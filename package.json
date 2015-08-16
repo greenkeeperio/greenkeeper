@@ -6,9 +6,12 @@
     "url": "https://github.com/boennemann/greenkeeper/issues"
   },
   "dependencies": {
+    "hide-secrets": "^1.0.0",
     "node-emoji": "^1.0.3",
     "nopt": "^3.0.3",
-    "os-homedir": "^1.0.1"
+    "npmlog": "^1.2.1",
+    "os-homedir": "^1.0.1",
+    "request": "^2.60.0"
   },
   "devDependencies": {
     "nyc": "^3.1.0",
