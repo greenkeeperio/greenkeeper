@@ -18,14 +18,14 @@
   },
   "homepage": "https://github.com/boennemann/greenkeeper#readme",
   "license": "UNLICENSED",
-  "main": "lib/index.js",
+  "main": "src/index.js",
   "preferGlobal": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/boennemann/greenkeeper.git"
   },
   "scripts": {
-    "start": "./lib/index.js",
+    "start": "./src/index.js",
     "pretest": "standard",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "test": "nyc tap test/*.js"
