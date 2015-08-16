@@ -8,7 +8,7 @@
   "dependencies": {
     "node-emoji": "^1.0.3",
     "nopt": "^3.0.3",
-    "npmlog": "^1.2.1"
+    "os-homedir": "^1.0.1"
   },
   "devDependencies": {
     "nyc": "^3.1.0",
