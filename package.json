@@ -5,7 +5,11 @@
   "bugs": {
     "url": "https://github.com/boennemann/greenkeeper/issues"
   },
-  "dependencies": {},
+  "dependencies": {
+    "node-emoji": "^1.0.3",
+    "nopt": "^3.0.3",
+    "npmlog": "^1.2.1"
+  },
   "devDependencies": {
     "nyc": "^3.1.0",
     "semantic-release": "^4.0.3",
@@ -21,6 +25,7 @@
     "url": "https://github.com/boennemann/greenkeeper.git"
   },
   "scripts": {
+    "start": "./lib/index.js",
     "pretest": "standard",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "test": "nyc tap test/*.js"
