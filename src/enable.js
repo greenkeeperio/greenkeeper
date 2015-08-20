@@ -32,7 +32,7 @@ module.exports = function (flags) {
       return console.log(slug + ' enabled')
     }
 
-    log.error('sync', err || res)
+    log.error('enable', err || res)
     process.exit(1)
   })
 }
