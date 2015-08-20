@@ -23,6 +23,11 @@ exports.set = function (name, value) {
   exports._save()
 }
 
+exports.unset = function (name) {
+  delete config[name]
+  exports._save()
+}
+
 exports.replace = function (newConfig) {
   config = newConfig
   exports._save()

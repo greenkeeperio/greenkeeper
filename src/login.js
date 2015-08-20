@@ -5,10 +5,10 @@ var randomString = require('random-string')
 
 var rc = require('./lib/rc')
 
-module.exports = function (config) {
+module.exports = function (flags) {
   log.verbose('login', 'starting command')
 
-  if (config.token && !config.force) {
+  if (flags.token && !flags.force) {
     log.error('login', 'Already logged in. Use --force to continue.')
     process.exit(1)
   }
@@ -20,23 +20,27 @@ module.exports = function (config) {
   request({
     method: 'POST',
     json: true,
-    url: config.api + 'tokens',
+    url: flags.api + 'tokens',
     timeout: 1000 * 60 * 60, // wait 1h
     body: {
       id: id
     }
   }, function (err, res, data) {
-    if (err) return log.error('login', 'Request failed', err)
+    if (err) {
+      log.error('login', 'Request failed', err)
+      process.exit(1)
+    }
 
     if (!(res.statusCode === 200 && data.token)) {
-      return log.error('login', 'Login failed', res, data)
+      log.error('login', 'Login failed', res, data)
+      process.exit(1)
     }
 
     rc.set('token', data.token)
-    log.info('login', 'Logged in')
+    console.log('Logged in')
   })
 
-  var url = config.api + 'login?id=' + id
+  var url = flags.api + 'login?id=' + id
 
   log.info('login', 'Open ' + url)
   open(url)
