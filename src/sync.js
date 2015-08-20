@@ -5,7 +5,10 @@ var request = require('request')
 module.exports = function (flags) {
   log.verbose('sync', 'starting command')
 
-  if (!flags.token) process.exit(0)
+  if (!flags.token) {
+    log.error('sync', 'Authentication missing')
+    process.exit(1)
+  }
 
   log.http('sync', 'Sending request')
   request({
@@ -21,5 +24,6 @@ module.exports = function (flags) {
     }
 
     log.error('sync', err || res)
+    process.exit(1)
   })
 }

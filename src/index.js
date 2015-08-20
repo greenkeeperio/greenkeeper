@@ -15,6 +15,7 @@ var commands = require('./commands')
 var rcFlags = rc.get()
 
 var cliFlags = nopt({
+  slug: String,
   version: Boolean,
   help: Boolean,
   api: String,

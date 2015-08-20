@@ -17,5 +17,6 @@ module.exports = function (flags) {
     if (data.name) return console.log(data.name)
 
     log.error('whoami', err || res)
+    process.exit(1)
   })
 }

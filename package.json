@@ -6,6 +6,7 @@
     "url": "https://github.com/boennemann/greenkeeper/issues"
   },
   "dependencies": {
+    "github-from-package": "0.0.0",
     "hide-secrets": "^1.0.0",
     "node-emoji": "^1.0.3",
     "nopt": "^3.0.3",
