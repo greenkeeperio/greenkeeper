@@ -7,6 +7,7 @@ var exports = module.exports = [
   'enable',
   'disable',
   'info',
+  'sync',
   'whoami'
 ].sort()
 
