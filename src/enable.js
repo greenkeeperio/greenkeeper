@@ -28,6 +28,10 @@ module.exports = function (flags) {
     },
     body: {slug: slug}
   }, function (err, res, data) {
+    if (data.noChange) {
+      return console.log(slug + ' already enabled')
+    }
+
     if (data.ok) {
       return console.log(slug + ' enabled')
     }
