@@ -14,6 +14,7 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
+    if (err) log.error('whoami', err)
     if (data.name) return console.log(data.name)
 
     log.error('whoami', err || res)
