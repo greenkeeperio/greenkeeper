@@ -58,7 +58,7 @@ if (flags.version) {
   process.exit(0)
 }
 
-var command = commands.all[(flags.argv.remain || ['']).shift().toLowerCase()]
+var command = commands.all[((flags.argv.remain || []).shift() || '').toLowerCase()]
 
 if (flags.help || !command) {
   console.log('Usage: greenkeeper <command>\n')
