@@ -1,7 +1,5 @@
 var log = require('npmlog')
-var open = require('open')
 var request = require('request')
-var randomString = require('random-string')
 
 var rc = require('./lib/rc')
 
