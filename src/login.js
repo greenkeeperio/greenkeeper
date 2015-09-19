@@ -1,3 +1,4 @@
+var _ = require('lodash')
 var log = require('npmlog')
 var open = require('open')
 var request = require('request')
@@ -37,11 +38,31 @@ module.exports = function (flags) {
     }
 
     rc.set('token', data.token)
-    console.log('Logged in')
+
+    // async me! (sing along to moisturize me!)
+    log.info('sync', 'Syncing your GitHub, it’ll only be a minute!')
+    request({
+      method: 'POST',
+      url: flags.api + 'sync',
+      json: true,
+      headers: {
+        Authorization: 'Bearer ' + flags.token
+      }
+    }, function (err, res, data) {
+      if(err) {
+        return log.error('sync', err)
+      }
+      if (data.repos) {
+        log.info(`Done synching ${data.repos.length} repositories.`)
+        return log.info('You are now logged in, synced and all set up!')
+      }
+
+    });
+
   })
 
   var url = flags.api + 'login?id=' + id
 
-  log.info('login', 'Open ' + url)
+  log.verbose('login', 'Open ' + url)
   open(url)
 }
