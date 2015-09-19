@@ -34,7 +34,7 @@ module.exports = function (flags) {
     }, function (err, res, data) {
       if (err) {
         log.error('login', story.request_failed)
-        process.exit(2)
+        process.exit(1)
       }
 
       if (res.statusCode >= 502 && res.statusCode <= 504) {

@@ -1,9 +1,8 @@
 var log = require('npmlog')
 var open = require('open')
+var request = require('request')
 
-var rc = require('./lib/rc')
-
-function usage() {
+function usage () {
   log.error('Please use one of these commands: \n\n' + [
     'greenkeeper buy supporter ($5 / month, fast queue)',
     'greenkeeper buy personal ($14 / month, infinite repos, faster queue)',
@@ -27,14 +26,14 @@ module.exports = function (flags) {
     return usage()
   }
 
-  var url = 'https://fastspring.com/greenkeeper.io/';
-  switch(argv.remain[0]) {
+  var url = 'https://fastspring.com/greenkeeper.io/'
+  switch (argv.remain[0]) {
     case 'supporter':
       url += 'supporter'
-      break;
-    case 'personal': 
+      break
+    case 'personal':
       url += 'personal'
-      break;
+      break
     case 'organisation':
       // require 25 or 50 option
       if (typeof argv.remain[1] === 'undefined' || ['25', '50'].indexOf(argv.remain[1]) === -1) {
@@ -46,6 +45,30 @@ module.exports = function (flags) {
     default:
       return usage()
   }
+
+  request({
+    method: 'POST',
+    json: true,
+    url: flags.api + 'payment/wait',
+    timeout: 1000 * 60 * 60, // wait 1h
+    body: {
+      id: flags.token,
+      plan: url
+    }
+  }, function (err, res, data) {
+    if (err) {
+      log.error('login', 'Payment failed', err)
+      process.exit(1)
+    }
+
+    if (!(res.statusCode === 200 && data.token)) {
+      log.error('login', 'Payment failed', res, data)
+      process.exit(1)
+    }
+
+    console.log('Payment Successful! Team greenkeeper says thank you! <3')
+    console.log('Stephan, Christoph, Alex, Gregor, Jan & Ola')
+  })
 
   log.verbose('buy', 'Opening url ' + url)
   open(url)
