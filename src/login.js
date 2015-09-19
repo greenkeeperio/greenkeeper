@@ -53,10 +53,9 @@ module.exports = function (flags) {
         return log.error('sync', err)
       }
       if (data.repos) {
-        log.info(`Done synching ${data.repos.length} repositories.`)
-        return log.info('You are now logged in, synced and all set up!')
+        console.log(`Done synching ${data.repos.length} repositories.`)
+        console.log('You are now logged in, synced and all set up!')
       }
-
     });
 
   })
