@@ -10,6 +10,7 @@ var nopt = require('nopt')
 
 var rc = require('./lib/rc')
 var pkg = require('../package.json')
+var story = require('./lib/story')
 var commands = require('./commands')
 
 var rcFlags = rc.get()
@@ -41,6 +42,8 @@ var cliFlags = nopt({
   quiet: ['--loglevel', 'warn']
 })
 
+log.levels.http = 1500
+
 log.level = cliFlags.loglevel || rcFlags.loglevel || 'info'
 log.headingStyle = {fg: 'white'}
 log.heading = emoji.get('palm_tree')
@@ -61,10 +64,7 @@ if (flags.version) {
 var command = commands.all[((flags.argv.remain || []).shift() || '').toLowerCase()]
 
 if (flags.help || !command) {
-  console.log('Usage: greenkeeper <command>\n')
-  console.log('where <command> is one of:')
-  console.log('    ', commands.join(', '))
-  console.log('\n' + emoji.get('palm_tree'))
+  console.log(story.usage(commands))
   process.exit(0)
 }
 

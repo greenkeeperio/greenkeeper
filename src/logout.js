@@ -2,12 +2,13 @@ var log = require('npmlog')
 var request = require('request')
 
 var rc = require('./lib/rc')
+var story = require('./lib/story').logout
 
 module.exports = function (flags) {
   log.verbose('logout', 'starting command')
 
   if (!flags.token) {
-    log.error('logout', 'Already logged out.')
+    log.error('logout', story.error_already_logged_in)
     process.exit(1)
   }
 
@@ -22,7 +23,7 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (data.ok) {
       rc.unset('token')
-      return console.log('Logged out')
+      return console.log(story.logged_out)
     }
 
     log.error('logout', err || res)

@@ -2,11 +2,13 @@ var _ = require('lodash')
 var log = require('npmlog')
 var request = require('request')
 
+var story = require('./lib/story').sync
+
 module.exports = function (flags) {
   log.verbose('sync', 'starting command')
 
   if (!flags.token) {
-    log.error('sync', 'Authentication missing')
+    log.error('sync', story.error_no_login_first)
     process.exit(1)
   }
 
@@ -20,7 +22,7 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (data.repos) {
-      return data.repos.forEach(_.ary(console.log, 1))
+      return story.repos(data.repos)
     }
 
     log.error('sync', err || res)
