@@ -2,7 +2,10 @@
   "name": "greenkeeper",
   "description": "keeps your npm dependencies up-to-date",
   "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me/)",
-  "bin": "src/index.js",
+  "bin": {
+    "greenkeeper": "src/index.js",
+    "gk": "src/index.js"
+  },
   "bugs": {
     "url": "https://github.com/boennemann/greenkeeper/issues"
   },
