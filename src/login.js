@@ -5,12 +5,13 @@ var request = require('request')
 var randomString = require('random-string')
 
 var rc = require('./lib/rc')
+var story = require('./lib/story').login
 
 module.exports = function (flags) {
   log.verbose('login', 'starting command')
 
   if (flags.token && !flags.force) {
-    log.error('login', 'Already logged in. Use --force to continue.')
+    log.error('login', story.error_already_logged_in)
     process.exit(1)
   }
 
@@ -28,12 +29,12 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (err) {
-      log.error('login', 'Request failed', err)
+      log.error('login', story.request_faild(err))
       process.exit(1)
     }
 
     if (!(res.statusCode === 200 && data.token)) {
-      log.error('login', 'Login failed', res, data)
+      log.error('login', story.login_failed(req))
       process.exit(1)
     }
 

@@ -1,6 +1,8 @@
 var log = require('npmlog')
 var request = require('request')
 
+var story = require('./lib/story').whoami
+
 module.exports = function (flags) {
   log.verbose('whoami', 'starting command')
 
@@ -15,7 +17,7 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (err) log.error('whoami', err)
-    if (data.name) return console.log(data.name)
+    if (data.name) return console.log(story.name(data))
 
     log.error('whoami', err || res)
     process.exit(1)

@@ -1,18 +1,20 @@
 var log = require('npmlog')
 var request = require('request')
 
+var story = require('./lib/story').info
+
 module.exports = function (flags) {
   log.verbose('info', 'Starting command')
 
   if (!flags.token) {
-    log.error('info', 'Please login first')
+    log.error('info', story.error_login_first)
     process.exit(1)
   }
 
   var slug = flags.slug || require('./lib/slug')()
 
   if (!slug) {
-    log.error('info', 'missing slug')
+    log.error('info', story.error_missing_slug)
     process.exit(1)
   }
 
@@ -28,7 +30,7 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (data) {
-      return console.log(data)
+      return console.log(story.data(data))
     }
 
     log.error('info', err || res)
