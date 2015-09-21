@@ -9,10 +9,18 @@ var exports = module.exports = [
   'info',
   'sync',
   'whoami',
-  'support'
+  'support',
+  'evilhackerdude',
+  'lewis'
 ].sort()
 
+exports.secrets = [
+  'evilhackerdude',
+  'lewis'
+]
+
 exports.aliases = {
+  ehd: 'evilhackerdude',
   chat: 'support',
   signup: 'login',
   signin: 'login',

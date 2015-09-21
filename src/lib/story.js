@@ -7,7 +7,7 @@ module.exports = {
     return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
       'Usage: greenkeeper <command>\n\n' +
       'where <command> is one of:\n' +
-      '    ' + commands.join(', ') + '\n' +
+      '    ' + _.difference(commands, commands.secrets).join(', ') + '\n' +
       '\n' + emoji.get('palm_tree')
   },
 
