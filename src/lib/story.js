@@ -4,10 +4,11 @@ var emoji = require('node-emoji')
 
 module.exports = {
   usage: function (commands) {
-    return 'Usage: greenkeeper <command>\n\n'
-      + 'where <command> is one of:\n'
-      + '    ', commands.join(', ') + '\n'
-      + '\n' + emoji.get('palm_tree')
+    return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
+      'Usage: greenkeeper <command>\n\n' +
+      'where <command> is one of:\n' +
+      '    ' + commands.join(', ') + '\n' +
+      '\n' + emoji.get('palm_tree')
   },
 
   disable: {
@@ -39,7 +40,7 @@ module.exports = {
       return util.format(slug, 'enabled')
     }
   },
-  
+
   info: {
     error_login_first: 'Please login first',
     error_missing_slug: 'missing slug',
@@ -71,7 +72,7 @@ module.exports = {
   },
 
   whoami: {
-    name: function(data) {
+    name: function (data) {
       return data.name
     }
   }

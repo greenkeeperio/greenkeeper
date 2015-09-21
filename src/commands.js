@@ -8,10 +8,12 @@ var exports = module.exports = [
   'disable',
   'info',
   'sync',
-  'whoami'
+  'whoami',
+  'support'
 ].sort()
 
 exports.aliases = {
+  chat: 'support',
   signup: 'login',
   signin: 'login',
   signout: 'logout',
