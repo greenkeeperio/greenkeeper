@@ -29,7 +29,7 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (err) {
-      log.error('login', story.request_faild(err))
+      log.error('login', story.request_failed(err))
       process.exit(1)
     }
 
@@ -54,7 +54,7 @@ module.exports = function (flags) {
         return log.error('sync', err)
       }
       if (data.repos) {
-        console.log(`Done synching ${data.repos.length} repositories.`)
+        console.log('Done synching '+data.repos.length+' repositories.')
         console.log('You are now logged in, synced and all set up!')
       }
     });
