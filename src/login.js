@@ -1,8 +1,8 @@
-var _ = require('lodash')
 var log = require('npmlog')
 var open = require('open')
 var request = require('request')
 var randomString = require('random-string')
+var spinner = require('char-spinner')
 
 var rc = require('./lib/rc')
 var story = require('./lib/story').login
@@ -19,6 +19,7 @@ module.exports = function (flags) {
   log.verbose('login', 'id', id)
 
   log.verbose('login', 'Getting token from API and opening GitHub login')
+  var spin = spinner()
   request({
     method: 'POST',
     json: true,
@@ -34,7 +35,7 @@ module.exports = function (flags) {
     }
 
     if (!(res.statusCode === 200 && data.token)) {
-      log.error('login', story.login_failed(req))
+      log.error('login', story.login_failed(res))
       process.exit(1)
     }
 
@@ -50,15 +51,16 @@ module.exports = function (flags) {
         Authorization: 'Bearer ' + flags.token
       }
     }, function (err, res, data) {
-      if(err) {
+      clearInterval(spin)
+
+      if (err) {
         return log.error('sync', err)
       }
       if (data.repos) {
-        console.log('Done synching '+data.repos.length+' repositories.')
+        console.log('Done synching ' + data.repos.length + ' repositories.')
         console.log('You are now logged in, synced and all set up!')
       }
-    });
-
+    })
   })
 
   var url = flags.api + 'login?id=' + id

@@ -1,6 +1,6 @@
-var _ = require('lodash')
 var log = require('npmlog')
 var request = require('request')
+var spinner = require('char-spinner')
 
 var story = require('./lib/story').sync
 
@@ -13,6 +13,8 @@ module.exports = function (flags) {
   }
 
   log.http('sync', 'Sending request')
+  log.info('sync', 'This might take a while')
+  var spin = spinner()
   request({
     method: 'POST',
     url: flags.api + 'sync',
@@ -21,6 +23,7 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
+    clearInterval(spin)
     if (data.repos) {
       return story.repos(data.repos)
     }
