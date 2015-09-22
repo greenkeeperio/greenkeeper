@@ -12,6 +12,7 @@
   "dependencies": {
     "abbrev": "^1.0.7",
     "char-spinner": "^1.0.1",
+    "ansi": "^0.3.0",
     "github-from-package": "0.0.0",
     "hide-secrets": "^1.0.0",
     "lodash": "^3.10.1",
