@@ -30,10 +30,10 @@ module.exports = {
   },
 
   disable: {
-    error_login_first: 'Please login first',
-    error_missing_slug: 'missing slug',
+    error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
+    error_missing_slug: 'greenkeeper only works with GitHub repos',
     repo_info: function (slug) {
-      return util.format('Slug is:', slug)
+      return util.format('The repo slug is:', slug)
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
@@ -45,10 +45,10 @@ module.exports = {
   },
 
   enable: {
-    error_login_first: 'Please login first',
-    error_missing_slug: 'missing slug',
+    error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
+    error_missing_slug: 'greenkeeper can only be enabled on GitHub repos',
     repo_info: function (slug) {
-      return util.format('Slug is:', slug)
+      return util.format('The repo slug is:', slug)
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
@@ -60,15 +60,15 @@ module.exports = {
   },
 
   info: {
-    error_login_first: 'Please login first',
-    error_missing_slug: 'missing slug',
+    error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
+    error_missing_slug: 'This isn\'t a GitHub repo',
     data: function (data) {
       return data
     }
   },
 
   login: {
-    error_already_logged_in: 'Already logged in. Use --force to continue.',
+    error_already_logged_in: 'You\'re already logged in. Use --force to continue.',
     request_failed: function (err) {
       return util.format('Request failed', err)
     },
@@ -78,12 +78,12 @@ module.exports = {
   },
 
   logout: {
-    error_already_logged_in: 'Already logged in',
+    error_already_logged_in: 'You\'re already logged in',
     logged_out: 'Logged out. Bye! '+emoji.get('palm_tree')
   },
 
   sync: {
-    error_login_first: 'Please login first',
+    error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
     repos: function (repos) {
       return repos.forEach(_.ary(console.log, 1))
     }

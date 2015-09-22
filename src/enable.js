@@ -18,7 +18,7 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  log.info('enable', 'Slug is:', slug)
+  log.info('enable', 'The GitHub slug is:', slug)
 
   log.http('enable', 'Sending request')
   request({
