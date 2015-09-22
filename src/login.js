@@ -37,7 +37,7 @@ module.exports = function (flags) {
     }
 
     if (!(res.statusCode === 200 && data.token)) {
-      log.error('login', story.login_failed(res))
+      log.error('login', story.login_failed(res, data))
       process.exit(1)
     }
 
@@ -57,6 +57,9 @@ module.exports = function (flags) {
 
       if (err) {
         return log.error('sync', err)
+      }
+      if (data.error){
+        log.error('login', data.statusCode+'/'+ data.error +': '+ data.message)
       }
       if (data.repos) {
         console.log('Done synching ' + data.repos.length + ' repositories.')
