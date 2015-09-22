@@ -6,8 +6,10 @@ var spinner = require('char-spinner')
 
 var rc = require('./lib/rc')
 var story = require('./lib/story').login
+var logo = require('./lib/story').logo
 
 module.exports = function (flags) {
+  logo();
   log.verbose('login', 'starting command')
 
   if (flags.token && !flags.force) {
@@ -42,7 +44,7 @@ module.exports = function (flags) {
     rc.set('token', data.token)
 
     // async me! (sing along to moisturize me!)
-    log.info('sync', 'Syncing your GitHub, it’ll only be a minute!')
+    log.info('sync', 'Syncing your GitHub, it’ll only be a minute!\n')
     request({
       method: 'POST',
       url: flags.api + 'sync',
