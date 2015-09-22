@@ -29,13 +29,6 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
-    if(err){
-      log.error('info', err)
-    }
-    if (data.error){
-      // TODO: Not sure which format error messages might be in yet
-      log.error('info', data.error)
-    }
     if (data) {
       if(data.disabled){
         log.info('info', 'greenkeeper isn\'t enabled for this repo')
@@ -43,6 +36,20 @@ module.exports = function (flags) {
         log.info('info', 'greenkeeper is enabled for this repo')
       }
     }
-    process.exit(1)
+    if(err){
+      log.error('info', err)
+      process.exit(1)
+    }
+    if (data.error){
+      switch(data.statusCode){
+        // TODO: Not sure which other error messages we need to cover
+        case 409:
+          log.error('info', 'Conflict! We appear to have this repo in our system several times. This can happen if you have moved or recreated the repo. We can fix this though, please contact us at $ greenkeeper support')
+          return;
+        break;
+      }
+      log.error('info', data.error)
+      process.exit(1)
+    }
   })
 }

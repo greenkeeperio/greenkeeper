@@ -37,7 +37,7 @@ module.exports = {
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'was not disabled before')
+      return util.format(slug, 'is already disabled (if this repo is inside an organisation, somebody other than you may have done this)')
     },
     error_disabled: function (slug) {
       return util.format(slug, 'disabled')
@@ -52,7 +52,7 @@ module.exports = {
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'was not enabled before')
+      return util.format(slug, 'is already enabled (if this repo is inside an organisation, somebody other than you may have done this)')
     },
     error_enabled: function (slug) {
       return util.format(slug, 'enabled')
