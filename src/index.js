@@ -46,7 +46,7 @@ log.levels.http = 1500
 
 log.level = cliFlags.loglevel || rcFlags.loglevel || 'info'
 log.headingStyle = {fg: 'white'}
-log.heading = emoji.get('palm_tree')
+log.heading = emoji.get('palm_tree')+' '
 
 var flags = _.assign({}, rcFlags, cliFlags)
 
