@@ -72,7 +72,7 @@ module.exports = {
     request_failed: function (err) {
       return util.format('Request failed', err)
     },
-    login_failed: function () {
+    login_failed: function (res, data) {
       return util.format('Login failed', res, data)
     }
   },
