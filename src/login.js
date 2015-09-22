@@ -48,7 +48,7 @@ module.exports = function (flags) {
       url: flags.api + 'sync',
       json: true,
       headers: {
-        Authorization: 'Bearer ' + flags.token
+        Authorization: 'Bearer ' + data.token
       }
     }, function (err, res, data) {
       clearInterval(spin)
