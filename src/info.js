@@ -18,7 +18,7 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  log.info('info', 'Slug is:', slug)
+  log.info('info', 'The GitHub slug is:', slug)
 
   log.http('info', 'Sending request')
   request({
@@ -29,11 +29,20 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
-    if (data) {
-      return console.log(story.data(data))
+    if(err){
+      log.error('info', err)
     }
-
-    log.error('info', err || res)
+    if (data.error){
+      // TODO: Not sure which format error messages might be in yet
+      log.error('info', data.error)
+    }
+    if (data) {
+      if(data.disabled){
+        log.info('info', 'greenkeeper isn\'t enabled for this repo')
+      } else {
+        log.info('info', 'greenkeeper is enabled for this repo')
+      }
+    }
     process.exit(1)
   })
 }
