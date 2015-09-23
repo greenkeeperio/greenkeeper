@@ -30,7 +30,7 @@ module.exports = {
       'Usage: greenkeeper <command>\n\n' +
       'where <command> is one of:\n' +
       '    ' + _.difference(commands, commands.secrets).join(', ') + '\n' +
-      '\n' + emoji.get('palm_tree')
+      process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : ''
   },
 
   disable: {
@@ -83,7 +83,7 @@ module.exports = {
 
   logout: {
     error_already_logged_in: 'You’re already logged in',
-    logged_out: 'Logged out ' + emoji.get('palm_tree')
+    logged_out: 'Logged out' + process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') : ''
   },
 
   sync: {
