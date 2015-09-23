@@ -52,7 +52,7 @@ module.exports = function (flags) {
     } else if (data.statusCode === 403) {
       log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via $ greenkeeper upgrade')
     } else {
-      log.error('enable', res.statusMessage)
+      log.error('enable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
     }
     process.exit(1)
   })

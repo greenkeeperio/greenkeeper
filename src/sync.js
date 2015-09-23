@@ -33,7 +33,7 @@ module.exports = function (flags) {
       return story.repos(data.repos)
     }
 
-    log.error('sync', res.statusMessage)
+    log.error('sync', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
     process.exit(1)
   })
 }

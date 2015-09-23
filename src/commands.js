@@ -11,7 +11,8 @@ var exports = module.exports = [
   'whoami',
   'support',
   'evilhackerdude',
-  'lewis'
+  'lewis',
+  'upgrade'
 ].sort()
 
 exports.secrets = [
@@ -20,6 +21,12 @@ exports.secrets = [
 ]
 
 exports.aliases = {
+  downgrade: 'support',
+  cancel: 'support',
+  unsubscribe: 'support',
+  pay: 'upgrade',
+  buy: 'upgrade',
+  subscribe: 'upgrade',
   ehd: 'evilhackerdude',
   chat: 'support',
   signup: 'login',

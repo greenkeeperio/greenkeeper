@@ -23,7 +23,7 @@ module.exports = function (flags) {
 
     if (data.name) return console.log(story.name(data))
 
-    log.error('whoami', res.statusMessage)
+    log.error('whoami', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
     process.exit(1)
   })
 }

@@ -31,7 +31,7 @@ module.exports = function (flags) {
       return console.log(story.logged_out)
     }
 
-    log.error('logout', err || res)
+    log.error('logout', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
     process.exit(1)
   })
 }

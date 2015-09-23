@@ -26,11 +26,12 @@ module.exports = {
 
   usage: function (commands) {
     logo()
+
     return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
       'Usage: greenkeeper <command>\n\n' +
       'where <command> is one of:\n' +
       '    ' + _.difference(commands, commands.secrets).join(', ') + '\n' +
-      process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : ''
+      (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
   },
 
   disable: {

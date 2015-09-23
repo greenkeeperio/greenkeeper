@@ -47,7 +47,7 @@ module.exports = function (flags) {
       return console.log(story.disabled(slug))
     }
 
-    log.error('disable', res.statusMessage)
+    log.error('disable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
     process.exit(1)
   })
 }
