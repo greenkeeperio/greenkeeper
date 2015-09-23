@@ -2,7 +2,7 @@ var fs = require('fs')
 var path = require('path')
 var url = require('url')
 
-var githubUrl = require('github-from-package')
+var githubUrl = require('github-url-from-git')
 
 module.exports = function (cb) {
   var pkg
@@ -13,7 +13,10 @@ module.exports = function (cb) {
     return undefined
   }
 
-  var ghUrl = githubUrl(pkg)
+  var repo = pkg.repository || ''
+  repo = repo.url || repo
+
+  var ghUrl = githubUrl(repo)
 
   if (ghUrl) {
     return (url.parse(ghUrl).pathname || '').substr(1)

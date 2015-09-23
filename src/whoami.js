@@ -6,7 +6,10 @@ var story = require('./lib/story').whoami
 module.exports = function (flags) {
   log.verbose('whoami', 'starting command')
 
-  if (!flags.token) process.exit(0)
+  if (!flags.token) {
+    log.error('whoami', 'Login required. Run $ greenkeeper login')
+    process.exit(1)
+  }
 
   log.http('whoami', 'Sending request')
   request({

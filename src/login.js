@@ -32,17 +32,17 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (err) {
-      log.error('info', err.message)
+      log.error('login', story.request_failed)
       process.exit(1)
     }
 
-    if (err) {
-      log.error('login', story.request_failed(err))
+    if (res.statusCode === 504 || res.statusCode === 502) {
+      log.error('login', 'Oops, that took too long. Try again please.')
       process.exit(1)
     }
 
     if (!(res.statusCode === 200 && data.token)) {
-      log.error('login', story.login_failed(res, data))
+      log.error('login', story.login_failed)
       process.exit(1)
     }
 
@@ -50,6 +50,12 @@ module.exports = function (flags) {
 
     // async me! (sing along to moisturize me!)
     log.info('login', 'That was successful, now syncing all your GitHub repos')
+
+    if (data.beta) {
+      log.warn('queue', 'You can already enable repositories, but we will only start sending you pull requests once we have activated your account.')
+      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
+    }
+
     request({
       method: 'POST',
       url: flags.api + 'sync',

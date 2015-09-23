@@ -39,6 +39,11 @@ module.exports = function (flags) {
       return log.error('enable', story.error_no_data)
     }
 
+    if (data.beta) {
+      log.warn('queue', 'We won\'t send you pull requests for this repo just yet, because we haven\'t activated your account.')
+      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
+    }
+
     if (data.noChange) {
       return log.error('enable', story.error_no_change(slug)) // TODO: We might not need this
     }

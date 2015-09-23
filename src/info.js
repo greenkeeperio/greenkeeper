@@ -34,6 +34,11 @@ module.exports = function (flags) {
       process.exit(1)
     }
 
+    if (data.beta) {
+      log.warn('queue', 'We aren\'t sending pull requests for this repo yet, because we haven\'t activated your account.')
+      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
+    }
+
     if (data.disabled) {
       log.error('info', 'greenkeeper isn’t enabled for this repo')
       process.exit(1)
@@ -49,6 +54,6 @@ module.exports = function (flags) {
       process.exit(1)
     }
 
-    log.info('info', 'greenkeeper is enabled for this repo')
+    console.log('greenkeeper is enabled for this repo')
   })
 }

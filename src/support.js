@@ -1,13 +1,12 @@
 var log = require('npmlog')
 var open = require('open')
 
-var story = require('./lib/story').logout
-
 module.exports = function (flags) {
-  log.verbose('whoami', 'starting command')
+  log.verbose('support', 'starting command')
 
   if (!flags.token) {
-    log.error('sync', story.error_no_login_first)
+    log.info('support', 'Not logged in. Opening the general support repo.')
+    open('https://github.com/greenkeeperio/support')
     process.exit(1)
   }
 

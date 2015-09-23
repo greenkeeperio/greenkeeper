@@ -34,6 +34,10 @@ module.exports = {
       (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
   },
 
+  support: {
+    error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login'
+  },
+
   disable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
     error_missing_slug: 'greenkeeper only works with GitHub repos',
@@ -51,7 +55,7 @@ module.exports = {
 
   enable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repo or use $ greenkeeper enable --slug <user>/<repo>',
+    error_missing_slug: 'Missing slug\nRun this command from inside your repo and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repo>',
     repo_info: function (slug) {
       return util.format('The repo slug is:', slug)
     },
@@ -66,7 +70,7 @@ module.exports = {
 
   info: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repo or use $ greenkeeper enable --slug <user>/<repo>',
+    error_missing_slug: 'Missing slug\nRun this command from inside your repo and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repo>',
     data: function (data) {
       return data
     }
@@ -74,12 +78,8 @@ module.exports = {
 
   login: {
     error_already_logged_in: 'You’re already logged in. Use --force to continue.',
-    request_failed: function (err) {
-      return util.format('Request failed', err)
-    },
-    login_failed: function (res, data) {
-      return util.format('Login failed', res, data)
-    }
+    request_failed: 'Request failed',
+    login_failed: 'Login failed'
   },
 
   logout: {
