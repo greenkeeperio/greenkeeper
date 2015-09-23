@@ -44,7 +44,7 @@ module.exports = function (flags) {
     }
 
     if (data.ok) {
-      return console.log(story.enabled)
+      return console.log(story.enabled(slug))
     }
 
     if (data.statusCode === 400) {

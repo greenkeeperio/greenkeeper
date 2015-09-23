@@ -59,7 +59,7 @@ module.exports = {
     error_no_change: function (slug) {
       return util.format(slug, 'is already enabled\nIf this repo is inside an organisation, somebody other than you may have done this')
     },
-    error_enabled: function (slug) {
+    enabled: function (slug) {
       return util.format(slug, 'enabled')
     }
   },
