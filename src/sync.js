@@ -24,11 +24,16 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     clearInterval(spin)
+    if (err) {
+      log.error('sync', err.message)
+      process.exit(1)
+    }
+
     if (data.repos) {
       return story.repos(data.repos)
     }
 
-    log.error('sync', err || res)
+    log.error('sync', res.statusMessage)
     process.exit(1)
   })
 }

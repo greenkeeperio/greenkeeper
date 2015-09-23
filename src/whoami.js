@@ -16,10 +16,14 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
-    if (err) log.error('whoami', err)
+    if (err) {
+      log.error('whoami', err.message)
+      process.exit(1)
+    }
+
     if (data.name) return console.log(story.name(data))
 
-    log.error('whoami', err || res)
+    log.error('whoami', res.statusMessage)
     process.exit(1)
   })
 }

@@ -2,26 +2,30 @@ var _ = require('lodash')
 var util = require('util')
 var emoji = require('node-emoji')
 var ansi = require('ansi')
-var cursor = ansi(process.stdout)
+var cursor = ansi(process.stderr)
+
+function logo () {
+  cursor.green()
+  console.error(
+    '\n                oooo\n' +
+    '                `888\n' +
+    '     .ooooooooo  888  ooooo\n' +
+    '    8888\' \`8888  888 .88P\'\n' +
+    '    8888   8888  8888888.       g r e e n k e e p e r . i o\n' +
+    '    \`888bod88P\'  888 \`888b.\n' +
+    '     \`Yooooooo. o888o o8888o\n' +
+    '          \`Y88b\n' +
+    '    d88P   d888\n' +
+    '    \`Y8888888P\'\n'
+  )
+  cursor.reset()
+}
 
 module.exports = {
-  logo: function () {
-    cursor.green()
-    console.log("\n                oooo\n"
-                 +"                `888\n"
-                 +"     .ooooooooo  888  ooooo\n"
-                 +"    8888' `8888  888 .88P'\n"
-                 +"    8888   8888  8888888.       g r e e n k e e p e r . i o\n"
-                 +"    `888bod88P'  888 `888b.\n"
-                 +"     `Yooooooo. o888o o8888o\n"
-                 +"          `Y88b\n"
-                 +"    d88P   d888\n"
-                 +"    `Y8888888P'\n")
-    cursor.reset()
-  },
+  logo: logo,
 
   usage: function (commands) {
-    this.logo();
+    logo()
     return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
       'Usage: greenkeeper <command>\n\n' +
       'where <command> is one of:\n' +
@@ -37,7 +41,7 @@ module.exports = {
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already disabled (if this repo is inside an organisation, somebody other than you may have done this)')
+      return util.format(slug, 'is already disabled\nIf this repo is inside an organisation, somebody other than you may have done this')
     },
     error_disabled: function (slug) {
       return util.format(slug, 'disabled')
@@ -46,13 +50,13 @@ module.exports = {
 
   enable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'greenkeeper can only be enabled on GitHub repos',
+    error_missing_slug: 'Missing slug\nRun this command from inside your repo or use $ greenkeeper enable --slug <user>/<repo>',
     repo_info: function (slug) {
       return util.format('The repo slug is:', slug)
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already enabled (if this repo is inside an organisation, somebody other than you may have done this)')
+      return util.format(slug, 'is already enabled\nIf this repo is inside an organisation, somebody other than you may have done this')
     },
     error_enabled: function (slug) {
       return util.format(slug, 'enabled')
@@ -61,14 +65,14 @@ module.exports = {
 
   info: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'This isn\'t a GitHub repo',
+    error_missing_slug: 'Missing slug\nRun this command from inside your repo or use $ greenkeeper enable --slug <user>/<repo>',
     data: function (data) {
       return data
     }
   },
 
   login: {
-    error_already_logged_in: 'You\'re already logged in. Use --force to continue.',
+    error_already_logged_in: 'You’re already logged in. Use --force to continue.',
     request_failed: function (err) {
       return util.format('Request failed', err)
     },
@@ -78,8 +82,8 @@ module.exports = {
   },
 
   logout: {
-    error_already_logged_in: 'You\'re already logged in',
-    logged_out: 'Logged out. Bye! '+emoji.get('palm_tree')
+    error_already_logged_in: 'You’re already logged in',
+    logged_out: 'Logged out ' + emoji.get('palm_tree')
   },
 
   sync: {

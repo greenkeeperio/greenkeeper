@@ -30,26 +30,29 @@ module.exports = function (flags) {
     },
     body: {slug: slug}
   }, function (err, res, data) {
-    console.log('data: ',data);
-    console.log('err: ',err);
+    if (err) {
+      log.error('enable', err.message)
+      process.exit(1)
+    }
+
     if (!data) {
-      return console.log(story.error_no_data)
+      return log.error('enable', story.error_no_data)
     }
 
     if (data.noChange) {
-      return console.log(story.error_no_change(slug)) // TODO: We might not need this
+      return log.error('enable', story.error_no_change(slug)) // TODO: We might not need this
     }
 
     if (data.ok) {
       return console.log(story.enabled)
     }
 
-    if(data.statusCode === 400){
-      log.error('enable', 'A repo with this slug doesn\'t exist on GitHub')
-    } else if(data.statusCode === 403){
-      log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories. You can subscribe via $ greenkeeper upgrade')
+    if (data.statusCode === 400) {
+      log.error('enable', 'A repo with this slug doesn’t exist on GitHub')
+    } else if (data.statusCode === 403) {
+      log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via $ greenkeeper upgrade')
     } else {
-      log.error('enable', err || res)
+      log.error('enable', res.statusMessage)
     }
     process.exit(1)
   })

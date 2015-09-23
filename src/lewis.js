@@ -1,4 +1,6 @@
 var woerter = [
+  'WAAAT?',
+  'VOLL!',
   'JA!',
   'wunderbar',
   'genau',

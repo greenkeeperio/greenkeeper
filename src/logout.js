@@ -21,6 +21,11 @@ module.exports = function (flags) {
       Authorization: 'Bearer ' + flags.token
     }
   }, function (err, res, data) {
+    if (err) {
+      log.error('logout', err.message)
+      process.exit(1)
+    }
+
     if (data.ok) {
       rc.unset('token')
       return console.log(story.logged_out)

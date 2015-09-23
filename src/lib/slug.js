@@ -1,7 +1,6 @@
 var fs = require('fs')
 var path = require('path')
 var url = require('url')
-var log = require('npmlog')
 
 var githubUrl = require('github-from-package')
 
@@ -14,8 +13,9 @@ module.exports = function (cb) {
     return undefined
   }
 
-  var ghUrl = githubUrl(pkg);
-  if(ghUrl){
-    return (url.parse(githubUrl(pkg)).pathname || '').substr(1)
+  var ghUrl = githubUrl(pkg)
+
+  if (ghUrl) {
+    return (url.parse(ghUrl).pathname || '').substr(1)
   }
 }

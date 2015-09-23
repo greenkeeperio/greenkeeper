@@ -30,20 +30,24 @@ module.exports = function (flags) {
     },
     body: {slug: slug}
   }, function (err, res, data) {
+    if (err) {
+      log.error('disable', err.message)
+      process.exit(1)
+    }
 
     if (!data) {
-      return console.log(story.error_no_data)
+      return log.error('disable', story.error_no_data)
     }
 
     if (data.noChange) {
-      return console.log(story.error_no_change(slug)) // TODO: We might not need this
+      return log.error('disable', story.error_no_change(slug)) // TODO: We might not need this
     }
 
     if (data.ok) {
       return console.log(story.disabled(slug))
     }
 
-    log.error('disable', err || res)
+    log.error('disable', res.statusMessage)
     process.exit(1)
   })
 }

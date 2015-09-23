@@ -9,7 +9,7 @@ var story = require('./lib/story').login
 var logo = require('./lib/story').logo
 
 module.exports = function (flags) {
-  logo();
+  logo()
   log.verbose('login', 'starting command')
 
   if (flags.token && !flags.force) {
@@ -32,6 +32,11 @@ module.exports = function (flags) {
     }
   }, function (err, res, data) {
     if (err) {
+      log.error('info', err.message)
+      process.exit(1)
+    }
+
+    if (err) {
       log.error('login', story.request_failed(err))
       process.exit(1)
     }
@@ -44,7 +49,7 @@ module.exports = function (flags) {
     rc.set('token', data.token)
 
     // async me! (sing along to moisturize me!)
-    log.info('sync', 'Syncing your GitHub, it’ll only be a minute!\n')
+    log.info('login', 'That was successful, now syncing all your GitHub repos')
     request({
       method: 'POST',
       url: flags.api + 'sync',
@@ -56,14 +61,19 @@ module.exports = function (flags) {
       clearInterval(spin)
 
       if (err) {
-        return log.error('sync', err)
+        log.error('login', err.message)
+        process.exit(1)
       }
-      if (data.error){
-        log.error('login', data.statusCode+'/'+ data.error +': '+ data.message)
+
+      if (data.error) {
+        log.error('login', data.statusCode + '/' + data.error + ': ' + data.message)
+        process.exit(1)
       }
+
       if (data.repos) {
-        console.log('Done synching ' + data.repos.length + ' repositories.')
+        log.info('login', 'Done synching ' + data.repos.length + ' repositories')
         console.log('You are now logged in, synced and all set up!')
+        log.info('login', 'Enable your repos with', '$ greenkeeper enable')
       }
     })
   })
