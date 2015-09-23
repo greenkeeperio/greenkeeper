@@ -6,8 +6,9 @@ node_modules
 .nyc_output
 
 # npm specific
+.editorconfig
+.npmignore
 .gitignore
 .npmrc
 .travis.yml
-src
-tests
+test
