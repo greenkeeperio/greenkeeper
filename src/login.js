@@ -34,11 +34,11 @@ module.exports = function (flags) {
     }, function (err, res, data) {
       if (err) {
         log.error('login', story.request_failed)
-        process.exit(1)
+        process.exit(2)
       }
 
       if (res.statusCode >= 502 && res.statusCode <= 504) {
-        log.error('login', 'Oops, that took too long. retrying...')
+        log.warn('login', 'Oops, that took too long. retrying...')
         return setTimeout(getToken, 1000)
       }
 
