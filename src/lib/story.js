@@ -45,7 +45,7 @@ module.exports = {
       '      login   log into Greenkeeper, opens GitHub Authentication',
       '     logout   log out of Greenkeeper',
       '',
-      '    enable   enable Greenkeeper for a package',
+      '     enable   enable Greenkeeper for a package',
       '    disable   disable Greenkeeper for a package',
       '',
       '     whoami   show who you are logged in as into Greenkeeper',
