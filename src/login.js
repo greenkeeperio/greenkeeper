@@ -38,7 +38,7 @@ module.exports = function (flags) {
       }
 
       if (res.statusCode >= 502 && res.statusCode <= 504) {
-        log.error('login', 'Oops, that took too long. retrying...')
+        log.warn('login', 'Oops, that took too long. retrying...')
         return setTimeout(getToken, 1000)
       }
 

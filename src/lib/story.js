@@ -59,7 +59,7 @@ module.exports = {
       '       help   this screen',
       '',
       '  enable, disable and info take an optional parameter --slug=user/repo',
-      '  where `user` is the username or organisation on GitHub and `repo` is',
+      '  where `user` is the username or organization on GitHub and `repo` is',
       '  the repository name. If you omit the slug, `greenkeeper` will use',
       '  the current directory’s package.json',
       '',
@@ -126,7 +126,7 @@ module.exports = {
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already disabled\nIf this repo is inside an organisation, somebody other than you may have done this')
+      return util.format(slug, 'is already disabled\nIf this repo is inside an organization, somebody other than you may have done this')
     },
     disabled: function (slug) {
       return util.format(slug, 'disabled')
@@ -141,7 +141,7 @@ module.exports = {
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already enabled\nIf this repo is inside an organisation, somebody other than you may have done this')
+      return util.format(slug, 'is already enabled\nIf this repo is inside an organization, somebody other than you may have done this')
     },
     enabled: function (slug) {
       return util.format(slug, 'enabled')
