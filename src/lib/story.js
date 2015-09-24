@@ -21,8 +21,7 @@ function logo () {
   cursor.reset()
 }
 
-var emoji = (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
-
+var ourmoji = (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
 
 module.exports = {
   logo: logo,
@@ -48,13 +47,13 @@ module.exports = {
       '',
       '    enable   enable Greenkeeper for a package',
       '    disable   disable Greenkeeper for a package',
-      '',           
+      '',
       '     whoami   show who you are logged in as into Greenkeeper',
       '    upgrade   upgrade to a different plan',
-      '',           
+      '',
       '       info   show the state of your package on Greenkeeper',
       '    support   talk to a human, opens support in your browser',
-      '',           
+      '',
       '       sync   sync all your GitHub repositories to Greenkeeper',
       '',
       '       help   this screen',
@@ -73,7 +72,7 @@ module.exports = {
       '',
       '#protip: you can type `gk` instead of `greenkeeper` in the Terminal.',
       ''
-    ].join('\n') + emoji
+    ].join('\n') + ourmoji
   },
 
   start: [
@@ -113,7 +112,7 @@ module.exports = {
     '',
     '       $ greenkeeper support',
     ''
-  ].join('\n') + emoji,
+  ].join('\n') + ourmoji,
 
   support: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login'
