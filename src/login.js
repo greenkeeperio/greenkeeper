@@ -17,72 +17,76 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  var id = randomString({length: 16})
+  var id = randomString({length: 32})
   log.verbose('login', 'id', id)
 
   log.verbose('login', 'Getting token from API and opening GitHub login')
   var spin = spinner()
-  request({
-    method: 'POST',
-    json: true,
-    url: flags.api + 'tokens',
-    timeout: 1000 * 60 * 60, // wait 1h
-    body: {
-      id: id
-    }
-  }, function (err, res, data) {
-    if (err) {
-      log.error('login', story.request_failed)
-      process.exit(1)
-    }
-
-    if (res.statusCode === 504 || res.statusCode === 502) {
-      log.error('login', 'Oops, that took too long. Try again please.')
-      process.exit(1)
-    }
-
-    if (!(res.statusCode === 200 && data.token)) {
-      log.error('login', story.login_failed)
-      process.exit(1)
-    }
-
-    rc.set('token', data.token)
-
-    // async me! (sing along to moisturize me!)
-    log.info('login', 'That was successful, now syncing all your GitHub repos')
-
-    if (data.beta) {
-      log.warn('queue', 'You can already enable repositories, but we will only start sending you pull requests once we have activated your account.')
-      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
-    }
-
+  function getToken () {
     request({
       method: 'POST',
-      url: flags.api + 'sync',
       json: true,
-      headers: {
-        Authorization: 'Bearer ' + data.token
+      url: flags.api + 'tokens',
+      timeout: 1000 * 60 * 60, // wait 1h
+      body: {
+        id: id
       }
     }, function (err, res, data) {
-      clearInterval(spin)
-
       if (err) {
-        log.error('login', err.message)
+        log.error('login', story.request_failed)
         process.exit(1)
       }
 
-      if (data.error) {
-        log.error('login', data.statusCode + '/' + data.error + ': ' + data.message)
+      if (res.statusCode >= 502 && res.statusCode <= 504) {
+        log.error('login', 'Oops, that took too long. retrying...')
+        return setTimeout(getToken, 1000)
+      }
+
+      if (!(res.statusCode === 200 && data.token)) {
+        log.error('login', story.login_failed)
         process.exit(1)
       }
 
-      if (data.repos) {
-        log.info('login', 'Done syncing ' + data.repos.length + ' repositories')
-        console.log('You are now logged in, synced and all set up!')
-        log.info('login', 'Find out how to get started with', '$ greenkeeper start')
+      rc.set('token', data.token)
+
+      // async me! (sing along to moisturize me!)
+      log.info('login', 'That was successful, now syncing all your GitHub repos')
+
+      if (data.beta) {
+        log.warn('queue', 'You can already enable repositories, but we will only start sending you pull requests once we have activated your account.')
+        log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
       }
+
+      request({
+        method: 'POST',
+        url: flags.api + 'sync',
+        json: true,
+        headers: {
+          Authorization: 'Bearer ' + data.token
+        }
+      }, function (err, res, data) {
+        clearInterval(spin)
+
+        if (err) {
+          log.error('login', err.message)
+          process.exit(1)
+        }
+
+        if (data.error) {
+          log.error('login', data.statusCode + '/' + data.error + ': ' + data.message)
+          process.exit(1)
+        }
+
+        if (data.repos) {
+          log.info('login', 'Done syncing ' + data.repos.length + ' repositories')
+          console.log('You are now logged in, synced and all set up!')
+          log.info('login', 'Find out how to get started with', '$ greenkeeper start')
+        }
+      })
     })
-  })
+  }
+
+  getToken()
 
   var url = flags.api + 'login?id=' + id
 
