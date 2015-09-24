@@ -54,8 +54,6 @@ module.exports = function (flags) {
       process.exit(2)
     }
 
-    console.log(res)
-
     console.log('greenkeeper is enabled for this repo')
   })
 }
