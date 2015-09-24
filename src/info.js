@@ -31,16 +31,16 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (err) {
       log.error('info', err.message)
-      process.exit(1)
-    }
-
-    if (data.beta) {
-      log.warn('queue', 'We aren\'t sending pull requests for this repo yet, because we haven\'t activated your account.')
-      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
+      process.exit(2)
     }
 
     if (data.disabled) {
       log.error('info', 'greenkeeper isn’t enabled for this repo')
+      process.exit(1)
+    }
+
+    if (data.statusCode === 400) {
+      log.error('enable', 'A repo with this slug doesn’t exist on GitHub')
       process.exit(1)
     }
 
@@ -51,7 +51,7 @@ module.exports = function (flags) {
 
     if (data.error) {
       log.error('info', data.error)
-      process.exit(1)
+      process.exit(2)
     }
 
     console.log('greenkeeper is enabled for this repo')

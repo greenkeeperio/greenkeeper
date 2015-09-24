@@ -78,4 +78,13 @@ if (flags.help || !command) {
 
 if (flags.force) log.warn('cli', 'using --force')
 
+process.on('exit', function (code) {
+  if (code !== 2) return
+
+  log.error('load', 'Woops, this is an unexpected error.')
+  log.error('load', 'We just started this service, so maybe it\'s just be too much load for us right now.')
+  log.error('load', 'Please try again later, while we\'re busy spinning up more machines for you <3')
+  log.error('load', 'Oh, and if this keeps reappearing – Please let us know: support@greenkeeper.io')
+})
+
 require('./' + command)(flags, pkg)

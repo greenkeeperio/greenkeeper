@@ -34,7 +34,7 @@ module.exports = function (flags) {
     }, function (err, res, data) {
       if (err) {
         log.error('login', story.request_failed)
-        process.exit(1)
+        process.exit(2)
       }
 
       if (res.statusCode >= 502 && res.statusCode <= 504) {
@@ -52,11 +52,6 @@ module.exports = function (flags) {
       // async me! (sing along to moisturize me!)
       log.info('login', 'That was successful, now syncing all your GitHub repos')
 
-      if (data.beta) {
-        log.warn('queue', 'You can already enable repositories, but we will only start sending you pull requests once we have activated your account.')
-        log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
-      }
-
       request({
         method: 'POST',
         url: flags.api + 'sync',
@@ -69,12 +64,12 @@ module.exports = function (flags) {
 
         if (err) {
           log.error('login', err.message)
-          process.exit(1)
+          process.exit(2)
         }
 
         if (data.error) {
           log.error('login', data.statusCode + '/' + data.error + ': ' + data.message)
-          process.exit(1)
+          process.exit(2)
         }
 
         if (data.repos) {

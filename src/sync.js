@@ -26,7 +26,7 @@ module.exports = function (flags) {
     clearInterval(spin)
     if (err) {
       log.error('sync', err.message)
-      process.exit(1)
+      process.exit(2)
     }
 
     if (data.repos) {
@@ -34,6 +34,6 @@ module.exports = function (flags) {
     }
 
     log.error('sync', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(1)
+    process.exit(2)
   })
 }

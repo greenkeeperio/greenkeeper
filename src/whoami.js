@@ -21,12 +21,12 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (err) {
       log.error('whoami', err.message)
-      process.exit(1)
+      process.exit(2)
     }
 
     if (data.name) return console.log(story.name(data))
 
     log.error('whoami', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(1)
+    process.exit(2)
   })
 }
