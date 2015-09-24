@@ -77,9 +77,9 @@ module.exports = function (flags) {
       }
 
       if (data.repos) {
-        log.info('login', 'Done synching ' + data.repos.length + ' repositories')
+        log.info('login', 'Done syncing ' + data.repos.length + ' repositories')
         console.log('You are now logged in, synced and all set up!')
-        log.info('login', 'Enable your repos with', '$ greenkeeper enable')
+        log.info('login', 'Find out how to get started with', '$ greenkeeper start')
       }
     })
   })
