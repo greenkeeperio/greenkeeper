@@ -22,7 +22,8 @@
     "os-homedir": "^1.0.1",
     "parse-github-repo-url": "^1.0.0",
     "random-string": "^0.1.2",
-    "request": "^2.60.0"
+    "request": "^2.60.0",
+    "update-notifier": "^0.5.0"
   },
   "devDependencies": {
     "nyc": "^3.1.0",
