@@ -1,8 +1,9 @@
 module.exports = function (flags) {
-
   var log = require('npmlog')
   var open = require('open')
   var request = require('request')
+  var querystring = require('querystring')
+  var randomString = require('random-string')
 
   function usage () {
     log.error('Please use one of these commands: \n\n' + [
@@ -27,13 +28,18 @@ module.exports = function (flags) {
     return usage()
   }
 
-  var url = flags.api + '/upgrade'
+  var url = flags.api + 'payment'
+  var params = {
+    access_token: flags.token,
+    id: randomString({length: 32})
+
+  }
   switch (argv.remain[0]) {
     case 'supporter':
-      url += 'supporter'
+      url += '/supporter'
       break
     case 'personal':
-      url += 'personal'
+      url += '/personal'
       break
     case 'organisation':
       // require 25 or 50 option
@@ -46,11 +52,14 @@ module.exports = function (flags) {
         return usage()
       }
       const numberOfRepos = argv.remain[1]
-      url += 'organisation-' + numberOfRepos + '?org=' + argv.remain[2]
+      url += '/organisation-' + numberOfRepos
+      params['org'] = argv.remain[2]
       break
     default:
       return usage()
   }
+
+  url += '?' + querystring.stringify(params)
 
   request({
     method: 'POST',

@@ -13,8 +13,7 @@ var exports = module.exports = [
   'evilhackerdude',
   'lewis',
   'upgrade',
-  'start',
-  'buy'
+  'start'
 ].sort()
 
 exports.secrets = [
@@ -35,9 +34,7 @@ exports.aliases = {
   signin: 'login',
   signout: 'logout',
   on: 'enable',
-  off: 'disable',
-  pay: 'buy',
-  purchase: 'buy'
+  off: 'disable'
 }
 
 exports.all = _.mapValues(
