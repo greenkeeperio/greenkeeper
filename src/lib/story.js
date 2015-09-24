@@ -21,41 +21,99 @@ function logo () {
   cursor.reset()
 }
 
+var emoji = (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
+
+
 module.exports = {
   logo: logo,
 
   usage: function (commands) {
     logo()
 
-    return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
-      'Usage: greenkeeper <command>\n\n' +
-      'where <command> is one of:\n' +
-      '    ' + _.difference(commands, commands.secrets).join(', ') + '\n\n' +
-      ' Detailed command information:\n\n' +
-      [
-        '      login   log into Greenkeeper, opens GitHub Authentication',
-        '     logout   log out of Greenkeeper',
-        '',
-        '    enable   enable Greenkeeper for a package',
-        '    disable   disable Greenkeeper for a package',
-        '',           
-        '     whoami   show who you are logged in as into Greenkeeper',
-        '    upgrade   upgrade to a different plan',
-        '',           
-        '       info   show the state of your package on Greenkeeper',
-        '    support   talk to a human, opens support in your browser',
-        '',           
-        '       sync   sync all repositories you have access to on GitHub to Greenkeeper',
-        '',
-        '       help   this screen\n\n',
-        '   enable, disable and info take an optional parameter --slug=user/repo',
-        '   where `user` is the username or organisation on GitHub and `repo` is',
-        '   the repository name. If you omit the slug, `greenkeeper` will use',
-        '   the current directory’s package.json\n'
-        
-      ].join('\n') + 
-      (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
+    return [
+      '',
+      'Want to talk to a human? Run `greenkeeper support` :)',
+      '',
+      'Usage: greenkeeper [--slug=user/repo] <command>',
+      '',
+      'where <command> is one of:',
+      '    ' + _.difference(commands, commands.secrets).join(', '),
+      '',
+      'Detailed command information:',
+      '',
+      '      start   learn how to get started with Greenkeeper',
+      '',
+      '      login   log into Greenkeeper, opens GitHub Authentication',
+      '     logout   log out of Greenkeeper',
+      '',
+      '    enable   enable Greenkeeper for a package',
+      '    disable   disable Greenkeeper for a package',
+      '',           
+      '     whoami   show who you are logged in as into Greenkeeper',
+      '    upgrade   upgrade to a different plan',
+      '',           
+      '       info   show the state of your package on Greenkeeper',
+      '    support   talk to a human, opens support in your browser',
+      '',           
+      '       sync   sync all your GitHub repositories to Greenkeeper',
+      '',
+      '       help   this screen',
+      '',
+      '  enable, disable and info take an optional parameter --slug=user/repo',
+      '  where `user` is the username or organisation on GitHub and `repo` is',
+      '  the repository name. If you omit the slug, `greenkeeper` will use',
+      '  the current directory’s package.json',
+      '',
+      '  sync happens automatically when you log in, but needs to be re-run,',
+      '  when you add repositories on GitHub.',
+      '',
+      'Getting Started:',
+      '',
+      '    Type `greenkeeper start` to learn how to get started.',
+      '',
+      '#protip: you can type `gk` instead of `greenkeeper` in the Terminal.',
+      ''
+    ].join('\n') + emoji
   },
+
+  start: [
+    '',
+    '  Getting Started with Greenkeeper:',
+    '',
+    '    You first step after installing greenkeeper is to log in. Type:',
+    '',
+    '        $ greenkeeper login',
+    '',
+    '    Your browser will open a new window or tab and redirect you to',
+    '    GitHub’s Application Authentication screen. There is a big green ',
+    '    button [Authorize application] at the bottom. When you click it,',
+    '    Greenkeeper gets the access to GitHub it needs to do its job, but',
+    '    no more. When all goes well, your browser will say “Check your ',
+    '    Terminal”, and when you switch back here, the login will be done',
+    '    and Greenkeeper will have started to sync your GitHub repo',
+    '    information.',
+    '',
+    '    Congratulations, you made it past the most complicated step!',
+    '',
+    '    Next, you enable a package of yours. To do this, navigate to a',
+    '    local copy of your package (e.g. `cd ~/code/mypackage`). Then:',
+    '',
+    '        $ greenkeeper enable',
+    '',
+    '    And that’s it already! :)',
+    '',
+    '    From here on out, Greenkeeper will work its magic. The first thing',
+    '    you are going to notice is a Pull Request where we pin all your',
+    '    dependencies in your package’s package.json to their respective',
+    '    latest versions. Then, whenever one of your dependencies is updated',
+    '    on GitHub, you will receive a Pull Request to update your package',
+    '    accordingly.',
+    '',
+    '    If you’d like to talk to a human or want to report an issue, type:',
+    '',
+    '       $ greenkeeper support',
+    ''
+  ].join('\n') + emoji,
 
   support: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login'

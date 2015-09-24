@@ -12,7 +12,8 @@ var exports = module.exports = [
   'support',
   'evilhackerdude',
   'lewis',
-  'upgrade'
+  'upgrade',
+  'start'
 ].sort()
 
 exports.secrets = [
