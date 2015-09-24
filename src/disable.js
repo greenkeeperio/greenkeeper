@@ -32,11 +32,12 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (err) {
       log.error('disable', err.message)
-      process.exit(1)
+      process.exit(2)
     }
 
     if (!data) {
-      return log.error('disable', story.error_no_data)
+      log.error('disable', story.error_no_data)
+      process.exit(2)
     }
 
     if (data.noChange) {
@@ -48,6 +49,6 @@ module.exports = function (flags) {
     }
 
     log.error('disable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(1)
+    process.exit(2)
   })
 }

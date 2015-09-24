@@ -23,7 +23,7 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (err) {
       log.error('logout', err.message)
-      process.exit(1)
+      process.exit(2)
     }
 
     if (data.ok) {
@@ -32,6 +32,6 @@ module.exports = function (flags) {
     }
 
     log.error('logout', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(1)
+    process.exit(2)
   })
 }

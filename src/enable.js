@@ -32,16 +32,11 @@ module.exports = function (flags) {
   }, function (err, res, data) {
     if (err) {
       log.error('enable', err.message)
-      process.exit(1)
+      process.exit(2)
     }
 
     if (!data) {
       return log.error('enable', story.error_no_data)
-    }
-
-    if (data.beta) {
-      log.warn('queue', 'We won\'t send you pull requests for this repo just yet, because we haven\'t activated your account.')
-      log.warn('queue', 'We will let you know when that happens – and it won\'t take long :)')
     }
 
     if (data.noChange) {
@@ -54,11 +49,13 @@ module.exports = function (flags) {
 
     if (data.statusCode === 400) {
       log.error('enable', 'A repo with this slug doesn’t exist on GitHub')
+      process.exit(1)
     } else if (data.statusCode === 403) {
       log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via $ greenkeeper upgrade')
-    } else {
-      log.error('enable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
+      process.exit(1)
     }
-    process.exit(1)
+
+    log.error('enable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
+    process.exit(2)
   })
 }
