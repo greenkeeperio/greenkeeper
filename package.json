@@ -13,7 +13,7 @@
     "abbrev": "^1.0.7",
     "ansi": "^0.3.0",
     "char-spinner": "^1.0.1",
-    "github-url-from-git": "^1.4.0",
+    "github-slug": "0.0.2",
     "hide-secrets": "^1.0.0",
     "lodash": "^3.10.1",
     "node-emoji": "^1.0.3",
@@ -21,7 +21,6 @@
     "npmlog": "^1.2.1",
     "open": "0.0.5",
     "os-homedir": "^1.0.1",
-    "parse-github-repo-url": "^1.0.0",
     "random-string": "^0.1.2",
     "request": "^2.60.0",
     "update-notifier": "^0.5.0"
