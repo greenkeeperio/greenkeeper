@@ -30,7 +30,30 @@ module.exports = {
     return '\nWant to talk to a human? Run `greenkeeper support` :)\n\n' +
       'Usage: greenkeeper <command>\n\n' +
       'where <command> is one of:\n' +
-      '    ' + _.difference(commands, commands.secrets).join(', ') + '\n' +
+      '    ' + _.difference(commands, commands.secrets).join(', ') + '\n\n' +
+      ' Detailed command information:\n\n' +
+      [
+        '      login   log into Greenkeeper, opens GitHub Authentication',
+        '     logout   log out of Greenkeeper',
+        '',
+        '    ensable   enable Greenkeeper a package',
+        '    disable   disable Greenkeeper for a package',
+        '',           
+        '     whoami   show who you are logged in as into Greenkeeper',
+        '    upgrade   upgrade to a different plan',
+        '',           
+        '       info   show the state of your package on Greenkeeper',
+        '    support   talk to a human, opens support in your browser',
+        '',           
+        '       sync   sync all repositories you have access to on GitHub to Greenkeeper',
+        '',
+        '       help   this screen\n\n',
+        '   enable, disable and info take an optional parameter --slug=user/repo',
+        '   where `user` is the username or organisation on GitHub and `repo` is',
+        '   the repository name. If you omit the slug, `greenkeeper` will use',
+        '   the current directory’s package.json\n'
+        
+      ].join('\n') + 
       (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
   },
 
