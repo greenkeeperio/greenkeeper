@@ -176,7 +176,7 @@ module.exports = {
 
   whoami: {
     name: function (data) {
-      return data.name
+      return 'You're currently logged in as' + data.name
     }
   }
 
