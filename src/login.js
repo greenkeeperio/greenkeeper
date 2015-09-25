@@ -17,6 +17,10 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
+  if (!flags['public-only']) {
+    log.info('login', 'Requsting access for public and private repos. For public only usecases do $ greenkeeper login --public-only')
+  }
+
   var id = randomString({length: 32})
   log.verbose('login', 'id', id)
 
@@ -83,7 +87,7 @@ module.exports = function (flags) {
 
   getToken()
 
-  var url = flags.api + 'login?id=' + id
+  var url = flags.api + 'login?id=' + id + (flags['public-only'] ? '&public=true' : '')
 
   log.verbose('login', 'Open ' + url)
   open(url)
