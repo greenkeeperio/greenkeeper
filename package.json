@@ -32,7 +32,7 @@
     "tap": "1.4.1"
   },
   "homepage": "http://greenkeeper.io/",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "main": "src/index.js",
   "preferGlobal": true,
   "repository": {
