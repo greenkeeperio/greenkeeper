@@ -37,7 +37,7 @@
   "preferGlobal": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/boennemann/greenkeeper.git"
+    "url": "https://github.com/greenkeeperio/greenkeeper.git"
   },
   "scripts": {
     "pretest": "standard",
