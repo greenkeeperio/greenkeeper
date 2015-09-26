@@ -6,12 +6,23 @@ module.exports = function (flags) {
   var randomString = require('random-string')
 
   function usage () {
-    console.log('Please use one of these commands: \n\n' + [
-      '    For  $5/month, fast queue, public repos: $ greenkeeper upgrade supporter',
-      '    For $14/month, faster queue,  all repos: $ greenkeeper upgrade personal',
-      '    For $50/month, fastest queue,  25 repos: $ greenkeeper upgrade organization 25 <your-org-name>',
-      '    For $90/month, fastest queue,  50 repos: $ greenkeeper upgrade organization 50 <your-org-name>',
-      '\nIf you need more repos, emails us at support@greenkeeper.io'
+    console.log([
+      '',
+      '  Please use one of these commands:',
+      '',
+      '      For  $5/month, fast queue, public repos: $ greenkeeper upgrade supporter',
+      '      For $14/month, faster queue,  all repos: $ greenkeeper upgrade personal',
+      '      For $50/month, fastest queue,  25 repos: $ greenkeeper upgrade organization 25 <your-org-name>',
+      '      For $90/month, fastest queue,  50 repos: $ greenkeeper upgrade organization 50 <your-org-name>',
+      '',
+      '  If you need more repos, emails us at support@greenkeeper.io',
+      '',
+      '  Try risk-free: If you’re not satisfied and cancel your account within',
+      '  the first 30 days, we can refund your money – no questions asked. After',
+      '  that, you can always cancel to the end of each running month.',
+      '',
+      '  If you would like to talk to a human, type `greenkeeper supporta`',
+      ''
     ].join('\n'))
     process.exit(1)
   }
