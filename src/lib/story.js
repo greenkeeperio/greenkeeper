@@ -79,7 +79,7 @@ module.exports = {
     '',
     '  Getting Started with Greenkeeper:',
     '',
-    '    You first step after installing greenkeeper is to log in. Type:',
+    '    Your first step after installing greenkeeper is to log in. Type:',
     '',
     '        $ greenkeeper login',
     '',
