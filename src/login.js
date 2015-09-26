@@ -18,7 +18,7 @@ module.exports = function (flags) {
   }
 
   if (!flags['public-only']) {
-    log.info('login', 'Requsting access for public and private repos. For public only usecases do $ greenkeeper login --public-only')
+    log.info('login', 'Requesting access for public and private repos. For public only usecases do $ greenkeeper login --public-only')
   }
 
   var id = randomString({length: 32})
