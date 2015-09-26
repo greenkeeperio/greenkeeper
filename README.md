@@ -8,7 +8,11 @@
 
 [![NPM](https://nodei.co/npm/greenkeeper.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/greenkeeper/)
 
-You first step after installing `greenkeeper` is to log in. Type:
+To install Greenkeeper, type:
+
+    $ npm install -g greenkeeper
+
+Then log in:
 
     $ greenkeeper login
 
