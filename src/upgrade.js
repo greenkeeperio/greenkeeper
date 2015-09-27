@@ -21,7 +21,7 @@ module.exports = function (flags) {
       '  the first 30 days, we can refund your money – no questions asked. After',
       '  that, you can always cancel to the end of each running month.',
       '',
-      '  If you would like to talk to a human, type `greenkeeper supporta`',
+      '  If you would like to talk to a human, type `greenkeeper support`',
       ''
     ].join('\n'))
     process.exit(1)
