@@ -55,7 +55,8 @@ module.exports = function (flags) {
       }
 
       if (data.statusCode === 400) {
-        log.error('enable', 'A repo with this slug doesn’t exist on GitHub')
+        log.error('enable', 'Couldn’t find a repo with this slug.')
+        log.error('enable', 'Either it doesn’t exist on GitHub, it’s a fork, or private.')
         process.exit(1)
       } else if (data.statusCode === 403) {
         log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via $ greenkeeper upgrade')

@@ -157,7 +157,7 @@ module.exports = {
   },
 
   login: {
-    error_already_logged_in: 'You’re already logged in. Use --force to continue.',
+    error_already_logged_in: 'You’re already logged in. Use --force to continue.\nIf you’re using Greenkeeper for private repos use both --force and --private.',
     request_failed: 'Request failed',
     login_failed: 'Login failed'
   },

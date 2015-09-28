@@ -1,77 +1,81 @@
+var _ = require('lodash')
+var log = require('npmlog')
+var open = require('open')
+var request = require('request')
+var querystring = require('querystring')
+var randomString = require('random-string')
+
+var getToken = require('./lib/get-token')
+var rc = require('./lib/rc')
+
 module.exports = function (flags) {
-  var log = require('npmlog')
-  var open = require('open')
-  var request = require('request')
-  var querystring = require('querystring')
-  var randomString = require('random-string')
-
-  function usage () {
-    console.log([
-      '',
-      '  Please use one of these commands:',
-      '',
-      '      For  $5/month, fast queue, public repos: $ greenkeeper upgrade supporter',
-      '      For $14/month, faster queue,  all repos: $ greenkeeper upgrade personal',
-      '      For $50/month, fastest queue,  25 repos: $ greenkeeper upgrade organization 25 <your-org-name>',
-      '      For $90/month, fastest queue,  50 repos: $ greenkeeper upgrade organization 50 <your-org-name>',
-      '',
-      '  If you need more repos, emails us at support@greenkeeper.io',
-      '',
-      '  Try risk-free: If you’re not satisfied and cancel your account within',
-      '  the first 30 days, we can refund your money – no questions asked. After',
-      '  that, you can always cancel to the end of each running month.',
-      '',
-      '  If you would like to talk to a human, type `greenkeeper support`',
-      ''
-    ].join('\n'))
-    process.exit(1)
-  }
-
   log.verbose('upgrade', 'starting command')
 
-  if (!flags.token && !flags.force) {
+  if (!flags.token) {
     log.error('upgrade', 'Please log in first.')
     process.exit(1)
   }
 
+  var loginId = randomString({length: 32})
   var id = randomString({length: 32})
 
-  const argv = flags.argv
-  if (!argv.remain || !argv.remain[0]) {
+  var argv = flags.argv
+
+  if (!argv.remain) {
     return usage()
   }
 
-  var url = flags.api + 'payment'
+  var plan = argv.remain.shift()
 
-  switch (argv.remain[0]) {
-    case 'supporter':
-      url += '/supporter'
-      break
-    case 'personal':
-      url += '/personal'
-      break
-    case 'organization':
-      // require 25 or 50 option
-      if (typeof argv.remain[1] === 'undefined' || ['25', '50'].indexOf(argv.remain[1]) === -1) {
-        log.error('Please specify an organization plan')
-        return usage()
-      }
-      if (!argv.remain[2]) {
-        log.error('Please specify an organization name')
-        return usage()
-      }
-      const numberOfRepos = argv.remain[1]
-      url += '/organization-' + numberOfRepos
-      break
-    default:
-      return usage()
+  if (!_.includes(['supporter', 'personal', 'organization'], plan)) {
+    log.error('Please specify a plan')
+    return usage()
   }
 
-  url += '?' + querystring.stringify({
-    access_token: flags.token,
-    id: id
+  var planType = argv.remain.shift()
+  var org = argv.remain.shift()
+
+  if (plan === 'organization') {
+    // require 25 or 50 option
+    if (!_.includes(['25', '50'], planType)) {
+      log.error('Please specify an organization plan type (25/50)')
+      return usage()
+    }
+
+    plan += '-' + planType
+
+    if (!org) {
+      log.error('Please specify an organization name')
+      return usage()
+    }
+  }
+
+  getToken(flags, loginId, function (data) {
+    rc.set('token', data.token)
+
+    var url = flags.api + 'payment' + '/' + plan
+
+    url += '?' + querystring.stringify({
+      access_token: data.token,
+      id: id
+    })
+
+    getPayment(flags, id, data.token, org, function () {
+      console.log('Payment Successful! Team greenkeeper says thank you! <3')
+      console.log('Stephan, Christoph, Alex, Gregor, Jan & Ola')
+    })
+
+    log.verbose('upgrade', 'Opening url ' + url)
+    open(url)
   })
 
+  var url = flags.api + 'login?id=' + loginId + '&private=true'
+
+  log.verbose('upgrade', 'Opening url ' + url)
+  open(url)
+}
+
+function getPayment (flags, id, token, org, callback) {
   request({
     method: 'POST',
     json: true,
@@ -79,26 +83,49 @@ module.exports = function (flags) {
     timeout: 1000 * 60 * 60, // wait 1h
     body: {
       id: id,
-      organization: argv.remain[2]
+      organization: org
     },
     headers: {
-      Authorization: 'Bearer ' + flags.token
+      Authorization: 'Bearer ' + token
     }
   }, function (err, res, data) {
     if (err) {
       log.error('login', 'Payment failed', err.message)
-      process.exit(1)
+      process.exit(2)
+    }
+
+    if (res.statusCode >= 502 && res.statusCode <= 504) {
+      log.verbose('upgrade', 'Oops, that took too long. retrying...')
+      return setTimeout(getPayment.bind(null, flags, id, token, org, callback), 1000)
     }
 
     if (!(res.statusCode === 200 && data.ok)) {
-      log.error('login', 'Payment failed', data.message)
+      log.error('login', 'Payment failed')
       process.exit(1)
     }
 
-    console.log('Payment Successful! Team greenkeeper says thank you! <3')
-    console.log('Stephan, Christoph, Alex, Gregor, Jan & Ola')
+    callback(data)
   })
+}
 
-  log.verbose('upgrade', 'Opening url ' + url)
-  open(url)
+function usage () {
+  console.log([
+    '',
+    '  Please use one of these commands:',
+    '',
+    '      For  $5/month, fast queue, public repos: $ greenkeeper upgrade supporter',
+    '      For $14/month, faster queue,  all repos: $ greenkeeper upgrade personal',
+    '      For $50/month, fastest queue,  25 repos: $ greenkeeper upgrade organization 25 <your-org-name>',
+    '      For $90/month, fastest queue,  50 repos: $ greenkeeper upgrade organization 50 <your-org-name>',
+    '',
+    '  If you need more repos, emails us at support@greenkeeper.io',
+    '',
+    '  Try risk-free: If you’re not satisfied and cancel your account within',
+    '  the first 30 days, we can refund your money – no questions asked. After',
+    '  that, you can always cancel to the end of each running month.',
+    '',
+    '  If you would like to talk to a human, type `greenkeeper support`',
+    ''
+  ].join('\n'))
+  process.exit(1)
 }
