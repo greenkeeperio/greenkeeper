@@ -7,7 +7,7 @@
     "gk": "src/index.js"
   },
   "bugs": {
-    "url": "https://github.com/greenkeeperio/support/issues"
+    "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
     "abbrev": "1.0.7",

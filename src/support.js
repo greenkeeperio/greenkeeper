@@ -6,7 +6,7 @@ module.exports = function (flags) {
 
   if (!flags.token) {
     log.info('support', 'Not logged in. Opening the general support repo.')
-    open('https://github.com/greenkeeperio/support')
+    open('https://github.com/greenkeeperio/greenkeeper')
     process.exit(1)
   }
 
