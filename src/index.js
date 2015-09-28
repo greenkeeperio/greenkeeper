@@ -24,7 +24,7 @@ require('update-notifier')({
 var rcFlags = rc.get()
 
 var cliFlags = nopt({
-  'private': Boolean,
+  private: Boolean,
   slug: String,
   version: Boolean,
   help: Boolean,
