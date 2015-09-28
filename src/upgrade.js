@@ -66,7 +66,7 @@ module.exports = function (flags) {
     })
 
     log.verbose('upgrade', 'Opening url ' + url)
-    open(url)
+    setTimeout(open, 1000, url)
   })
 
   var url = flags.api + 'login?id=' + loginId + '&private=true'
