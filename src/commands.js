@@ -13,7 +13,8 @@ var exports = module.exports = [
   'evilhackerdude',
   'lewis',
   'upgrade',
-  'start'
+  'start',
+  'list'
 ].sort()
 
 exports.secrets = [
@@ -22,6 +23,7 @@ exports.secrets = [
 ]
 
 exports.aliases = {
+  ls: 'list',
   downgrade: 'support',
   cancel: 'support',
   unsubscribe: 'support',
