@@ -24,9 +24,11 @@ module.exports = function (flags) {
       process.exit(2)
     }
 
-    if (data.name) return console.log(story.name(data))
+    if (!data.name) {
+      log.error('whoami', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
+      process.exit(2)
+    }
 
-    log.error('whoami', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(2)
+    console.log(story.name(data))
   })
 }

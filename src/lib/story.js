@@ -176,7 +176,16 @@ module.exports = {
 
   whoami: {
     name: function (data) {
-      return 'You’re currently logged in as ' + data.name
+      return 'You’re currently logged in as ' + data.name +
+        (data.plan ? ' (' + data.plan + ')' : '') +
+        (data.organizations.length
+          ? '\nGreenkeeper can access these organizations:\n\n' + data.organizations.map(function (org) {
+            return '    ' + org.name + (org.plan ? ' (' + org.plan +
+              (org.paying ? ', paid by you' : '') +
+            ')' : '')
+          }).sort().join('\n')
+          : ''
+        )
     }
   }
 
