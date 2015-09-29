@@ -13,10 +13,9 @@ var pkg = require('../package.json')
 var story = require('./lib/story')
 var commands = require('./commands')
 
-var ownPkg = require('../package.json')
 require('update-notifier')({
   pkg: _.defaults(
-    ownPkg,
+    pkg,
     {version: '0.0.0'}
   )
 }).notify()

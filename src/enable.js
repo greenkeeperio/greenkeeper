@@ -1,3 +1,6 @@
+var fs = require('fs')
+var path = require('path')
+
 var log = require('npmlog')
 var request = require('request')
 
@@ -11,13 +14,15 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  if (flags.slug) return enableCommand(null, flags.slug)
-
   require('github-slug')(process.cwd(), enableCommand)
 
   function enableCommand (err, slug) {
     if (err) {
-      log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
+      log.error('enable', 'Couldn’t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
+    }
+
+    if (!flags.slug && !fs.existsSync(path.join(process.cwd(), 'package.json'))) {
+      log.warn('enable', 'No package.json present, you won’t receive pull requests')
     }
 
     if (!slug) {
