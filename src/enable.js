@@ -14,6 +14,8 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
+  if (flags.slug) return enableCommand(null, flags.slug)
+
   require('github-slug')(process.cwd(), enableCommand)
 
   function enableCommand (err, slug) {
