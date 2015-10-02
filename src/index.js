@@ -13,13 +13,6 @@ var pkg = require('../package.json')
 var story = require('./lib/story')
 var commands = require('./commands')
 
-require('update-notifier')({
-  pkg: _.defaults(
-    pkg,
-    {version: '0.0.0'}
-  )
-}).notify()
-
 var rcFlags = rc.get()
 
 var cliFlags = nopt({
@@ -88,3 +81,9 @@ process.on('exit', function (code) {
 })
 
 require('./' + command)(flags, pkg)
+require('update-notifier')({
+  pkg: _.defaults(
+    pkg,
+    {version: '0.0.0'}
+  )
+}).notify()
