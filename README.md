@@ -34,12 +34,12 @@ local copy of your package (e.g. `cd ~/code/mypackage`). Then:
 
 And that’s it already! :)
 
-From here on out, Greenkeeper will work its magic. The first thing
-you are going to notice is a Pull Request where we pin all your
-dependencies in your package’s package.json to their respective
-latest versions. Then, whenever one of your dependencies is updated
-on GitHub, you will receive a Pull Request to update your package
-accordingly.
+From here on out, Greenkeeper will work its magic. If your
+dependencies are already outdated the first thing you are going to
+notice is a Pull Request where we update all your dependencies in
+your package’s package.json to their respective latest versions.
+Then, whenever one of your dependencies is updated on npm, you will
+receive a Pull Request to update your package accordingly.
 
 If you’d like to talk to a human or want to report an issue, type:
 
