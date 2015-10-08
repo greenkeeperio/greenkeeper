@@ -34,7 +34,7 @@ local copy of your package (e.g. `cd ~/code/mypackage`). Then:
 
 And that’s it already! :)
 
-From here on out, Greenkeeper will work its magic. If your
+From here on out, Greenkeeper will do its job automatically. If your
 dependencies are already outdated the first thing you are going to
 notice is a Pull Request where we update all your dependencies in
 your package’s package.json to their respective latest versions.
