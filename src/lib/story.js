@@ -31,7 +31,8 @@ module.exports = {
 
     return [
       '',
-      'Want to talk to a human? Run `greenkeeper support` :)',
+      'Have a question? Check the FAQ at greenkeeper.io/faq.html,',
+      'or talk to a human: Run `greenkeeper support` :)',
       '',
       'Usage: greenkeeper [--slug=user/repo] <command>',
       '',
