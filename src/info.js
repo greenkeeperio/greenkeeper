@@ -48,8 +48,8 @@ module.exports = function (flags) {
 
       if (data.statusCode === 400) {
         log.error('info', 'Couldn’t find a project with this slug.')
-        log.error('info', 'The repo has to exist on GitHub, it can’t be a fork and it has to be public,')
-        log.error('info', 'or you have have to have a private plan. To verify run $ greenkeeper whoami')
+        log.error('info', 'The repo has to exist on GitHub and it has to be public,')
+        log.error('info', 'or you have to have to have a private plan. To verify run $ greenkeeper whoami')
         log.error('info', 'If you have just recently created this repo try running $ greenkeeper sync')
         log.error('info', 'You need admin access to enable repos.')
         log.error('info', 'If you think this error really shouldn’t appear let us look into it with $ greenkeeper support')
