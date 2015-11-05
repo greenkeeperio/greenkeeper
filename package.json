@@ -18,7 +18,7 @@
     "lodash": "3.10.1",
     "node-emoji": "1.0.4",
     "nopt": "3.0.4",
-    "npmlog": "1.2.1",
+    "npmlog": "2.0.0",
     "open": "0.0.5",
     "os-homedir": "1.0.1",
     "random-string": "0.1.2",
