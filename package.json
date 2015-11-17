@@ -28,7 +28,7 @@
   "devDependencies": {
     "nyc": "3.2.2",
     "semantic-release": "4.3.5",
-    "standard": "5.4.0",
+    "standard": "5.4.1",
     "tap": "2.2.0"
   },
   "homepage": "http://greenkeeper.io/",
