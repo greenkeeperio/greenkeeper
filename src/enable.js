@@ -63,10 +63,10 @@ module.exports = function (flags) {
 
       if (data.statusCode === 400) {
         log.error('enable', 'Couldn’t enable a project with this slug.')
-        log.error('enable', 'The repo has to exist on GitHub and it has to be public,')
-        log.error('enable', 'or you have to have a private plan. To verify run $ greenkeeper whoami')
+        log.error('enable', 'If you want to try your free private repo make sure to grant the necessary rights by running $ greenkeeper login --force --private')
+        log.error('enable', 'You have to have a plan for more than one private repo. To verify run $ greenkeeper whoami')
         log.error('enable', 'If you have just recently created this repo try running $ greenkeeper sync')
-        log.error('enable', 'You need admin access to enable repos.')
+        log.error('enable', 'You need admin access to a repo to enable it.')
         log.error('enable', 'If you think this error really shouldn’t appear let us look into it with $ greenkeeper support')
         process.exit(1)
       } else if (data.statusCode === 403) {
