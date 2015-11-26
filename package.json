@@ -10,26 +10,26 @@
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
-    "abbrev": "1.0.7",
-    "ansi": "0.3.0",
-    "char-spinner": "1.0.1",
-    "github-slug": "1.1.0",
-    "hide-secrets": "1.0.0",
-    "lodash": "3.10.1",
-    "node-emoji": "1.0.4",
-    "nopt": "3.0.6",
-    "npmlog": "2.0.0",
+    "abbrev": "^1.0.7",
+    "ansi": "^0.3.0",
+    "char-spinner": "^1.0.1",
+    "github-slug": "^1.1.0",
+    "hide-secrets": "^1.0.0",
+    "lodash": "^3.10.1",
+    "node-emoji": "^1.0.4",
+    "nopt": "^3.0.6",
+    "npmlog": "^2.0.0",
     "open": "0.0.5",
-    "os-homedir": "1.0.1",
-    "random-string": "0.1.2",
-    "request": "2.67.0",
-    "update-notifier": "0.5.0"
+    "os-homedir": "^1.0.1",
+    "random-string": "^0.1.2",
+    "request": "^2.67.0",
+    "update-notifier": "^0.5.0"
   },
   "devDependencies": {
-    "nyc": "3.2.2",
-    "semantic-release": "4.3.5",
-    "standard": "5.4.1",
-    "tap": "2.3.1"
+    "nyc": "^3.2.2",
+    "semantic-release": "^4.3.5",
+    "standard": "^5.4.1",
+    "tap": "^2.3.1"
   },
   "homepage": "http://greenkeeper.io/",
   "license": "Apache-2.0",
