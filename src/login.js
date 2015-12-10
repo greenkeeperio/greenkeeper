@@ -1,4 +1,5 @@
 var log = require('npmlog')
+var nerfDart = require('nerf-dart')
 var open = require('open')
 var request = require('request')
 var randomString = require('random-string')
@@ -24,7 +25,7 @@ module.exports = function (flags) {
   log.verbose('login', 'Getting token from API and opening GitHub login')
 
   getToken(flags, id, function (data) {
-    rc.set('token', data.token)
+    rc.set(nerfDart(flags.api) + 'token', data.token)
     // async me! (sing along to moisturize me!)
     log.info('login', 'That was successful, now syncing all your GitHub repos')
 

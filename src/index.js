@@ -5,6 +5,7 @@ var url = require('url')
 var _ = require('lodash')
 var emoji = require('node-emoji')
 var hideSecrets = require('hide-secrets')
+var nerfDart = require('nerf-dart')
 var log = require('npmlog')
 var nopt = require('nopt')
 
@@ -59,6 +60,7 @@ log.heading = process.platform === 'darwin' ? emoji.get('palm_tree') + ' ' : ''
 var flags = _.assign({}, rcFlags, cliFlags)
 
 flags.api = url.parse(flags.api || 'https://api.greenkeeper.io/').format()
+flags.token = rc.get()[nerfDart(flags.api) + 'token'] || flags.token
 
 log.silly('cli', 'rc arguments', _.omit(hideSecrets(rcFlags), 'argv'))
 log.silly('cli', 'cli arguments', _.omit(hideSecrets(cliFlags), 'argv'))

@@ -16,6 +16,7 @@
     "github-slug": "^1.1.0",
     "hide-secrets": "^1.0.0",
     "lodash": "^3.10.1",
+    "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
     "nopt": "^3.0.6",
     "npmlog": "^2.0.0",

@@ -1,4 +1,5 @@
 var log = require('npmlog')
+var nerfDart = require('nerf-dart')
 var request = require('request')
 
 var rc = require('./lib/rc')
@@ -28,6 +29,7 @@ module.exports = function (flags) {
 
     if (data.ok) {
       rc.unset('token')
+      rc.unset(nerfDart(flags.api) + 'token')
       return console.log(story.logged_out)
     }
 
