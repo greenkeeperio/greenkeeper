@@ -172,6 +172,12 @@ module.exports = {
     logged_out: 'Logged out' + process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') : ''
   },
 
+  'organization-access': [
+    'Opening GitHub application settings in browser',
+    'Grant or revoke Greenkeeper access to individual organizations there',
+    'After granting access for a new organization run $ greenkeeper sync'
+  ],
+
   sync: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
     repos: function (repos) {

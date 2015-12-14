@@ -11,6 +11,8 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
+  log.info('whoami', 'If you’re missing certain organizations run $ greenkeeper access')
+
   log.http('whoami', 'Sending request')
   request({
     url: flags.api + 'whoami',
