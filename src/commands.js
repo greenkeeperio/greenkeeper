@@ -14,7 +14,8 @@ var exports = module.exports = [
   'lewis',
   'upgrade',
   'start',
-  'list'
+  'list',
+  'organization-access'
 ].sort()
 
 exports.secrets = [
@@ -36,7 +37,10 @@ exports.aliases = {
   signin: 'login',
   signout: 'logout',
   on: 'enable',
-  off: 'disable'
+  off: 'disable',
+  access: 'organization-access',
+  'organisation-access': 'organization-access',
+  'org-access': 'organization-access'
 }
 
 exports.all = _.mapValues(
