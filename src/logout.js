@@ -5,11 +5,11 @@ var request = require('request')
 var rc = require('./lib/rc')
 var story = require('./lib/story').logout
 
-module.exports = function (flags) {
+module.exports = function(flags) {
   log.verbose('logout', 'starting command')
 
   if (!flags.token) {
-    log.error('logout', story.error_already_logged_in)
+    log.error('logout', story.error_already_logged_out)
     process.exit(1)
   }
 
@@ -21,7 +21,7 @@ module.exports = function (flags) {
     headers: {
       Authorization: 'Bearer ' + flags.token
     }
-  }, function (err, res, data) {
+  }, function(err, res, data) {
     if (err) {
       log.error('logout', err.message)
       process.exit(2)
