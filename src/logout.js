@@ -9,7 +9,7 @@ module.exports = function (flags) {
   log.verbose('logout', 'starting command')
 
   if (!flags.token) {
-    log.error('logout', story.error_already_logged_in)
+    log.error('logout', story.error_already_logged_out)
     process.exit(1)
   }
 
