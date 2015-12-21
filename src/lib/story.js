@@ -168,7 +168,7 @@ module.exports = {
   },
 
   logout: {
-    error_already_logged_in: 'You’re already logged in',
+    error_already_logged_out: 'You’re already logged out',
     logged_out: 'Logged out' + process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') : ''
   },
 
