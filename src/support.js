@@ -10,7 +10,7 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  log.info('support', 'Opening Intercom chat in browser')
+  log.info('support', 'Opening GitHub issues')
 
   open(flags.api + 'support?access_token=' + flags.token)
 }
