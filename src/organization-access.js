@@ -14,7 +14,7 @@ module.exports = function (flags) {
   story.forEach(function (message) {
     log.info('organization-access', message)
   })
-
-  log.verbose('organization-access', 'https://git.io/greenkeeper-app')
-  open('https://git.io/greenkeeper-app')
+  var url = flags.api + 'login/organization-access'
+  log.verbose('organization-access', 'Open ' + url)
+  open(url)
 }
