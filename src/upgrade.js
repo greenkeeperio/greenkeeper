@@ -6,10 +6,21 @@ var querystring = require('querystring')
 var randomString = require('random-string')
 
 var getToken = require('./lib/get-token')
+var checkEnterprise = require('./lib/check-enterprise')
 var rc = require('./lib/rc')
 
-module.exports = function (flags) {
+module.exports = checkEnterprise(function (err, flags, isEnterprise) {
   log.verbose('upgrade', 'starting command')
+
+  if (err) {
+    log.error('logout', err.message)
+    process.exit(2)
+  }
+
+  if (isEnterprise) {
+    log.info('upgrade', 'You are already subscribed to Greenkeeper Enterprise.')
+    process.exit(0)
+  }
 
   if (!flags.token) {
     log.error('upgrade', 'Please log in first.')
@@ -73,7 +84,7 @@ module.exports = function (flags) {
 
   log.verbose('upgrade', 'Opening url ' + url)
   open(url)
-}
+})
 
 function getPayment (flags, id, token, org, callback) {
   request({
