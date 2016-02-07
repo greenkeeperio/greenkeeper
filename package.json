@@ -29,7 +29,7 @@
   "devDependencies": {
     "nyc": "^5.0.0",
     "semantic-release": "^4.3.5",
-    "standard": "^5.4.1",
+    "standard": "^6.0.2",
     "tap": "^5.0.0"
   },
   "homepage": "http://greenkeeper.io/",
