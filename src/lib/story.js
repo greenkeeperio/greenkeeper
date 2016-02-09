@@ -34,7 +34,7 @@ module.exports = {
       'Have a question? Check the FAQ at greenkeeper.io/faq.html,',
       'or talk to a human: Run `greenkeeper support` :)',
       '',
-      'Usage: greenkeeper [--slug=user/repo] <command>',
+      'Usage: greenkeeper [--slug=user/repository] <command>',
       '',
       'where <command> is one of:',
       '    ' + _.difference(commands, commands.secrets).join(', '),
@@ -46,15 +46,15 @@ module.exports = {
       '      login   log into Greenkeeper, opens GitHub Authentication',
       '     logout   log out of Greenkeeper',
       '',
-      '     enable   enable Greenkeeper for a package',
-      '    disable   disable Greenkeeper for a package',
-      '       list   a list of all enabled packages',
+      '     enable   enable Greenkeeper for a repository',
+      '    disable   disable Greenkeeper for a repository',
+      '       list   a list of all enabled repositories',
       '',
       '    upgrade   upgrade to a different plan',
       '     whoami   show who you are logged in as into Greenkeeper',
       '              and what organizations you have access to',
       '',
-      '       info   show the state of your package on Greenkeeper',
+      '       info   show the state of your repository on Greenkeeper',
       '    support   talk to a human, opens support in your browser',
       '',
       '       sync   sync all your GitHub repositories to Greenkeeper',
@@ -62,8 +62,8 @@ module.exports = {
       '     --help   this screen',
       '  --version   current version of the Greenkeeper CLI',
       '',
-      '  enable, disable and info take an optional parameter --slug=user/repo',
-      '  where `user` is the username or organization on GitHub and `repo` is',
+      '  enable, disable and info take an optional parameter --slug=user/repository',
+      '  where `user` is the username or organization on GitHub and `repository` is',
       '  the repository name. If you omit the slug, `greenkeeper` will use',
       '  the current directory’s git remote "origin"',
       '',
@@ -94,13 +94,13 @@ module.exports = {
     '    Greenkeeper gets the access to GitHub it needs to do its job, but',
     '    no more. When all goes well, your browser will say “Check your ',
     '    Terminal”, and when you switch back here, the login will be done',
-    '    and Greenkeeper will have started to sync your GitHub repo',
+    '    and Greenkeeper will have started to sync your GitHub repository',
     '    information.',
     '',
     '    Congratulations, you made it past the most complicated step!',
     '',
-    '    Next, you enable a package of yours. To do this, navigate to a',
-    '    local copy of your package (e.g. `cd ~/code/mypackage`). Then:',
+    '    Next, you enable a repository of yours. To do this, navigate to a',
+    '    local copy of your repository (e.g. `cd ~/code/myrepo`). Then:',
     '',
     '        $ greenkeeper enable',
     '',
@@ -109,9 +109,9 @@ module.exports = {
     '    From here on out, Greenkeeper will do its job automatically. If your',
     '    dependencies are already outdated the first thing you are going to',
     '    notice is a Pull Request where we update all your dependencies in',
-    '    your package’s package.json to their respective latest versions.',
+    '    your repository’s package.json to their respective latest versions.',
     '    Then, whenever one of your dependencies is updated on npm, you will',
-    '    receive a Pull Request to update your package accordingly.',
+    '    receive a Pull Request to update your package.json accordingly.',
     '',
     '    If you’d like to talk to a human or want to report an issue, type:',
     '',
@@ -125,13 +125,12 @@ module.exports = {
 
   disable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'greenkeeper only works with GitHub repos',
     repo_info: function (slug) {
-      return util.format('The repo slug is:', slug)
+      return util.format('The repository slug is:', slug)
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already disabled\nIf this repo is inside an organization, somebody other than you may have done this')
+      return util.format(slug, 'is already disabled\nIf this repository is inside an organization, somebody other than you may have done this')
     },
     disabled: function (slug) {
       return util.format(slug, 'disabled')
@@ -140,13 +139,12 @@ module.exports = {
 
   enable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repo and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repo>',
     repo_info: function (slug) {
-      return util.format('The repo slug is:', slug)
+      return util.format('The repository slug is:', slug)
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already enabled\nIf this repo is inside an organization, somebody other than you may have done this')
+      return util.format(slug, 'is already enabled\nIf this repository is inside an organization, somebody other than you may have done this')
     },
     enabled: function (slug) {
       return util.format(slug, 'enabled')
@@ -155,14 +153,13 @@ module.exports = {
 
   info: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repo and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repo>',
     data: function (data) {
       return data
     }
   },
 
   login: {
-    error_already_logged_in: 'You’re already logged in. Use --force to continue.\nIf you’re using Greenkeeper for private repos use both --force and --private.',
+    error_already_logged_in: 'You’re already logged in. Use --force to continue.\nIf you’re using Greenkeeper for private repositories use both --force and --private.',
     request_failed: 'Request failed',
     login_failed: 'Login failed'
   },

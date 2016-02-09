@@ -27,7 +27,7 @@ module.exports = function (flags) {
   getToken(flags, id, function (data) {
     rc.set(nerfDart(flags.api) + 'token', data.token)
     // async me! (sing along to moisturize me!)
-    log.info('login', 'That was successful, now syncing all your GitHub repos')
+    log.info('login', 'That was successful, now syncing all your GitHub repositories')
 
     var spin = spinner()
 

@@ -28,7 +28,7 @@ module.exports = function (flags) {
     }
 
     if (!data.packages.length) {
-      log.error('list', 'No packages enabled yet')
+      log.error('list', 'No repositories enabled yet')
     }
 
     console.log(data.packages.join('\n'))
