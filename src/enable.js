@@ -19,17 +19,13 @@ module.exports = function (flags) {
   require('github-slug')(process.cwd(), enableCommand)
 
   function enableCommand (err, slug) {
-    if (err) {
+    if (err || !slug) {
       log.error('enable', 'Couldn’t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repository>')
+      process.exit(1)
     }
 
     if (!flags.slug && !fs.existsSync(path.join(process.cwd(), 'package.json'))) {
       log.warn('enable', 'No package.json present, you won’t receive pull requests')
-    }
-
-    if (!slug) {
-      log.error('enable', story.error_missing_slug)
-      process.exit(1)
     }
 
     log.info('enable', 'The GitHub slug is:', slug)

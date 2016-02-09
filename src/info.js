@@ -16,12 +16,8 @@ module.exports = function (flags) {
   require('github-slug')(process.cwd(), infoCommand)
 
   function infoCommand (err, slug) {
-    if (err) {
+    if (err || !slug) {
       log.error('disable', 'Couldn\'t find a remote GitHub repository in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repository>')
-    }
-
-    if (!slug) {
-      log.error('info', story.error_missing_slug)
       process.exit(1)
     }
 

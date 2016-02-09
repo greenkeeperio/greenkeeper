@@ -125,7 +125,6 @@ module.exports = {
 
   disable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'greenkeeper only works with GitHub repositories',
     repo_info: function (slug) {
       return util.format('The repository slug is:', slug)
     },
@@ -140,7 +139,6 @@ module.exports = {
 
   enable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repository and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repository>',
     repo_info: function (slug) {
       return util.format('The repository slug is:', slug)
     },
@@ -155,7 +153,6 @@ module.exports = {
 
   info: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
-    error_missing_slug: 'Missing slug\nRun this command from inside your repository and add a repository field to the package.json\nExplicitly passing the slug works as well $ greenkeeper enable --slug <user>/<repository>',
     data: function (data) {
       return data
     }

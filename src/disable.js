@@ -16,12 +16,8 @@ module.exports = function (flags) {
   require('github-slug')(process.cwd(), disableCommand)
 
   function disableCommand (err, slug) {
-    if (err) {
+    if (err || !slug) {
       log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repository>')
-    }
-
-    if (!slug) {
-      log.error('disable', story.error_missing_slug)
       process.exit(1)
     }
 
