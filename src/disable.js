@@ -17,7 +17,7 @@ module.exports = function (flags) {
 
   function disableCommand (err, slug) {
     if (err) {
-      log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
+      log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repository>')
     }
 
     if (!slug) {

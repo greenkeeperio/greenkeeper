@@ -22,13 +22,13 @@ button [Authorize application] at the bottom. When you click it,
 Greenkeeper gets the access to GitHub it needs to do its job, but
 no more. When all goes well, your browser will say “Check your
 Terminal”, and when you switch back here, the login will be done
-and Greenkeeper will have started to sync your GitHub repo
+and Greenkeeper will have started to sync your GitHub repository
 information.
 
 Congratulations, you made it past the most complicated step!
 
-Next, you enable a package of yours. To do this, navigate to a
-local copy of your package (e.g. `cd ~/code/mypackage`). Then:
+Next, you enable a repository of yours. To do this, navigate to a
+local copy of your repository (e.g. `cd ~/code/myrepo`). Then:
 
     $ greenkeeper enable
 
@@ -37,9 +37,9 @@ And that’s it already! :)
 From here on out, Greenkeeper will do its job automatically. If your
 dependencies are already outdated the first thing you are going to
 notice is a Pull Request where we update all your dependencies in
-your package’s package.json to their respective latest versions.
+your repository’s package.json to their respective latest versions.
 Then, whenever one of your dependencies is updated on npm, you will
-receive a Pull Request to update your package accordingly.
+receive a Pull Request to update your repository accordingly.
 
 If you’d like to talk to a human or want to report an issue, type:
 

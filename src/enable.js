@@ -20,7 +20,7 @@ module.exports = function (flags) {
 
   function enableCommand (err, slug) {
     if (err) {
-      log.error('enable', 'Couldn’t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
+      log.error('enable', 'Couldn’t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repository>')
     }
 
     if (!flags.slug && !fs.existsSync(path.join(process.cwd(), 'package.json'))) {
@@ -62,11 +62,11 @@ module.exports = function (flags) {
       }
 
       if (data.statusCode === 400) {
-        log.error('enable', 'Couldn’t enable a project with this slug.')
-        log.error('enable', 'If you want to try your free private repo make sure to grant the necessary rights by running $ greenkeeper login --force --private')
-        log.error('enable', 'You have to have a plan for more than one private repo. To verify run $ greenkeeper whoami')
-        log.error('enable', 'If you have just recently created this repo try running $ greenkeeper sync')
-        log.error('enable', 'You need admin access to a repo to enable it.')
+        log.error('enable', 'Couldn’t enable a repository with this slug.')
+        log.error('enable', 'If you want to try your free private repository make sure to grant the necessary rights by running $ greenkeeper login --force --private')
+        log.error('enable', 'You have to have a plan for more than one private repository. To verify run $ greenkeeper whoami')
+        log.error('enable', 'If you have just recently created this repository try running $ greenkeeper sync')
+        log.error('enable', 'You need admin access to a repository to enable it.')
         log.error('enable', 'If you think this error really shouldn’t appear let us look into it with $ greenkeeper support')
         process.exit(1)
       } else if (data.statusCode === 403) {
