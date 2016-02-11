@@ -14,12 +14,7 @@ var pkg = require('../package.json')
 var story = require('./lib/story')
 var commands = require('./commands')
 
-require('update-notifier')({
-  pkg: _.defaults(
-    pkg,
-    {version: '0.0.0'}
-  )
-}).notify()
+if (pkg.version) require('update-notifier')({pkg: pkg}).notify()
 
 var rcFlags = rc.get()
 
