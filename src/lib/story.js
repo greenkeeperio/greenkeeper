@@ -1,123 +1,24 @@
+var fs = require('fs')
+var join = require('path').join
+
 var _ = require('lodash')
+var md = require('cli-md')
 var util = require('util')
 var emoji = require('node-emoji')
-var ansi = require('ansi')
-var cursor = ansi(process.stderr)
 
-function logo () {
-  cursor.green()
-  console.error(
-    '\n                oooo\n' +
-    '                `888\n' +
-    '     .ooooooooo  888  ooooo\n' +
-    '    8888\' \`8888  888 .88P\'\n' +
-    '    8888   8888  8888888.       g r e e n k e e p e r . i o\n' +
-    '    \`888bod88P\'  888 \`888b.\n' +
-    '     \`Yooooooo. o888o o8888o\n' +
-    '          \`Y88b\n' +
-    '    d88P   d888\n' +
-    '    \`Y8888888P\'\n'
-  )
-  cursor.reset()
-}
+var logo = require('./logo')
 
 var ourmoji = (process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') + ' ' : '')
 
 module.exports = {
-  logo: logo,
-
-  usage: function (commands) {
-    logo()
-
-    return [
-      '',
-      'Have a question? Check the FAQ at greenkeeper.io/faq.html,',
-      'or talk to a human: Run `greenkeeper support` :)',
-      '',
-      'Usage: greenkeeper [--slug=user/repository] <command>',
-      '',
-      'where <command> is one of:',
-      '    ' + _.difference(commands, commands.secrets).join(', '),
-      '',
-      'Detailed command information:',
-      '',
-      '      start   learn how to get started with Greenkeeper',
-      '',
-      '      login   log into Greenkeeper, opens GitHub Authentication',
-      '     logout   log out of Greenkeeper',
-      '',
-      '     enable   enable Greenkeeper for a repository',
-      '    disable   disable Greenkeeper for a repository',
-      '       list   a list of all enabled repositories',
-      '',
-      '    upgrade   upgrade to a different plan',
-      '     whoami   show who you are logged in as into Greenkeeper',
-      '              and what organizations you have access to',
-      '',
-      '       info   show the state of your repository on Greenkeeper',
-      '    support   talk to a human, opens support in your browser',
-      '',
-      '       sync   sync all your GitHub repositories to Greenkeeper',
-      '',
-      '     --help   this screen',
-      '  --version   current version of the Greenkeeper CLI',
-      '',
-      '  enable, disable and info take an optional parameter --slug=user/repository',
-      '  where `user` is the username or organization on GitHub and `repository` is',
-      '  the repository name. If you omit the slug, `greenkeeper` will use',
-      '  the current directory’s git remote "origin"',
-      '',
-      '  sync happens automatically when you log in, but needs to be re-run,',
-      '  when you add repositories on GitHub.',
-      '',
-      'Getting Started:',
-      '',
-      '    Type `greenkeeper start` to learn how to get started.',
-      '',
-      '#protip: you can type `gk` instead of `greenkeeper` and abbreviate',
-      '         every command, as long as it’s unambiguous',
-      ''
-    ].join('\n') + ourmoji
+  usage: function () {
+    return md(getReadme(1) + ourmoji)
   },
 
-  start: [
-    '',
-    '  Getting Started with Greenkeeper:',
-    '',
-    '    Your first step after installing greenkeeper is to log in. Type:',
-    '',
-    '        $ greenkeeper login',
-    '',
-    '    Your browser will open a new window or tab and redirect you to',
-    '    GitHub’s Application Authentication screen. There is a big green',
-    '    button [Authorize application] at the bottom. When you click it,',
-    '    Greenkeeper gets the access to GitHub it needs to do its job, but',
-    '    no more. When all goes well, your browser will say “Check your ',
-    '    Terminal”, and when you switch back here, the login will be done',
-    '    and Greenkeeper will have started to sync your GitHub repository',
-    '    information.',
-    '',
-    '    Congratulations, you made it past the most complicated step!',
-    '',
-    '    Next, you enable a repository of yours. To do this, navigate to a',
-    '    local copy of your repository (e.g. `cd ~/code/myrepo`). Then:',
-    '',
-    '        $ greenkeeper enable',
-    '',
-    '    And that’s it already! :)',
-    '',
-    '    From here on out, Greenkeeper will do its job automatically. If your',
-    '    dependencies are already outdated the first thing you are going to',
-    '    notice is a Pull Request where we update all your dependencies in',
-    '    your repository’s package.json to their respective latest versions.',
-    '    Then, whenever one of your dependencies is updated on npm, you will',
-    '    receive a Pull Request to update your package.json accordingly.',
-    '',
-    '    If you’d like to talk to a human or want to report an issue, type:',
-    '',
-    '       $ greenkeeper support',
-    ''
-  ].join('\n') + ourmoji,
+  start: function () {
+    logo()
+    return md(getReadme(0) + ourmoji)
+  },
 
   support: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login'
@@ -197,4 +98,11 @@ module.exports = {
     }
   }
 
+}
+
+function getReadme (index) {
+  var content = fs.readFileSync(join(__dirname, '../../README.md'), 'utf8')
+
+  if (typeof index !== 'number') return content
+  return content.split('<!-- section /-->')[index]
 }

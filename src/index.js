@@ -69,7 +69,7 @@ if (flags.version) {
 var command = commands.all[((flags.argv.remain || []).shift() || '').toLowerCase()]
 
 if (flags.help || !command) {
-  console.log(story.usage(commands))
+  process.stdout.write(story.usage())
   process.exit(0)
 }
 

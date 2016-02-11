@@ -8,7 +8,7 @@ var spinner = require('char-spinner')
 var getToken = require('./lib/get-token')
 var rc = require('./lib/rc')
 var story = require('./lib/story').login
-var logo = require('./lib/story').logo
+var logo = require('./lib/logo')
 
 module.exports = function (flags) {
   logo()
