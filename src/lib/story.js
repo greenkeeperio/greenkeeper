@@ -3,7 +3,6 @@ var join = require('path').join
 
 var _ = require('lodash')
 var md = require('cli-md')
-var util = require('util')
 var emoji = require('node-emoji')
 
 var logo = require('./logo')
@@ -27,28 +26,28 @@ module.exports = {
   disable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
     repo_info: function (slug) {
-      return util.format('The repository slug is:', slug)
+      return 'The repository slug is: ' + slug
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already disabled\nIf this repository is inside an organization, somebody other than you may have done this')
+      return slug + ' is already disabled\nIf this repository is inside an organization, somebody other than you may have done this'
     },
     disabled: function (slug) {
-      return util.format(slug, 'disabled')
+      return slug + ' disabled'
     }
   },
 
   enable: {
     error_login_first: 'Please log in to greenkeeper first: $ greenkeeper login',
     repo_info: function (slug) {
-      return util.format('The repository slug is:', slug)
+      return 'The repository slug is: ' + slug
     },
     error_no_data: 'API error',
     error_no_change: function (slug) {
-      return util.format(slug, 'is already enabled\nIf this repository is inside an organization, somebody other than you may have done this')
+      return slug + ' is already enabled\nIf this repository is inside an organization, somebody other than you may have done this'
     },
     enabled: function (slug) {
-      return util.format(slug, 'enabled')
+      return slug + ' enabled'
     }
   },
 
@@ -67,7 +66,7 @@ module.exports = {
 
   logout: {
     error_already_logged_out: 'You’re already logged out',
-    logged_out: 'Logged out' + process.platform === 'darwin' ? '\n' + emoji.get('palm_tree') : ''
+    logged_out: 'Logged out' + ourmoji
   },
 
   'organization-access': [
