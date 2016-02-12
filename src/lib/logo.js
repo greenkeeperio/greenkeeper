@@ -1,10 +1,7 @@
-var ansi = require('ansi')
-
-var cursor = ansi(process.stderr)
+var chalk = require('chalk')
 
 module.exports = function () {
-  cursor.green()
-  console.error([
+  console.error(chalk.green([
     '                        oooo',
     '                        `888',
     '             .ooooooooo  888  ooooo',
@@ -16,6 +13,5 @@ module.exports = function () {
     '            d88P   d888',
     "            `Y8888888P'",
     '\n'
-  ].join('\n'))
-  cursor.reset()
+  ].join('\n')))
 }

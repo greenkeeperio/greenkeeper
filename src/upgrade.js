@@ -1,4 +1,5 @@
 var _ = require('lodash')
+var chalk = require('chalk')
 var log = require('npmlog')
 var open = require('open')
 var request = require('request')
@@ -124,10 +125,10 @@ function usage () {
     '',
     '  Please use one of these commands:',
     '',
-    '      For  $5/month, fast queue, public repositories: $ greenkeeper upgrade supporter',
-    '      For $14/month, faster queue,  all repositories: $ greenkeeper upgrade personal',
-    '      For $50/month, fastest queue,  25 repositories: $ greenkeeper upgrade organization 25 <your-org-name>',
-    '      For $90/month, fastest queue,  50 repositories: $ greenkeeper upgrade organization 50 <your-org-name>',
+    '      For  $5/month, fast queue, public repositories: ' + chalk.yellow('greenkeeper upgrade supporter'),
+    '      For $14/month, faster queue,  all repositories: ' + chalk.yellow('greenkeeper upgrade personal'),
+    '      For $50/month, fastest queue,  25 repositories: ' + chalk.yellow('greenkeeper upgrade organization 25 <your-org-name>'),
+    '      For $90/month, fastest queue,  50 repositories: ' + chalk.yellow('greenkeeper upgrade organization 50 <your-org-name>'),
     '',
     '  If you need more repositories, emails us at support@greenkeeper.io',
     '',

@@ -1,3 +1,4 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var nerfDart = require('nerf-dart')
 var open = require('open')
@@ -54,7 +55,7 @@ module.exports = function (flags) {
       if (data.repos) {
         log.info('login', 'Done syncing ' + data.repos.length + ' repositories')
         console.log('You are now logged in, synced and all set up!')
-        log.info('login', 'Find out how to get started with', '$ greenkeeper start')
+        log.info('login', 'Find out how to get started with', '' + chalk.yellow('greenkeeper start'))
       }
     })
   })

@@ -78,8 +78,9 @@ if (flags.force) log.warn('cli', 'using --force')
 process.on('exit', function (code) {
   if (code !== 2) return
 
-  log.error('unexpected', 'Uhm, this was an unexpected error. Please try again.')
-  log.error('unexpected', 'If this keeps reappearing – please let us know $ gk support')
+  var chalk = require('chalk')
+  log.error('unknown', 'Uhm, this was an unexpected error. Please try again.')
+  log.error('unknown', 'If this keeps reappearing – please let us know ' + chalk.yellow('greenkeeper support'))
 })
 
 require('./' + command)(flags, pkg)
