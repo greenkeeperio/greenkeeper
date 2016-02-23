@@ -64,6 +64,7 @@ Usage: `greenkeeper [--slug=user/repository] <command>`
 | info      | show the state of your repository |
 | support   | opens support in your browser |
 | sync      | sync all your GitHub repositories |
+| config    | get, set and delete config |
 | --help    | this screen |
 | --version | current version of the CLI |
 
