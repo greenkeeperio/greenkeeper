@@ -15,7 +15,8 @@ var exports = module.exports = [
   'upgrade',
   'start',
   'list',
-  'organization-access'
+  'organization-access',
+  'config'
 ].sort()
 
 exports.secrets = [

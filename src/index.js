@@ -8,6 +8,7 @@ var hideSecrets = require('hide-secrets')
 var nerfDart = require('nerf-dart')
 var log = require('npmlog')
 var nopt = require('nopt')
+var isURL = require('valid-url').isWebUri
 
 var rc = require('./lib/rc')
 var pkg = require('../package.json')
@@ -74,6 +75,11 @@ if (flags.help || !command) {
 }
 
 if (flags.force) log.warn('cli', 'using --force')
+
+if (!flags.force && command !== 'config' && !isURL(flags.api)) {
+  log.error('cli', 'API endpoint is not a valid URL.', flags.api)
+  process.exit(1)
+}
 
 process.on('exit', function (code) {
   if (code !== 2) return

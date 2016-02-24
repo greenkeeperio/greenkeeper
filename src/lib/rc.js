@@ -14,8 +14,10 @@ try {
   config = {}
 }
 
-exports.get = function () {
-  return config
+exports.get = function (name) {
+  return name
+    ? config[name]
+    : config
 }
 
 exports.set = function (name, value) {
