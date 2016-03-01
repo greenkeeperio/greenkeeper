@@ -60,7 +60,9 @@ module.exports = function (flags) {
     })
   })
 
+  console.log(flags.api);
   var url = flags.api + 'login?id=' + id + (flags['private'] ? '&private=true' : '')
+  console.log(url);
 
   log.verbose('login', 'Open ' + url)
   open(url)
