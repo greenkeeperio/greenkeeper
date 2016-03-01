@@ -1,7 +1,7 @@
 var chalk = require('chalk')
 var log = require('npmlog')
 var nerfDart = require('nerf-dart')
-var open = require('open')
+var open = require('opener')
 var request = require('request')
 var randomString = require('random-string')
 var spinner = require('char-spinner')
@@ -60,7 +60,9 @@ module.exports = function (flags) {
     })
   })
 
+  console.log(flags.api);
   var url = flags.api + 'login?id=' + id + (flags['private'] ? '&private=true' : '')
+  console.log(url);
 
   log.verbose('login', 'Open ' + url)
   open(url)

@@ -1,5 +1,5 @@
 var log = require('npmlog')
-var open = require('open')
+var open = require('opener')
 
 var story = require('./lib/story')['organization-access']
 

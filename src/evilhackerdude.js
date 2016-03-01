@@ -1,4 +1,4 @@
-var open = require('open')
+var open = require('opener')
 
 module.exports = function (flags) {
   console.log('We have content addressed you!')

@@ -21,7 +21,7 @@
     "node-emoji": "^1.0.4",
     "nopt": "^3.0.6",
     "npmlog": "^2.0.0",
-    "open": "0.0.5",
+    "opener": "^1.4.1",
     "os-homedir": "^1.0.1",
     "random-string": "^0.1.2",
     "request": "^2.67.0",
