@@ -1,5 +1,5 @@
 var log = require('npmlog')
-var open = require('open')
+var open = require('opener')
 
 module.exports = function (flags) {
   log.verbose('support', 'starting command')
