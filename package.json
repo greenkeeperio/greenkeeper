@@ -29,7 +29,7 @@
     "valid-url": "^1.0.9"
   },
   "devDependencies": {
-    "nyc": "^5.0.0",
+    "nyc": "^6.0.0",
     "semantic-release": "^4.3.5",
     "standard": "^6.0.3",
     "tap": "^5.0.0"
