@@ -8,18 +8,14 @@ var hideSecrets = require('hide-secrets')
 var nerfDart = require('nerf-dart')
 var log = require('npmlog')
 var nopt = require('nopt')
+var isURL = require('valid-url').isWebUri
 
 var rc = require('./lib/rc')
 var pkg = require('../package.json')
 var story = require('./lib/story')
 var commands = require('./commands')
 
-require('update-notifier')({
-  pkg: _.defaults(
-    pkg,
-    {version: '0.0.0'}
-  )
-}).notify()
+if (pkg.version) require('update-notifier')({pkg: pkg}).notify()
 
 var rcFlags = rc.get()
 
@@ -74,19 +70,23 @@ if (flags.version) {
 var command = commands.all[((flags.argv.remain || []).shift() || '').toLowerCase()]
 
 if (flags.help || !command) {
-  console.log(story.usage(commands))
+  process.stdout.write(story.usage())
   process.exit(0)
 }
 
 if (flags.force) log.warn('cli', 'using --force')
 
+if (!flags.force && command !== 'config' && !isURL(flags.api)) {
+  log.error('cli', 'API endpoint is not a valid URL.', flags.api)
+  process.exit(1)
+}
+
 process.on('exit', function (code) {
   if (code !== 2) return
 
-  log.error('load', 'Woops, this is an unexpected error.')
-  log.error('load', 'We just started this service, so maybe it\'s just too much load for us right now.')
-  log.error('load', 'Please try again later, while we\'re busy spinning up more machines for you <3')
-  log.error('load', 'Oh, and if this keeps reappearing – Please let us know: support@greenkeeper.io')
+  var chalk = require('chalk')
+  log.error('unknown', 'Uhm, this was an unexpected error. Please try again.')
+  log.error('unknown', 'If this keeps reappearing – please let us know ' + chalk.yellow('greenkeeper support'))
 })
 
 require('./' + command)(flags, pkg)

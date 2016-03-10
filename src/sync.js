@@ -30,7 +30,7 @@ module.exports = function (flags) {
     }
 
     if (data.repos) {
-      return story.repos(data.repos)
+      return console.log(data.repos.sort().join('\n'))
     }
 
     log.error('sync', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))

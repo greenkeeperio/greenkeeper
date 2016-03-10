@@ -1,15 +1,27 @@
 var _ = require('lodash')
+var chalk = require('chalk')
 var log = require('npmlog')
-var open = require('open')
+var open = require('opener')
 var request = require('request')
 var querystring = require('querystring')
 var randomString = require('random-string')
 
 var getToken = require('./lib/get-token')
+var checkEnterprise = require('./lib/check-enterprise')
 var rc = require('./lib/rc')
 
-module.exports = function (flags) {
+module.exports = checkEnterprise(function (err, flags, isEnterprise) {
   log.verbose('upgrade', 'starting command')
+
+  if (err) {
+    log.error('logout', err.message)
+    process.exit(2)
+  }
+
+  if (isEnterprise) {
+    log.info('upgrade', 'You are already subscribed to Greenkeeper Enterprise.')
+    process.exit(0)
+  }
 
   if (!flags.token) {
     log.error('upgrade', 'Please log in first.')
@@ -73,7 +85,7 @@ module.exports = function (flags) {
 
   log.verbose('upgrade', 'Opening url ' + url)
   open(url)
-}
+})
 
 function getPayment (flags, id, token, org, callback) {
   request({
@@ -113,12 +125,12 @@ function usage () {
     '',
     '  Please use one of these commands:',
     '',
-    '      For  $5/month, fast queue, public repos: $ greenkeeper upgrade supporter',
-    '      For $14/month, faster queue,  all repos: $ greenkeeper upgrade personal',
-    '      For $50/month, fastest queue,  25 repos: $ greenkeeper upgrade organization 25 <your-org-name>',
-    '      For $90/month, fastest queue,  50 repos: $ greenkeeper upgrade organization 50 <your-org-name>',
+    '      For  $5/month, fast queue, public repositories: ' + chalk.yellow('greenkeeper upgrade supporter'),
+    '      For $14/month, faster queue,  all repositories: ' + chalk.yellow('greenkeeper upgrade personal'),
+    '      For $50/month, fastest queue,  25 repositories: ' + chalk.yellow('greenkeeper upgrade organization 25 <your-org-name>'),
+    '      For $90/month, fastest queue,  50 repositories: ' + chalk.yellow('greenkeeper upgrade organization 50 <your-org-name>'),
     '',
-    '  If you need more repos, emails us at support@greenkeeper.io',
+    '  If you need more repositories, emails us at support@greenkeeper.io',
     '',
     '  Try risk-free: If you’re not satisfied and cancel your account within',
     '  the first 30 days, we can refund your money – no questions asked. After',

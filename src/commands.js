@@ -15,7 +15,8 @@ var exports = module.exports = [
   'upgrade',
   'start',
   'list',
-  'organization-access'
+  'organization-access',
+  'config'
 ].sort()
 
 exports.secrets = [
@@ -36,6 +37,7 @@ exports.aliases = {
   signup: 'login',
   signin: 'login',
   signout: 'logout',
+  init: 'enable',
   on: 'enable',
   off: 'disable',
   access: 'organization-access',

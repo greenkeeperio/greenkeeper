@@ -1,6 +1,7 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var nerfDart = require('nerf-dart')
-var open = require('open')
+var open = require('opener')
 var request = require('request')
 var randomString = require('random-string')
 var spinner = require('char-spinner')
@@ -8,7 +9,7 @@ var spinner = require('char-spinner')
 var getToken = require('./lib/get-token')
 var rc = require('./lib/rc')
 var story = require('./lib/story').login
-var logo = require('./lib/story').logo
+var logo = require('./lib/logo')
 
 module.exports = function (flags) {
   logo()
@@ -27,7 +28,7 @@ module.exports = function (flags) {
   getToken(flags, id, function (data) {
     rc.set(nerfDart(flags.api) + 'token', data.token)
     // async me! (sing along to moisturize me!)
-    log.info('login', 'That was successful, now syncing all your GitHub repos')
+    log.info('login', 'That was successful, now syncing all your GitHub repositories')
 
     var spin = spinner()
 
@@ -54,7 +55,7 @@ module.exports = function (flags) {
       if (data.repos) {
         log.info('login', 'Done syncing ' + data.repos.length + ' repositories')
         console.log('You are now logged in, synced and all set up!')
-        log.info('login', 'Find out how to get started with', '$ greenkeeper start')
+        log.info('login', 'Find out how to get started with', '' + chalk.yellow('greenkeeper start'))
       }
     })
   })

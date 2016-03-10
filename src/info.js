@@ -1,3 +1,4 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
 
@@ -16,12 +17,8 @@ module.exports = function (flags) {
   require('github-slug')(process.cwd(), infoCommand)
 
   function infoCommand (err, slug) {
-    if (err) {
-      log.error('disable', 'Couldn\'t find a remote GitHub repository in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
-    }
-
-    if (!slug) {
-      log.error('info', story.error_missing_slug)
+    if (err || !slug) {
+      log.error('disable', 'Couldn\'t find a remote GitHub repository in this folder.\nTry passing the slug explicitly ' + chalk.yellow('greenkeeper enable --slug <user>/<repository>'))
       process.exit(1)
     }
 
@@ -42,22 +39,22 @@ module.exports = function (flags) {
       }
 
       if (data.disabled) {
-        log.error('info', 'greenkeeper isn’t enabled for this repo')
+        log.error('info', 'greenkeeper isn’t enabled for this repository')
         process.exit(1)
       }
 
       if (data.statusCode === 400) {
-        log.error('info', 'Couldn’t find a project with this slug.')
-        log.error('info', 'The repo has to exist on GitHub and it has to be public,')
-        log.error('info', 'or you have to have to have a private plan. To verify run $ greenkeeper whoami')
-        log.error('info', 'If you have just recently created this repo try running $ greenkeeper sync')
-        log.error('info', 'You need admin access to enable repos.')
-        log.error('info', 'If you think this error really shouldn’t appear let us look into it with $ greenkeeper support')
+        log.error('info', 'Couldn’t find a repository with this slug.')
+        log.error('info', 'The repository has to exist on GitHub and it has to be public,')
+        log.error('info', 'or you have to have to have a private plan. To verify run ' + chalk.yellow('greenkeeper whoami'))
+        log.error('info', 'If you have just recently created this repository try running ' + chalk.yellow('greenkeeper sync'))
+        log.error('info', 'You need admin access to enable repositories.')
+        log.error('info', 'If you think this error really shouldn’t appear let us look into it with ' + chalk.yellow('greenkeeper support'))
         process.exit(1)
       }
 
       if (data.statusCode === 409) {
-        log.error('info', 'Conflict! We appear to have this repo in our system several times\nThis can happen if you have moved or recreated the repo\nWe can fix this though, please contact us at $ greenkeeper support')
+        log.error('info', 'Conflict! We appear to have this repository in our system several times\nThis can happen if you have moved or recreated the repository\nWe can fix this though, please contact us at ' + chalk.yellow('greenkeeper support'))
         process.exit(1)
       }
 
@@ -66,7 +63,7 @@ module.exports = function (flags) {
         process.exit(2)
       }
 
-      console.log('greenkeeper is enabled for this repo')
+      console.log('greenkeeper is enabled for this repository')
     })
   }
 }

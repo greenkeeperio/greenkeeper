@@ -1,3 +1,4 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
 
@@ -16,12 +17,8 @@ module.exports = function (flags) {
   require('github-slug')(process.cwd(), disableCommand)
 
   function disableCommand (err, slug) {
-    if (err) {
-      log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly $ greenkeeper enable --slug <user>/<repo>')
-    }
-
-    if (!slug) {
-      log.error('disable', story.error_missing_slug)
+    if (err || !slug) {
+      log.error('disable', 'Couldn\'t find a GitHub remote "origin" in this folder.\nTry passing the slug explicitly ' + chalk.yellow('greenkeeper enable --slug <user>/<repository>'))
       process.exit(1)
     }
 

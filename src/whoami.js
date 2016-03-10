@@ -1,3 +1,4 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
 
@@ -7,11 +8,11 @@ module.exports = function (flags) {
   log.verbose('whoami', 'starting command')
 
   if (!flags.token) {
-    log.error('whoami', 'Login required. Run $ greenkeeper login')
+    log.error('whoami', 'Login required. Run ' + chalk.yellow('greenkeeper login'))
     process.exit(1)
   }
 
-  log.info('whoami', 'If you’re missing certain organizations run $ greenkeeper access')
+  log.info('whoami', 'If you’re missing organizations run ' + chalk.yellow('greenkeeper access'))
 
   log.http('whoami', 'Sending request')
   request({

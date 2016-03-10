@@ -1,3 +1,4 @@
+var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
 
@@ -5,7 +6,7 @@ module.exports = function (flags) {
   log.verbose('list', 'starting command')
 
   if (!flags.token) {
-    log.error('list', 'Login required. Run $ greenkeeper login')
+    log.error('list', 'Login required. Run ' + chalk.yellow('greenkeeper login'))
     process.exit(1)
   }
 
@@ -28,9 +29,9 @@ module.exports = function (flags) {
     }
 
     if (!data.packages.length) {
-      log.error('list', 'No packages enabled yet')
+      log.error('list', 'No repositories enabled yet')
     }
 
-    console.log(data.packages.join('\n'))
+    console.log(data.packages.sort().join('\n'))
   })
 }
