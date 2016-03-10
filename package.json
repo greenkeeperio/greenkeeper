@@ -1,11 +1,14 @@
 {
   "name": "greenkeeper",
   "description": "Your software, up to date, all the time",
-  "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me/)",
+  "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me)",
   "bin": {
     "greenkeeper": "src/index.js",
     "gk": "src/index.js"
   },
+  "files": [
+    "src"
+  ],
   "bugs": {
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
@@ -34,7 +37,7 @@
     "standard": "^6.0.3",
     "tap": "^5.0.0"
   },
-  "homepage": "http://greenkeeper.io/",
+  "homepage": "http://greenkeeper.io",
   "license": "Apache-2.0",
   "main": "src/index.js",
   "preferGlobal": true,
