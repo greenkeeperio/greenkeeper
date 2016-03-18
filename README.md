@@ -94,3 +94,5 @@ command, as long as it’s unambiguous
 [![NPM](https://nodei.co/npm/greenkeeper.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/greenkeeper/)
 
 🌴
+
+I love greenkeeper!
