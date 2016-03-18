@@ -37,6 +37,7 @@ exports.aliases = {
   signup: 'login',
   signin: 'login',
   signout: 'logout',
+  status: 'info',
   init: 'enable',
   on: 'enable',
   off: 'disable',
