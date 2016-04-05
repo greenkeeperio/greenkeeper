@@ -4,8 +4,10 @@ var path = require('path')
 var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
+var _ = require('lodash')
 
 var story = require('./lib/story').enable
+var sync = require('./lib/sync')
 
 module.exports = function (flags) {
   log.verbose('enable', 'Starting command')
@@ -31,48 +33,72 @@ module.exports = function (flags) {
 
     log.info('enable', 'The GitHub slug is:', slug)
 
-    log.http('enable', 'Sending request')
-    request({
-      method: 'POST',
-      url: flags.api + 'packages',
-      json: true,
-      headers: {
-        Authorization: 'Bearer ' + flags.token
-      },
-      body: {slug: slug}
-    }, function (err, res, data) {
-      if (err) {
-        log.error('enable', err.message)
-        process.exit(2)
-      }
+    enable(false)
 
-      if (!data) {
-        return log.error('enable', story.error_no_data)
-      }
+    function enable (isSynced) {
+      log.http('enable', 'Sending request')
+      request({
+        method: 'POST',
+        url: flags.api + 'packages',
+        json: true,
+        headers: {
+          Authorization: 'Bearer ' + flags.token
+        },
+        body: {slug: slug}
+      }, function (err, res, data) {
+        if (err) {
+          log.error('enable', err.message)
+          process.exit(2)
+        }
 
-      if (data.noChange) {
-        return log.error('enable', story.error_no_change(slug)) // TODO: We might not need this
-      }
+        if (!data) {
+          return log.error('enable', story.error_no_data)
+        }
 
-      if (data.ok) {
-        return console.log(story.enabled(slug))
-      }
+        if (data.noChange) {
+          return log.error('enable', story.error_no_change(slug)) // TODO: We might not need this
+        }
 
-      if (data.statusCode === 400) {
-        log.error('enable', 'Couldn’t enable a repository with this slug.')
-        log.error('enable', 'If you want to try your free private repository make sure to grant the necessary rights by running ' + chalk.yellow('greenkeeper login --force --private'))
-        log.error('enable', 'You have to have a plan for more than one private repository. To verify run ' + chalk.yellow('greenkeeper whoami'))
-        log.error('enable', 'If you have just recently created this repository try running ' + chalk.yellow('greenkeeper sync'))
-        log.error('enable', 'You need admin access to a repository to enable it.')
-        log.error('enable', 'If you think this error really shouldn’t appear let us look into it with ' + chalk.yellow('greenkeeper support'))
-        process.exit(1)
-      } else if (data.statusCode === 403) {
-        log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via ' + chalk.yellow('greenkeeper upgrade'))
-        process.exit(1)
-      }
+        if (data.ok) {
+          return console.log(story.enabled(slug))
+        }
 
-      log.error('enable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-      process.exit(2)
-    })
+        if (data.statusCode === 403) {
+          log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via ' + chalk.yellow('greenkeeper upgrade'))
+          process.exit(1)
+        }
+
+        if (data.statusCode !== 400) {
+          log.error('enable', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
+          process.exit(2)
+        }
+
+        if (isSynced) exitWithError()
+
+        log.verbose('enable', 'Repository not found. Starting a sync.')
+        log.info('enable', 'Synchronizing your repositories. This might take a while.')
+        sync(flags, function (err, repos) {
+          if (err) {
+            log.error('enable', 'Synchronizing the repositories was not possible.')
+            exitWithError()
+          }
+          if (_.includes(repos, slug)) {
+            log.verbose('enable', 'Repository found after sync. Trying to enable again.')
+            return enable(true)
+          }
+          log.verbose('enable', 'Repository not found after sync.')
+          exitWithError()
+        })
+      })
+    }
   }
+}
+
+function exitWithError () {
+  log.error('enable', 'Couldn’t enable a repository with this slug.')
+  log.error('enable', 'If you want to try your free private repository make sure to grant the necessary rights by running ' + chalk.yellow('greenkeeper login --force --private'))
+  log.error('enable', 'You have to have a plan for more than one private repository. To verify run ' + chalk.yellow('greenkeeper whoami'))
+  log.error('enable', 'You need admin access to a repository to enable it.')
+  log.error('enable', 'If you think this error really shouldn’t appear let us look into it with ' + chalk.yellow('greenkeeper support'))
+  process.exit(1)
 }
