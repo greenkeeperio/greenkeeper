@@ -73,8 +73,8 @@ where `user` is the username or organization on GitHub and `repository` is the
 repository name. If you omit the slug, `greenkeeper` will use the current
 directory’s git remote "origin"
 
-sync happens automatically when you log in, but needs to be re-run, when you
-add repositories on GitHub.
+sync happens automatically when you log in. Also `enable` performs a sync automatically
+in case the repository you try to enable is not found.
 
 Type `greenkeeper start` to learn how to get started.
 

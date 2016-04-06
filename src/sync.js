@@ -1,8 +1,7 @@
 var log = require('npmlog')
-var request = require('request')
-var spinner = require('char-spinner')
 
 var story = require('./lib/story').sync
+var sync = require('./lib/sync')
 
 module.exports = function (flags) {
   log.verbose('sync', 'starting command')
@@ -14,26 +13,11 @@ module.exports = function (flags) {
 
   log.http('sync', 'Sending request')
   log.info('sync', 'This might take a while')
-  var spin = spinner()
-  request({
-    method: 'POST',
-    url: flags.api + 'sync',
-    json: true,
-    headers: {
-      Authorization: 'Bearer ' + flags.token
-    }
-  }, function (err, res, data) {
-    clearInterval(spin)
+  sync(flags, function (err, repos) {
     if (err) {
       log.error('sync', err.message)
       process.exit(2)
     }
-
-    if (data.repos) {
-      return console.log(data.repos.sort().join('\n'))
-    }
-
-    log.error('sync', res.statusMessage + (res.body.message ? ': ' + res.body.message : ''))
-    process.exit(2)
+    console.log(repos.sort().join('\n'))
   })
 }
