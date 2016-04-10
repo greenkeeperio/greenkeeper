@@ -42,5 +42,14 @@ module.exports = function (flags) {
   var url = flags.api + 'login?id=' + id + (flags['private'] ? '&private=true' : '')
 
   log.verbose('login', 'Open ' + url)
-  open(url)
+  var openResult = open(url)
+
+  var tmCheck = setInterval(function () {
+    if (openResult.exitCode !== null) {
+      clearInterval(tmCheck)
+      if (openResult.exitCode !== 0) {
+        console.log('Login from this URL:', url)
+      }
+    }
+  }, 100)
 }
