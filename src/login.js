@@ -42,5 +42,9 @@ module.exports = function (flags) {
   var url = flags.api + 'login?id=' + id + (flags['private'] ? '&private=true' : '')
 
   log.verbose('login', 'Open ' + url)
-  open(url)
+  open(url, function (err, stdout, stderr) {
+    if (err) {
+      console.log('Login from this URL:', url)
+    }
+  })
 }
