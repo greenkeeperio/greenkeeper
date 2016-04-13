@@ -3,12 +3,14 @@ var log = require('npmlog')
 var nerfDart = require('nerf-dart')
 var open = require('opener')
 var randomString = require('random-string')
+var _ = require('lodash')
 
 var getToken = require('./lib/get-token')
 var rc = require('./lib/rc')
 var story = require('./lib/story').login
 var logo = require('./lib/logo')
 var sync = require('./lib/sync')
+var checkEnterprise = require('./lib/check-enterprise.js')
 
 module.exports = function (flags) {
   logo()
@@ -39,12 +41,26 @@ module.exports = function (flags) {
     })
   })
 
-  var url = flags.api + 'login?id=' + id + (flags['private'] ? '&private=true' : '')
+  if (!flags['private'] && !_.has(flags, 'private')) {
+    return checkEnterprise(function (err, flags, isEnterprise) {
+      if (err) {
+        log.error('login', err.message)
+        process.exit(2)
+      }
+      openAuth(isEnterprise)
+    })(flags)
+  }
 
-  log.verbose('login', 'Open ' + url)
-  open(url, function (err, stdout, stderr) {
-    if (err) {
-      console.log('Login from this URL:', url)
-    }
-  })
+  openAuth(flags['private'])
+
+  function openAuth (withPrivate) {
+    var url = flags.api + 'login?id=' + id
+    if (withPrivate) url += '&private=true'
+    log.verbose('login', 'Open ' + url)
+    open(url, function (err, stdout, stderr) {
+      if (err) {
+        console.log('Login from this URL:', url)
+      }
+    })
+  }
 }
