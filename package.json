@@ -37,7 +37,7 @@
     "standard": "^6.0.3",
     "tap": "^5.0.0"
   },
-  "homepage": "http://greenkeeper.io",
+  "homepage": "https://greenkeeper.io",
   "license": "Apache-2.0",
   "main": "src/index.js",
   "preferGlobal": true,
