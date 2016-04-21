@@ -51,22 +51,25 @@ Run `greenkeeper support` :)
 
 Usage: `greenkeeper [--slug=user/repository] <command>`
 
-| command |  |
-| ---: | :--- |
-| start     | learn how to get started |
-| login     | opens GitHub Authentication |
-| logout    | |
-| enable    | enable  a repository |
-| disable   | disable a repository |
-| list      | a list of all enabled repositories |
-| upgrade   | upgrade to a different plan |
-| whoami    | show who you are logged in as and what organizations you can access |
-| info      | show the state of your repository |
-| support   | opens support in your browser |
-| sync      | sync all your GitHub repositories |
-| config    | get, set and delete config |
-| --help    | this screen |
-| --version | current version of the CLI |
+| command     |  |
+| ----------: | :--- |
+| start       | learn how to get started |
+| login       | opens GitHub Authentication |
+| logout      | |
+| enable      | enable  a repository |
+| disable     | disable a repository |
+| list        | a list of all enabled repositories |
+| upgrade     | upgrade to a different plan |
+| whoami      | show who you are logged in as and what organizations you can access |
+| info        | show the state of your repository |
+| support     | opens support in your browser |
+| sync        | sync all your GitHub repositories |
+| npm-access  | grant access to your private npm packages |
+| npm-verify  | check access to private npm packages |
+| postpublish | add the postpublish hook to your scoped module |
+| config      | get, set and delete config |
+| --help      | this screen |
+| --version   | current version of the CLI |
 
 `enable`, `disable` and `info` take an optional parameter --slug=user/repository
 where `user` is the username or organization on GitHub and `repository` is the
