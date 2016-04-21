@@ -16,7 +16,10 @@ var exports = module.exports = [
   'start',
   'list',
   'organization-access',
-  'config'
+  'config',
+  'npm-access',
+  'npm-verify',
+  'postpublish'
 ].sort()
 
 exports.secrets = [
