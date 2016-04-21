@@ -2,7 +2,7 @@ var log = require('npmlog')
 var nerfDart = require('nerf-dart')
 var request = require('request')
 
-var rc = require('./lib/rc')
+var rc = require('@greenkeeper/flags')._rc
 var story = require('./lib/story').logout
 
 module.exports = function (flags) {

@@ -6,7 +6,7 @@ var randomString = require('random-string')
 var _ = require('lodash')
 
 var getToken = require('./lib/get-token')
-var rc = require('./lib/rc')
+var rc = require('@greenkeeper/flags')._rc
 var story = require('./lib/story').login
 var logo = require('./lib/logo')
 var sync = require('./lib/sync')

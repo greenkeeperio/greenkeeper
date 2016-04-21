@@ -13,6 +13,7 @@
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
+    "@greenkeeper/flags": "^1.0.1",
     "abbrev": "^1.0.7",
     "chalk": "^1.1.1",
     "char-spinner": "^1.0.1",
@@ -22,10 +23,9 @@
     "lodash": "^4.0.0",
     "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
-    "nopt": "^3.0.6",
+    "npm-registry-client": "^7.1.0",
     "npmlog": "^2.0.0",
     "opener": "^1.4.1",
-    "os-homedir": "^1.0.1",
     "random-string": "^0.1.2",
     "request": "^2.67.0",
     "update-notifier": "^0.6.0",

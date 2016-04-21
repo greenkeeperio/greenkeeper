@@ -2,7 +2,7 @@ var abbrev = require('abbrev')
 var chalk = require('chalk')
 var log = require('npmlog')
 
-var rc = require('./lib/rc')
+var rc = require('@greenkeeper/flags')._rc
 
 var aliases = abbrev(['get', 'set', 'delete', 'list'])
 
