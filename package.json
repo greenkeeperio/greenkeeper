@@ -21,6 +21,7 @@
     "github-slug": "^1.1.0",
     "hide-secrets": "^1.0.0",
     "inquirer": "^0.12.0",
+    "json-preserve-indent": "^1.1.1",
     "lodash": "^4.0.0",
     "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
@@ -29,7 +30,6 @@
     "opener": "^1.4.1",
     "random-string": "^0.1.2",
     "request": "^2.67.0",
-    "run-parallel": "1.1.6",
     "update-notifier": "^0.6.0",
     "valid-url": "^1.0.9",
     "validator": "^5.1.0"
