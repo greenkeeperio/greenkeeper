@@ -8,6 +8,7 @@ var _ = require('lodash')
 
 var story = require('./lib/story').enable
 var sync = require('./lib/sync')
+var postpublish = require('./postpublish')
 
 module.exports = function (flags) {
   log.verbose('enable', 'Starting command')
@@ -27,9 +28,15 @@ module.exports = function (flags) {
       process.exit(1)
     }
 
-    if (!flags.slug && !fs.existsSync(path.join(process.cwd(), 'package.json'))) {
-      log.warn('enable', 'No package.json present, you won’t receive pull requests')
+    var pkg = {}
+    if (!flags.slug) {
+      try {
+        pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json')))
+      } catch (e) {
+        log.warn('enable', 'No package.json present, you won’t receive pull requests')
+      }
     }
+    var scoped = pkg && pkg.name && pkg.name.charAt(0) === '@'
 
     log.info('enable', 'The GitHub slug is:', slug)
 
@@ -60,7 +67,13 @@ module.exports = function (flags) {
         }
 
         if (data.ok) {
-          return console.log(story.enabled(slug))
+          console.log(story.enabled(slug))
+          if (!scoped || flags.slug || flags.postpublish === false) process.exit()
+
+          log.info('enable', 'This is a scoped package.')
+          log.info('enable', 'Installing greenkeeper-postpublish module to automatically announce new versions.')
+
+          return postpublish(flags)
         }
 
         if (data.statusCode === 403) {
