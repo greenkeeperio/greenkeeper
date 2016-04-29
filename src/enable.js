@@ -36,7 +36,7 @@ module.exports = function (flags) {
         log.warn('enable', 'No package.json present, you won’t receive pull requests')
       }
     }
-    var scoped = pkg && pkg.name && pkg.name.charAt(0) === '@'
+    var scoped = _.get(pkg, 'name[0]') === '@'
 
     log.info('enable', 'The GitHub slug is:', slug)
 
@@ -86,32 +86,29 @@ module.exports = function (flags) {
           process.exit(2)
         }
 
-        if (isSynced) exitWithError()
+        if (isSynced) exitWithError(slug)
 
         log.verbose('enable', 'Repository not found. Starting a sync.')
         log.info('enable', 'Synchronizing your repositories. This might take a while.')
         sync(flags, function (err, repos) {
           if (err) {
             log.error('enable', 'Synchronizing the repositories was not possible.')
-            exitWithError()
+            exitWithError(slug)
           }
           if (_.includes(repos, slug)) {
             log.verbose('enable', 'Repository found after sync. Trying to enable again.')
             return enable(true)
           }
           log.verbose('enable', 'Repository not found after sync.')
-          exitWithError()
+          exitWithError(slug)
         })
       })
     }
   }
 }
 
-function exitWithError () {
-  log.error('enable', 'Couldn’t enable a repository with this slug.')
-  log.error('enable', 'If you want to try your free private repository make sure to grant the necessary rights by running ' + chalk.yellow('greenkeeper login --force --private'))
-  log.error('enable', 'You have to have a plan for more than one private repository. To verify run ' + chalk.yellow('greenkeeper whoami'))
-  log.error('enable', 'You need admin access to a repository to enable it.')
-  log.error('enable', 'If you think this error really shouldn’t appear let us look into it with ' + chalk.yellow('greenkeeper support'))
+function exitWithError (slug) {
+  log.error('enable', 'Couldn’t enable a repository with slug ' + chalk.yellow(slug) + '.')
+  console.log(story.fail())
   process.exit(1)
 }

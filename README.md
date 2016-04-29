@@ -87,6 +87,19 @@ command, as long as it’s unambiguous
 
 <!-- section /-->
 
+# Enabling a repository
+
+Most of the time enabling a repository is straight forward – just execute `greenkeeper enable`.
+In some cases, especially when there are private repositories or permissions involved, it can fail.
+Fear not. This guide will walk you through all the required steps.
+If you can’t get your repository enabled after these steps please contact us. `greenkeeper support`
+
+1. If you want to enable a private repository for the first time make sure to **grant Greenkeeper the necessary rights** by running `greenkeeper login --force --private`.
+2. With GitHub’s new permission model you need to **grant Greenkeeper access per organization**. You can do this with `greenkeeper access`.
+3. Keep in mind that **you need admin access to a repository** to enable it. If you don’t have access please ask someone on your team for help.
+
+<!-- section /-->
+
 # The CLI
 
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)

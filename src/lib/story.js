@@ -44,6 +44,9 @@ module.exports = {
     },
     enabled: function (slug) {
       return slug + ' enabled'
+    },
+    fail: function () {
+      return md(getReadme(2))
     }
   },
 
