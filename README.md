@@ -67,6 +67,7 @@ Usage: `greenkeeper [--slug=user/repository] <command>`
 | npm-access  | grant access to your private npm packages |
 | npm-verify  | check access to private npm packages |
 | postpublish | add the postpublish hook to your scoped module |
+| faq         | open FAQ website |
 | config      | get, set and delete config |
 | --help      | this screen |
 | --version   | current version of the CLI |

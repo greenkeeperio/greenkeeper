@@ -19,7 +19,8 @@ var exports = module.exports = [
   'config',
   'npm-access',
   'npm-verify',
-  'postpublish'
+  'postpublish',
+  'faq'
 ].sort()
 
 exports.secrets = [
