@@ -2,6 +2,7 @@ var test = require('tap').test
 
 var greenkeeper = require('../')
 
-test('dummy', function (t) {
+test('smoke', function (t) {
   t.ok(greenkeeper)
+  t.end()
 })
