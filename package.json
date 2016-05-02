@@ -50,6 +50,7 @@
   },
   "scripts": {
     "pretest": "standard",
+    "posttest": "./src/index.js start",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "start": "./src/index.js",
     "test": "nyc tap test/*.js"
