@@ -18,7 +18,7 @@ if (require.main === module) {
 }
 
 function greenkeeper () {
-  if (pkg.version) require('update-notifier')({pkg: pkg}).notify()
+  if (pkg.version !== '0.0.0-placeholder') require('update-notifier')({pkg: pkg}).notify()
 
   log.levels.http = 1500
 

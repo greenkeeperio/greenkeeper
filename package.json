@@ -1,5 +1,6 @@
 {
   "name": "greenkeeper",
+  "version": "0.0.0-placeholder",
   "description": "Your software, up to date, all the time",
   "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me)",
   "bin": {
