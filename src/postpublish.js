@@ -1,4 +1,3 @@
-var _ = require('lodash')
 var exec = require('child_process').exec
 var fs = require('fs')
 var path = require('path')
@@ -18,7 +17,7 @@ module.exports = function (flags) {
     process.exit(1)
   }
 
-  if (_.get(pkg, 'name[0]') !== '@') log.warn('postpublish', 'This is not a scoped package. "greenkeeper-postpublish" should not be required.')
+  if (pkg.get('name[0]') !== '@') log.warn('postpublish', 'This is not a scoped package. "greenkeeper-postpublish" should not be required.')
 
   if (pkg.get('devDependencies.greenkeeper-postpublish')) {
     log.info('postpublish', 'greenkeeper-postpublish is already installed')
