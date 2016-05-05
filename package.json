@@ -31,7 +31,7 @@
     "opener": "^1.4.1",
     "random-string": "^0.1.2",
     "request": "^2.67.0",
-    "update-notifier": "^0.6.0",
+    "update-notifier": "^0.7.0",
     "valid-url": "^1.0.9",
     "validator": "^5.1.0"
   },
