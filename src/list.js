@@ -1,3 +1,4 @@
+var _ = require('lodash')
 var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
@@ -31,7 +32,10 @@ module.exports = function (flags) {
     if (!data.packages.length) {
       log.error('list', 'No repositories enabled yet')
     }
-
-    console.log(data.packages.sort().join('\n'))
+    _.orderBy(data.all, ['is_enabler', 'name'], ['desc', 'asc'])
+    .forEach(function (repo) {
+      if (!repo.enabled) return
+      console.log(repo.name, repo.is_enabler ? chalk.green('(enabled by you)') : '')
+    })
   })
 }
