@@ -12,6 +12,7 @@ var commands = require('./commands')
 var flags = require('@greenkeeper/flags')
 
 if (require.main === module) {
+  require('set-blocking')(true)
   greenkeeper()
 } else {
   module.exports = greenkeeper
