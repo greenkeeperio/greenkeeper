@@ -92,7 +92,8 @@ module.exports = function (flags) {
         }
 
         if (data.statusCode === 403) {
-          log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via ' + chalk.yellow('greenkeeper upgrade'))
+          log.error('enable', 'Admin access is required to enable a repository.')
+          log.error('enable', 'Please ask an admin on your team to enable Greenkeeper.')
           process.exit(1)
         }
 

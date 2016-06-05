@@ -57,10 +57,10 @@ module.exports = function (flags) {
 
   openAuth(flags['private'])
 
-  function openAuth (private) {
+  function openAuth (pvt) {
     var query = {
       id: id,
-      private: private
+      private: pvt
     }
 
     if (flags.admin === false) {
