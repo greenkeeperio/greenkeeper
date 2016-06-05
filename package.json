@@ -14,7 +14,7 @@
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
-    "@greenkeeper/flags": "^2.0.0",
+    "@greenkeeper/flags": "^3.0.0",
     "abbrev": "^1.0.7",
     "chalk": "^1.1.1",
     "char-spinner": "^1.0.1",
