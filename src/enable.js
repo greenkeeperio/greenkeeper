@@ -1,8 +1,10 @@
 var fs = require('fs')
 var path = require('path')
+var qs = require('querystring')
 
 var chalk = require('chalk')
 var log = require('npmlog')
+var open = require('opener')
 var request = require('request')
 var _ = require('lodash')
 
@@ -51,7 +53,7 @@ module.exports = function (flags) {
         headers: {
           Authorization: 'Bearer ' + flags.token
         },
-        body: {slug: slug}
+        body: {slug: slug, manual_webhooks: flags.admin === false}
       }, function (err, res, data) {
         if (err) {
           log.error('enable', err.message)
@@ -68,6 +70,19 @@ module.exports = function (flags) {
 
         if (data.ok) {
           console.log(story.enabled(slug))
+
+          if (data.webhooks_secret) {
+            var url = 'https://greenkeeper.io/manual-webhooks.html?' + qs.encode({
+              slug: slug,
+              secret: data.webhooks_secret
+            })
+            open(url, function (err, stdout, stderr) {
+              if (err) {
+                console.log('Get webhooks setup instructions at this URL:', url)
+              }
+            })
+          }
+
           if (!scoped || flags.slug || flags.postpublish === false) process.exit()
 
           log.info('enable', 'This is a scoped package.')
@@ -77,7 +92,8 @@ module.exports = function (flags) {
         }
 
         if (data.statusCode === 403) {
-          log.error('enable', 'You need a paid greenkeeper.io subscription to enable private repositories\nYou can subscribe via ' + chalk.yellow('greenkeeper upgrade'))
+          log.error('enable', 'Admin access is required to enable a repository.')
+          log.error('enable', 'Please ask an admin on your team to enable Greenkeeper.')
           process.exit(1)
         }
 

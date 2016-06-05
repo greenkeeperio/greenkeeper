@@ -1,3 +1,5 @@
+var qs = require('querystring')
+
 var chalk = require('chalk')
 var log = require('npmlog')
 var nerfDart = require('nerf-dart')
@@ -28,6 +30,8 @@ module.exports = function (flags) {
 
   getToken(flags, id, function (data) {
     rc.set(nerfDart(flags.api) + 'token', data.token)
+    rc.set(nerfDart(flags.api) + 'admin', flags.admin)
+
     log.info('login', 'That was successful, now syncing all your GitHub repositories')
     flags.token = data.token
     sync(flags, function (err, repos) {
@@ -53,9 +57,19 @@ module.exports = function (flags) {
 
   openAuth(flags['private'])
 
-  function openAuth (withPrivate) {
-    var url = flags.api + 'login?id=' + id
-    if (withPrivate) url += '&private=true'
+  function openAuth (pvt) {
+    var query = {
+      id: id,
+      private: pvt
+    }
+
+    if (flags.admin === false) {
+      query.no_admin = true
+      query.access_token = flags.token
+    }
+
+    var url = flags.api + 'login?' + qs.encode(query)
+
     log.verbose('login', 'Open ' + url)
     open(url, function (err, stdout, stderr) {
       if (err) {
