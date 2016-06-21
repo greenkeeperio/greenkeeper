@@ -7,6 +7,7 @@ var log = require('npmlog')
 var open = require('opener')
 var request = require('request')
 var _ = require('lodash')
+var yaml = require('js-yaml')
 
 var story = require('./lib/story').enable
 var sync = require('./lib/sync')
@@ -37,6 +38,8 @@ module.exports = function (flags) {
       } catch (e) {
         log.warn('enable', 'No package.json present, you won’t receive pull requests')
       }
+
+      checkTravisyml(pkg)
     }
     var scoped = _.get(pkg, 'name[0]') === '@'
 
@@ -120,6 +123,28 @@ module.exports = function (flags) {
         })
       })
     }
+  }
+}
+
+function checkTravisyml (pkg) {
+  try {
+    var travisyml = yaml.safeLoad(fs.readFileSync(path.join(process.cwd(), '.travis.yml')))
+    var onlyBranches = _.get(travisyml, 'branches.only')
+    if (!onlyBranches) return
+
+    var branchPrefix = _.get(pkg, 'greenkeeper.branchPrefix', 'greenkeeper-')
+
+    var greenkeeperRule = onlyBranches.some(function (branch) {
+      return _.includes(branch, branchPrefix.slice(0, -1))
+    })
+    if (greenkeeperRule) return
+
+    log.warn('enable', 'Your .travis.yml is configured to only run for specific branches.')
+    log.warn('enable', 'For Greenkeeper to work you need to whitelist the Greenkeeper branches.')
+    log.warn('enable', 'Add this rule to ' + chalk.yellow('branches.only') + ' in your .travis.yml:')
+    log.warn('enable', chalk.yellow('   - /^' + branchPrefix + '.*$/'))
+  } catch (e) {
+    // ignore missing or malformed yml
   }
 }
 
