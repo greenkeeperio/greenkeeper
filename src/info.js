@@ -1,6 +1,7 @@
 var chalk = require('chalk')
 var log = require('npmlog')
 var request = require('request')
+var moment = require('moment')
 
 var story = require('./lib/story').info
 
@@ -27,7 +28,7 @@ module.exports = function (flags) {
     log.http('info', 'Sending request')
     request({
       method: 'GET',
-      url: flags.api + 'packages/' + slug,
+      url: flags.api + 'packages/' + slug + '?include_branches=true',
       json: true,
       headers: {
         Authorization: 'Bearer ' + flags.token
@@ -64,6 +65,15 @@ module.exports = function (flags) {
       }
 
       console.log('greenkeeper is enabled for this repository')
+      var prs = data.branches
+        .filter(function (branch) {
+          return branch.pr && branch.pr.state === 'open'
+        })
+      if (prs.length > 0) console.log('Open pull requests: ')
+      prs.forEach(function (branch) {
+        console.log('- ' + chalk.green('#' + branch.pr.number) + ' ' + branch.dependency + '@' + branch.version + ' ' + chalk.grey(moment(branch.created_at).fromNow()))
+      })
+      if (prs.length > 0) console.log('Older pull requests might not be shown.')
     })
   }
 }
