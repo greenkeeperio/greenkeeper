@@ -39,7 +39,7 @@
     "validator": "^5.1.0"
   },
   "devDependencies": {
-    "nyc": "^7.0.0",
+    "nyc": "^8.1.0",
     "semantic-release": "^4.3.5",
     "standard": "^7.0.0",
     "tap": "^6.1.1"
