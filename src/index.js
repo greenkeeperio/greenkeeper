@@ -48,6 +48,13 @@ function greenkeeper () {
     process.exit(1)
   }
 
+  if (flags.api === 'https://api.greenkeeper.io/' && command !== 'web-app' && (flags.web_interface_beta_banner || 0) < 10) {
+    var boxen = require('boxen')
+    var chalk = require('chalk')
+    console.error(boxen('Check out the beta version of our web interface: ' + chalk.yellow('greenkeeper web-app'), {padding: 1, borderStyle: 'double', borderColor: 'green'}))
+    flags._rc.set('web_interface_beta_banner', (flags.web_interface_beta_banner || 0) + 1)
+  }
+
   process.on('exit', function (code) {
     if (code !== 2) return
 
