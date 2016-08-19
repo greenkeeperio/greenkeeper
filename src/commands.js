@@ -20,7 +20,8 @@ var exports = module.exports = [
   'npm-access',
   'npm-verify',
   'postpublish',
-  'faq'
+  'faq',
+  'web-app'
 ].sort()
 
 exports.secrets = [
