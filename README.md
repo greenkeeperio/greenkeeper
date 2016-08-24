@@ -100,6 +100,20 @@ If you can’t get your repository enabled after these steps please contact us. 
 
 <!-- section /-->
 
+# repository options
+
+There are some things you can customize for your repository. You do so by
+adding a `"greenkeeper"` key to your `package.json` file.
+
+The following options are available:
+
+| option       | description | default
+| ----------:  | :--- | :---- |
+| ignore       | array of ignored dependencies | `[]` |
+| branchPrefix | prefix used for branches | `'greenkeeper-'` |
+| label        | label to use for pull requests | `'greenkeeper'`
+
+
 # The CLI
 
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
