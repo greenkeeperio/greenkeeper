@@ -69,7 +69,7 @@ function startDialog (cb) {
     name: 'password',
     message: 'npm password',
     validate: _.ary(_.partial(validator.isLength, _, 1), 1)
-  }], function (answers) {
+  }]).then(function (answers) {
     cache = answers
 
     cb(null, answers)
