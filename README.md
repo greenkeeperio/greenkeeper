@@ -80,6 +80,22 @@ directory’s git remote "origin"
 sync happens automatically when you log in. Also `enable` performs a sync automatically
 in case the repository you try to enable is not found.
 
+## Repository Options
+
+There are some things you can customize for your repository. You do so by
+adding a `"greenkeeper"` field to your `package.json` file.
+
+The following options are available:
+
+| option       | description | default
+| ----------:  | :--- | :---- |
+| ignore       | array of ignored dependencies | `[]` |
+| branchPrefix | prefix used for branches | `'greenkeeper-'` |
+| label        | label to use for pull requests | `'greenkeeper'`
+
+
+## Getting Started
+
 Type `greenkeeper start` to learn how to get started.
 
 protip: you can type `gk` instead of `greenkeeper` and abbreviate every
