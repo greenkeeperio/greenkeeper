@@ -43,7 +43,7 @@
     "nyc": "^8.1.0",
     "semantic-release": "^4.3.5",
     "standard": "^8.0.0",
-    "tap": "^6.1.1"
+    "tap": "^7.0.0"
   },
   "homepage": "https://greenkeeper.io",
   "license": "Apache-2.0",
