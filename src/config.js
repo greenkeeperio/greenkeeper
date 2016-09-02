@@ -4,7 +4,7 @@ var log = require('npmlog')
 
 var rc = require('@greenkeeper/flags')._rc
 
-var aliases = abbrev(['get', 'set', 'delete', 'list'])
+var aliases = abbrev(['get', 'set', 'delete', 'list', 'path'])
 
 module.exports = function (flags) {
   var commands = flags.argv.remain
@@ -19,7 +19,10 @@ module.exports = function (flags) {
       return del(commands)
     case 'list':
       return list(commands)
+    case 'path':
+      return console.log(rc.getPath())
     default:
+      log.info('config', rc.getPath())
       log.error('config', [
         'Usage:',
         chalk.yellow('greenkeeper config set <key> <value>'),

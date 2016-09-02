@@ -1,20 +1,17 @@
 {
   "name": "greenkeeper",
-  "version": "0.0.0-placeholder",
   "description": "Your software, up to date, all the time",
+  "version": "0.0.0-placeholder",
   "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me)",
   "bin": {
     "greenkeeper": "src/index.js",
     "gk": "src/index.js"
   },
-  "files": [
-    "src"
-  ],
   "bugs": {
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
-    "@greenkeeper/flags": "^3.0.0",
+    "@greenkeeper/flags": "^3.0.1",
     "abbrev": "^1.0.7",
     "boxen": "^0.6.0",
     "chalk": "^1.1.1",
@@ -45,6 +42,12 @@
     "standard": "^8.0.0",
     "tap": "^7.0.0"
   },
+  "engines": {
+    "node": ">=4"
+  },
+  "files": [
+    "src"
+  ],
   "homepage": "https://greenkeeper.io",
   "license": "Apache-2.0",
   "main": "src/index.js",
@@ -54,8 +57,8 @@
     "url": "https://github.com/greenkeeperio/greenkeeper.git"
   },
   "scripts": {
-    "pretest": "standard",
     "posttest": "./src/index.js start",
+    "pretest": "standard",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "start": "./src/index.js",
     "test": "nyc tap test/*.js"
