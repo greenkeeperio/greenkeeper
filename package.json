@@ -23,7 +23,7 @@
     "js-yaml": "3.6.1",
     "json-preserve-indent": "^1.1.1",
     "lodash": "^4.0.0",
-    "moment": "2.14.1",
+    "moment": "2.15.1",
     "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
     "npm-registry-client": "^7.1.0",
