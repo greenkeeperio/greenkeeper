@@ -23,7 +23,7 @@
     "js-yaml": "3.6.1",
     "json-preserve-indent": "^1.1.1",
     "lodash": "^4.0.0",
-    "moment": "2.14.1",
+    "moment": "2.15.2",
     "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
     "npm-registry-client": "^7.1.0",
@@ -34,13 +34,13 @@
     "set-blocking": "^2.0.0",
     "update-notifier": "^1.0.2",
     "valid-url": "^1.0.9",
-    "validator": "^5.1.0"
+    "validator": "^6.1.0"
   },
   "devDependencies": {
     "nyc": "^8.1.0",
     "semantic-release": "^4.3.5",
     "standard": "^8.0.0",
-    "tap": "^7.0.0"
+    "tap": "^8.0.0"
   },
   "engines": {
     "node": ">=4"
