@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "nyc": "^8.1.0",
-    "semantic-release": "^4.3.5",
+    "semantic-release": "^6.3.2",
     "standard": "^8.0.0",
     "tap": "^8.0.0"
   },
