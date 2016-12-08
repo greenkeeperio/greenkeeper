@@ -19,7 +19,7 @@
     "cli-md": "^1.2.0",
     "github-slug": "^2.0.0",
     "hide-secrets": "^1.0.0",
-    "inquirer": "^1.1.2",
+    "inquirer": "^2.0.0",
     "js-yaml": "3.7.0",
     "json-preserve-indent": "^1.1.1",
     "lodash": "^4.0.0",
