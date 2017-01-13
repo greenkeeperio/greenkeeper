@@ -21,7 +21,8 @@ var exports = module.exports = [
   'npm-verify',
   'postpublish',
   'faq',
-  'web-app'
+  'web-app',
+  'signup'
 ].sort()
 
 exports.secrets = [
@@ -39,7 +40,6 @@ exports.aliases = {
   subscribe: 'upgrade',
   ehd: 'evilhackerdude',
   chat: 'support',
-  signup: 'login',
   signin: 'login',
   signout: 'logout',
   status: 'info',
