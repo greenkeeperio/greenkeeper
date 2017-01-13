@@ -51,7 +51,7 @@ function greenkeeper () {
   if (flags.api === 'https://api.greenkeeper.io/' && (flags.integration_beta_banner || 0) < 10) {
     var boxen = require('boxen')
     var chalk = require('chalk')
-    console.error(boxen('Check out our all new GitHub Integration: ' + chalk.yellow('git.io/uptodate'), {padding: 1, borderStyle: 'double', borderColor: 'green'}))
+    console.error(boxen('Check out our all new GitHub Integration: ' + chalk.yellow('https://git.io/uptodate'), {padding: 1, borderStyle: 'double', borderColor: 'green'}))
     flags._rc.set('integration_beta_banner', (flags.integration_beta_banner || 0) + 1)
   }
 
