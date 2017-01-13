@@ -23,7 +23,7 @@ module.exports = function getToken (flags, id, callback) {
       return setTimeout(getToken.bind(null, flags, id, callback), 1000)
     }
 
-    if (!(res.statusCode === 200 && data.token)) {
+    if (res.statusCode !== 200) {
       log.error('login', story.login_failed)
       process.exit(1)
     }
