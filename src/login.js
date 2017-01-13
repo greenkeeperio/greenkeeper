@@ -29,6 +29,12 @@ module.exports = function (flags) {
   log.verbose('login', 'Getting token from API and opening GitHub login')
 
   getToken(flags, id, function (data) {
+    if (data.disallowedSignup) {
+      log.info('login', 'Signing up for the old Greenkeeper oAuth application is no longer supported.')
+      log.info('login', 'The new GitHub Integration was opened instead.')
+      return
+    }
+
     rc.set('api', flags.api)
     rc.set(nerfDart(flags.api) + 'token', data.token)
     rc.set(nerfDart(flags.api) + 'admin', flags.admin)
