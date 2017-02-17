@@ -1,5 +1,7 @@
 # Getting Started with Greenkeeper
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
+
 To **install Greenkeeper**, type:
 ```
 npm install -g greenkeeper
