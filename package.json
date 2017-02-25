@@ -34,7 +34,7 @@
     "set-blocking": "^2.0.0",
     "update-notifier": "^2.0.0",
     "valid-url": "^1.0.9",
-    "validator": "^6.1.0"
+    "validator": "^7.0.0"
   },
   "devDependencies": {
     "nyc": "^10.1.0",
