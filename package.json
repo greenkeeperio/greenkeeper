@@ -39,7 +39,7 @@
   "devDependencies": {
     "nyc": "^10.1.0",
     "semantic-release": "^6.3.2",
-    "standard": "^8.0.0",
+    "standard": "^10.0.0-beta.0",
     "tap": "^10.0.0"
   },
   "engines": {
