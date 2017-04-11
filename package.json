@@ -29,7 +29,7 @@
     "npm-registry-client": "^7.1.0",
     "npmlog": "^4.0.0",
     "opener": "^1.4.1",
-    "random-string": "^0.1.2",
+    "random-string": "^0.2.0",
     "request": "^2.67.0",
     "set-blocking": "^2.0.0",
     "update-notifier": "^2.0.0",
