@@ -26,7 +26,7 @@
     "moment": "^2.16.0",
     "nerf-dart": "^1.0.0",
     "node-emoji": "^1.0.4",
-    "npm-registry-client": "^7.1.0",
+    "npm-registry-client": "^8.3.0",
     "npmlog": "^4.0.0",
     "opener": "^1.4.1",
     "random-string": "^0.1.2",
