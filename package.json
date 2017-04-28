@@ -4,43 +4,18 @@
   "version": "0.0.0-placeholder",
   "author": "Stephan Bönnemann <stephan@boennemann.me> (http://boennemann.me)",
   "bin": {
-    "greenkeeper": "src/index.js",
-    "gk": "src/index.js"
+    "greenkeeper": "bin.js",
+    "gk": "bin.js"
   },
   "bugs": {
     "url": "https://github.com/greenkeeperio/greenkeeper/issues"
   },
   "dependencies": {
-    "@greenkeeper/flags": "^3.0.1",
-    "abbrev": "^1.0.7",
-    "boxen": "^1.0.0",
-    "chalk": "^1.1.1",
-    "char-spinner": "^1.0.1",
-    "cli-md": "^1.2.0",
-    "github-slug": "^2.0.0",
-    "hide-secrets": "^1.0.0",
-    "inquirer": "^3.0.1",
-    "js-yaml": "3.8.1",
-    "json-preserve-indent": "^1.1.1",
-    "lodash": "^4.0.0",
-    "moment": "^2.16.0",
-    "nerf-dart": "^1.0.0",
-    "node-emoji": "^1.0.4",
-    "npm-registry-client": "^7.1.0",
-    "npmlog": "^4.0.0",
-    "opener": "^1.4.1",
-    "random-string": "^0.1.2",
-    "request": "^2.67.0",
-    "set-blocking": "^2.0.0",
-    "update-notifier": "^2.0.0",
-    "valid-url": "^1.0.9",
-    "validator": "^6.1.0"
+    "opener": "^1.4.3"
   },
   "devDependencies": {
-    "nyc": "^10.1.0",
     "semantic-release": "^6.3.2",
-    "standard": "^8.0.0",
-    "tap": "^10.0.0"
+    "standard": "*"
   },
   "engines": {
     "node": ">=4"
@@ -57,10 +32,7 @@
     "url": "https://github.com/greenkeeperio/greenkeeper.git"
   },
   "scripts": {
-    "posttest": "./src/index.js start",
-    "pretest": "standard",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
-    "start": "./src/index.js",
-    "test": "nyc tap test/*.js"
+    "test": "standard",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   }
 }
