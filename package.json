@@ -42,7 +42,7 @@
   "engines": {
     "node": ">=7.6"
   },
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "nyc": {
     "all": true,
     "include": [
