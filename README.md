@@ -100,15 +100,6 @@ Used to happen inside pull-request-close with our oAuth App.
 
 Used to happen inside pull-request-close with our oAuth App.
 
-## Deprecated Job Types (oAuth)
-
-There were certain hacks/workarounds that we used in our old oAuth application. The following jobs are no longer required:
-
-1. check-follower
-2. package-webhooks-enable
-3. package-webhooks-disable
-4. pull-request-email
-
 ## documents
 
 ### installations
