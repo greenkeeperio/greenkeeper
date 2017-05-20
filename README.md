@@ -1,4 +1,6 @@
-# Greenkeeper
+# Welcome to Greenkeeper!
+
+<img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
@@ -7,10 +9,78 @@
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
+**Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.**
 
-Go to https://github.com/integration/greenkeeper to install Greenkeeper on your personal account or organization.
+Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
+
+<details>
+<summary>Who else is using it? Anyone I know?</summary>
+
+Well, we’re helping out these fine folks, for example:
+
+- [lodash](https://lodash.com)
+- [PouchDB](https://pouchdb.com/)
+- [Karma](https:/github.com/karma-runner/karma)
+- [request](https://www.npmjs.com/package/request)
+- [Google’s AMP](https://github.com/ampproject/amphtml)
+- [Modernizr](https://modernizr.com)
+- [standard](https://www.npmjs.com/package/standard)
+- [webtorrent](https://www.npmjs.com/package/webtorrent)
+- [mustache.js](https://github.com/janl/mustache.js)
+- [FreeCodeCamp](https://freecodecamp.com)
+- [HTML5 Boilerplate](https://github.com/h5bp/html5-boilerplate)
+
+And many thousands more!
+
+</details>
+
+<details>
+<summary>Tell me more about how Greenkeeper works, please!</summary>
+
+No problem! Greenkeeper sits between npm and GitHub, observing all of the modules you depend on. When they get updated, your project gets a new branch with that update. Your CI tests kick in, and we watch them to see whether they pass.
+
+Based on the test results and your current version definitions we will open up clear, actionable issues for you. If there’s nothing for you to do, we won’t nag you, but if a dependency *does* break your software, you’ll know immediately, and can get started on fixing the problem.
+
+And if a you’ve got stuff to do, we understand. Sometimes you simply have to make a pragmatic trade-off between fixing your build for the breaking update or just pinning the working version so you can get back to it later. Our bot can respect that, and will let you pin the last working version of the dependency right there in the issue thread:
+
+| **Screenshot - Pinning dependencies** |
+|---|
+| ![Choosing repositories](https://cdn-images-1.medium.com/max/1600/0*T11jS2wNKlbQVbgC.) |
+
+</details>
+
+## Getting started with the new Github Integration
+
+1. Click on the green **Install** button at the top of the [integration page](https://github.com/integration/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
+
+2. You can then choose the organization you want to install Greenkeeper on, and then either enable specific repositories (we strongly recommend this), or all of them.
+
+    **Important:** just having the Greenkeeper _installed_ on a repo doesn’t necessarily _enable_ it yet. More on that below. By the way, you can change this behaviour later on the `Installed integrations` page in your organizations’ settings.
+
+    | **Screenshot - Installing Greenkeeper on repositories** |
+    |---|
+    | ![Choosing repositories](https://cloud.githubusercontent.com/assets/908178/21938177/85b0587c-d9ba-11e6-8c62-210a7fc5a53b.png) |
+
+3. If there’s a `package.json` file present in your repository you will get Greenkeeper’s **initial pull request**, which updates all outdated dependencies and contains a lot of additional information. Greenkeeper will only be **enabled** on this repo if you merge this initial pull request.
+
+    | **Screenshot - Greenkeeper’s initial pull request** |
+    |---|
+    | ![Inital pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
+
+    **Important:** If all dependencies are already up-to-date, we currently *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the integration on the repos you actually need it on, in step 1 above. Again, we highly recommend taking the time to whitelist repos individually.
+
+4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get more reliable software with a minimum amount of work.
+
+### Additional Notes
+
+- The old oAuth application based Greenkeeper will automatically be disabled for the user or organization you're installing it on, so you don't have two versions running.
+- With the new Greenkeeper public scoped npm packages work out of the box. Private scoped packages require an additional setup step, which is described in the initial pull request.
+- You no longer need the Greenkeeper CLI to interact with the service.
 
 ---
+
+<details>
+<summary>Jobs Service Documentation</summary>
 
 This is the core service of Greenkeeper. It takes care of the dependency update logic and the related pull request/issue creation.
 
@@ -192,3 +262,5 @@ Used to happen inside pull-request-close with our oAuth App.
   updated_at
 }
 ```
+
+</details>
