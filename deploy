@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# immediately fail if an error occurs
+set -e
+
+export NAME=jobs
+export PUSH_TO_REPLICATED=true
+export ZDT_DEPLOYMENT=false
+export NO_VHOST=true
+export GITHUB_TOKEN=${GITHUB_TOKEN:-$GH_TOKEN}
+
+git clone https://${GITHUB_TOKEN}@github.com/neighbourhoodie/gk-deploy-scripts.git
+
+./gk-deploy-scripts/deploy

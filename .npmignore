@@ -1,0 +1,13 @@
+*.log
+*.dump
+*.swp
+.DS_Store
+.env
+.nyc_output
+.travis.yml
+.editorconfig
+Dockerfile
+deploy
+test
+coverage
+start-couchdb

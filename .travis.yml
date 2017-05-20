@@ -1,0 +1,20 @@
+language: node_js
+services:
+- docker
+cache:
+  directories:
+  - node_modules
+notifications:
+  email: false
+node_js:
+- '7'
+before_install:
+- npm install -g npm
+- npm install -g greenkeeper-shrinkwrap@1
+before_script: greenkeeper-shrinkwrap-update
+after_script: greenkeeper-shrinkwrap-upload
+after_success:
+- npm run deploy
+branches:
+  except:
+    - /^v\d+\.\d+\.\d+$/

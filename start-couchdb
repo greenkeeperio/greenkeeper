@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# immediately fail if an error occurs
+set -e
+
+docker rm -fv gk-couchdb || true
+docker run -d -p 5984:5984 --name gk-couchdb klaemo/couchdb:2.0.0
+sleep 1.5

@@ -1,0 +1,299 @@
+const _ = require('lodash')
+const { test, tearDown } = require('tap')
+const nock = require('nock')
+const proxyquire = require('proxyquire').noCallThru()
+
+const dbs = require('../../../lib/dbs')
+const worker = proxyquire('../../../jobs/github-event/push', {
+  '../../lib/get-token': () => ({ token: 'secure' })
+})
+
+test('github-event push', async t => {
+  const { repositories } = await dbs()
+
+  await Promise.all([
+    repositories.bulkDocs([
+      {
+        _id: '444',
+        fullName: 'finn/test',
+        accountId: '123'
+      },
+      {
+        _id: '444:branch:1234abcd',
+        type: 'branch',
+        sha: '1234abcd',
+        repositoryId: '444',
+        version: '2.0.0',
+        dependency: 'lodash',
+        dependencyType: 'dependencies',
+        head: 'gk-lodash-2.0.0'
+      },
+      {
+        _id: '444:branch:1234abce',
+        type: 'branch',
+        sha: '1234abce',
+        repositoryId: '444',
+        version: '3.0.0',
+        dependency: 'lodash',
+        dependencyType: 'dependencies',
+        head: 'gk-lodash-3.0.0'
+      }
+    ])
+  ])
+
+  t.test('package.json present', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(200, {
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+
+    const newJobs = await worker({
+      installation: {
+        id: 37
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['package.json']
+        }
+      ],
+      repository: {
+        id: 444,
+        full_name: 'finn/test',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    t.ok(newJobs, 'new job scheduled')
+    t.is(newJobs.data.name, 'create-initial-branch', 'create-initial-branch')
+    t.is(newJobs.data.repositoryId, '444', 'repositoryId')
+    t.is(newJobs.data.accountId, '123', 'repositoryId')
+
+    const repo = await repositories.get('444')
+    t.same(repo.packages, {
+      'package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    })
+    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab3b')
+    t.end()
+  })
+
+  t.test('do branch cleanup on modify', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(200, {
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^2.0.0'
+          }
+        })
+      })
+      .delete('/repos/finn/test/git/refs/heads/gk-lodash-2.0.0')
+      .reply(200, {})
+
+    const newJobs = await worker({
+      installation: {
+        id: 37
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab2b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['package.json']
+        }
+      ],
+      repository: {
+        id: 444,
+        full_name: 'finn/test',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    t.notOk(newJobs)
+
+    const repo = await repositories.get('444')
+    t.same(repo.packages, {
+      'package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^2.0.0'
+        }
+      }
+    })
+
+    const branch = await repositories.get('444:branch:1234abcd')
+    t.ok(branch.referenceDeleted)
+    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab2b')
+    t.end()
+  })
+
+  t.test('do branch cleanup on remove', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(200, {
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            underscore: '*'
+          }
+        })
+      })
+      .delete('/repos/finn/test/git/refs/heads/gk-lodash-3.0.0')
+      .reply(200, {})
+
+    const newJobs = await worker({
+      installation: {
+        id: 37
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab1b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['package.json']
+        }
+      ],
+      repository: {
+        id: 444,
+        full_name: 'finn/test',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    t.notOk(newJobs)
+
+    const repo = await repositories.get('444')
+    t.same(repo.packages, {
+      'package.json': {
+        name: 'testpkg',
+        dependencies: {
+          underscore: '*'
+        }
+      }
+    })
+
+    const branch = await repositories.get('444:branch:1234abce')
+    t.ok(branch.referenceDeleted)
+    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab1b')
+    t.end()
+  })
+
+  t.test('invalid package.json present', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(200, {
+        content: Buffer.from('test').toString('base64')
+      })
+
+    const newJobs = await worker({
+      installation: {
+        id: 37
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3c',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['package.json']
+        }
+      ],
+      repository: {
+        id: 444,
+        full_name: 'finn/test',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    t.notOk(newJobs)
+
+    const repo = await repositories.get('444')
+    t.notOk(repo.enabled)
+    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab3c')
+    t.end()
+  })
+
+  t.test('package.json deleted', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(404, {})
+
+    const newJobs = await worker({
+      ref: 'refs/heads/master',
+      after: 'deadbeef',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: ['package.json'],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 444,
+        full_name: 'finn/test',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    t.notOk(newJobs)
+    const repo = await repositories.get('444')
+    t.notOk(_.get(repo.packages, ['package.json']))
+    t.is(repo.headSha, 'deadbeef')
+    t.notOk(repo.enabled)
+    t.end()
+  })
+})
+
+tearDown(async () => {
+  const { repositories } = await dbs()
+
+  await repositories.remove(await repositories.get('444'))
+  await repositories.remove(await repositories.get('444:branch:1234abcd'))
+  await repositories.remove(await repositories.get('444:branch:1234abce'))
+})
+
+function encodePkg (pkg) {
+  return Buffer.from(JSON.stringify(pkg)).toString('base64')
+}
