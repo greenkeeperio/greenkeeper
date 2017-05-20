@@ -1,7 +1,11 @@
-# Greenkeeper Jobs
+# Greenkeeper
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
+
+Go to https://github.com/integration/greenkeeper to install Greenkeeper on your personal account or organization.
+
+---
 
 This is the core service of Greenkeeper. It takes care of the dependency update logic and the related pull request/issue creation.
 
