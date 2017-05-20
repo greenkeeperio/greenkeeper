@@ -19,7 +19,7 @@ const getToken = require('../lib/get-token')
 const getConfig = require('../lib/get-config')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
-const { setPackageJson } = require('../lib/repository-docs')
+const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-write-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
@@ -28,25 +28,25 @@ const registryUrl = env.NPM_REGISTRY
 
 module.exports = async function ({ repositoryId }) {
   const { installations, repositories } = await dbs()
-  const repository = await repositories.get(repositoryId)
-  const accountId = repository.accountId
+  const repoDoc = await repositories.get(repositoryId)
+  const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const { token } = await getToken(installation.installation)
   const github = Github()
   github.authenticate({ type: 'token', token })
 
-  if (repository.fork && !repository.hasIssues) return
+  if (repoDoc.fork && !repoDoc.hasIssues) return
 
-  await setPackageJson(github, repository)
-  if (!_.get(repository, ['packages', 'package.json'])) return
-  await upsert(repositories, repository._id, repository)
+  await updateRepoDoc(github, repoDoc)
+  if (!_.get(repoDoc, ['packages', 'package.json'])) return
+  await upsert(repositories, repoDoc._id, repoDoc)
 
-  const config = getConfig(repository)
+  const config = getConfig(repoDoc)
   if (config.disabled) return
-  const pkg = _.get(repository, ['packages', 'package.json'])
+  const pkg = _.get(repoDoc, ['packages', 'package.json'])
   if (!pkg) return
 
-  const [owner, repo] = repository.fullName.split('/')
+  const [owner, repo] = repoDoc.fullName.split('/')
 
   await createDefaultLabel({github, owner, repo, name: config.label})
 
@@ -114,7 +114,7 @@ module.exports = async function ({ repositoryId }) {
     .createHmac('sha256', env.BADGES_SECRET)
     .update(slug.toLowerCase())
     .digest('hex')
-  const badgesTokenMaybe = repository.private ? `?token=${tokenHash}&ts=${Date.now()}` : ''
+  const badgesTokenMaybe = repoDoc.private ? `?token=${tokenHash}&ts=${Date.now()}` : ''
   const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
 
   const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
@@ -150,7 +150,7 @@ module.exports = async function ({ repositoryId }) {
         if (!badger.hasImageSupport(ext)) return
 
         const hasPrivateBadge = privateBadgeRegex.test(readme)
-        if (repository.private && hasPrivateBadge) {
+        if (repoDoc.private && hasPrivateBadge) {
           return readme.replace(privateBadgeRegex, badgeUrl)
         }
 
@@ -158,7 +158,7 @@ module.exports = async function ({ repositoryId }) {
           readme,
           'https://badges.greenkeeper.io/'
         )
-        if (!repository.private && badgeAlreadyAdded) return
+        if (!repoDoc.private && badgeAlreadyAdded) return
 
         return badger.addBadge(
           readme,
@@ -183,8 +183,8 @@ module.exports = async function ({ repositoryId }) {
   if (!sha) {
     // When there are no changes and the badge already exists we can enable right away
     if (badgeAlreadyAdded) {
-      await upsert(repositories, repository._id, { enabled: true })
-      return await maybeUpdatePaymentsJob(accountId, repository.private)
+      await upsert(repositories, repoDoc._id, { enabled: true })
+      return await maybeUpdatePaymentsJob(accountId, repoDoc.private)
     } else {
       throw new Error('Could not create initial branch')
     }

@@ -33,6 +33,7 @@ test('create-initial-branch', async t => {
     nock('https://api.github.com')
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: encodePkg({ devDependencies })
       })
       .get('/repos/finnp/test')
@@ -128,7 +129,13 @@ test('create-initial-branch', async t => {
     nock('https://api.github.com')
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: encodePkg({ dependencies: {} })
+      })
+      .get('/repos/finnp/test/contents/package-lock.json')
+      .reply(200, {
+        path: 'package-lock.json',
+        content: encodePkg({who: 'cares'})
       })
       .get('/repos/finnp/test')
       .reply(200, {
@@ -139,6 +146,9 @@ test('create-initial-branch', async t => {
     })
     t.notOk(newJob)
     const repodoc = await repositories.get('44')
+    t.ok(repodoc.files['package.json'])
+    t.ok(repodoc.files['package-lock.json'])
+    t.notOk(repodoc.files['yarn.lock'])
     t.ok(repodoc.enabled, 'repository was enabled')
     t.end()
   })

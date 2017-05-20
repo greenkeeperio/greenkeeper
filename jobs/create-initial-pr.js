@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 
+const _ = require('lodash')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
 const dbs = require('../lib/dbs')
@@ -80,6 +81,8 @@ module.exports = async function ({ repository, branchDoc, combined, installation
 
   const accountTokenUrl = `https://account.greenkeeper.io/status?token=${repodoc.accountToken}`
 
+  const files = _.get(repodoc, 'files', {})
+
   // enabled
   try {
     var {
@@ -101,7 +104,8 @@ module.exports = async function ({ repository, branchDoc, combined, installation
         installationId,
         success: combined.state === 'success',
         enabled,
-        accountTokenUrl
+        accountTokenUrl,
+        files
       }),
       base,
       head

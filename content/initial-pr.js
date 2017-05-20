@@ -1,4 +1,4 @@
-const { compact } = require('lodash')
+const _ = require('lodash')
 const md = require('./template')
 
 module.exports = prBody
@@ -118,15 +118,24 @@ const faqText = () => md`
 There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html) and of course you may always [ask my humans](https://github.com/greenkeeperio/greenkeeper/issues/new).
 `
 
+function hasLockFileText (files) {
+  const lockFiles = _.pick(files, ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'])
+  const lockFile = _.findKey(lockFiles)
+  if (!lockFile) return
+  return md`⚠️ We found a ${md.code(lockFile)} file in this repository. You need to use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure it gets updated as well.`
+}
+
 const mainMessage = ({enabled, depsUpdated}) => {
   if (enabled) return 'All your dependencies are up-to-date right now, so this repository was enabled right away. Good job :thumbsup:'
   if (depsUpdated) return 'This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point. I will look out for further dependency updates and make sure to handle them in isolation and in real-time, **as soon as you merge this pull request**.'
   return '' // no updates, but private repository
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl}) {
+function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files}) {
   return md`
 Let’s get started with automated dependency management for ${ghRepo.name} :muscle:
+
+${hasLockFileText(files)}
 
 ${mainMessage({enabled, depsUpdated})}
 
@@ -134,10 +143,9 @@ ${!enabled && '**I won’t start sending you further updates, unless you have me
 
 ${secret && accountTokenUrl && `💸  **Warning** 💸 Enabling this might increase your monthly payment 👉 [check your billing status](${accountTokenUrl})`}
 
-
 ---
 ${
-  compact([
+  _.compact([
     depsUpdated && !success && branchFailed(),
     secret && enablePrivatePackage({secret, installationId}),
     badgeUrl && badgeAddedText({badgeUrl}),
@@ -155,5 +163,5 @@ ${
 Good luck with your project and see you soon :sparkles:
 
 Your [Greenkeeper](https://greenkeeper.io) Bot :palm_tree:
-  `
+`
 }

@@ -3,17 +3,60 @@ const { test } = require('tap')
 
 const Github = require('../../lib/github')
 
-const { createDocs, setPackageJson } = require('../../lib/repository-docs')
+const { createDocs, updateRepoDoc, readPackageJson } = require('../../lib/repository-docs')
 
-test('get package.json', async t => {
+test('readPackageJson', async t => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'token secret' }
   })
-    .get('/repos/owner/repo/contents/package.json')
-    .reply(200, {
-      type: 'file',
-      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
-    })
+  .get('/repos/finnp/test/contents/package.json')
+  .reply(200, {
+    type: 'file',
+    path: 'package.json',
+    content: Buffer.from(JSON.stringify({ name: 'testing' })).toString('base64')
+  })
+
+  const github = Github()
+  github.authenticate({
+    type: 'token',
+    token: 'secret'
+  })
+  const pkg = await readPackageJson(github, 'finnp/test')
+  t.is(pkg.name, 'testing')
+  t.end()
+})
+
+test('readPackageJson no file', async t => {
+  nock('https://api.github.com', {
+    reqheaders: { Authorization: 'token secret' }
+  })
+
+  const github = Github()
+  github.authenticate({
+    type: 'token',
+    token: 'secret'
+  })
+  const pkg = await readPackageJson(github, 'finnp/test2')
+  t.notOk(pkg)
+  t.end()
+})
+
+test('updateRepoDoc with package.json', async t => {
+  nock('https://api.github.com', {
+    reqheaders: { Authorization: 'token secret' }
+  })
+  .get('/repos/owner/repo/contents/package.json')
+  .reply(200, {
+    type: 'file',
+    path: 'package.json',
+    content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+  })
+  .get('/repos/owner/repo/contents/package-lock.json')
+  .reply(200, {
+    type: 'file',
+    path: 'package-lock.json',
+    content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
+  })
 
   const github = Github()
   github.authenticate({
@@ -21,8 +64,11 @@ test('get package.json', async t => {
     token: 'secret'
   })
 
-  const doc = await setPackageJson(github, { fullName: 'owner/repo' })
+  const doc = await updateRepoDoc(github, { fullName: 'owner/repo' })
   t.is(doc.packages['package.json'].name, 'test')
+  t.ok(doc.files['package-lock.json'], 'package-lock.json')
+  t.ok(doc.files['package.json'], 'package.json')
+  t.notOk(doc.files['yarn.lock'], 'yarn.lock')
   t.end()
 })
 
@@ -33,6 +79,7 @@ test('get invalid package.json', async t => {
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
       type: 'file',
+      path: 'package.json',
       content: Buffer.from('test').toString('base64')
     })
 
@@ -42,7 +89,7 @@ test('get invalid package.json', async t => {
     token: 'secret'
   })
 
-  const doc = await setPackageJson(github, {
+  const doc = await updateRepoDoc(github, {
     fullName: 'owner/repo',
     packages: {
       'package.json': {
@@ -51,6 +98,9 @@ test('get invalid package.json', async t => {
     }
   })
   t.notOk(doc.packages['package.json'])
+  t.ok(doc.files['package.json'])
+  t.notOk(doc.files['package-lock.json'])
+  t.notOk(doc.files['yarn.lock'])
   t.end()
 })
 
