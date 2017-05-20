@@ -1,7 +1,7 @@
 # Greenkeeper Jobs
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/jobs.svg)](https://greenkeeper.io/)
-[![Build Status](https://travis-ci.org/greenkeeperio/jobs.svg?branch=master)](https://travis-ci.org/greenkeeperio/jobs)
+[![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
+[![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
 
 This is the core service of Greenkeeper. It takes care of the dependency update logic and the related pull request/issue creation.
 
