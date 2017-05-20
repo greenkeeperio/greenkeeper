@@ -6,15 +6,14 @@ cache:
   - node_modules
 notifications:
   email: false
-node_js:
-- '7'
+node_js: 7
 before_install:
-- npm install -g npm
-- npm install -g greenkeeper-shrinkwrap@1
-before_script: greenkeeper-shrinkwrap-update
-after_script: greenkeeper-shrinkwrap-upload
-after_success:
-- npm run deploy
+- npm install -g npm5
+- npm5 install -g greenkeeper-lockfile@1
+install: npm5 install
+before_script: greenkeeper-lockfile-update
+after_script: greenkeeper-lockfile-upload
+after_success: npm5 run deploy
 branches:
   except:
-    - /^v\d+\.\d+\.\d+$/
+  - /^v\d+\.\d+\.\d+$/
