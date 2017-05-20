@@ -59,10 +59,9 @@
   },
   "scripts": {
     "format": "prettier-standard-formatter jobs lib test",
-    "install": "npm prune",
     "db:start": "./start-couchdb",
     "deploy": "./deploy",
-    "pretest": "standard && npm run db:start",
+    "pretest": "standard && npm5 run db:start",
     "start": "node index.js",
     "test": "NODE_ENV=testing nyc tap test"
   },
