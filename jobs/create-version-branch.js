@@ -40,6 +40,11 @@ module.exports = async function (
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
 
+  const satisfies = semver.satisfies(version, oldVersion)
+  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock']
+  const hasLockFile = _.some(_.pick(repository.files, lockFiles))
+  if (satisfies && hasLockFile) return
+
   const billing = await getActiveBilling(accountId)
 
   if (repository.private && !billing) return
@@ -70,8 +75,6 @@ module.exports = async function (
     parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
     return parsed.toString()
   }
-
-  const satisfies = semver.satisfies(version, oldVersion)
 
   const openPR = _.get(
     await repositories.query('pr_open_by_dependency', {
