@@ -13,7 +13,9 @@ const getToken = require('../lib/get-token')
 
 const prContent = require('../content/initial-pr')
 
-module.exports = async function ({ repository, branchDoc, combined, installationId, accountId }) {
+module.exports = async function (
+  { repository, branchDoc, combined, installationId, accountId }
+) {
   accountId = String(accountId)
   const { repositories } = await dbs()
   const repositoryId = String(repository.id)
@@ -93,7 +95,8 @@ module.exports = async function ({ repository, branchDoc, combined, installation
       repo,
       title: enabled
         ? `Add Greenkeeper badge 🌴`
-        : (depsUpdated ? 'Update dependencies' : 'Add badge') + ' to enable Greenkeeper 🌴',
+        : (depsUpdated ? 'Update dependencies' : 'Add badge') +
+            ' to enable Greenkeeper 🌴',
       body: prContent({
         depsUpdated,
         ghRepo,

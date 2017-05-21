@@ -65,11 +65,12 @@ test('create-initial-branch', async t => {
         return {}
       })
 
-    const createInitial = proxyquire('../../jobs/create-initial-pr',
-      { '../lib/get-token': (installationId) => {
+    const createInitial = proxyquire('../../jobs/create-initial-pr', {
+      '../lib/get-token': installationId => {
         t.equals(installationId, 11)
         return { token: 'secure' }
-      }})
+      }
+    })
 
     await createInitial({
       repository: { id: 42 },

@@ -1,4 +1,4 @@
-const {test, tearDown} = require('tap')
+const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../lib/dbs')
 const proxyquire = require('proxyquire').noCallThru()
@@ -18,7 +18,7 @@ test('initial-timeout-pr', async t => {
     fullName: 'finnp/test'
   })
 
-  t.test('create', async (t) => {
+  t.test('create', async t => {
     const ghMock = nock('https://api.github.com')
       .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
         t.ok(title, 'github issue has title')
@@ -47,7 +47,7 @@ test('initial-timeout-pr', async t => {
     t.end()
   })
 
-  t.test('already exists', async (t) => {
+  t.test('already exists', async t => {
     nock('https://api.github.com') // no request should be made
 
     await installations.put({

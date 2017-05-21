@@ -6,7 +6,7 @@ const githubQueue = require('../lib/github-write-queue')
 const getToken = require('../lib/get-token')
 const paymentActivatedText = require('../content/payment-activated')
 
-module.exports = async function ({accountId}) {
+module.exports = async function ({ accountId }) {
   const { installations, repositories, payments } = await dbs()
   const installation = await installations.get(accountId)
   const { token } = await getToken(installation.installation)
@@ -26,20 +26,32 @@ module.exports = async function ({accountId}) {
 }
 
 async function paymentAdded ({ repositories, accountId, github }) {
-  const dbResult = _.map((await repositories.query('private_by_account', { key: accountId, include_docs: true })).rows, 'doc')
+  const dbResult = _.map(
+    (await repositories.query('private_by_account', {
+      key: accountId,
+      include_docs: true
+    })).rows,
+    'doc'
+  )
   const allRepos = _.keyBy(dbResult, '_id')
-  const initialPrs = _.get(await repositories.query('initial_pr_payment', {
-    keys: _.keys(allRepos),
-    include_docs: true
-  }), 'rows')
+  const initialPrs = _.get(
+    await repositories.query('initial_pr_payment', {
+      keys: _.keys(allRepos),
+      include_docs: true
+    }),
+    'rows'
+  )
 
   for (let pr of initialPrs) {
-    const {head, number, state} = pr.doc
+    const { head, number, state } = pr.doc
     if (state !== 'open') continue
     const repoDoc = allRepos[pr.key]
     const accountToken = repoDoc.accountToken
     const [owner, repo] = repoDoc.fullName.split('/')
-    const sha = _.get(await github.gitdata.getReference({ owner, repo, ref: `heads/${head}` }), 'object.sha')
+    const sha = _.get(
+      await github.gitdata.getReference({ owner, repo, ref: `heads/${head}` }),
+      'object.sha'
+    )
 
     if (!sha) throw new Error('Missing sha')
 
@@ -60,11 +72,13 @@ async function setSuccessStatus ({ github, owner, repo, sha, accountToken }) {
   }))
 }
 
-async function commentPaymentWarning ({ github, owner, repo, number, accountToken }) {
+async function commentPaymentWarning (
+  { github, owner, repo, number, accountToken }
+) {
   await githubQueue(() => github.issues.createComment({
     owner,
     repo,
     number,
-    body: paymentActivatedText({accountToken})
+    body: paymentActivatedText({ accountToken })
   }))
 }

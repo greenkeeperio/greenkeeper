@@ -48,7 +48,7 @@ module.exports = async function ({ repositoryId }) {
 
   const [owner, repo] = repoDoc.fullName.split('/')
 
-  await createDefaultLabel({github, owner, repo, name: config.label})
+  await createDefaultLabel({ github, owner, repo, name: config.label })
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
@@ -114,7 +114,9 @@ module.exports = async function ({ repositoryId }) {
     .createHmac('sha256', env.BADGES_SECRET)
     .update(slug.toLowerCase())
     .digest('hex')
-  const badgesTokenMaybe = repoDoc.private ? `?token=${tokenHash}&ts=${Date.now()}` : ''
+  const badgesTokenMaybe = repoDoc.private
+    ? `?token=${tokenHash}&ts=${Date.now()}`
+    : ''
   const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
 
   const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
@@ -139,7 +141,7 @@ module.exports = async function ({ repositoryId }) {
     {
       path: '.travis.yml',
       message: 'chore(travis): whitelist greenkeeper branches',
-      transform: (raw) => travisTransform(config, raw)
+      transform: raw => travisTransform(config, raw)
     },
     {
       path: '[README]',
@@ -219,7 +221,7 @@ module.exports = async function ({ repositoryId }) {
   }
 }
 
-async function createDefaultLabel ({github, name, owner, repo}) {
+async function createDefaultLabel ({ github, name, owner, repo }) {
   if (name !== false) {
     try {
       await githubQueue(() => github.issues.createLabel({
