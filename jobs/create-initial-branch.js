@@ -186,7 +186,7 @@ module.exports = async function ({ repositoryId }) {
     // When there are no changes and the badge already exists we can enable right away
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
-      return await maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
     } else {
       throw new Error('Could not create initial branch')
     }
