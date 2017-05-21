@@ -27,5 +27,5 @@ module.exports = async function ({ installation, repositories_removed }) {
 
   const hasPrivateRepos = repositories.some(repo => repo.private)
 
-  return await maybeUpdatePaymentsJob(accountId, hasPrivateRepos)
+  return maybeUpdatePaymentsJob(accountId, hasPrivateRepos)
 }
