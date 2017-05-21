@@ -16,7 +16,7 @@
     "json-in-place": "^1.0.1",
     "jsonwebtoken": "^7.1.9",
     "lodash": "^4.16.1",
-    "npm-registry-client": "^7.2.1",
+    "npm-registry-client": "^8.3.0",
     "pouchdb-http": "^6.0.2",
     "pouchdb-mapreduce": "^6.0.5",
     "pouchdb-upsert": "^2.2.0",
