@@ -3,18 +3,21 @@ const { test } = require('tap')
 
 const Github = require('../../lib/github')
 
-const { createDocs, updateRepoDoc, readPackageJson } = require('../../lib/repository-docs')
+const { createDocs, updateRepoDoc, readPackageJson } = require(
+  '../../lib/repository-docs'
+)
 
 test('readPackageJson', async t => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'token secret' }
   })
-  .get('/repos/finnp/test/contents/package.json')
-  .reply(200, {
-    type: 'file',
-    path: 'package.json',
-    content: Buffer.from(JSON.stringify({ name: 'testing' })).toString('base64')
-  })
+    .get('/repos/finnp/test/contents/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'testing' }))
+        .toString('base64')
+    })
 
   const github = Github()
   github.authenticate({
@@ -45,18 +48,18 @@ test('updateRepoDoc with package.json', async t => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'token secret' }
   })
-  .get('/repos/owner/repo/contents/package.json')
-  .reply(200, {
-    type: 'file',
-    path: 'package.json',
-    content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
-  })
-  .get('/repos/owner/repo/contents/package-lock.json')
-  .reply(200, {
-    type: 'file',
-    path: 'package-lock.json',
-    content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
-  })
+    .get('/repos/owner/repo/contents/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/package-lock.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package-lock.json',
+      content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
+    })
 
   const github = Github()
   github.authenticate({

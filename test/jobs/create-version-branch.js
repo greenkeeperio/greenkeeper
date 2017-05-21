@@ -409,9 +409,11 @@ test('create-version-branch', async t => {
       }
     })
 
-    const githubMock = nock('https://api.github.com').get('/repos/finnp/test').reply(200, {
-      default_branch: 'master'
-    })
+    const githubMock = nock('https://api.github.com')
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
 
     const newJob = await worker({
       dependency: '@finnpauls/dep',

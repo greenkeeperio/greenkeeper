@@ -135,7 +135,7 @@ test('create-initial-branch', async t => {
       .get('/repos/finnp/test/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
-        content: encodePkg({who: 'cares'})
+        content: encodePkg({ who: 'cares' })
       })
       .get('/repos/finnp/test')
       .reply(200, {

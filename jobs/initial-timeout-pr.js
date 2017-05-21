@@ -29,7 +29,7 @@ module.exports = async function ({ repositoryId, accountId }) {
     owner,
     repo,
     title: `Action required: Greenkeeper could not be activated 🚨`,
-    body: timeoutBody({fullName}),
+    body: timeoutBody({ fullName }),
     labels: [label]
   }))
 
