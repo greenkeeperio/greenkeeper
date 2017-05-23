@@ -26,7 +26,7 @@
     "request": "^2.75.0",
     "request-promise": "^4.1.1",
     "retry-promise": "^1.0.0",
-    "rollbar": "^0.6.2",
+    "rollbar": "^2.0.2",
     "semver": "^5.3.0",
     "stripe": "^4.15.1",
     "yml-in-place": "^1.0.2"
