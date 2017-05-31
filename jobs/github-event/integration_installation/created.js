@@ -1,7 +1,4 @@
-const crypto = require('crypto')
-
 const _ = require('lodash')
-const request = require('request-promise')
 
 const dbs = require('../../../lib/dbs')
 const getToken = require('../../../lib/get-token')
@@ -53,25 +50,6 @@ module.exports = async function ({ installation }) {
 
   statsd.increment('installs')
   statsd.event('install')
-
-  try {
-    const body = {
-      type: installation.account.type.toLowerCase(),
-      id: `github:${installation.account.id}`
-    }
-    const authorization = crypto
-      .createHmac('sha256', 'migrationyolosecret')
-      .update(body.type + body.id)
-      .digest('hex')
-    await request.post({
-      url: 'https://api.greenkeeper.io/migrate',
-      json: true,
-      headers: {
-        authorization
-      },
-      body
-    })
-  } catch (e) {}
 
   // scheduling create-initial-branch jobs
   return _(repoDocs)
