@@ -3,46 +3,7 @@ const { test } = require('tap')
 
 const Github = require('../../lib/github')
 
-const { createDocs, updateRepoDoc, readPackageJson } = require(
-  '../../lib/repository-docs'
-)
-
-test('readPackageJson', async t => {
-  nock('https://api.github.com', {
-    reqheaders: { Authorization: 'token secret' }
-  })
-    .get('/repos/finnp/test/contents/package.json')
-    .reply(200, {
-      type: 'file',
-      path: 'package.json',
-      content: Buffer.from(JSON.stringify({ name: 'testing' }))
-        .toString('base64')
-    })
-
-  const github = Github()
-  github.authenticate({
-    type: 'token',
-    token: 'secret'
-  })
-  const pkg = await readPackageJson(github, 'finnp/test')
-  t.is(pkg.name, 'testing')
-  t.end()
-})
-
-test('readPackageJson no file', async t => {
-  nock('https://api.github.com', {
-    reqheaders: { Authorization: 'token secret' }
-  })
-
-  const github = Github()
-  github.authenticate({
-    type: 'token',
-    token: 'secret'
-  })
-  const pkg = await readPackageJson(github, 'finnp/test2')
-  t.notOk(pkg)
-  t.end()
-})
+const { createDocs, updateRepoDoc } = require('../../lib/repository-docs')
 
 test('updateRepoDoc with package.json', async t => {
   nock('https://api.github.com', {

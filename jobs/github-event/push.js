@@ -3,7 +3,7 @@ const _ = require('lodash')
 const getToken = require('../../lib/get-token')
 const GitHub = require('../../lib/github')
 const dbs = require('../../lib/dbs')
-const { readPackageJson } = require('../../lib/repository-docs')
+const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
@@ -12,28 +12,17 @@ module.exports = async function (data) {
   const { repositories } = await dbs()
   const { after, repository, installation } = data
 
-  // No change on the default branch
-  if (
-    !data.head_commit || data.ref !== `refs/heads/${repository.default_branch}`
-  ) {
-    return
-  }
+  const branchRef = `refs/heads/${repository.default_branch}`
+  if (!data.head_commit || data.ref !== branchRef) return
 
-  const pkgAdded = _.some(data.commits, c => {
-    return _.includes(c.added, 'package.json')
-  })
+  const relevantFiles = [
+    'package.json',
+    'package-lock.json',
+    'npm-shrinkwrap.json',
+    'yarn.lock'
+  ]
 
-  const pkgRemoved = _.some(data.commits, c => {
-    return _.includes(c.removed, 'package.json')
-  })
-
-  const pkgModified = _.some(data.commits, c => {
-    return _.includes(c.modified, 'package.json')
-  })
-
-  // No changes to package.json
-  if (!pkgAdded && !pkgRemoved && !pkgModified) return
-
+  if (!hasRelevantChanges(data.commits, relevantFiles)) return
   const repositoryId = String(repository.id)
 
   let repodoc = await repositories.get(repositoryId)
@@ -42,28 +31,18 @@ module.exports = async function (data) {
   if (after === repodoc.headSha) return
   repodoc.headSha = after
 
-  if (pkgRemoved) {
-    _.unset(repodoc, ['packages', 'package.json'])
-    return disableRepo({ repositories, repository, repodoc })
-  }
-
   const { token } = await getToken(installation.id)
 
   const github = GitHub()
   github.authenticate({ type: 'token', token })
 
-  const pkg = await readPackageJson(github, repository.full_name)
-
-  if (!pkg) {
-    _.unset(repodoc, ['packages', 'package.json'])
-    return disableRepo({ repositories, repository, repodoc })
-  }
-
   const oldPkg = _.get(repodoc, ['packages', 'package.json'])
+  await updateRepoDoc(github, repodoc)
+  const pkg = _.get(repodoc, ['packages', 'package.json'])
+
+  if (!pkg) return disableRepo({ repositories, repository, repodoc })
 
   if (_.isEqual(oldPkg, pkg)) return
-
-  _.set(repodoc, ['packages', 'package.json'], pkg)
 
   const disabled = _.get(pkg, ['greenkeeper', 'disabled'])
   if (disabled) return disableRepo({ repositories, repository, repodoc })
@@ -119,6 +98,16 @@ function updateDoc (repositories, repository, repodoc) {
       })
     )
   )
+}
+
+function hasRelevantChanges (commits, files) {
+  return _.some(files, file => {
+    return _.some(['added', 'removed', 'modified'], changeType => {
+      return _.some(commits, commit => {
+        return _.includes(commit[changeType], file)
+      })
+    })
+  })
 }
 
 async function disableRepo ({ repositories, repodoc, repository }) {

@@ -19,6 +19,18 @@ test('github-event push', async t => {
         accountId: '123'
       },
       {
+        _id: '445',
+        fullName: 'finn/enabled',
+        accountId: '123',
+        enabled: true
+      },
+      {
+        _id: '446',
+        fullName: 'finn/enabled2',
+        accountId: '123',
+        enabled: true
+      },
+      {
         _id: '444:branch:1234abcd',
         type: 'branch',
         sha: '1234abcd',
@@ -45,12 +57,18 @@ test('github-event push', async t => {
     nock('https://api.github.com')
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
             lodash: '^1.0.0'
           }
         })
+      })
+      .get('/repos/finn/test/contents/package-lock.json')
+      .reply(200, {
+        path: 'package-lock.json',
+        content: encodePkg({})
       })
 
     const newJobs = await worker({
@@ -64,7 +82,7 @@ test('github-event push', async t => {
         {
           added: [],
           removed: [],
-          modified: ['package.json']
+          modified: ['package.json', 'package-lock.json']
         }
       ],
       repository: {
@@ -84,6 +102,9 @@ test('github-event push', async t => {
     t.is(newJobs.data.accountId, '123', 'repositoryId')
 
     const repo = await repositories.get('444')
+    t.ok(repo.files['package.json'])
+    t.ok(repo.files['package-lock.json'])
+    t.notOk(repo.files['npm-shrinkwrap.json'])
     t.same(repo.packages, {
       'package.json': {
         name: 'testpkg',
@@ -100,6 +121,7 @@ test('github-event push', async t => {
     nock('https://api.github.com')
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
@@ -157,6 +179,7 @@ test('github-event push', async t => {
     nock('https://api.github.com')
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
@@ -214,6 +237,7 @@ test('github-event push', async t => {
     nock('https://api.github.com')
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
+        path: 'package.json',
         content: Buffer.from('test').toString('base64')
       })
 
@@ -232,8 +256,8 @@ test('github-event push', async t => {
         }
       ],
       repository: {
-        id: 444,
-        full_name: 'finn/test',
+        id: 446,
+        full_name: 'finn/enabled2',
         name: 'test',
         owner: {
           login: 'finn'
@@ -244,9 +268,43 @@ test('github-event push', async t => {
 
     t.notOk(newJobs)
 
-    const repo = await repositories.get('444')
+    const repo = await repositories.get('446')
     t.notOk(repo.enabled)
     t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab3c')
+    t.end()
+  })
+
+  t.test('no relevant changes', async t => {
+    nock('https://api.github.com')
+      .get('/repos/finn/test/contents/package.json')
+      .reply(200, () => {
+        t.fail('should not request package.json')
+      })
+    const newJobs = await worker({
+      installation: {
+        id: 37
+      },
+      ref: 'refs/heads/master',
+      after: 'deadbeef',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: ['index.js'],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 445,
+        full_name: 'finn/enabled',
+        name: 'test',
+        owner: {
+          login: 'finn'
+        },
+        default_branch: 'master'
+      }
+    })
+    t.notOk(newJobs)
     t.end()
   })
 
@@ -256,6 +314,9 @@ test('github-event push', async t => {
       .reply(404, {})
 
     const newJobs = await worker({
+      installation: {
+        id: 37
+      },
       ref: 'refs/heads/master',
       after: 'deadbeef',
       head_commit: {},
@@ -267,8 +328,8 @@ test('github-event push', async t => {
         }
       ],
       repository: {
-        id: 444,
-        full_name: 'finn/test',
+        id: 445,
+        full_name: 'finn/enabled',
         name: 'test',
         owner: {
           login: 'finn'
@@ -278,7 +339,7 @@ test('github-event push', async t => {
     })
 
     t.notOk(newJobs)
-    const repo = await repositories.get('444')
+    const repo = await repositories.get('445')
     t.notOk(_.get(repo.packages, ['package.json']))
     t.is(repo.headSha, 'deadbeef')
     t.notOk(repo.enabled)
@@ -290,6 +351,8 @@ tearDown(async () => {
   const { repositories } = await dbs()
 
   await repositories.remove(await repositories.get('444'))
+  await repositories.remove(await repositories.get('445'))
+  await repositories.remove(await repositories.get('446'))
   await repositories.remove(await repositories.get('444:branch:1234abcd'))
   await repositories.remove(await repositories.get('444:branch:1234abce'))
 })
