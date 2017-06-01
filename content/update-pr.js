@@ -1,8 +1,7 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type, release, diffCommits, plan, isPrivate}) => md`
-${betaWarning(isPrivate, plan)}
+module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type, release, diffCommits}) => md`
 ## Version **${version}** of ${dependencyLink} just got published.
 
 <table>
@@ -58,13 +57,3 @@ ${_.compact([release, diffCommits])}
 Your [Greenkeeper](https://greenkeeper.io) Bot :palm_tree:
 
 `
-
-function betaWarning (isPrivate, plan) {
-  if (!isPrivate || plan !== 'beta') return ''
-
-  return md`
-|⚠️  Beta is ending on May 31st ⚠️ |
-| --- |
-|  To continue using *private repositories* with Greenkeeper, you need to [upgrade to a a paid plan](https://account.greenkeeper.io).  |
-  `
-}
