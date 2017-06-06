@@ -140,7 +140,8 @@ module.exports = async function ({ repositoryId }) {
       transform: raw => travisTransform(config, raw)
     },
     {
-      path: '[README]',
+      path: 'README.md',
+      create: true,
       message: 'docs(readme): add Greenkeeper badge',
       transform: (readme, path) => {
         // TODO: empty readme, no image support

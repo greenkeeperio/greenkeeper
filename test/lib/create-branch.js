@@ -153,7 +153,7 @@ test('create branch', async t => {
           transform: oldPkg => oldPkg.toUpperCase()
         },
         {
-          path: '[README]',
+          path: 'README.md',
           message: 'readme',
           transform: (old, path) => path === 'readme.md' && old.toLowerCase()
         }
