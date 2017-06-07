@@ -1,5 +1,3 @@
-// create initial branch
-
 const { test, tearDown } = require('tap')
 const nock = require('nock')
 const proxyquire = require('proxyquire').noCallThru()
@@ -31,6 +29,12 @@ test('create-initial-branch', async t => {
     t.plan(10)
 
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -68,7 +72,6 @@ test('create-initial-branch', async t => {
       })
 
     const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/create-branch': ({ transforms }) => {
         const newPkg = JSON.parse(
           transforms[0].transform(JSON.stringify({ devDependencies }))
@@ -117,7 +120,6 @@ test('create-initial-branch', async t => {
       fullName: 'finnp/test'
     })
     const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/create-branch': ({ transforms }) => {
         transforms[2].transform(
           'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.sv',
@@ -127,6 +129,12 @@ test('create-initial-branch', async t => {
     })
 
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -165,6 +173,12 @@ test('create-initial-branch', async t => {
     const worker = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
+    .post('/installations/37/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
 
     const newJob = await worker({
       repositoryId: 43

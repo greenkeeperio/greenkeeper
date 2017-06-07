@@ -1,18 +1,19 @@
 const nock = require('nock')
 const { test } = require('tap')
 const _ = require('lodash')
-const Github = require('../../lib/github')
 
 const getDiffCommits = require('../../lib/get-diff-commits')
 
 test('get-diff-commits', async t => {
   t.plan(4)
 
-  nock('https://api.github.com', {
-    reqheaders: {
-      Authorization: 'token secret'
-    }
-  })
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .get('/repos/finnp/test/compare/dead...beef')
     .reply(200, () => {
       t.pass('GitHub endpoint called')
@@ -36,11 +37,8 @@ test('get-diff-commits', async t => {
     })
     .reply(200, 'body <a href="https://github.com/greenkeeperio/greenkeeper">')
 
-  const github = Github()
-  github.authenticate({ type: 'token', token: 'secret' })
-
   const diff = await getDiffCommits({
-    github,
+    installationId: '123',
     owner: 'finnp',
     repo: 'test',
     base: 'dead',

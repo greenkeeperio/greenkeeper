@@ -2,7 +2,6 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 const proxyquire = require('proxyquire')
 
-const Github = require('../../lib/github')
 const dbs = require('../../lib/dbs')
 
 test('open-issue', async t => {
@@ -23,9 +22,9 @@ test('open-issue', async t => {
 
   const openIssue = proxyquire('../../lib/open-issue', {
     './create-branch': (
-      { github, owner, repo, branch, newBranch, path, message, transform }
+      { installationId, owner, repo, branch, newBranch, path, message, transform }
     ) => {
-      t.ok(github, 'create-branch github object')
+      t.ok(installationId, 'create-branch installationId')
       t.is(owner, 'finnp', 'create-branch owner')
       t.is(repo, 'testrepo', 'create-branch repo')
       t.is(branch, 'master', 'create-branch branch')
@@ -53,9 +52,13 @@ test('open-issue', async t => {
     }
   })
 
-  const github = Github()
-
   nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .post('/repos/finnp/testrepo/issues', ({ title, body, labels }) => {
       t.ok(title, 'github issue has title')
       t.same(labels, ['customlabel'], 'github issue correct label')
@@ -70,7 +73,7 @@ test('open-issue', async t => {
     })
 
   await openIssue({
-    github,
+    installationId: '123',
     repositoryId: '42',
     accountId: '1010',
     owner: 'finnp',

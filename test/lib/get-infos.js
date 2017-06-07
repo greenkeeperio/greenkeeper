@@ -2,7 +2,6 @@ const { test } = require('tap')
 const _ = require('lodash')
 const proxyquire = require('proxyquire')
 const nock = require('nock')
-const Github = require('../../lib/github')
 
 test('get changelog', async t => {
   const getInfos = proxyquire('../../lib/get-infos', {
@@ -11,11 +10,13 @@ test('get changelog', async t => {
     }
   })
 
-  nock('https://api.github.com', {
-    reqheaders: {
-      Authorization: 'token secret'
-    }
-  })
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .get('/repos/finnp/test/releases/tags/v2.2.2')
     .reply(200, {
       body_html: 'Cool new features! also fixed <a href="https://github.com/finnp/test/issues/1">#1</a>',
@@ -23,11 +24,8 @@ test('get changelog', async t => {
       html_url: 'http://github.com/link/to/thing'
     })
 
-  const github = Github()
-  github.authenticate({ type: 'token', token: 'secret' })
-
   const infos = await getInfos({
-    github,
+    installationId: '123',
     dependency: '@finnpauls/dep',
     version: '2.2.2',
     diffBase: '1.0.0',

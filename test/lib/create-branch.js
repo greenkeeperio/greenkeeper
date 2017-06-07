@@ -2,13 +2,20 @@ const nock = require('nock')
 const { test } = require('tap')
 
 const createBranch = require('../../lib/create-branch')
-const Github = require('../../lib/github')
+
+function ghToken (nocked) {
+  return nocked
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+}
 
 test('create branch', async t => {
   t.test('change one file', async t => {
-    nock('https://api.github.com', {
-      reqheaders: { Authorization: 'token secret' }
-    })
+    ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/contents/package.json')
       .query({ ref: 'master' })
       .reply(200, {
@@ -49,14 +56,8 @@ test('create branch', async t => {
       })
       .reply(201)
 
-    const github = Github()
-    github.authenticate({
-      type: 'token',
-      token: 'secret'
-    })
-
     const sha = await createBranch({
-      github,
+      installationId: 123,
       owner: 'owner',
       repo: 'repo',
       branch: 'master',
@@ -71,9 +72,7 @@ test('create branch', async t => {
   })
 
   t.test('change multiple files', async t => {
-    nock('https://api.github.com', {
-      reqheaders: { Authorization: 'token secret' }
-    })
+    ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/readme?ref=master')
       .reply(200, {
         path: 'readme.md',
@@ -141,14 +140,8 @@ test('create branch', async t => {
       })
       .reply(201)
 
-    const github = Github()
-    github.authenticate({
-      type: 'token',
-      token: 'secret'
-    })
-
     const sha = await createBranch({
-      github,
+      installationId: 123,
       owner: 'owner',
       repo: 'repo',
       branch: 'master',

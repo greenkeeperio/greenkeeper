@@ -1,14 +1,16 @@
 const nock = require('nock')
 const { test } = require('tap')
 
-const Github = require('../../lib/github')
-
 const { createDocs, updateRepoDoc } = require('../../lib/repository-docs')
 
 test('updateRepoDoc with package.json', async t => {
-  nock('https://api.github.com', {
-    reqheaders: { Authorization: 'token secret' }
-  })
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
       type: 'file',
@@ -22,13 +24,7 @@ test('updateRepoDoc with package.json', async t => {
       content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
     })
 
-  const github = Github()
-  github.authenticate({
-    type: 'token',
-    token: 'secret'
-  })
-
-  const doc = await updateRepoDoc(github, { fullName: 'owner/repo' })
+  const doc = await updateRepoDoc('123', { fullName: 'owner/repo' })
   t.is(doc.packages['package.json'].name, 'test')
   t.ok(doc.files['package-lock.json'], 'package-lock.json')
   t.ok(doc.files['package.json'], 'package.json')
@@ -37,9 +33,13 @@ test('updateRepoDoc with package.json', async t => {
 })
 
 test('get invalid package.json', async t => {
-  nock('https://api.github.com', {
-    reqheaders: { Authorization: 'token secret' }
-  })
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
       type: 'file',
@@ -47,13 +47,7 @@ test('get invalid package.json', async t => {
       content: Buffer.from('test').toString('base64')
     })
 
-  const github = Github()
-  github.authenticate({
-    type: 'token',
-    token: 'secret'
-  })
-
-  const doc = await updateRepoDoc(github, {
+  const doc = await updateRepoDoc('123', {
     fullName: 'owner/repo',
     packages: {
       'package.json': {

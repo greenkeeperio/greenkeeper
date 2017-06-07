@@ -2,7 +2,6 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
-const Github = require('../../lib/github')
 
 const deleteBranches = require('../../lib/delete-branches')
 
@@ -46,6 +45,12 @@ test('delete-branches', async t => {
   ])
 
   nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .delete('/repos/brot/lecker/git/refs/heads/greenkeeper-standard-10.0.0')
     .reply(200, () => {
       t.pass('deleted 10.0.0')
@@ -57,14 +62,8 @@ test('delete-branches', async t => {
       return {}
     })
 
-  const github = Github()
-  github.authenticate({
-    type: 'token',
-    token: 'secret'
-  })
-
   await deleteBranches(
-    { github, fullName: 'brot/lecker', repositoryId: '42' },
+    { installationId: '123', fullName: 'brot/lecker', repositoryId: '42' },
     {
       change: 'modified',
       after: '^10.0.0',

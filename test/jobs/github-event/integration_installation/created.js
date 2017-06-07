@@ -1,21 +1,18 @@
 const _ = require('lodash')
 const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire').noCallThru()
-
 const dbs = require('../../../../lib/dbs')
-const worker = proxyquire(
-  '../../../../jobs/github-event/integration_installation/created',
-  {
-    '../../../lib/get-token': () => ({ token: 'secure' })
-  }
-)
+const worker = require('../../../../jobs/github-event/integration_installation/created')
 
 test('github-event integration_installation created', async t => {
   const { installations, repositories } = await dbs()
-  nock('https://api.github.com', {
-    reqheaders: { Authorization: 'token secure' }
-  })
+  nock('https://api.github.com')
+    .post('/installations/1/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
     .get('/installation/repositories')
     .reply('200', {
       repositories: [

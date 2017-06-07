@@ -14,11 +14,15 @@ test('github-event status', async t => {
 
   t.test('initial pr', async t => {
     t.plan(6)
-    const worker = proxyquire('../../../jobs/github-event/status', {
-      '../../lib/get-token': () => ({ token: 'secure' })
-    })
+    const worker = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
+      .post('/installations/1336/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/club/mate/commits/deadbeef/status')
       .reply(200, {
         state: 'success',
@@ -35,7 +39,7 @@ test('github-event status', async t => {
     const newJob = await worker({
       state: 'success',
       sha: 'deadbeef',
-      installation: { id: 1337 },
+      installation: { id: 1336 },
       repository: {
         id: 42,
         full_name: 'club/mate',
@@ -50,18 +54,17 @@ test('github-event status', async t => {
     t.is(newJob.data.branchDoc.sha, 'deadbeef', 'branchDoc sha')
     t.is(newJob.data.repository.id, 42, 'repositoryId')
     t.is(newJob.data.combined.state, 'success', 'combined status')
-    t.is(newJob.data.installationId, 1337)
+    t.is(newJob.data.installationId, 1336)
   })
 
   t.test('version branch', async t => {
     t.plan(6)
     const worker = proxyquire('../../../jobs/github-event/status', {
-      '../../lib/get-token': () => ({ token: 'secure' }),
       '../../lib/create-initial-pr': () => {
         t.fail('create initial pr called')
       },
       '../../lib/handle-branch-status': args => {
-        t.ok(args.github, 'github')
+        t.is(args.installationId, 1337, 'installationId')
         t.is(args.branchDoc.dependency, 'test')
         t.is(args.accountId, '10', 'accountId')
         t.is(args.repository.id, 43, 'repositoryId')
@@ -70,6 +73,12 @@ test('github-event status', async t => {
     })
 
     nock('https://api.github.com')
+      .post('/installations/1337/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/club/mate/commits/deadbeef2/status')
       .reply(200, {
         state: 'success',
