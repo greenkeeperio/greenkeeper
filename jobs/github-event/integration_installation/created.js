@@ -30,11 +30,11 @@ module.exports = async function ({ installation }) {
   let res = await github.integrations.getInstallationRepositories({
     per_page: 100
   })
-  let { repositories } = res
+  let { repositories } = res.data
 
   while (github.hasNextPage(res)) {
     res = await github.getNextPage(res)
-    repositories = repositories.concat(res.repositories)
+    repositories = repositories.concat(res.data.repositories)
   }
 
   if (!repositories.length) return

@@ -20,14 +20,19 @@ test('github-event integration_installation created', async t => {
           id: 123,
           full_name: 'bar/repo',
           private: true
-        },
+        }
+      ]}, {
+        Link: '<https://api.github.com/installation/repositories?page=2>; rel="next"'
+      })
+    .get('/installation/repositories?page=2')
+    .reply('200', {
+      repositories: [
         {
           id: 234,
           full_name: 'bar/repo2',
           private: false
         }
-      ]
-    })
+      ]})
 
   const newJobs = await worker({
     installation: {
