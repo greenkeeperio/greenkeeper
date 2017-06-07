@@ -1,12 +1,9 @@
 const _ = require('lodash')
 const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire').noCallThru()
 
 const dbs = require('../../../lib/dbs')
-const worker = proxyquire('../../../jobs/github-event/push', {
-  '../../lib/get-token': () => ({ token: 'secure' })
-})
+const worker = require('../../../jobs/github-event/push')
 
 test('github-event push', async t => {
   const { repositories } = await dbs()
@@ -55,6 +52,12 @@ test('github-event push', async t => {
 
   t.test('package.json present', async t => {
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -119,6 +122,12 @@ test('github-event push', async t => {
 
   t.test('do branch cleanup on modify', async t => {
     nock('https://api.github.com')
+      .post('/installations/38/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -134,7 +143,7 @@ test('github-event push', async t => {
 
     const newJobs = await worker({
       installation: {
-        id: 37
+        id: 38
       },
       ref: 'refs/heads/master',
       after: '9049f1265b7d61be4a8904a9a27120d2064dab2b',
@@ -177,6 +186,12 @@ test('github-event push', async t => {
 
   t.test('do branch cleanup on remove', async t => {
     nock('https://api.github.com')
+      .post('/installations/39/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -192,7 +207,7 @@ test('github-event push', async t => {
 
     const newJobs = await worker({
       installation: {
-        id: 37
+        id: 39
       },
       ref: 'refs/heads/master',
       after: '9049f1265b7d61be4a8904a9a27120d2064dab1b',
@@ -235,6 +250,12 @@ test('github-event push', async t => {
 
   t.test('invalid package.json present', async t => {
     nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -243,7 +264,7 @@ test('github-event push', async t => {
 
     const newJobs = await worker({
       installation: {
-        id: 37
+        id: 40
       },
       ref: 'refs/heads/master',
       after: '9049f1265b7d61be4a8904a9a27120d2064dab3c',
@@ -276,13 +297,19 @@ test('github-event push', async t => {
 
   t.test('no relevant changes', async t => {
     nock('https://api.github.com')
+      .post('/installations/41/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, () => {
         t.fail('should not request package.json')
       })
     const newJobs = await worker({
       installation: {
-        id: 37
+        id: 41
       },
       ref: 'refs/heads/master',
       after: 'deadbeef',
@@ -310,12 +337,18 @@ test('github-event push', async t => {
 
   t.test('package.json deleted', async t => {
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(404, {})
 
     const newJobs = await worker({
       installation: {
-        id: 37
+        id: 42
       },
       ref: 'refs/heads/master',
       after: 'deadbeef',

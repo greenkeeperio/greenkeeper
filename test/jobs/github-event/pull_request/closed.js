@@ -1,11 +1,7 @@
 const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire').noCallThru()
 const nock = require('nock')
-
 const dbs = require('../../../../lib/dbs')
-const worker = proxyquire('../../../../jobs/github-event/pull_request/closed', {
-  '../../../lib/get-token': () => ({ token: 'secret' })
-})
+const worker = require('../../../../jobs/github-event/pull_request/closed')
 
 test('github-event pull_request closed', async t => {
   const { repositories } = await dbs()
@@ -26,6 +22,12 @@ test('github-event pull_request closed', async t => {
   t.test('initial pr merged', async t => {
     t.plan(6)
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .delete('/repos/finnp/test/git/refs/heads/thehead')
       .reply(200, () => {
         t.pass('deleted reference')

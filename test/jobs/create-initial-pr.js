@@ -2,7 +2,6 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
-const proxyquire = require('proxyquire').noCallThru()
 
 test('create-initial-branch', async t => {
   const { installations, repositories } = await dbs()
@@ -33,9 +32,15 @@ test('create-initial-branch', async t => {
       updatedAt: '2017-01-13T17:33:56.698Z'
     })
 
-    t.plan(4)
+    t.plan(3)
 
     nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
         default_branch: 'custom'
@@ -65,12 +70,7 @@ test('create-initial-branch', async t => {
         return {}
       })
 
-    const createInitial = proxyquire('../../jobs/create-initial-pr', {
-      '../lib/get-token': installationId => {
-        t.equals(installationId, 11)
-        return { token: 'secure' }
-      }
-    })
+    const createInitial = require('../../jobs/create-initial-pr')
 
     await createInitial({
       repository: { id: 42 },

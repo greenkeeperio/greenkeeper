@@ -1,15 +1,11 @@
 const { test, tearDown } = require('tap')
 const proxyquire = require('proxyquire')
 const nock = require('nock')
-const GitHub = require('../../lib/github')
 
 const dbs = require('../../lib/dbs')
 
 test('handle-branch-status', async t => {
   const { repositories, installations, npm } = await dbs()
-
-  const github = GitHub()
-  github.authenticate({ type: 'token', token: 'secure' })
 
   t.test('without issue', async t => {
     await Promise.all([
@@ -51,6 +47,12 @@ test('handle-branch-status', async t => {
       })
 
       nock('https://api.github.com')
+        .post('/installations/123/access_tokens')
+        .reply(200, {
+          token: 'secret'
+        })
+        .get('/rate_limit')
+        .reply(200, {})
         .delete('/repos/club/mate/git/refs/heads/branchname')
         .reply(422, () => {
           t.pass('deleted branch')
@@ -61,7 +63,7 @@ test('handle-branch-status', async t => {
         })
 
       const newJob = await handleBranchStatus({
-        github,
+        installationId: '123',
         accountId: '10',
         repository: {
           id: '42',
@@ -92,7 +94,7 @@ test('handle-branch-status', async t => {
       nock('https://api.github.com')
 
       const newJob = await handleBranchStatus({
-        github,
+        installationId: '123',
         accountId: 42,
         combined: { state: 'failure', statuses: [] },
         branchDoc: await repositories.get('42:branch:deadbeef2'),
@@ -139,13 +141,19 @@ test('handle-branch-status', async t => {
     ])
 
     nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .post('/repos/club/mate/issues/5/comments')
       .reply(201, () => {
         t.pass('commented on right issue')
       })
 
     const newJob = await handleBranchStatus({
-      github,
+      installationId: '123',
       accountId: 43,
       combined: { state: 'success', statuses: [] },
       branchDoc: await repositories.get('43:branch:deadbeef3'),

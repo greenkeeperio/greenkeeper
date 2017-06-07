@@ -9,8 +9,11 @@ test('create-version-branch', async t => {
 
   await installations.put({
     _id: '123',
-    installation: 37,
-    plan: 'free'
+    installation: 37
+  })
+  await installations.put({
+    _id: '124',
+    installation: 38
   })
 
   t.test('new pull request', async t => {
@@ -29,6 +32,12 @@ test('create-version-branch', async t => {
     t.plan(13)
 
     const githubMock = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, () => {
         t.pass('pull request created')
@@ -60,9 +69,8 @@ test('create-version-branch', async t => {
       })
 
     const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/get-infos': (
-        { github, dependency, version, diffBase, versions }
+        { installationId, dependency, version, diffBase, versions }
       ) => {
         t.pass('used get-infos')
         t.same(
@@ -74,7 +82,7 @@ test('create-version-branch', async t => {
           'passed the versions'
         )
         t.is(version, '2.0.0', 'passed correct version')
-        t.ok(github, 'passed the github object')
+        t.is(installationId, 37, 'passed the installationId object')
         t.is(dependency, '@finnpauls/dep', 'passed correct dependency')
         return {
           dependencyLink: '[]()',
@@ -137,7 +145,7 @@ test('create-version-branch', async t => {
   t.test('new pull request private repo', async t => {
     await repositories.put({
       _id: '421',
-      accountId: '123',
+      accountId: '124',
       fullName: 'finnp/testtest',
       private: true,
       packages: {
@@ -149,12 +157,18 @@ test('create-version-branch', async t => {
       }
     })
     await payments.put({
-      _id: '123',
+      _id: '124',
       plan: 'personal'
     })
     t.plan(13)
 
     const githubMock = nock('https://api.github.com')
+      .post('/installations/38/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
       .reply(200, () => {
         t.pass('pull request created')
@@ -186,9 +200,8 @@ test('create-version-branch', async t => {
       })
 
     const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/get-infos': (
-        { github, dependency, version, diffBase, versions }
+        { installationId, dependency, version, diffBase, versions }
       ) => {
         t.pass('used get-infos')
         t.same(
@@ -200,7 +213,7 @@ test('create-version-branch', async t => {
           'passed the versions'
         )
         t.is(version, '2.0.0', 'passed correct version')
-        t.ok(github, 'passed the github object')
+        t.is(installationId, 38, 'passed the installationId object')
         t.is(dependency, '@finnpauls/dep', 'passed correct dependency')
         return {
           dependencyLink: '[]()',
@@ -236,7 +249,7 @@ test('create-version-branch', async t => {
 
     const newJob = await worker({
       dependency: '@finnpauls/dep',
-      accountId: '123',
+      accountId: '124',
       repositoryId: '421',
       type: 'devDependencies',
       distTag: 'latest',
@@ -298,6 +311,12 @@ test('create-version-branch', async t => {
       })
 
     nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .get('/repos/finnp/test2')
       .reply(200, {
         default_branch: 'master'
@@ -309,9 +328,8 @@ test('create-version-branch', async t => {
       })
 
     const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/get-infos': (
-        { github, dependency, version, diffBase, versions }
+        { installationId, dependency, version, diffBase, versions }
       ) => {
         t.pass('used get-infos')
         t.same(
@@ -323,7 +341,7 @@ test('create-version-branch', async t => {
           'passed the versions'
         )
         t.is(version, '2.0.0', 'passed correct version')
-        t.ok(github, 'passed the github object')
+        t.is(installationId, 37, 'passed the installationId object')
         t.is(dependency, '@finnpauls/dep2', 'passed correct dependency')
         return {
           dependencyLink: '[]()',
@@ -396,7 +414,6 @@ test('create-version-branch', async t => {
     t.plan(2)
 
     const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' }),
       '../lib/create-branch': ({ transform }) => {
         const newPkg = transform(
           JSON.stringify({
@@ -437,9 +454,7 @@ test('create-version-branch', async t => {
   })
 
   t.test('ignore invalid oldVersion', async t => {
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' })
-    })
+    const worker = require('../../jobs/create-version-branch')
 
     const newJob = await worker({
       distTag: 'latest',
@@ -464,9 +479,7 @@ test('create-version-branch', async t => {
       }
     })
 
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-token': () => ({ token: 'secure' })
-    })
+    const worker = require('../../jobs/create-version-branch')
 
     const newJob = await worker({
       dependency: 'b',
@@ -489,6 +502,7 @@ tearDown(async () => {
 
   await Promise.all([
     installations.remove(await installations.get('123')),
+    installations.remove(await installations.get('124')),
     repositories.remove(await repositories.get('42:branch:1234abcd')),
     repositories.remove(await repositories.get('43:branch:1234abcd')),
     repositories.remove(await repositories.get('42:pr:321')),
@@ -498,6 +512,6 @@ tearDown(async () => {
     repositories.remove(await repositories.get('44')),
     repositories.remove(await repositories.get('421')),
     repositories.remove(await repositories.get('45')),
-    payments.remove(await payments.get('123'))
+    payments.remove(await payments.get('124'))
   ])
 })

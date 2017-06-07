@@ -1,11 +1,8 @@
 const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../lib/dbs')
-const proxyquire = require('proxyquire').noCallThru()
 
-const worker = proxyquire('../../jobs/initial-timeout-pr', {
-  '../lib/get-token': () => ({ token: 'secure' })
-})
+const worker = require('../../jobs/initial-timeout-pr')
 
 test('initial-timeout-pr', async t => {
   const { installations, repositories } = await dbs()
@@ -20,6 +17,12 @@ test('initial-timeout-pr', async t => {
 
   t.test('create', async t => {
     const ghMock = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
       .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
         t.ok(title, 'github issue has title')
         t.same(labels, ['greenkeeper'], 'github issue label')
