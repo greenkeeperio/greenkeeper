@@ -1,7 +1,5 @@
 const _ = require('lodash')
 
-const getToken = require('../../lib/get-token')
-const GitHub = require('../../lib/github')
 const dbs = require('../../lib/dbs')
 const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
@@ -31,13 +29,8 @@ module.exports = async function (data) {
   if (after === repodoc.headSha) return
   repodoc.headSha = after
 
-  const { token } = await getToken(installation.id)
-
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
-
   const oldPkg = _.get(repodoc, ['packages', 'package.json'])
-  await updateRepoDoc(github, repodoc)
+  await updateRepoDoc(installation.id, repodoc)
   const pkg = _.get(repodoc, ['packages', 'package.json'])
 
   if (!pkg) return disableRepo({ repositories, repository, repodoc })
@@ -80,7 +73,7 @@ module.exports = async function (data) {
   await Promise.mapSeries(
     branches,
     deleteBranches.bind(null, {
-      github,
+      installationId: installation.id,
       fullName: repository.full_name,
       repositoryId
     })

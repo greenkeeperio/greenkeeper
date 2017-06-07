@@ -2,16 +2,14 @@ const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 
-const GitHub = require('../lib/github')
 const dbs = require('../lib/dbs')
-const getToken = require('../lib/get-token')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
 const getRangedVersion = require('../lib/get-ranged-version')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
-const githubQueue = require('../lib/github-write-queue')
+const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling } = require('../lib/payments')
 
@@ -52,10 +50,9 @@ module.exports = async function (
   const [owner, repo] = repository.fullName.split('/')
   const config = getConfig(repository)
   if (_.includes(config.ignore, dependency)) return
-  const { token } = await getToken(installation.installation)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
-  const { default_branch: base } = await github.repos.get({ owner, repo })
+  const installationId = installation.installation
+  const ghqueue = githubQueue(installationId)
+  const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
 
   const newBranch = `${config.branchPrefix}${dependency}-${version}`
 
@@ -98,7 +95,7 @@ module.exports = async function (
   }
 
   const sha = await createBranch({
-    github,
+    installationId,
     owner,
     repo,
     branch: base,
@@ -146,7 +143,7 @@ module.exports = async function (
     : oldVersionResolved
 
   const { dependencyLink, release, diffCommits } = await getInfos({
-    github,
+    installationId,
     dependency,
     version,
     diffBase,
@@ -156,7 +153,7 @@ module.exports = async function (
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
   if (openPR) {
-    await githubQueue(() => github.issues.createComment({
+    await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
@@ -185,7 +182,7 @@ module.exports = async function (
   })
 
   // verify pull requests commit
-  await githubQueue(() => github.repos.createStatus({
+  await ghqueue.write(github => github.repos.createStatus({
     sha,
     owner,
     repo,
@@ -196,7 +193,7 @@ module.exports = async function (
   }))
 
   const createdPr = await createPr({
-    github,
+    ghqueue,
     title,
     body,
     base,
@@ -223,7 +220,7 @@ module.exports = async function (
   })
 
   if (config.label !== false) {
-    await githubQueue(() => github.issues.addLabels({
+    await ghqueue.write(github => github.issues.addLabels({
       number: createdPr.number,
       labels: [config.label],
       owner,
@@ -232,9 +229,9 @@ module.exports = async function (
   }
 }
 
-async function createPr ({ github, title, body, base, head, owner, repo }) {
+async function createPr ({ ghqueue, title, body, base, head, owner, repo }) {
   try {
-    return await githubQueue(() => github.pullRequests.create({
+    return await ghqueue.write(github => github.pullRequests.create({
       title,
       body,
       base,
@@ -244,12 +241,12 @@ async function createPr ({ github, title, body, base, head, owner, repo }) {
     }))
   } catch (err) {
     if (err.code !== 422) throw err
-    const allPrs = await github.pullRequests.getAll({
+    const allPrs = await ghqueue.read(github => github.pullRequests.getAll({
       base,
       head: owner + ':' + head,
       owner,
       repo
-    })
+    }))
 
     if (allPrs.length > 0) return allPrs.shift()
   }

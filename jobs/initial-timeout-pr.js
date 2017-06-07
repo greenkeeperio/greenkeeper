@@ -1,8 +1,6 @@
-const Github = require('../lib/github')
 const dbs = require('../lib/dbs')
-const getToken = require('../lib/get-token')
 const statsd = require('../lib/statsd')
-const githubQueue = require('../lib/github-write-queue')
+const githubQueue = require('../lib/github-queue')
 const updatedAt = require('../lib/updated-at')
 const timeoutBody = require('../content/timeout-issue')
 const getConfig = require('../lib/get-config')
@@ -10,9 +8,7 @@ const getConfig = require('../lib/get-config')
 module.exports = async function ({ repositoryId, accountId }) {
   const { installations, repositories } = await dbs()
   const installation = await installations.get(String(accountId))
-  const { token } = await getToken(installation.installation)
-  const github = Github()
-  github.authenticate({ type: 'token', token })
+  const installationId = installation.installation
 
   const pr = await repositories.query('by_pr', {
     key: [String(repositoryId), 'greenkeeper/initial']
@@ -25,7 +21,7 @@ module.exports = async function ({ repositoryId, accountId }) {
   const [owner, repo] = fullName.split('/')
   const { label } = getConfig(repoDoc)
 
-  const { number } = await githubQueue(() => github.issues.create({
+  const { number } = await githubQueue(installationId).write(github => github.issues.create({
     owner,
     repo,
     title: `Action required: Greenkeeper could not be activated 🚨`,
