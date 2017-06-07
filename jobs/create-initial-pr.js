@@ -5,11 +5,9 @@ const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
 const dbs = require('../lib/dbs')
 const env = require('../lib/env')
-const githubQueue = require('../lib/github-write-queue')
-const GitHub = require('../lib/github')
+const githubQueue = require('../lib/github-queue')
 const { hasBilling } = require('../lib/payments')
 const upsert = require('../lib/upsert')
-const getToken = require('../lib/get-token')
 
 const prContent = require('../content/initial-pr')
 
@@ -21,9 +19,6 @@ module.exports = async function (
   const repositoryId = String(repository.id)
   let repodoc = await repositories.get(repositoryId)
   const config = getConfig(repodoc)
-  const { token } = await getToken(installationId)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
 
   const [owner, repo] = repodoc.fullName.split('/')
   const {
@@ -50,7 +45,9 @@ module.exports = async function (
     state: combined.state
   })
 
-  await githubQueue(() => github.repos.createStatus({
+  const ghqueue = githubQueue(installationId)
+
+  await ghqueue.write(github => github.repos.createStatus({
     owner,
     repo,
     sha,
@@ -62,7 +59,7 @@ module.exports = async function (
 
   const accountHasBilling = await hasBilling(accountId)
   if (repodoc.private && !accountHasBilling) {
-    await githubQueue(() => github.repos.createStatus({
+    await ghqueue.write(github => github.repos.createStatus({
       owner,
       repo,
       sha,
@@ -73,7 +70,7 @@ module.exports = async function (
     }))
   }
 
-  const ghRepo = await github.repos.get({ owner, repo })
+  const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
 
   const secret = repodoc.private &&
     crypto
@@ -90,7 +87,7 @@ module.exports = async function (
     var {
       id,
       number
-    } = await githubQueue(() => github.pullRequests.create({
+    } = await ghqueue.write(github => github.pullRequests.create({
       owner,
       repo,
       title: enabled
@@ -116,7 +113,7 @@ module.exports = async function (
     statsd.increment('initial_pullrequests')
 
     if (config.label !== false) {
-      await githubQueue(() => github.issues.addLabels({
+      await ghqueue.write(github => github.issues.addLabels({
         owner,
         repo,
         number,
@@ -128,12 +125,12 @@ module.exports = async function (
 
     // in case the pull request was already created
     // we just store that PRs info
-    const pr = (await github.pullRequests.getAll({
+    const pr = (await ghqueue.read(github => github.pullRequests.getAll({
       owner,
       repo,
       base,
       head: `${owner}:${head}`
-    }))[0]
+    })))[0]
 
     id = pr.id
     number = pr.number

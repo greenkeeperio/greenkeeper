@@ -1,8 +1,7 @@
 const _ = require('lodash')
 
 const dbs = require('../../lib/dbs')
-const GitHub = require('../../lib/github')
-const getToken = require('../../lib/get-token')
+const GithubQueue = require('../../lib/github-queue')
 const handleBranchStatus = require('../../lib/handle-branch-status')
 
 module.exports = async function ({ state, sha, repository, installation }) {
@@ -13,16 +12,13 @@ module.exports = async function ({ state, sha, repository, installation }) {
 
   const [owner, repo] = repository.full_name.split('/')
   const accountId = String(repository.owner.id)
-  const { token } = await getToken(installation.id)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
-
+  const installationId = installation.id
   // not a success or failure state
-  const combined = await github.repos.getCombinedStatus({
+  const combined = await GithubQueue(installationId).read(github => github.repos.getCombinedStatus({
     owner,
     repo,
     ref: sha
-  })
+  }))
   if (!_.includes(['success', 'failure'], combined.state)) return
 
   const branchDoc = _.get(
@@ -54,7 +50,7 @@ module.exports = async function ({ state, sha, repository, installation }) {
   }
 
   await handleBranchStatus({
-    github,
+    installationId,
     branchDoc,
     accountId,
     repository,

@@ -12,15 +12,13 @@ const escapeRegex = require('escape-string-regexp')
 
 const RegClient = require('../lib/npm-registry-client')
 const env = require('../lib/env')
-const Github = require('../lib/github')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
-const getToken = require('../lib/get-token')
 const getConfig = require('../lib/get-config')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const { updateRepoDoc } = require('../lib/repository-docs')
-const githubQueue = require('../lib/github-write-queue')
+const githubQueue = require('../lib/github-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 
@@ -31,13 +29,11 @@ module.exports = async function ({ repositoryId }) {
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
-  const { token } = await getToken(installation.installation)
-  const github = Github()
-  github.authenticate({ type: 'token', token })
+  const installationId = installation.installation
 
   if (repoDoc.fork && !repoDoc.hasIssues) return
 
-  await updateRepoDoc(github, repoDoc)
+  await updateRepoDoc(installationId, repoDoc)
   if (!_.get(repoDoc, ['packages', 'package.json'])) return
   await upsert(repositories, repoDoc._id, repoDoc)
 
@@ -48,7 +44,7 @@ module.exports = async function ({ repositoryId }) {
 
   const [owner, repo] = repoDoc.fullName.split('/')
 
-  await createDefaultLabel({ github, owner, repo, name: config.label })
+  await createDefaultLabel({ installationId, owner, repo, name: config.label })
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
@@ -103,7 +99,7 @@ module.exports = async function ({ repositoryId }) {
     .filter(Boolean)
     .value()
 
-  const ghRepo = await github.repos.get({ owner, repo })
+  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
 
   const branch = ghRepo.default_branch
 
@@ -174,7 +170,7 @@ module.exports = async function ({ repositoryId }) {
   ]
 
   const sha = await createBranch({
-    github,
+    installationId,
     owner,
     repo,
     branch,
@@ -221,10 +217,10 @@ module.exports = async function ({ repositoryId }) {
   }
 }
 
-async function createDefaultLabel ({ github, name, owner, repo }) {
+async function createDefaultLabel ({ installationId, name, owner, repo }) {
   if (name !== false) {
     try {
-      await githubQueue(() => github.issues.createLabel({
+      await githubQueue(installationId).write(github => github.issues.createLabel({
         owner,
         repo,
         name,

@@ -1,10 +1,8 @@
 const _ = require('lodash')
 
-const GitHub = require('../../../lib/github')
-const getToken = require('../../../lib/get-token')
+const githubQueue = require('../../../lib/github-queue')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
-const githubQueue = require('../../../lib/github-write-queue')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -30,15 +28,12 @@ module.exports = async function (data) {
   const accountId = repodoc.accountId
 
   const [owner, repo] = repository.full_name.split('/')
-  const { token } = await getToken(installation.id)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
 
   repodoc = await upsert(repositories, String(repository.id), {
     enabled: true
   })
   try {
-    await githubQueue(() => github.gitdata.deleteReference({
+    await githubQueue(installation.id).write(github => github.gitdata.deleteReference({
       owner,
       repo,
       ref: `heads/${prdoc.head}`
