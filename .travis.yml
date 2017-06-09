@@ -3,7 +3,7 @@ services:
 - docker
 cache:
   directories:
-  - node_modules
+  - $HOME/.npm
 notifications:
   email: false
 node_js: 7
