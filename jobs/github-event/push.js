@@ -35,7 +35,7 @@ module.exports = async function (data) {
 
   if (!pkg) return disableRepo({ repositories, repository, repodoc })
 
-  if (_.isEqual(oldPkg, pkg)) return
+  if (_.isEqual(oldPkg, pkg)) return updateDoc(repositories, repository, repodoc)
 
   const disabled = _.get(pkg, ['greenkeeper', 'disabled'])
   if (disabled) return disableRepo({ repositories, repository, repodoc })
