@@ -22,7 +22,7 @@
     "pouchdb-upsert": "^2.2.0",
     "promise-queue": "^2.2.3",
     "promise-retry": "^1.1.1",
-    "readme-badger": "^0.1.2",
+    "readme-badger": "^0.2.0",
     "request": "^2.75.0",
     "request-promise": "^4.1.1",
     "retry-promise": "^1.0.0",

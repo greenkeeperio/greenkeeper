@@ -48,7 +48,7 @@ test('open-issue', async t => {
         'pinned standard to 1.4.0'
       )
 
-      return { sha: 'deadbeef' }
+      return 'deadbeef'
     }
   })
 
