@@ -3,6 +3,7 @@
 <img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
+[![Slack](https://greenkeeper-slack.herokuapp.com/badge.svg)](https://greenkeeper-slack.herokuapp.com/)
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
 [![Dependency Status](https://david-dm.org/greenkeeperio/greenkeeper/master.svg)](https://david-dm.org/greenkeeperio/greenkeeper/master)
 [![devDependency Status](https://david-dm.org/greenkeeperio/greenkeeper/master/dev-status.svg)](https://david-dm.org/greenkeeperio/greenkeeper/master#info=devDependencies)
