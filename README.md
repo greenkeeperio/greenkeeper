@@ -73,10 +73,7 @@ And if a you’ve got stuff to do, we understand. Sometimes you simply have to m
 4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get more reliable software with a minimum amount of work.
 
 ### Additional Notes
-
-- The old oAuth application based Greenkeeper will automatically be disabled for the user or organization you're installing it on, so you don't have two versions running.
 - With the new Greenkeeper public scoped npm packages work out of the box. Private scoped packages require an additional setup step, which is described in the initial pull request.
-- You no longer need the Greenkeeper CLI to interact with the service.
 
 ---
 
