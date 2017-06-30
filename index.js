@@ -64,13 +64,16 @@ require('./lib/rollbar')
   }
 
   const scheduleRemindersJobData = Buffer.from(JSON.stringify({name: 'schedule-stale-initial-pr-reminders'}))
-  setInterval(async () => {
+  async function scheduleReminders () {
     try {
       await scheduleJob(scheduleRemindersJobData, {priority: 1})
     } catch (e) {
       console.log(e)
     }
-  }, 60 * 60 * 1000)
+  }
+
+  setTimeout(scheduleReminders, 5000)
+  setInterval(scheduleReminders, 24 * 60 * 60 * 1000)
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
