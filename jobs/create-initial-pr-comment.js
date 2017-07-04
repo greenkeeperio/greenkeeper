@@ -1,0 +1,82 @@
+const crypto = require('crypto')
+
+const _ = require('lodash')
+const statsd = require('../lib/statsd')
+const dbs = require('../lib/dbs')
+const env = require('../lib/env')
+const githubQueue = require('../lib/github-queue')
+const upsert = require('../lib/upsert')
+
+const prContent = require('../content/initial-pr')
+
+module.exports = async function (
+  { repository, branchDoc, combined, installationId, accountId, prDocId }
+) {
+  accountId = String(accountId)
+  const { repositories } = await dbs()
+  const repositoryId = String(repository.id)
+
+  const prDoc = await repositories.get(prDocId)
+  if (prDoc.initialPrCommentSent) return
+
+  const repodoc = await repositories.get(repositoryId)
+  const [owner, repo] = repodoc.fullName.split('/')
+  const {
+    head,
+    travisModified,
+    depsUpdated,
+    badgeAdded,
+    badgeUrl
+  } = branchDoc
+
+  branchDoc = await upsert(repositories, branchDoc._id, {
+    statuses: combined.statuses,
+    processed: true,
+    state: combined.state
+  })
+
+  const ghqueue = githubQueue(installationId)
+
+  const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  const issue = await ghqueue.read(github => github.issues.get({
+    owner,
+    repo,
+    number: prDoc.number
+  }))
+
+  if (issue.state !== 'open' || issue.locked) return
+
+  const secret = repodoc.private &&
+    crypto
+      .createHmac('sha256', env.NPMHOOKS_SECRET)
+      .update(String(installationId))
+      .digest('hex')
+
+  const accountTokenUrl = `https://account.greenkeeper.io/status?token=${repodoc.accountToken}`
+
+  const files = _.get(repodoc, 'files', {})
+
+  await ghqueue.write(github => github.issues.createComment({
+    owner,
+    repo,
+    body: prContent({
+      depsUpdated,
+      ghRepo,
+      newBranch: head,
+      badgeUrl: badgeAdded && badgeUrl,
+      travisModified,
+      secret,
+      installationId,
+      success: combined.state === 'success',
+      enabled: false,
+      accountTokenUrl,
+      files
+    }),
+    number: prDoc.number
+  }))
+  statsd.increment('initial_pullrequest_comments')
+
+  await upsert(repositories, prDocId, {
+    initialPrCommentSent: true
+  })
+}

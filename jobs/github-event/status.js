@@ -37,6 +37,30 @@ module.exports = async function ({ state, sha, repository, installation }) {
   if (branchDoc.state === combined.state) return
 
   if (branchDoc.initial) {
+    const result = await repositories.allDocs({
+      include_docs: true,
+      descending: true,
+      startkey: `${repository.id}:pr:\uffff`,
+      endkey: `${repository.id}:pr:`
+    })
+    const initialRow = result.rows.find((row) => {
+      return row.doc.initial && row.doc.createdByUser
+    })
+
+    if (initialRow) {
+      return {
+        data: {
+          name: 'create-initial-pr-comment',
+          accountId,
+          branchDoc,
+          prDocId: initialRow.doc._id,
+          repository,
+          combined,
+          installationId: installation.id
+        }
+      }
+    }
+
     return {
       data: {
         name: 'create-initial-pr',
