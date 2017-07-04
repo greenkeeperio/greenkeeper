@@ -1,6 +1,7 @@
 const githubQueue = require('../lib/github-queue')
 const dbs = require('../lib/dbs')
 const upsert = require('../lib/upsert')
+const statsd = require('../lib/statsd')
 const staleInitialPRReminderComment = require('../content/stale-initial-pr-reminder')
 
 module.exports = async function (
@@ -38,4 +39,6 @@ module.exports = async function (
   await upsert(repositories, repositoryId, {
     staleInitialPRReminder: true
   })
+
+  statsd.increment('stale-initial-pr-reminder')
 }
