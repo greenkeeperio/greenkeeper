@@ -16,6 +16,7 @@ module.exports = async function (
   const ghqueue = githubQueue(installationId)
 
   if (repository.enabled) return
+  if (repository.staleInitialPRReminder) return
 
   const [owner, repo] = repository.fullName.split('/')
 
