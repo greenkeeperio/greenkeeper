@@ -97,6 +97,33 @@ test('send-stale-initial-pr-reminder', async t => {
     await waitFor(50)
   })
 
+  t.test('does nothing if the repo has already received the reminder', async t => {
+    t.plan(1)
+
+    await upsert(repositories, '42', {staleInitialPRReminder: true})
+
+    githubNock
+      .get('/repos/finnp/test/issues/1234')
+      .reply(200, () => {
+        t.fail('Should not query issue status')
+        return {}
+      })
+      .post('/repos/finnp/test/issues/1234/comments')
+      .reply(201, () => {
+        t.fail('Should not post comment')
+        return {}
+      })
+
+    const newJob = await worker({
+      prNumber: 1234,
+      repositoryId: 42,
+      accountId: 123
+    })
+
+    t.notOk(newJob, 'no new job')
+    await waitFor(50)
+  })
+
   t.test('does nothing if the issue was closed in the meanwhile', async t => {
     t.plan(1)
 
