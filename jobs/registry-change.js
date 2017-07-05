@@ -62,36 +62,38 @@ module.exports = async function (
     '_id'
   )
 
-  return packages.map(pkg => {
-    const account = accounts[pkg.value.accountId]
-    const plan = account.plan
+  return packages
+    .filter(pkg => pkg.value.type !== 'peerDependencies')
+    .map(pkg => {
+      const account = accounts[pkg.value.accountId]
+      const plan = account.plan
 
-    const satisfyingVersions = Object.keys(versions)
-      .filter(version => semver.satisfies(version, pkg.value.oldVersion))
-      .sort(semver.rcompare)
+      const satisfyingVersions = Object.keys(versions)
+        .filter(version => semver.satisfies(version, pkg.value.oldVersion))
+        .sort(semver.rcompare)
 
-    const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
-      ? satisfyingVersions[1]
-      : satisfyingVersions[0]
+      const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
+        ? satisfyingVersions[1]
+        : satisfyingVersions[0]
 
-    if (isFromHook && String(account.installation) !== installation) return {}
+      if (isFromHook && String(account.installation) !== installation) return {}
 
-    return {
-      data: Object.assign(
-        {
-          name: 'create-version-branch',
-          dependency,
-          distTags,
-          distTag,
-          versions,
-          oldVersionResolved,
-          repositoryId: pkg.id,
-          installation: account.installation,
-          plan
-        },
-        pkg.value
-      ),
-      plan
-    }
-  })
+      return {
+        data: Object.assign(
+          {
+            name: 'create-version-branch',
+            dependency,
+            distTags,
+            distTag,
+            versions,
+            oldVersionResolved,
+            repositoryId: pkg.id,
+            installation: account.installation,
+            plan
+          },
+          pkg.value
+        ),
+        plan
+      }
+    })
 }
