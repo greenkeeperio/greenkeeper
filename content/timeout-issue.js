@@ -11,7 +11,7 @@ If you have already set up a CI for this repository, you might need to check you
 
 We recommend using [Travis CI](https://travis-ci.org), but Greenkeeper will work with every other CI service as well.
 
-Once you have installed CI on your repository, please delete the \`greenkeeper/initial\` branch in your repository and reinstall the Greenkeeper app.
+Once you have installed CI on this repository, you’ll need to re-trigger Greenkeeper’s initial Pull Request. To do this, please delete the \`greenkeeper/initial\` branch in this repository, and then remove and re-add this repository to the Greenkeeper integration’s white list on Github. You'll find this list on your repo or organiszation’s __settings__ page, under __Installed GitHub Apps__.
 `
 function branchLink (fullName) {
   return md.link(
