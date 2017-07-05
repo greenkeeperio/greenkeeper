@@ -62,8 +62,24 @@ module.exports = async function (
     '_id'
   )
 
-  return packages
+  // Prioritize `dependencies` over all other dependency types
+  // https://github.com/greenkeeperio/greenkeeper/issues/409
+
+  const order = {
+    'dependencies': 1,
+    'devDependencies': 2,
+    'optionalDependencies': 3
+  }
+
+  const sortByDependency = (packageA, packageB) => {
+    return order[packageA.value.type] - order[packageB.value.type]
+  }
+
+  const filteredSortedPackages = packages
     .filter(pkg => pkg.value.type !== 'peerDependencies')
+    .sort(sortByDependency)
+
+  return _.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
