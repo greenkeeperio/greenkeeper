@@ -10,6 +10,8 @@ Since we did not receive a CI status on the ${branchLink(fullName)} branch, we a
 If you have already set up a CI for this repository, you might need to check your configuration. Make sure it will run on all new branches. If you don’t want it to run on every branch, you can whitelist branches starting with ${md.code('greenkeeper/')}.
 
 We recommend using [Travis CI](https://travis-ci.org), but Greenkeeper will work with every other CI service as well.
+
+Once you have installed CI on your repository, please delete the \`greenkeeper/initial\` branch in your repository and reinstall the Greenkeeper app.
 `
 function branchLink (fullName) {
   return md.link(
