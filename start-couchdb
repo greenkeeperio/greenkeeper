@@ -6,7 +6,7 @@ set -e
 docker rm -fv gk-couchdb || true
 docker run -d -p 5984:5984 --name gk-couchdb klaemo/couchdb:2.0.0
 
-TIMEOUT=60
+TIMEOUT=120
 TRIES=0
 printf 'Waiting for CouchDB to be available to us'
 

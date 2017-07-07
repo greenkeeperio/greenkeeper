@@ -62,36 +62,54 @@ module.exports = async function (
     '_id'
   )
 
-  return packages.map(pkg => {
-    const account = accounts[pkg.value.accountId]
-    const plan = account.plan
+  // Prioritize `dependencies` over all other dependency types
+  // https://github.com/greenkeeperio/greenkeeper/issues/409
 
-    const satisfyingVersions = Object.keys(versions)
-      .filter(version => semver.satisfies(version, pkg.value.oldVersion))
-      .sort(semver.rcompare)
+  const order = {
+    'dependencies': 1,
+    'devDependencies': 2,
+    'optionalDependencies': 3
+  }
 
-    const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
-      ? satisfyingVersions[1]
-      : satisfyingVersions[0]
+  const sortByDependency = (packageA, packageB) => {
+    return order[packageA.value.type] - order[packageB.value.type]
+  }
 
-    if (isFromHook && String(account.installation) !== installation) return {}
+  const filteredSortedPackages = packages
+    .filter(pkg => pkg.value.type !== 'peerDependencies')
+    .sort(sortByDependency)
 
-    return {
-      data: Object.assign(
-        {
-          name: 'create-version-branch',
-          dependency,
-          distTags,
-          distTag,
-          versions,
-          oldVersionResolved,
-          repositoryId: pkg.id,
-          installation: account.installation,
-          plan
-        },
-        pkg.value
-      ),
-      plan
-    }
-  })
+  return _.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
+    .map(pkg => {
+      const account = accounts[pkg.value.accountId]
+      const plan = account.plan
+
+      const satisfyingVersions = Object.keys(versions)
+        .filter(version => semver.satisfies(version, pkg.value.oldVersion))
+        .sort(semver.rcompare)
+
+      const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
+        ? satisfyingVersions[1]
+        : satisfyingVersions[0]
+
+      if (isFromHook && String(account.installation) !== installation) return {}
+
+      return {
+        data: Object.assign(
+          {
+            name: 'create-version-branch',
+            dependency,
+            distTags,
+            distTag,
+            versions,
+            oldVersionResolved,
+            repositoryId: pkg.id,
+            installation: account.installation,
+            plan
+          },
+          pkg.value
+        ),
+        plan
+      }
+    })
 }
