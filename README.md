@@ -50,6 +50,14 @@ And if a you’ve got stuff to do, we understand. Sometimes you simply have to m
 
 </details>
 
+<details>
+<summary>I found a critical bug, who do I talk to?</summary>
+
+If you’ve discovered a security-related bug in Greenkeeper or related services, **please disclose it to us confidentially** by emailing us at support@greenkeeper.io
+
+If you find any, **don’t share security vulnerabilities publicly** (in a GitHub issue for example), always keep these conversations with us confidential so we have a chance to get things fixed before anyone exploits the bug.
+</details>
+
 ## Getting started with the new Github Integration
 
 1. Click on the green **Install** button at the top of the [integration page](https://github.com/integration/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
