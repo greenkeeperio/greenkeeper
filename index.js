@@ -88,7 +88,7 @@ require('./lib/rollbar')
     if (!queueId) {
       const login = _.get(data, 'repository.owner.name')
       try {
-        if (!login) throw new Error('can not identify job owner')
+        if (!login) throw new Error(`can not identify job owner of ${data.name}`)
 
         const {installations} = await dbs()
         queueId = _.get(await installations.query('by_login', {
