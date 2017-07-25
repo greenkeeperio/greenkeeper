@@ -77,10 +77,8 @@ require('./lib/rollbar')
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
-
-    if (data.name === 'registry-change' ||
-        data.name === 'stripe-event' ||
-        data.name === 'schedule-stale-initial-pr-reminders') {
+    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset']
+    if (jobsWithoutOwners.includes(data.name)) {
       return queues[data.name].add(() => worker(job))
     }
 
