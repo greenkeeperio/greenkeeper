@@ -52,7 +52,7 @@ module.exports = async function ({ repositoryFullName }) {
         ref: `heads/${branch.head}`
       }))
     } catch (e) {
-      if (e.code === 404) {
+      if (e.code === 422 && e.message === 'Reference does not exist') {
         continue
       }
       if (branch.head === 'greenkeeper/initial' || branch.head === 'greenkeeper-initial') {

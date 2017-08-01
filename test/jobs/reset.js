@@ -194,7 +194,7 @@ test('reset repo', async t => {
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200)
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper/initial')
-      .reply(404)
+      .reply(422, 'Reference does not exist')
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
 
