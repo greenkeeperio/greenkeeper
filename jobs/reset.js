@@ -52,7 +52,9 @@ module.exports = async function ({ repositoryFullName }) {
         ref: `heads/${branch.head}`
       }))
     } catch (e) {
-      if (e.code === 422 && e.message === 'Reference does not exist') {
+      // branch was deleted already and since we wanted to delete it anyway, we're cool
+      // with this error
+      if (e.code === 422) {
         continue
       }
       if (branch.head === 'greenkeeper/initial' || branch.head === 'greenkeeper-initial') {
