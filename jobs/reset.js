@@ -52,6 +52,9 @@ module.exports = async function ({ repositoryFullName }) {
         ref: `heads/${branch.head}`
       }))
     } catch (e) {
+      if (e.code === 404) {
+        continue
+      }
       if (branch.head === 'greenkeeper/initial' || branch.head === 'greenkeeper-initial') {
         throw e
       }

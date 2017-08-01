@@ -184,6 +184,32 @@ test('reset repo', async t => {
     }
   })
 
+  t.test('do not mind if a branch does not exist', async t => {
+    await repositories.put({
+      _id: '42:branch:deadbeef0',
+      type: 'branch',
+      repositoryId: '42',
+      head: 'greenkeeper/initial'
+    })
+    githubNock
+      .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
+      .reply(200)
+      .delete('/repos/finnp/abc/git/refs/heads/greenkeeper/initial')
+      .reply(404)
+      .get('/repos/finnp/abc')
+      .reply(200, githubRepository)
+
+    try {
+      await worker({
+        repositoryFullName: 'finnp/abc'
+      })
+    } catch (e) {
+      t.fail('error thrown')
+    } finally {
+      await waitFor(timeToWaitAfterTests)
+    }
+  })
+
   t.test('delete all branchdocs of the repo', async t => {
     t.plan(1)
     githubNock
