@@ -23,8 +23,8 @@ module.exports = async function ({ repositoryFullName }) {
   // delete all prdocs
   const prdocs = await repositories.allDocs({
     include_docs: true,
-    startkey: `${repoDoc.id}:pr:`,
-    endkey: `${repoDoc.id}:pr:\ufff0`,
+    startkey: `${repoDoc._id}:pr:`,
+    endkey: `${repoDoc._id}:pr:\ufff0`,
     inclusive_end: true
   })
 
@@ -34,8 +34,8 @@ module.exports = async function ({ repositoryFullName }) {
   // delete all greenkeeper branches in the repository
   const branches = await repositories.allDocs({
     include_docs: true,
-    startkey: `${repoDoc.id}:branch:`,
-    endkey: `${repoDoc.id}:branch:\ufff0`,
+    startkey: `${repoDoc._id}:branch:`,
+    endkey: `${repoDoc._id}:branch:\ufff0`,
     inclusive_end: true
   })
   const [owner, repo] = repositoryFullName.split('/')
