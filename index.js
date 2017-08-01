@@ -52,7 +52,8 @@ require('./lib/rollbar')
 
   const queues = {
     'registry-change': new Queue(1, Infinity),
-    'stripe-event': new Queue(1, Infinity)
+    'stripe-event': new Queue(1, Infinity),
+    'reset': new Queue(1, Infinity)
   }
   channel.consume(env.EVENTS_QUEUE_NAME, consume)
   channel.consume(env.JOBS_QUEUE_NAME, consume)
