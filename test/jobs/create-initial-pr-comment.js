@@ -4,6 +4,7 @@ const worker = require('../../jobs/create-initial-pr-comment')
 const upsert = require('../../lib/upsert')
 
 const dbs = require('../../lib/dbs')
+const timeToWaitAfterTests = 500
 
 const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
@@ -111,7 +112,7 @@ test('create-initial-pr-comment', async t => {
 
     const prDoc = await repositories.get('42:pr:1234')
     t.ok(prDoc.initialPrCommentSent, 'initialPrCommentSent set to true')
-    await waitFor(50)
+    await waitFor(timeToWaitAfterTests)
   })
 
   t.test('does nothing if the repo has already received the comment', async t => {
@@ -134,7 +135,7 @@ test('create-initial-pr-comment', async t => {
     const newJob = await runWorker()
 
     t.notOk(newJob, 'no new job')
-    await waitFor(50)
+    await waitFor(timeToWaitAfterTests)
   })
 
   t.test('does nothing if the issue was closed in the meanwhile', async t => {
@@ -155,7 +156,7 @@ test('create-initial-pr-comment', async t => {
     const newJob = await runWorker()
 
     t.notOk(newJob, 'no new job')
-    await waitFor(50)
+    await waitFor(timeToWaitAfterTests)
   })
 
   t.test('does nothing if the issue was locked in the meanwhile', async t => {
@@ -176,6 +177,6 @@ test('create-initial-pr-comment', async t => {
     const newJob = await runWorker()
 
     t.notOk(newJob, 'no new job')
-    await waitFor(50)
+    await waitFor(timeToWaitAfterTests)
   })
 })
