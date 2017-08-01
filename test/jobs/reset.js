@@ -52,7 +52,6 @@ test('reset repo', async t => {
     })
     await repositories.put({
       _id: '42',
-      id: '42',
       accountId: '123',
       enabled: true,
       fullName: 'finnp/abc',
