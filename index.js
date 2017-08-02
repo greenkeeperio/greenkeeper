@@ -80,7 +80,10 @@ require('./lib/rollbar')
     const data = JSON.parse(job.content.toString())
     const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset']
     if (jobsWithoutOwners.includes(data.name)) {
-      return queues[data.name].add(() => worker(job))
+      if (queues[data.name]) {
+        return queues[data.name].add(() => worker(job))
+      }
+      throw new Error(`Unknown queue name: ${data.name}`)
     }
 
     let queueId = Number(data.accountId) ||
