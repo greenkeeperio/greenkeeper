@@ -66,6 +66,36 @@ module.exports = async function ({ repositoryFullName }) {
   const deleteBranchDocs = branches.rows.map(row => repositories.remove(row.doc))
   await Promise.all(deleteBranchDocs)
 
+  // close all greenkeeper issues in the repository and delete all issues in the database
+  const issues = await repositories.allDocs({
+    include_docs: true,
+    startkey: `${repoDoc._id}:issue:`,
+    endkey: `${repoDoc._id}:issue:\ufff0`,
+    inclusive_end: true
+  })
+
+  for (let row of issues.rows) {
+    const issue = row.doc
+    if (issue.state === 'closed') {
+      continue
+    }
+    try {
+      await ghqueue.write(github => github.issues.edit({
+        owner,
+        repo,
+        number: issue.number,
+        state: 'closed'
+      }))
+    } catch (e) {
+      if (e.code !== 404) {
+        throw e
+      }
+    }
+  }
+
+  const deleteIssueDocs = issues.rows.map(row => repositories.remove(row.doc))
+  await Promise.all(deleteIssueDocs)
+
   // get the current repository state from github
   // to get the newest repo settings (e.g. user enabled issues in the mean time)
   const githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
