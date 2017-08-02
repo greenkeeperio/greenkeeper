@@ -1,4 +1,4 @@
-const dbs = require('./lib/dbs')
+const dbs = require('../lib/dbs')
 
 module.exports = async function () {
   const {repositories} = await dbs()
