@@ -80,6 +80,8 @@ test('reset repo', async t => {
     await removeIfExists(repositories, '42:pr:123')
     await removeIfExists(repositories, '42:branch:deadbeef')
     await removeIfExists(repositories, '42:branch:deadbeef0')
+    await removeIfExists(repositories, '42:issue:67')
+    await removeIfExists(repositories, '42:issue:65')
   })
 
   t.test('response with error if repo cound not be found', async t => {
@@ -259,6 +261,89 @@ test('reset repo', async t => {
     const freshRepoDoc = await repositories.get('42')
     t.equal(newJob.data.name, 'create-initial-branch', 'create-initial-branch Job enqueued')
     t.equal(newJob.data.repositoryId, freshRepoDoc._id, 'Job has the correct repository id')
+    await waitFor(timeToWaitAfterTests)
+  })
+
+  t.test('Close open issues and delete them from the database', async t => {
+    t.plan(3)
+    await repositories.put({
+      _id: '42:issue:67',
+      type: 'issue',
+      repositoryId: '42',
+      number: 67,
+      state: 'closed'
+    })
+    await repositories.put({
+      _id: '42:issue:65',
+      type: 'issue',
+      repositoryId: '42',
+      number: 65,
+      state: 'open'
+    })
+
+    githubNock
+      .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
+      .reply(200, {})
+      .get('/repos/finnp/abc')
+      .reply(200, githubRepository)
+      .patch('/repos/finnp/abc/issues/65')
+      .reply(200, () => {
+        t.ok(true, 'Issue closed')
+        return {}
+      })
+      .patch('/repos/finnp/abc/issues/67')
+      .optionally()
+      .reply(200, () => {
+        t.fail('should not close closed Issues')
+        return {}
+      })
+    await worker({
+      repositoryFullName: 'finnp/abc'
+    })
+    try {
+      await repositories.get('42:issue:67')
+    } catch (e) {
+      if (e.status === 404) {
+        t.ok(true, 'Issue doc deleted')
+      } else {
+        throw e
+      }
+    }
+    try {
+      await repositories.get('42:issue:65')
+    } catch (e) {
+      if (e.status === 404) {
+        t.ok(true, 'Issue doc deleted')
+      } else {
+        throw e
+      }
+    }
+    await waitFor(timeToWaitAfterTests)
+  })
+
+  t.test('Do not mind issues that do not exist', async t => {
+    t.plan(1)
+
+    await repositories.put({
+      _id: '42:issue:65',
+      type: 'issue',
+      repositoryId: '42',
+      number: 65,
+      state: 'open'
+    })
+    githubNock
+      .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
+      .reply(200, {})
+      .get('/repos/finnp/abc')
+      .reply(200, githubRepository)
+      .patch('/repos/finnp/abc/issues/65')
+      .reply(404)
+
+    await worker({
+      repositoryFullName: 'finnp/abc'
+    })
+
+    t.ok(true, 'no errors were thrown')
     await waitFor(timeToWaitAfterTests)
   })
 })
