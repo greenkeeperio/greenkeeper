@@ -38,5 +38,12 @@ module.exports = async function ({ id }) {
         repos: 1
       })
     )
+
+    return {
+      data: {
+        name: 'send-stripe-cancel-survey',
+        stripeSubscriptionId: subscriptionId
+      }
+    }
   }
 }
