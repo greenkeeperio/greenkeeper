@@ -25,12 +25,13 @@ test('enqueue email job when recieving stripe cancel event', async t => {
     stripeSubscriptionId: 'stripe_test_SubscriptionId'
   })
 
-  t.plan(2)
+  t.plan(3)
   const job = await worker({
     id: 'stripe_test_Id'
   })
   t.equal(job.data.name, 'send-stripe-cancel-survey', 'stripe cancel survey job send')
   t.equal(job.data.stripeSubscriptionId, 'stripe_test_SubscriptionId', 'correct stripe subscription id passed')
+  t.equal(job.data.accountId, '1', 'correct accountId passed')
 })
 
 tearDown(async () => {
