@@ -33,7 +33,7 @@ module.exports = async function (
     owner,
     repo,
     number: prNumber,
-    body: staleInitialPRReminderComment
+    body: staleInitialPRReminderComment()
   }))
 
   await upsert(repositories, repositoryId, {

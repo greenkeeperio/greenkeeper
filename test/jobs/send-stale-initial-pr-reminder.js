@@ -45,7 +45,7 @@ test('send-stale-initial-pr-reminder', async t => {
   })
 
   t.test('send reminders for stale initial pr', async t => {
-    t.plan(2)
+    t.plan(3)
 
     githubNock
       .get('/repos/finnp/test/issues/1234')
@@ -54,7 +54,8 @@ test('send-stale-initial-pr-reminder', async t => {
         locked: false
       })
       .post('/repos/finnp/test/issues/1234/comments')
-      .reply(201, () => {
+      .reply(201, (uri, requestBody) => {
+        t.hasFields(requestBody, 'body', 'has comment body')
         t.pass('comment added')
         return {}
       })
