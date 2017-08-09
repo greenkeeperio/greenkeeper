@@ -2,6 +2,7 @@ const dbs = require('../lib/dbs')
 const env = require('../lib/env')
 const stripe = require('stripe')(env.STRIPE_SECRET_KEY)
 const nodemailer = require('nodemailer')
+const content = require('../content/stripe-cancel-survey')
 // get the paymentsDoc with the accountId
 // if document has a subsciptionId -> exit
 
@@ -33,8 +34,8 @@ module.exports = async function ({ accountId, stripeSubscriptionId }) {
   const message = {
     to: customer.email,
     from: env.EMAIL_USER,
-    subject: 'TODO',
-    text: 'TODO'
+    subject: 'Sorry to see you go.',
+    text: content()
   }
 
   await new Promise((resolve, reject) => {
