@@ -209,7 +209,7 @@ module.exports = async function ({ repositoryId }) {
   statsd.increment('initial_branch')
 
   return {
-    delay: 15 * 60 * 1000,
+    delay: 30 * 60 * 1000,
     data: {
       name: 'initial-timeout-pr',
       repositoryId,
