@@ -346,4 +346,20 @@ test('reset repo', async t => {
     t.ok(true, 'no errors were thrown')
     await waitFor(timeToWaitAfterTests)
   })
+
+  t.test('Do not mind about case sensivity in the repository name', async t => {
+    t.plan(2)
+    githubNock
+      .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
+      .reply(200, {})
+      .get('/repos/finnp/abc')
+      .reply(200, githubRepository)
+    const newJob = await worker({
+      repositoryFullName: 'Finnp/aBc'
+    })
+    const freshRepoDoc = await repositories.get('42')
+    t.equal(newJob.data.name, 'create-initial-branch', 'create-initial-branch Job enqueued')
+    t.equal(newJob.data.repositoryId, freshRepoDoc._id, 'Job has the correct repository id')
+    await waitFor(timeToWaitAfterTests)
+  })
 })

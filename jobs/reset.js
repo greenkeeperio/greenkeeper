@@ -4,6 +4,7 @@ const githubQueue = require('../lib/github-queue')
 const { createDocs } = require('../lib/repository-docs')
 
 module.exports = async function ({ repositoryFullName }) {
+  repositoryFullName = repositoryFullName.toLowerCase()
   // find the repository in the database
   const { repositories, installations } = await dbs()
   const repoDoc = _.get(
