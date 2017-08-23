@@ -1,3 +1,5 @@
 function (doc) {
-  emit(doc.accountId)
+  if (doc.accountId) {
+    emit(doc.accountId)
+  }
 }
