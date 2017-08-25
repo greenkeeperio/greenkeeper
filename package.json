@@ -9,7 +9,7 @@
     "couchdb-bootstrap": "^1.14.0",
     "envalid": "^3.0.0",
     "escape-string-regexp": "^1.0.5",
-    "github": "^9.2.0",
+    "github": "^10.0.0",
     "github-url-from-git": "^1.4.0",
     "hot-shots": "^4.3.0",
     "js-yaml": "^3.7.0",
