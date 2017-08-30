@@ -1,4 +1,5 @@
 const md = require('./template')
+const env = require('../lib/env')
 
 module.exports = ({fullName}) =>
 md`🚨 You need to enable Continuous Integration on all branches of this repository. 🚨
@@ -16,6 +17,6 @@ Once you have installed CI on this repository, you’ll need to re-trigger Green
 function branchLink (fullName) {
   return md.link(
     md.code('greenkeeper/initial'),
-    `https://github.com/${fullName}/commits/greenkeeper/initial`
+    `${env.GITHUB_URL}/${fullName}/commits/greenkeeper/initial`
   )
 }

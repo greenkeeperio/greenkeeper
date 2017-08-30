@@ -14,7 +14,7 @@ module.exports = async function ({ state, sha, repository, installation }) {
   const accountId = String(repository.owner.id)
   const installationId = installation.id
   // not a success or failure state
-  const combined = await GithubQueue(installationId).read(github => github.repos.getCombinedStatus({
+  const combined = await GithubQueue(installationId).read(github => github.repos.getCombinedStatusForRef({
     owner,
     repo,
     ref: sha
