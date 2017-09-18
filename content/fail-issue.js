@@ -2,14 +2,11 @@ const _ = require('lodash')
 const md = require('./template')
 
 const notDevDependency = ({dependency}) => md`
-${dependency} is a direct dependency of this project **this is very likely breaking your project right now**. If other packages depend on you it’s very likely also breaking them.
-I recommend you give this issue a very high priority. I’m sure you can resolve this :muscle:
+${dependency} is a direct dependency of this project, and **it is very likely causing it to break**. If other packages depend on yours, this update is probably also breaking those in turn.
 `
 
 const devDependency = ({dependency, dependencyType}) => md`
-As ${dependency} is “only” a ${dependencyType.replace(/ies$/, 'y')} of this project it **might not break production or downstream projects**, but “only” your build or test tools – **preventing new deploys or publishes**.
-
-I recommend you give this issue a high priority. I’m sure you can resolve this :muscle:
+${dependency} is a ${dependencyType.replace(/ies$/, 'y')} of this project. It **might not break your production code or affect downstream projects**, but probably breaks your build or test tools, which may **prevent deploying or publishing**.
 `
 
 const ciStatuses = ({statuses}) => md`
@@ -21,7 +18,7 @@ ${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${st
 `
 
 module.exports = ({version, dependencyLink, owner, repo, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => md`
-## Version **${version}** of ${dependencyLink} just got published.
+## Version **${version}** of ${dependencyLink} was just published.
 
 <table>
   <tr>
@@ -74,9 +71,9 @@ ${_.compact([release, diffCommits])}
 
 
 <details>
-<summary>Not sure how things should work exactly?</summary>
+<summary>FAQ and help</summary>
 
-There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html) and of course you may always [ask my humans](https://github.com/greenkeeperio/greenkeeper/issues/new).
+There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
 </details>
 
 
