@@ -1,6 +1,6 @@
 const dbs = require('../../../lib/dbs')
 const getConfig = require('../../../lib/get-config')
-const { hasBilling } = require('../../../lib/payments')
+const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../../../lib/payments')
 const githubQueue = require('../../../lib/github-queue')
 
 module.exports = async function (data) {
@@ -18,11 +18,13 @@ module.exports = async function (data) {
   const isInitialGreenkeeperBranch = pullRequest.head.ref === `${config.branchPrefix}initial`
   if (!isInitialGreenkeeperBranch) return
 
+  const accountId = repository.owner.id
+
   await repositories.put(
     {
       _id: prDocId,
       repositoryId,
-      accountId: repository.owner.id,
+      accountId: accountId,
       type: 'pr',
       initial: true,
       number: pullRequest.number,
@@ -35,8 +37,13 @@ module.exports = async function (data) {
   )
   const ghqueue = githubQueue(installation.id)
 
-  const accountHasBilling = await hasBilling(repository.owner.id)
-  if (repoDoc.private && !accountHasBilling) {
+  const billingAccount = await getActiveBilling(accountId)
+  const accountHasBilling = !!billingAccount
+  const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
+
+  if (repoDoc.private && ((!accountHasBilling || accountNeedsMarketplaceUpgrade))) {
+    const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
+
     await ghqueue.write(github => github.repos.createStatus({
       owner,
       repo,
@@ -44,7 +51,7 @@ module.exports = async function (data) {
       state: 'pending',
       context: 'greenkeeper/payment',
       description: 'Payment required, merging will have no effect',
-      target_url: 'https://account.greenkeeper.io/'
+      target_url: targetUrl
     }))
   }
 }
