@@ -6,7 +6,7 @@ const getConfig = require('../lib/get-config')
 const dbs = require('../lib/dbs')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
-const { hasBilling } = require('../lib/payments')
+const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 
 const prContent = require('../content/initial-pr')
@@ -57,8 +57,13 @@ module.exports = async function (
     target_url: 'https://greenkeeper.io/verify.html'
   }))
 
-  const accountHasBilling = await hasBilling(accountId)
-  if (repodoc.private && !accountHasBilling) {
+  const billingAccount = await getActiveBilling(accountId)
+  const accountHasBilling = !!billingAccount
+  const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
+
+  if (repodoc.private && (!accountHasBilling || accountNeedsMarketplaceUpgrade)) {
+    const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
+
     await ghqueue.write(github => github.repos.createStatus({
       owner,
       repo,
@@ -66,7 +71,7 @@ module.exports = async function (
       state: 'pending',
       context: 'greenkeeper/payment',
       description: 'Payment required, merging will have no effect',
-      target_url: 'https://account.greenkeeper.io/'
+      target_url: targetUrl
     }))
   }
 
