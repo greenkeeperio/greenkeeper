@@ -62,12 +62,12 @@ test('update-payments', async t => {
     t.notOk(newJobs, 'no new jobs scheduled')
   })
 
-  t.test('ignore if stripeItemId is missing', async t => {
+  t.test('ignore if stripeSubscriptionId is missing', async t => {
     const worker = proxyquire('../../jobs/update-payments', {
       '../lib/payments': {
         getActiveBilling: async () => {
           return {
-            plan: 'beta'
+            plan: 'org'
           }
         }
       },
