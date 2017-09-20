@@ -1,6 +1,6 @@
 const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire')
+const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
 const createInitial = require('../../jobs/create-initial-pr')
@@ -350,6 +350,8 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo and account with Github `team` plan with payment required', async t => {
+    const payments = require('../../lib/payments')
+
     await repositories.put({
       _id: '44b',
       accountId: '123team',
@@ -400,15 +402,9 @@ test('create-initial-pr', async t => {
         return {}
       })
 
-    const worker = proxyquire('../../jobs/create-initial-pr', {
-      '../lib/payments': {
-        'getCurrentlyPrivateAndEnabledRepos': async (accountId) => { // Help!  not working!
-          return 15
-        }
-      }
-    })
+    simple.mock(payments, 'getCurrentlyPrivateAndEnabledRepos').returnWith(15)
 
-    await worker({
+    await createInitial({
       repository: { id: '44b' },
       branchDoc: branchDoc,
       combined: {
@@ -418,6 +414,7 @@ test('create-initial-pr', async t => {
       installationId: 11,
       accountId: '123team'
     })
+    simple.restore()
   })
 
   t.test('create pr for private repo and account with Github `business` plan', async t => {

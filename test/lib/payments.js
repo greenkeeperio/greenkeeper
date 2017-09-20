@@ -1,5 +1,5 @@
 const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire')
+const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
 const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade } = require(
@@ -165,12 +165,11 @@ test('payments', async t => {
   })
 
   t.test('getAccountNeedsMarketplaceUpgrade with `team` plan and reached repo limit', async t => {
-    const { getAccountNeedsMarketplaceUpgrade } = proxyquire('../../lib/payments', { // Help! can't get this to be overwritten
-      './getCurrentlyPrivateAndEnabledRepos': async (accountId) => {
-        return 15
-      }
-    })
+    const payments = require('../../lib/payments')
+    simple.mock(payments, 'getCurrentlyPrivateAndEnabledRepos').resolveWith(15)
     const result = await getAccountNeedsMarketplaceUpgrade('123team')
+    simple.restore()
+
     t.ok(result)
     t.end()
   })
