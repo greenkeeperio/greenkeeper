@@ -36,6 +36,7 @@
     "nyc": "^11.0.3",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
     "proxyquire": "^1.7.10",
+    "simple-mock": "^0.8.0",
     "standard": "^10.0.2",
     "tap": "^10.0.1"
   },
