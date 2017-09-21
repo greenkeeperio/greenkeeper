@@ -11,7 +11,7 @@ const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
-const { getActiveBilling } = require('../lib/payments')
+const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 
 const prContent = require('../content/update-pr')
 
@@ -44,8 +44,7 @@ module.exports = async function (
   if (satisfies && hasLockFile) return
 
   const billing = await getActiveBilling(accountId)
-
-  if (repository.private && !billing) return
+  if (repository.private && (!billing || await getAccountNeedsMarketplaceUpgrade(accountId))) return
 
   const [owner, repo] = repository.fullName.split('/')
   const config = getConfig(repository)
