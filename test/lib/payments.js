@@ -2,12 +2,12 @@ const { test, tearDown } = require('tap')
 const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
-const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade } = require(
+const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade, getCurrentlyPrivateAndEnabledRepos } = require(
   '../../lib/payments'
 )
 
 test('payments', async t => {
-  const { payments } = await dbs()
+  const { payments, repositories } = await dbs()
   await payments.put({
     _id: '123',
     stripeSubscriptionId: 'stripe123',
@@ -33,6 +33,38 @@ test('payments', async t => {
   await payments.put({
     _id: '123business',
     plan: 'business'
+  })
+
+  await repositories.put({
+    _id: '44a',
+    accountId: '123team',
+    fullName: 'finnp/private',
+    private: true,
+    enabled: true
+  })
+
+  await repositories.put({
+    _id: '44b',
+    accountId: '123team',
+    fullName: 'finnp/public',
+    private: false,
+    enabled: true
+  })
+
+  await repositories.put({
+    _id: '44c',
+    accountId: '123team',
+    fullName: 'finnp/public',
+    private: false,
+    enabled: false
+  })
+
+  await repositories.put({
+    _id: '44d',
+    accountId: '123team',
+    fullName: 'finnp/private',
+    private: true,
+    enabled: false
   })
 
   /* getActiveBilling */
@@ -126,6 +158,20 @@ test('payments', async t => {
     t.end()
   })
 
+  /* getCurrentlyPrivateAndEnabledRepos */
+
+  t.test('getCurrentlyPrivateAndEnabledRepos with no Repos', async t => {
+    const result = await getCurrentlyPrivateAndEnabledRepos('123')
+    t.equal(result, 0, '0 private and enabled repos')
+    t.end()
+  })
+
+  t.test('getCurrentlyPrivateAndEnabledRepos with one Repo', async t => {
+    const result = await getCurrentlyPrivateAndEnabledRepos('123team')
+    t.equal(result, 1, '1 private and enabled repo')
+    t.end()
+  })
+
   /* getAccountNeedsMarketplaceUpgrade */
 
   t.test('getAccountNeedsMarketplaceUpgrade without billing', async t => {
@@ -182,11 +228,15 @@ test('payments', async t => {
 })
 
 tearDown(async () => {
-  const { payments } = await dbs()
+  const { payments, repositories } = await dbs()
   payments.remove(await payments.get('123'))
   payments.remove(await payments.get('123free'))
   payments.remove(await payments.get('123org'))
   payments.remove(await payments.get('123opensource'))
   payments.remove(await payments.get('123team'))
   payments.remove(await payments.get('123business'))
+  repositories.remove(await repositories.get('44a'))
+  repositories.remove(await repositories.get('44b'))
+  repositories.remove(await repositories.get('44c'))
+  repositories.remove(await repositories.get('44d'))
 })
