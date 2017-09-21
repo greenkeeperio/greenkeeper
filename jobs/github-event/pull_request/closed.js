@@ -3,6 +3,7 @@ const _ = require('lodash')
 const githubQueue = require('../../../lib/github-queue')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
+const { hasStripeBilling } = require('../../../lib/payments')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -40,7 +41,7 @@ module.exports = async function (data) {
     }))
   } catch (e) {}
 
-  if (repodoc.private) {
+  if (repodoc.private && (await hasStripeBilling(accountId))) {
     return {
       data: {
         name: 'update-payments',
