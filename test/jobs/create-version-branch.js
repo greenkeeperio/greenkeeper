@@ -16,6 +16,11 @@ test('create-version-branch', async t => {
     installation: 38
   })
 
+  await installations.put({
+    _id: '125',
+    installation: 39
+  })
+
   t.test('new pull request', async t => {
     await repositories.put({
       _id: '42',
@@ -273,6 +278,77 @@ test('create-version-branch', async t => {
     t.is(pr.state, 'open', 'pr status open')
   })
 
+  t.test('no pull request private repo with free account', async t => {
+    await repositories.put({
+      _id: '46',
+      accountId: '125',
+      fullName: 'finnp/testtest',
+      private: true,
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    await payments.put({
+      _id: '125',
+      plan: 'free'
+    })
+    t.plan(1)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/38/access_tokens')
+      .optionally()
+      .reply(200, () => {
+        t.fail('should not talk to github')
+        return { token: 'secret' }
+      })
+
+    const worker = proxyquire('../../jobs/create-version-branch', {
+      '../lib/get-infos': (
+        { installationId, dependency, version, diffBase, versions }
+      ) => {
+        return {
+          dependencyLink: '[]()',
+          release: 'the release',
+          diffCommits: 'commits...'
+        }
+      },
+      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
+      '../lib/get-diff-commits': () => ({
+        html_url: 'https://github.com/lkjlsgfj/',
+        total_commits: 0,
+        behind_by: 0,
+        commits: []
+      }),
+      '../lib/create-branch': ({ transform }) => {
+        return '1234abcd'
+      }
+    })
+
+    const newJob = await worker({
+      dependency: '@finnpauls/dep',
+      accountId: '125',
+      repositoryId: '46',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    t.notOk(newJob, 'no new job scheduled')
+  })
+
   t.test('comment pr', async t => {
     await Promise.all([
       repositories.put({
@@ -503,6 +579,7 @@ tearDown(async () => {
   await Promise.all([
     installations.remove(await installations.get('123')),
     installations.remove(await installations.get('124')),
+    installations.remove(await installations.get('125')),
     repositories.remove(await repositories.get('42:branch:1234abcd')),
     repositories.remove(await repositories.get('43:branch:1234abcd')),
     repositories.remove(await repositories.get('42:pr:321')),
@@ -512,6 +589,8 @@ tearDown(async () => {
     repositories.remove(await repositories.get('44')),
     repositories.remove(await repositories.get('421')),
     repositories.remove(await repositories.get('45')),
-    payments.remove(await payments.get('124'))
+    repositories.remove(await repositories.get('46')),
+    payments.remove(await payments.get('124')),
+    payments.remove(await payments.get('125'))
   ])
 })
