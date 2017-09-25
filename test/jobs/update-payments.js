@@ -1,5 +1,5 @@
 const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire').noCallThru()
+const proxyquire = require('proxyquire')
 
 const dbs = require('../../lib/dbs')
 
