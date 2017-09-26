@@ -1,6 +1,7 @@
 const { test } = require('tap')
 const nock = require('nock')
 const worker = require('../../jobs/reset')
+const removeIfExists = require('../remove-if-exists.js')
 
 const dbs = require('../../lib/dbs')
 const timeToWaitAfterTests = 500
@@ -9,16 +10,6 @@ const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
   })
-}
-
-const removeIfExists = async (db, id) => {
-  try {
-    return await db.remove(await db.get(id))
-  } catch (e) {
-    if (e.status !== 404) {
-      throw e
-    }
-  }
 }
 
 nock.disableNetConnect()

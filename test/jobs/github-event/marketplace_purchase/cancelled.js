@@ -1,16 +1,7 @@
 const { test, tearDown } = require('tap')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event/marketplace_purchase/cancelled')
-
-const removeIfExists = async (db, id) => {
-  try {
-    return await db.remove(await db.get(id))
-  } catch (e) {
-    if (e.status !== 404) {
-      throw e
-    }
-  }
-}
+const removeIfExists = require('../../../remove-if-exists.js')
 
 test('marketplace canceled', async t => {
   t.test('change entry in payments database to `free`', async t => {
