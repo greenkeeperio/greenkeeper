@@ -7,6 +7,7 @@ module.exports = async function ({ accountId, stripeSubscriptionId }) {
   const { payments } = await dbs()
   await stripe.subscriptions.del(stripeSubscriptionId)
   await upsert(payments, accountId, {
-    stripeSubscriptionId: null
+    stripeSubscriptionId: null,
+    stripeItemId: null
   })
 }

@@ -9,7 +9,7 @@ nock.enableNetConnect('localhost')
 
 test('Cancel Stripe Subscription', async t => {
   const { payments } = await dbs()
-  t.plan(2)
+  t.plan(3)
 
   nock('https://api.stripe.com/v1')
     .delete('/subscriptions/345')
@@ -34,6 +34,7 @@ test('Cancel Stripe Subscription', async t => {
   })
 
   const payment = await payments.get('123')
+  t.is(payment.stripeItemId, null)
   t.is(payment.stripeSubscriptionId, null)
   t.end()
 })
