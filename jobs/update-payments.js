@@ -1,5 +1,5 @@
 const env = require('../lib/env')
-const { getActiveBilling, getCurrentlyPrivateAndEnabledRepos } = require('../lib/payments')
+const { getActiveBilling, getAmountOfCurrentlyPrivateAndEnabledRepos } = require('../lib/payments')
 const stripe = require('stripe')(env.STRIPE_SECRET_KEY)
 
 module.exports = async ({ accountId, repositoryId }) => {
@@ -7,7 +7,7 @@ module.exports = async ({ accountId, repositoryId }) => {
     // ignore non-stripe users
   if (!billingAccount || !billingAccount.stripeSubscriptionId) return
 
-  const currentlyPrivateAndEnabledRepos = await getCurrentlyPrivateAndEnabledRepos(accountId)
+  const currentlyPrivateAndEnabledRepos = await getAmountOfCurrentlyPrivateAndEnabledRepos(accountId)
 
   // charge for new repo from Stripe
   const baseRepos = billingAccount.plan === 'org' ? 10 : 0

@@ -2,7 +2,7 @@ const { test, tearDown } = require('tap')
 const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
-const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade, getCurrentlyPrivateAndEnabledRepos } = require(
+const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade, getAmountOfCurrentlyPrivateAndEnabledRepos } = require(
   '../../lib/payments'
 )
 
@@ -158,16 +158,16 @@ test('payments', async t => {
     t.end()
   })
 
-  /* getCurrentlyPrivateAndEnabledRepos */
+  /* getAmountOfCurrentlyPrivateAndEnabledRepos */
 
-  t.test('getCurrentlyPrivateAndEnabledRepos with no Repos', async t => {
-    const result = await getCurrentlyPrivateAndEnabledRepos('123')
+  t.test('getAmountOfCurrentlyPrivateAndEnabledRepos with no Repos', async t => {
+    const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123')
     t.equal(result, 0, '0 private and enabled repos')
     t.end()
   })
 
-  t.test('getCurrentlyPrivateAndEnabledRepos with one Repo', async t => {
-    const result = await getCurrentlyPrivateAndEnabledRepos('123team')
+  t.test('getAmountOfCurrentlyPrivateAndEnabledRepos with one Repo', async t => {
+    const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123team')
     t.equal(result, 1, '1 private and enabled repo')
     t.end()
   })
@@ -212,7 +212,7 @@ test('payments', async t => {
 
   t.test('getAccountNeedsMarketplaceUpgrade with `team` plan and reached repo limit', async t => {
     const payments = require('../../lib/payments')
-    simple.mock(payments, 'getCurrentlyPrivateAndEnabledRepos').resolveWith(15)
+    simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').resolveWith(15)
     const result = await getAccountNeedsMarketplaceUpgrade('123team')
     simple.restore()
 
