@@ -38,10 +38,10 @@ module.exports = async function (data) {
   const ghqueue = githubQueue(installation.id)
 
   const billingAccount = await getActiveBilling(accountId)
-  const accountHasBilling = !!billingAccount
+  const hasBillingAccount = !!billingAccount
   const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
 
-  if (repoDoc.private && ((!accountHasBilling || accountNeedsMarketplaceUpgrade))) {
+  if (repoDoc.private && ((!hasBillingAccount || accountNeedsMarketplaceUpgrade))) {
     const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
 
     await ghqueue.write(github => github.repos.createStatus({
