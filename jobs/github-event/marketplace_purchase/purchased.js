@@ -1,5 +1,6 @@
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
+const normalizePlanName = require('../../../lib/normalize-plan-name')
 
 module.exports = async function ({ marketplace_purchase }) {
   const { payments } = await dbs()
@@ -8,7 +9,7 @@ module.exports = async function ({ marketplace_purchase }) {
   let paymentDoc
 
   await upsert(payments, accountId, {
-    plan: marketplace_purchase.plan.name.toLowerCase().replace(' ', '')
+    plan: normalizePlanName(marketplace_purchase.plan.name)
   })
 
   try {
