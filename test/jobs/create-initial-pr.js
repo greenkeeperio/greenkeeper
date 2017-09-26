@@ -402,7 +402,7 @@ test('create-initial-pr', async t => {
         return {}
       })
 
-    simple.mock(payments, 'getCurrentlyPrivateAndEnabledRepos').returnWith(15)
+    simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').returnWith(15)
 
     await createInitial({
       repository: { id: '44b' },
