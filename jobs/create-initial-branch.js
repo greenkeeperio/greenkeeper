@@ -1,6 +1,6 @@
 const crypto = require('crypto')
 const { extname } = require('path')
-
+const Log = require('gk-log')
 const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const { promisify } = require('bluebird')
@@ -25,21 +25,34 @@ const upsert = require('../lib/upsert')
 const registryUrl = env.NPM_REGISTRY
 
 module.exports = async function ({ repositoryId }) {
-  const { installations, repositories } = await dbs()
+  // logsDb = monthly db
+  const { installations, repositories, logs } = await dbs()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
 
-  if (repoDoc.fork && !repoDoc.hasIssues) return
+  log.info('started')
+
+  if (repoDoc.fork && !repoDoc.hasIssues) { // we should allways check if issues are disabled and exit
+    log.warn('exited: Issues disabled on fork')
+    return
+  }
 
   await updateRepoDoc(installationId, repoDoc)
-  if (!_.get(repoDoc, ['packages', 'package.json'])) return
+  if (!_.get(repoDoc, ['packages', 'package.json'])) {
+    log.warn('exited: No packages and package.json found')
+    return
+  }
   await upsert(repositories, repoDoc._id, repoDoc)
 
   const config = getConfig(repoDoc)
-  if (config.disabled) return
-  const pkg = _.get(repoDoc, ['packages', 'package.json'])
+  if (config.disabled) {
+    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
+    return
+  }
+  const pkg = _.get(repoDoc, ['packages', 'package.json']) // this is duplicated code (merge with L44)
   if (!pkg) return
 
   const [owner, repo] = repoDoc.fullName.split('/')
@@ -53,22 +66,31 @@ module.exports = async function ({ repositoryId }) {
       return _.map(pkg[type], (version, name) => ({ name, version, type }))
     })
   )
+  log.info('dependencies found', {parsedDependencies: dependencyMeta, packageJson: pkg})
   let dependencies = await Promise.mapSeries(dependencyMeta, async dep => {
     try {
       dep.data = await registryGet(registryUrl + dep.name.replace('/', '%2F'), {
       })
       return dep
-    } catch (err) {}
+    } catch (err) {
+      log.error('npm: Could not get package data', {dependency: dep})
+    }
   })
-
+  let dependencyActionsLog = {}
   dependencies = _(dependencies)
     .filter(Boolean)
     .map(dependency => {
       let latest = _.get(dependency, 'data.dist-tags.latest')
-      if (_.includes(config.ignore, dependency.name)) return
+      if (_.includes(config.ignore, dependency.name)) {
+        dependencyActionsLog[dependency.name] = 'ignored in config'
+        return
+      }
       // neither version nor range, so it's something weird (git url)
       // better not touch it
-      if (!semver.validRange(dependency.version)) return
+      if (!semver.validRange(dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'invalid range'
+        return
+      }
       // new version is prerelease
       const oldIsPrerelease = _.get(
         semver.parse(dependency.version),
@@ -90,16 +112,26 @@ module.exports = async function ({ repositoryId }) {
         })
       }
       // no to need change anything :)
-      if (semver.satisfies(latest, dependency.version)) return
+      if (semver.satisfies(latest, dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'satisfies semver'
+        return
+      }
       // no downgrades
-      if (semver.ltr(latest, dependency.version)) return
+      if (semver.ltr(latest, dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'would be a downgrade'
+        return
+      }
       dependency.newVersion = getRangedVersion(latest, dependency.version)
+      dependencyActionsLog[dependency.name] = `updated to ${dependency.newVersion}`
       return dependency
     })
     .filter(Boolean)
     .value()
 
-  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
+  log.info('parsed dependency actions', {dependencyActionsLog})
+
+  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
+  log.info('github: repository info', {repositoryInfo: ghRepo})
 
   const branch = ghRepo.default_branch
 
@@ -114,6 +146,7 @@ module.exports = async function ({ repositoryId }) {
     ? `?token=${tokenHash}&ts=${Date.now()}`
     : ''
   const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
+  log.info('badge: url', {badgeUrl})
 
   const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
 
@@ -157,7 +190,10 @@ module.exports = async function ({ repositoryId }) {
           readme,
           'https://badges.greenkeeper.io/'
         )
-        if (!repoDoc.private && badgeAlreadyAdded) return
+        if (!repoDoc.private && badgeAlreadyAdded) {
+          log.info('badge: Repository already has badge')
+          return
+        }
 
         return badger.addBadge(
           readme,
@@ -170,7 +206,7 @@ module.exports = async function ({ repositoryId }) {
     }
   ]
 
-  const sha = await createBranch({
+  const sha = await createBranch({ // try/catch
     installationId,
     owner,
     repo,
@@ -183,8 +219,10 @@ module.exports = async function ({ repositoryId }) {
     // When there are no changes and the badge already exists we can enable right away
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
+      log.info('Repository silently enabled')
       return maybeUpdatePaymentsJob(accountId, repoDoc.private)
     } else {
+      log.error('Could not create initial branch')
       throw new Error('Could not create initial branch')
     }
   }
@@ -207,6 +245,7 @@ module.exports = async function ({ repositoryId }) {
   })
 
   statsd.increment('initial_branch')
+  log.info('success')
 
   return {
     delay: 30 * 60 * 1000,
