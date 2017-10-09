@@ -244,7 +244,7 @@ module.exports = async function ({ repositoryId }) {
   })
 
   statsd.increment('initial_branch')
-  log.info('success')
+  log.success('success')
 
   return {
     delay: 30 * 60 * 1000,
