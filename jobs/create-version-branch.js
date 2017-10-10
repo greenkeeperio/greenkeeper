@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const semver = require('semver')
+const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
@@ -34,26 +35,38 @@ module.exports = async function (
   if (!semver.validRange(oldVersion)) return
 
   const version = distTags[distTag]
-  const { installations, repositories } = await dbs()
+  const { installations, repositories, logs } = await dbs()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
-
+  const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
+  log.info('started', {dependency, type, version, oldVersion})
   const satisfies = semver.satisfies(version, oldVersion)
   const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock']
   const hasLockFile = _.some(_.pick(repository.files, lockFiles))
-  if (satisfies && hasLockFile) return
+  if (satisfies && hasLockFile) {
+    log.info('exited: dependency satisfies semver & repository has a lockfile')
+    return
+  }
 
   const billing = await getActiveBilling(accountId)
-  if (repository.private && (!billing || await getAccountNeedsMarketplaceUpgrade(accountId))) return
+  if (repository.private && (!billing || await getAccountNeedsMarketplaceUpgrade(accountId))) {
+    log.warn('exited: payment required')
+    return
+  }
 
   const [owner, repo] = repository.fullName.split('/')
   const config = getConfig(repository)
-  if (_.includes(config.ignore, dependency)) return
+  if (_.includes(config.ignore, dependency)) {
+    log.warn('exited: dependency ignored')
+    return
+  }
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: found default branch', {defaultBranch: base})
 
   const newBranch = `${config.branchPrefix}${dependency}-${version}`
+  log.info('branch name created', {branchName: newBranch})
 
   function transform (pkg) {
     try {
@@ -64,9 +77,15 @@ module.exports = async function (
     }
 
     const oldPkgVersion = _.get(json, [type, dependency])
-    if (!oldPkgVersion) return
+    if (!oldPkgVersion) {
+      log.warn('exited: could not find old package version')
+      return
+    }
 
-    if (semver.ltr(version, oldPkgVersion)) return // no downgrades
+    if (semver.ltr(version, oldPkgVersion)) { // no downgrades
+      log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+      return
+    }
 
     parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
     return parsed.toString()
@@ -79,6 +98,7 @@ module.exports = async function (
     }),
     'rows[0].doc'
   )
+  log.info('database: found open PR for this dependency', {openPR})
 
   const commitMessageScope = !satisfies && type === 'dependencies'
     ? 'fix'
@@ -92,6 +112,7 @@ module.exports = async function (
 
     commitMessage += `\n\nCloses #${openPR.number}`
   }
+  log.info('commit message created', {commitMessage})
 
   const sha = await createBranch({
     installationId,
@@ -103,8 +124,14 @@ module.exports = async function (
     transform,
     message: commitMessage
   })
+  if (sha) {
+    log.success('github: branch created', {sha})
+  }
 
-  if (!sha) return // no branch was created
+  if (!sha) { // no branch was created
+    log.error('github: no branch was created')
+    return
+  }
 
   // TODO: previously we checked the default_branch's status
   // this failed when users used [ci skip]
@@ -133,7 +160,10 @@ module.exports = async function (
 
   // nothing to do anymore
   // the next action will be triggered by the status event
-  if (satisfies) return
+  if (satisfies) {
+    log.info('dependency satisfies version range')
+    return
+  }
 
   const diffBase = openPR
     ? _.get(openPR, 'comments.length')
@@ -160,7 +190,7 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-
+    log.info('github: commented on already open PR for that dependency')
     return
   }
 
@@ -181,6 +211,7 @@ module.exports = async function (
   })
 
   // verify pull requests commit
+  log.info('github: set greenkeeper/verify status')
   await ghqueue.write(github => github.repos.createStatus({
     sha,
     owner,
@@ -198,10 +229,17 @@ module.exports = async function (
     base,
     head: newBranch,
     owner,
-    repo
+    repo,
+    log
   })
 
-  if (!createdPr) return
+  if (createdPr) {
+    log.success('github: pull request created', {pullRequest: createdPr})
+  }
+  if (!createdPr) {
+    log.error('github: pull request was not created')
+    return
+  }
 
   statsd.increment('update_pullrequests')
 
@@ -228,7 +266,7 @@ module.exports = async function (
   }
 }
 
-async function createPr ({ ghqueue, title, body, base, head, owner, repo }) {
+async function createPr ({ ghqueue, title, body, base, head, owner, repo, log }) {
   try {
     return await ghqueue.write(github => github.pullRequests.create({
       title,
@@ -247,6 +285,9 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo }) {
       repo
     }))
 
-    if (allPrs.length > 0) return allPrs.shift()
+    if (allPrs.length > 0) {
+      log.warn('queue: retry sending pull request to github')
+      return allPrs.shift()
+    }
   }
 }
