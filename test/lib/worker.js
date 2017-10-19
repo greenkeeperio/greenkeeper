@@ -44,7 +44,7 @@ test('worker throws away unimplemented job action', async t => {
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'unimplemented-job' }))
+      content: Buffer.from(JSON.stringify({ name: 'unimplemented-job', accountId: 123 }))
     }
   )
 })
@@ -65,7 +65,7 @@ test('worker requeues job on error, then throws away', async t => {
       nack: t.pass
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-job' })),
+      content: Buffer.from(JSON.stringify({ name: 'failing-job', accountId: 123 })),
       fields: {}
     }
   )
@@ -80,7 +80,7 @@ test('worker requeues job on error, then throws away', async t => {
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-job' })),
+      content: Buffer.from(JSON.stringify({ name: 'failing-job', accountId: 123 })),
       fields: {
         redelivered: true
       }
@@ -102,7 +102,7 @@ test('worker acks job on success w/o further work', async t => {
       nack: t.fail
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'successful-job' }))
+      content: Buffer.from(JSON.stringify({ name: 'successful-job', repository: { owner: { id: 111 }, full_name: 'testOrg/testRepo' } }))
     }
   )
 })
@@ -136,7 +136,7 @@ test('worker schedules further jobs on success', async t => {
       nack: t.fail
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'successful-job' }))
+      content: Buffer.from(JSON.stringify({ name: 'successful-job', accountId: 234 }))
     }
   )
 })
@@ -164,7 +164,7 @@ test('worker requeues job on scheduling error, then throws away', async t => {
       nack: t.pass
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-schedule' })),
+      content: Buffer.from(JSON.stringify({ name: 'failing-schedule', accountId: 233 })),
       fields: {}
     }
   )
@@ -181,7 +181,7 @@ test('worker requeues job on scheduling error, then throws away', async t => {
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-schedule' })),
+      content: Buffer.from(JSON.stringify({ name: 'failing-schedule', accountId: 344 })),
       fields: {
         redelivered: true
       }
