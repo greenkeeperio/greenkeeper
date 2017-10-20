@@ -20,7 +20,7 @@ module.exports = async function ({ marketplace_purchase }) {
     await upsert(payments, accountId, { plan })
     log.success('database: paymentDoc was updated', { plan })
   } catch (error) {
-    log.error('error', { error })
+    log.error('database: could not update paymentDoc', { error })
     throw error
   }
 }
