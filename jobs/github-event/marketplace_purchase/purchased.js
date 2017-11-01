@@ -29,7 +29,7 @@ module.exports = async function ({ marketplace_purchase }) {
   }
 
   if (paymentDoc && paymentDoc.stripeSubscriptionId) {
-    log.info('sheduled `cancel-stripe-subscription` job')
+    log.info('scheduled `cancel-stripe-subscription` job')
     return {
       data: {
         name: 'cancel-stripe-subscription',
