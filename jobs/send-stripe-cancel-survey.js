@@ -34,7 +34,7 @@ module.exports = async function ({ accountId, stripeSubscriptionId }) {
   const message = {
     to: customer.email,
     from: env.EMAIL_USER,
-    subject: 'Sorry to see you go.',
+    subject: 'Thank you for trying greenkeeper',
     text: content()
   }
 
