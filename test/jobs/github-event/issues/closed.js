@@ -18,7 +18,11 @@ test('github-event issues closed', async t => {
       number: 666
     },
     repository: {
-      id: 42
+      id: 42,
+      full_name: 'test/test',
+      owner: {
+        id: 1234
+      }
     }
   })
 
