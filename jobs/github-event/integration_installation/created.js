@@ -30,7 +30,7 @@ module.exports = async function ({ installation }) {
   github.authenticate({ type: 'token', token })
 
   // getting installation repos from github
-  let res = await github.integrations.getInstallationRepositories({
+  let res = await github.apps.getInstallationRepositories({
     per_page: 100
   })
   let { repositories } = res.data
