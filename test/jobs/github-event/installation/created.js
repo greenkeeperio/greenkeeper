@@ -2,9 +2,9 @@ const _ = require('lodash')
 const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/integration_installation/created')
+const worker = require('../../../../jobs/github-event/installation/created')
 
-test('github-event integration_installation created', async t => {
+test('github-event installation created', async t => {
   const { installations, repositories } = await dbs()
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')

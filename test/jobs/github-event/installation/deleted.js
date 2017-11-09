@@ -3,7 +3,7 @@ const { test } = require('tap')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event')
 
-test('github-event integration_installation deleted', async t => {
+test('github-event installation deleted', async t => {
   t.plan(3)
   const { installations, repositories } = await dbs()
 
@@ -19,7 +19,7 @@ test('github-event integration_installation deleted', async t => {
   ])
 
   const newJobs = await worker({
-    type: 'integration_installation',
+    type: 'installation',
     action: 'deleted',
     installation: { account: { id: 2 } }
   })
