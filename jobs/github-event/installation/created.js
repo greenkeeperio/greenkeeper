@@ -10,7 +10,12 @@ const upsert = require('../../../lib/upsert')
 
 module.exports = async function ({ installation }) {
   const { installations, repositories: reposDb, logs } = await dbs()
-  const log = Log({logsDb: logs, accountId: installation.account.id, repoSlug: null, context: 'integration-installation-created'})
+  const log = Log({
+    logsDb: logs,
+    accountId: installation.account.id,
+    repoSlug: null,
+    context: 'installation-created'
+  })
   log.info('started')
   const docId = String(installation.account.id)
   const doc = await upsert(
