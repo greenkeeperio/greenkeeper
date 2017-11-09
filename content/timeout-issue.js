@@ -10,7 +10,7 @@ Since we didn’t receive a CI status on the ${branchLink(fullName)} branch, it�
 
 If you _have_ already set up a CI for this repository, you might need to check how it’s configured. Make sure it is set to run on all new branches. If you don’t want it to run on absolutely every branch, you can whitelist branches starting with ${md.code('greenkeeper/')}.
 
-Once you have installed and configured CI on this repository correctly, you’ll need to re-trigger Greenkeeper’s initial pull request. To do this, please delete the \`greenkeeper/initial\` branch in this repository, and then remove and re-add this repository to the Greenkeeper integration’s white list on Github. You'll find this list on your repo or organization’s __settings__ page, under __Installed GitHub Apps__.
+Once you have installed and configured CI on this repository correctly, you’ll need to re-trigger Greenkeeper’s initial pull request. To do this, please delete the \`greenkeeper/initial\` branch in this repository, and then remove and re-add this repository to the Greenkeeper App’s white list on Github. You'll find this list on your repo or organization’s __settings__ page, under __Installed GitHub Apps__.
 `
 function branchLink (fullName) {
   return md.link(
