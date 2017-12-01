@@ -5,7 +5,8 @@ const dbs = require('../../../lib/dbs')
 const statsd = require('../../../lib/statsd')
 
 module.exports = async function ({ installation }) {
-  const { installations, repositories: reposDb, logs } = await dbs()
+  const { installations, repositories: reposDb } = await dbs()
+  const logs = dbs.getLogsDb()
   const key = String(installation.account.id)
   const log = Log({
     logsDb: logs,
