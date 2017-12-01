@@ -36,7 +36,8 @@ module.exports = async function (
   if (!semver.validRange(oldVersion)) return
 
   const version = distTags[distTag]
-  const { installations, repositories, logs } = await dbs()
+  const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})

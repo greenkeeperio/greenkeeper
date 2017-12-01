@@ -23,7 +23,8 @@ const upsert = require('../lib/upsert')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
 
 module.exports = async function ({ repositoryId }) {
-  const { installations, repositories, logs } = await dbs()
+  const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)

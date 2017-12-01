@@ -14,7 +14,8 @@ const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-util
 // If we update dependencies, find any open PRs for that dependency and close the PRs by commit message
 
 module.exports = async function ({ repositoryId, groupName }) {
-  const { installations, repositories, logs } = await dbs()
+  const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)

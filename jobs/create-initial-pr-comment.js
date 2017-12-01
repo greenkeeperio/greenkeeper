@@ -13,7 +13,8 @@ module.exports = async function (
   { repository, branchDoc, combined, installationId, accountId, prDocId }
 ) {
   accountId = String(accountId)
-  const { repositories, logs } = await dbs()
+  const { repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repositoryId = String(repository.id)
 
   const prDoc = await repositories.get(prDocId)
