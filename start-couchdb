@@ -3,8 +3,15 @@
 # immediately fail if an error occurs
 set -e
 
-docker rm -fv gk-couchdb || true
-docker run -d -p 5984:5984 --name gk-couchdb klaemo/couchdb:2.0.0
+
+if [[ -n "$GK_COUCHDB" ]]; then
+  echo "Using existing CouchDB on :5984"
+  curl -sX DELETE $GK_COUCHDB/{installations,npm,payments,repositories}-staging 2>&1 > /dev/null
+else
+  echo "Starting CouchDB via Docker"
+  docker rm -fv gk-couchdb || true
+  docker run -d -p 5984:5984 --name gk-couchdb klaemo/couchdb:2.0.0
+fi
 
 TIMEOUT=280
 TRIES=0
