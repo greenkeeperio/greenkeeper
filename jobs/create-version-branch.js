@@ -41,10 +41,44 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info('started', {dependency, type, version, oldVersion})
   const satisfies = semver.satisfies(version, oldVersion)
-  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock']
-  const hasLockFile = _.some(_.pick(repository.files, lockFiles))
-  if (satisfies && hasLockFile) {
-    log.info('exited: dependency satisfies semver & repository has a lockfile')
+  /*
+
+  Shrinkwrap should behave differently from regular lockfiles:
+
+  If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue if not. For the other two types of lockfiles (package-lock and yarn-lock), we will in future check if gk-lockfile is found in the repo’s dev-dependencies, if it is, Greenkeeper will continue (and the lockfiles will get updated), if not, we bail as before and nothing happens (because without gk-lockfile, the CI build wouldn‘t install anything new anyway).
+
+  Variable name explanations:
+  - moduleLogFile: Lockfiles that get published to npm and influence what gets installed on a user’s machine, shrinkwrap, for example.
+  - projectLockFile: lockfiles that don’t get published to npm and have no influence on the users’ dependency trees, like package-lock and yarn-lock
+
+  See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
+
+  */
+  const moduleLockFiles = ['npm-shrinkwrap.json']
+  const projectLockFiles = ['package-lock.json', 'yarn.lock']
+  const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
+  const hasProjectLockFile = _.some(_.pick(repository.files, projectLockFiles))
+  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfies && hasModuleLockFile) {
+    log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
+    return
+  }
+
+  // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
+  // won’t get updated without it
+  if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
+    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile')
+    return
+  }
+
+  // Some uses may want to use project lockfiles for version pinning, in this case, we shouldn’t update
+  // the lockfiles either
+  const config = getConfig(repository)
+  const treatLockfilesAsPins = _.get(config, 'treatLockfilesAsPins') === true
+  if (satisfies && hasProjectLockFile && treatLockfilesAsPins) {
+    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & treatLockfilesAsPins is true')
     return
   }
 
@@ -55,7 +89,6 @@ module.exports = async function (
   }
 
   const [owner, repo] = repository.fullName.split('/')
-  const config = getConfig(repository)
   if (_.includes(config.ignore, dependency)) {
     log.warn('exited: dependency ignored by user config')
     return
