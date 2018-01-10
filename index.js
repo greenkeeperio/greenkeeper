@@ -27,6 +27,9 @@ require('./lib/rollbar')
   const conn = await amqp.connect(env.AMQP_URL)
   const channel = await conn.createChannel()
 
+  // only allow 64 items to pile up
+  channel.prefetch(64)
+
   // 5 different prios because order matters
   // e.g. always sync before everything else
   // or always uninstall integrations before installing
