@@ -5,11 +5,11 @@ Promise.config({
   longStackTraces: true
 })
 
-// const _ = require('lodash')
+const _ = require('lodash')
 const Queue = require('promise-queue')
 
 const env = require('./lib/env')
-// const dbs = require('./lib/dbs')
+const dbs = require('./lib/dbs')
 const statsd = require('./lib/statsd')
 require('./lib/rollbar')
 
@@ -54,8 +54,7 @@ require('./lib/rollbar')
   // e.g. const queues = {'stripe-event': new Queue(1, 10)}
   const queues = {}
   function queueJob (queueId, job) {
-    // const q = queues[queueId] = queues[queueId] || new Queue(1, Infinity)
-    const q = new Queue(1, Infinity)
+    const q = queues[queueId] = queues[queueId] || new Queue(1, Infinity)
     return q.add(() => worker(job))
   }
   channel.consume(env.EVENTS_QUEUE_NAME, consume)
@@ -86,28 +85,28 @@ require('./lib/rollbar')
       return queueJob(data.name, job)
     }
 
-    // let queueId = Number(data.accountId) ||
-    //   _.get(data, 'repository.owner.id') ||
-    //   _.get(data, 'installation.account.id') ||
-    //   _.get(data, 'organization.id')
+    let queueId = Number(data.accountId) ||
+      _.get(data, 'repository.owner.id') ||
+      _.get(data, 'installation.account.id') ||
+      _.get(data, 'organization.id')
 
-    // if (!queueId) {
-    //   const login = _.get(data, 'repository.owner.name')
-    //   try {
-    //     if (!login) throw new Error(`can not identify job owner of ${data.name}`)
-    //
-    //     const {installations} = await dbs()
-    //     queueId = _.get(await installations.query('by_login', {
-    //       key: login
-    //     }), 'rows[0].id')
-    //
-    //     if (!queueId) throw new Error('totally can not identify job owner')
-    //   } catch (e) {
-    //     channel.nack(job, false, false)
-    //     throw e
-    //   }
-    // }
-    // queueJob(queueId, job)
+    if (!queueId) {
+      const login = _.get(data, 'repository.owner.name')
+      try {
+        if (!login) throw new Error(`can not identify job owner of ${data.name}`)
+
+        const {installations} = await dbs()
+        queueId = _.get(await installations.query('by_login', {
+          key: login
+        }), 'rows[0].id')
+
+        if (!queueId) throw new Error('totally can not identify job owner')
+      } catch (e) {
+        channel.nack(job, false, false)
+        throw e
+      }
+    }
+    queueJob(queueId, job)
   }
 })()
 // }
