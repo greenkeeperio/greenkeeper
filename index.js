@@ -81,10 +81,10 @@ require('./lib/rollbar')
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
-    // const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription']
-    // if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
-    return queueJob(data.name, job)
-    // }
+    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription']
+    if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
+      return queueJob(data.name, job)
+    }
 
     // let queueId = Number(data.accountId) ||
     //   _.get(data, 'repository.owner.id') ||
