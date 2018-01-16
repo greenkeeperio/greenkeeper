@@ -76,9 +76,9 @@ module.exports = async function (
   // Some uses may want to use project lockfiles for version pinning, in this case, we shouldn’t update
   // the lockfiles either
   const config = getConfig(repository)
-  const treatLockfilesAsPins = _.get(config, 'treatLockfilesAsPins') === true
-  if (satisfies && hasProjectLockFile && treatLockfilesAsPins) {
-    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & treatLockfilesAsPins is true')
+  const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'onlyUpdateLockfilesIfOutOfRange') === true
+  if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
+    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & onlyUpdateLockfilesIfOutOfRange is true')
     return
   }
 
