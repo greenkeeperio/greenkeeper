@@ -658,7 +658,9 @@ test('create-version-branch', async t => {
             'greenkeeper-lockfile': '1.1.1'
           },
           greenkeeper: {
-            'onlyUpdateLockfilesIfOutOfRange': true
+            lockfiles: {
+              outOfRangeUpdatesOnly: true
+            }
           }
         }
       }
