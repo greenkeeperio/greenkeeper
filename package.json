@@ -40,7 +40,7 @@
     "proxyquire": "^1.7.10",
     "simple-mock": "^0.8.0",
     "standard": "^10.0.2",
-    "tap": "^10.0.1"
+    "tap": "^10.7.3"
   },
   "engines": {
     "node": ">=7.6"
