@@ -41,19 +41,24 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info('started', {dependency, type, version, oldVersion})
   const satisfies = semver.satisfies(version, oldVersion)
-  /*
 
-  Shrinkwrap should behave differently from regular lockfiles:
+  // Shrinkwrap should behave differently from regular lockfiles:
+  //
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue
+  // if not. For the other two types of lockfiles (package-lock and yarn-lock),
+  // we will in future check if gk-lockfile is found in the repo’s dev-dependencies,
+  // if it is, Greenkeeper will continue (and the lockfiles will get updated),
+  // if not, we bail as before and nothing happens (because without gk-lockfile,
+  // the CI build wouldn‘t install anything new anyway).
+  //
+  // Variable name explanations:
+  // - moduleLogFile: Lockfiles that get published to npm and that influence what
+  //   gets installed on a user’s machine, such as `npm-shrinkwrap.json`.
+  // - projectLockFile: lockfiles that don’t get published to npm and have no
+  //   influence on the users’ dependency trees, like package-lock and yarn-lock
+  //
+  // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
-  If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue if not. For the other two types of lockfiles (package-lock and yarn-lock), we will in future check if gk-lockfile is found in the repo’s dev-dependencies, if it is, Greenkeeper will continue (and the lockfiles will get updated), if not, we bail as before and nothing happens (because without gk-lockfile, the CI build wouldn‘t install anything new anyway).
-
-  Variable name explanations:
-  - moduleLogFile: Lockfiles that get published to npm and influence what gets installed on a user’s machine, shrinkwrap, for example.
-  - projectLockFile: lockfiles that don’t get published to npm and have no influence on the users’ dependency trees, like package-lock and yarn-lock
-
-  See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
-
-  */
   const moduleLockFiles = ['npm-shrinkwrap.json']
   const projectLockFiles = ['package-lock.json', 'yarn.lock']
   const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
