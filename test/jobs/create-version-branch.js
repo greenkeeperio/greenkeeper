@@ -15,10 +15,13 @@ test('create-version-branch', async t => {
     _id: '124',
     installation: 38
   })
-
   await installations.put({
     _id: '125',
     installation: 39
+  })
+  await installations.put({
+    _id: '2323',
+    installation: 40
   })
 
   t.test('new pull request', async t => {
@@ -571,6 +574,215 @@ test('create-version-branch', async t => {
     t.notOk(newJob, 'no new job scheduled')
     t.end()
   })
+
+  t.test('bails if in range and shrinkwrap', async t => {
+    await repositories.put({
+      _id: '47',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': false,
+        'npm-shrinkwrap.json': true,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {}
+      }
+    })
+
+    const worker = require('../../jobs/create-version-branch')
+
+    const newJob = await worker({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '47',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    t.notOk(newJob, 'no new job scheduled')
+    t.end()
+  })
+
+  t.test('bails if in range and project lockfile and no gk-lockfile', async t => {
+    await repositories.put({
+      _id: '48',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {}
+      }
+    })
+
+    const worker = require('../../jobs/create-version-branch')
+
+    const newJob = await worker({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '48',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    t.notOk(newJob, 'no new job scheduled')
+    t.end()
+  })
+
+  t.test('bails if in range and project lockfile, has gk-lockfile, but onlyUpdateLockfilesIfOutOfRange is true', async t => {
+    await repositories.put({
+      _id: '49',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          },
+          greenkeeper: {
+            'onlyUpdateLockfilesIfOutOfRange': true
+          }
+        }
+      }
+    })
+
+    const worker = require('../../jobs/create-version-branch')
+
+    const newJob = await worker({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '49',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    t.notOk(newJob, 'no new job scheduled')
+    t.end()
+  })
+
+  t.test('runs if in range, has project lockfile, has gk-lockfile', async t => {
+    await repositories.put({
+      _id: '50',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          }
+        }
+      }
+    })
+    t.plan(5)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .post('/repos/espy/test/pulls')
+      .reply(200, () => {
+        t.pass('pull request created')
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/espy/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+        '/repos/espy/test/issues/66/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/espy/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        return {}
+      })
+
+    const worker = proxyquire('../../jobs/create-version-branch', {
+      '../lib/get-infos': (
+        { installationId, dependency, version, diffBase, versions }
+      ) => {
+        return {
+          dependencyLink: '[]()',
+          release: 'the release',
+          diffCommits: 'commits...'
+        }
+      },
+      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
+      '../lib/get-diff-commits': () => ({
+        html_url: 'https://github.com/lkjlsgfj/',
+        total_commits: 0,
+        behind_by: 0,
+        commits: []
+      }),
+      '../lib/create-branch': ({ transform }) => {
+        return '1234abcd'
+      }
+    })
+
+    const newJob = await worker({
+      dependency: '@finnpauls/dep',
+      accountId: '2323',
+      repositoryId: '50',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    t.notOk(newJob, 'no new job scheduled')
+    const branch = await repositories.get('50:branch:1234abcd')
+    const pr = await repositories.get('50:pr:321')
+    t.ok(branch.processed, 'branch is processed')
+    t.is(pr.number, 66, 'correct pr number')
+    t.is(pr.state, 'open', 'pr status open')
+    t.end()
+  })
 })
 
 tearDown(async () => {
@@ -580,6 +792,7 @@ tearDown(async () => {
     installations.remove(await installations.get('123')),
     installations.remove(await installations.get('124')),
     installations.remove(await installations.get('125')),
+    installations.remove(await installations.get('2323')),
     repositories.remove(await repositories.get('42:branch:1234abcd')),
     repositories.remove(await repositories.get('43:branch:1234abcd')),
     repositories.remove(await repositories.get('42:pr:321')),
@@ -590,6 +803,12 @@ tearDown(async () => {
     repositories.remove(await repositories.get('421')),
     repositories.remove(await repositories.get('45')),
     repositories.remove(await repositories.get('46')),
+    repositories.remove(await repositories.get('47')),
+    repositories.remove(await repositories.get('48')),
+    repositories.remove(await repositories.get('49')),
+    repositories.remove(await repositories.get('50')),
+    repositories.remove(await repositories.get('50:branch:1234abcd')),
+    repositories.remove(await repositories.get('50:pr:321')),
     payments.remove(await payments.get('124')),
     payments.remove(await payments.get('125'))
   ])
