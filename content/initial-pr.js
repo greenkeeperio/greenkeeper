@@ -123,6 +123,7 @@ const faqText = () => md`
 There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
 `
 
+// needs to handle files as an array of arrays!
 function hasLockFileText (files) {
   const lockFiles = _.pick(files, ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'])
   const lockFile = _.findKey(lockFiles)
