@@ -13,7 +13,7 @@ test('github-event installation created', async t => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/installation/repositories')
+    .get('/installation/repositories?per_page=100')
     .reply('200', {
       repositories: [
         {
@@ -22,9 +22,9 @@ test('github-event installation created', async t => {
           private: true
         }
       ]}, {
-        Link: '<https://api.github.com/installation/repositories?page=2>; rel="next"'
+        Link: '<https://api.github.com/installation/repositories?per_page=100&page=2>; rel="next"'
       })
-    .get('/installation/repositories?page=2')
+    .get('/installation/repositories?per_page=100&page=2')
     .reply('200', {
       repositories: [
         {
