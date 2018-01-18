@@ -15,12 +15,18 @@ module.exports = async function (data) {
   const branchRef = `refs/heads/${repository.default_branch}`
   if (!data.head_commit || data.ref !== branchRef) return
 
+// add .greenkeeperrc
   const relevantFiles = [
     'package.json',
     'package-lock.json',
     'npm-shrinkwrap.json',
     'yarn.lock'
   ]
+
+  // if .greenkeeperrc
+  // updated repoDoc with new .greenkeeperrc
+  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
+  // close all open prs for that groupname
 
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
   const repositoryId = String(repository.id)
@@ -31,6 +37,9 @@ module.exports = async function (data) {
   if (after === repodoc.headSha) return
   repodoc.headSha = after
 
+  // get path of changed package json
+  // always put package.jsons in the repoDoc (new & old)
+  // if remove event: delete key of package.json
   const oldPkg = _.get(repodoc, ['packages', 'package.json'])
   await updateRepoDoc(installation.id, repodoc)
   const pkg = _.get(repodoc, ['packages', 'package.json'])
@@ -95,6 +104,8 @@ function updateDoc (repositories, repository, repodoc) {
   )
 }
 
+// check for relevant files in all folders!
+// currently we might just detect those files in the root directory
 function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {

@@ -43,6 +43,8 @@ module.exports = async function (
   // we want to handle different distTags in the future
   if (distTag !== 'latest') return
 
+  // probably update/create new  View for 'by_dependency'
+  // packages are a list of all repoDocs that have that dependency (should rename that)
   const packages = (await repositories.query('by_dependency', {
     key: dependency
   })).rows
@@ -62,8 +64,14 @@ module.exports = async function (
     '_id'
   )
 
+  // check if package has a greenkeeperrc / more then 1 package json or package.json is in subdirectory
+  // continue with the rest but send all otheres to a 'new' version branch job
+
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
+
+  // put all this logic in an utils function and return an object that we would need to start
+  // the version branch or group version branch job
 
   const order = {
     'dependencies': 1,
