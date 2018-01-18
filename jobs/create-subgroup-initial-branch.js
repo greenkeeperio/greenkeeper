@@ -1,23 +1,14 @@
-const crypto = require('crypto')
-const { extname } = require('path')
 const Log = require('gk-log')
 const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const { promisify } = require('bluebird')
 const semver = require('semver')
-const badger = require('readme-badger')
-const yaml = require('js-yaml')
-const yamlInPlace = require('yml-in-place')
-const escapeRegex = require('escape-string-regexp')
-
 const RegClient = require('../lib/npm-registry-client')
 const env = require('../lib/env')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
-const statsd = require('../lib/statsd')
 const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
@@ -25,13 +16,15 @@ const upsert = require('../lib/upsert')
 
 const registryUrl = env.NPM_REGISTRY
 
-module.exports = async function ({ repositoryId }) {
+// if we update dependencies find open PRs for that dependency and close the PRs by commit message
+
+module.exports = async function ({ repositoryId, groupname }) {
   const { installations, repositories, logs } = await dbs()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch'})
 
   log.info('started')
 
@@ -50,7 +43,6 @@ module.exports = async function ({ repositoryId }) {
   await upsert(repositories, repoDoc._id, repoDoc)
 
   const config = getConfig(repoDoc)
-  log.info(`config for ${repoDoc.fullName}`, {config})
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
@@ -64,7 +56,7 @@ module.exports = async function ({ repositoryId }) {
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
-  // get for all package.jsons
+  // get for all package.jsons in a group
   // every package should be updated to the newest version
   const dependencyMeta = _.flatten(
     ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
@@ -140,28 +132,14 @@ module.exports = async function ({ repositoryId }) {
 
   const branch = ghRepo.default_branch
 
-  const newBranch = config.branchPrefix + 'initial'
-
-  const slug = `${owner}/${repo}`
-  const tokenHash = crypto
-    .createHmac('sha256', env.BADGES_SECRET)
-    .update(slug.toLowerCase())
-    .digest('hex')
-  const badgesTokenMaybe = repoDoc.private
-    ? `?token=${tokenHash}&ts=${Date.now()}`
-    : ''
-  const badgeUrl = `https://${env.BADGES_HOST}/${slug}.svg${badgesTokenMaybe}`
-  log.info('badge: url', {badgeUrl})
-
-  const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
+  const newBranch = config.branchPrefix + 'initial' + `-${groupname}`
 
   let badgeAlreadyAdded = false
   // create a transform loop for all the package.json paths and push into the transforms array below
-  // add .greenkeeperrc too!
   const transforms = [
     {
       path: 'package.json',
-      message: getMessage(config.commitMessages, 'initialDependencies'),
+      message: 'chore(package): update dependencies',
       transform: oldPkg => {
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
@@ -172,43 +150,6 @@ module.exports = async function ({ repositoryId }) {
           inplace.set([type, name], newVersion)
         })
         return inplace.toString()
-      }
-    },
-    {
-      path: '.travis.yml',
-      message: getMessage(config.commitMessages, 'initialBranches'),
-      transform: raw => travisTransform(config, raw)
-    },
-    {
-      path: 'README.md',
-      create: true,
-      message: getMessage(config.commitMessages, 'initialBadge'),
-      transform: (readme, path) => {
-        // TODO: empty readme, no image support
-        const ext = extname(path).slice(1)
-        if (!badger.hasImageSupport(ext)) return
-
-        const hasPrivateBadge = privateBadgeRegex.test(readme)
-        if (repoDoc.private && hasPrivateBadge) {
-          return readme.replace(privateBadgeRegex, badgeUrl)
-        }
-
-        badgeAlreadyAdded = _.includes(
-          readme,
-          `https://${env.BADGES_HOST}/`
-        )
-        if (!repoDoc.private && badgeAlreadyAdded) {
-          log.info('badge: Repository already has badge')
-          return
-        }
-
-        return badger.addBadge(
-          readme,
-          ext,
-          badgeUrl,
-          'https://greenkeeper.io/',
-          'Greenkeeper badge'
-        )
       }
     }
   ]
@@ -227,11 +168,7 @@ module.exports = async function ({ repositoryId }) {
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
       log.info('Repository silently enabled')
-      if (env.IS_ENTERPRISE) {
-        return
-      } else {
-        return maybeUpdatePaymentsJob(accountId, repoDoc.private)
-      }
+      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
     } else {
       log.error('Could not create initial branch')
       throw new Error('Could not create initial branch')
@@ -239,8 +176,8 @@ module.exports = async function ({ repositoryId }) {
   }
 
   const depsUpdated = transforms[0].created
-  const travisModified = transforms[1].created
-  const badgeAdded = transforms[2].created
+  const travisModified = false
+  const badgeAdded = false
 
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
@@ -251,11 +188,9 @@ module.exports = async function ({ repositoryId }) {
     processed: false,
     depsUpdated,
     travisModified,
-    badgeAdded,
-    badgeUrl
+    badgeAdded
   })
 
-  statsd.increment('initial_branch')
   log.success('success')
 
   return {
@@ -279,34 +214,4 @@ async function createDefaultLabel ({ installationId, name, owner, repo }) {
       }))
     } catch (e) {}
   }
-}
-
-async function travisTransform (config, travisyml) {
-  try {
-    var travis = yaml.safeLoad(travisyml, {
-      schema: yaml.FAILSAFE_SCHEMA
-    })
-  } catch (e) {
-    // ignore .travis.yml if it can not be parsed
-    return
-  }
-  const onlyBranches = _.get(travis, 'branches.only')
-  if (!onlyBranches || !Array.isArray(onlyBranches)) return
-
-  const greenkeeperRule = onlyBranches.some(function (branch) {
-    if (_.first(branch) !== '/' || _.last(branch) !== '/') return false
-    try {
-      const regex = new RegExp(branch.slice(1, -1))
-      return regex.test(config.branchPrefix)
-    } catch (e) {
-      return false
-    }
-  })
-  if (greenkeeperRule) return
-
-  return yamlInPlace.addToSequence(
-    travisyml,
-    ['branches', 'only'],
-    `/^${escapeRegex(config.branchPrefix)}.*$/`
-  )
 }
