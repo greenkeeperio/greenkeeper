@@ -4,6 +4,9 @@ const proxyquire = require('proxyquire').noCallThru()
 
 const dbs = require('../../lib/dbs')
 
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
 test('create-version-branch', async t => {
   const { installations, repositories, payments } = await dbs()
 
@@ -41,10 +44,12 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, () => {
@@ -172,10 +177,12 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
       .reply(200, () => {
@@ -379,22 +386,14 @@ test('create-version-branch', async t => {
 
     t.plan(9)
 
-    nock('https://registry.npmjs.org')
-      .get('/@finnpauls%2Fdep2')
-      .reply(200, () => {
-        return {
-          repository: {
-            url: 'https://github.com/finnp/dep2'
-          }
-        }
-      })
-
-    nock('https://api.github.com')
+    const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test2')
       .reply(200, {
@@ -471,6 +470,7 @@ test('create-version-branch', async t => {
       }
     })
 
+    githubMock.done()
     t.notOk(newJob, 'no new job scheduled')
     const branch = await repositories.get('43:branch:1234abcd')
     t.ok(branch.processed, 'branch is processed')
@@ -706,9 +706,13 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .post('/repos/espy/test/pulls')
       .reply(200, () => {
         t.pass('pull request created')
