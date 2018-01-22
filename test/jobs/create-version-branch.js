@@ -709,6 +709,9 @@ test('create-version-branch', async t => {
       .reply(200, {
         token: 'secret'
       })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .post('/repos/espy/test/pulls')
       .reply(200, () => {
         t.pass('pull request created')
