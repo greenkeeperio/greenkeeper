@@ -1,7 +1,7 @@
-# Welcome to Greenkeeper!
-
-<img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
-
+<div align="center">
+  <img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
+</div>
+<div align="center">
 [![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
 [![Slack](https://greenkeeper-slack.herokuapp.com/badge.svg)](https://greenkeeper-slack.herokuapp.com/)
 [![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
@@ -9,11 +9,36 @@
 [![devDependency Status](https://david-dm.org/greenkeeperio/greenkeeper/master/dev-status.svg)](https://david-dm.org/greenkeeperio/greenkeeper/master#info=devDependencies)
 [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-
-**Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.**
-
-Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
-
+</div>
+<div align="center">
+  <h3>
+    <a href="https://greenkeeper.io/">
+      Website
+    </a>
+    <span> | </span>
+    <a href="https://blog.greenkeeper.io/">
+      Blog
+    </a>
+    <span> | </span>
+    <a href="https://github.com/greenkeeperio/greenkeeper/blob/master/CONTRIBUTING.md">
+      Contributing
+    </a>
+    <span> | </span>
+    <a href="https://greenkeeper.io/faq.html">
+      FAQ
+    </a>
+    <span> | </span>
+    <a href="https://greenkeeper.io/docs.html">
+      General Documentation
+    </a>
+  </h3>
+</div>
+<div align="center">
+  <strong>Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.</strong>
+</div>
+<div align="center">
+  Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
+</div>
 <details>
 <summary>Who else is using it? Anyone I know?</summary>
 
