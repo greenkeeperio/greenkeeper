@@ -17,7 +17,7 @@ Help us keep **Greenkeeper** open and inclusive. Please read and follow our [Cod
 
 ```bash
 # Clone your fork of the repo into the current directory
-$ git clone https://github.com/greenkeeperio/greenkeeper
+$ git clone https://github.com/<YOUR ACCOUNT>/greenkeeper.git
 # Navigate to the newly cloned directory
 $ cd greenkeeper
 # Assign the original repo to a remote called "upstream"
@@ -86,7 +86,7 @@ $ git push origin <topic-branch-name>
 6. [Open a Pull Request](https://help.github.com/articles/creating-a-pull-request/#creating-the-pull-request) with a clear title and description.
 
 **Tips**:
-- For ambitious tasks, open a Pull Request as soon as possible with the `[WIP]` prefix i nthe title, in order to get feedback and help from the community.
+- For ambitious tasks, open a Pull Request as soon as possible with the `[WIP]` prefix in the title, in order to get feedback and help from the community.
 - [Allow Greenkeeper maintainers to make changes to your Pull Request branch](https://help.github.com/articles/allowing-changes-to-a-pull-request-branch-created-from-a-fork) this way we can rebase it and make some minor changes if necessary. All changes we make will be done in new commit and we'll ask for your approval before merging them.
 
 ## Commit message guidelines
