@@ -219,7 +219,9 @@ module.exports = async function ({ repositoryId }) {
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
       log.info('Repository silently enabled')
-      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      if (!env.IS_ENTERPRISE) {
+        return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      }
     } else {
       log.error('Could not create initial branch')
       throw new Error('Could not create initial branch')
