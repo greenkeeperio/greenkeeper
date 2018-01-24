@@ -7,12 +7,18 @@ const removeIfExists = require('../helpers/remove-if-exists')
 const dbs = require('../../lib/dbs')
 
 test('create-initial-branch', async t => {
-  const { installations, repositories } = await dbs()
+  const { installations, repositories, payments } = await dbs()
 
   await installations.put({
     _id: '123',
     installation: 37,
     plan: 'free'
+  })
+
+  await payments.put({
+    _id: '123',
+    stripeSubscriptionId: 'stripe123',
+    plan: 'personal'
   })
 
   const devDependencies = {
@@ -162,6 +168,52 @@ test('create-initial-branch', async t => {
     t.end()
   })
 
+  t.test('badge already added for private repo', async t => {
+    await repositories.put({
+      _id: '45',
+      accountId: '123',
+      fullName: 'finnp/test',
+      private: true
+    })
+    const worker = proxyquire('../../jobs/create-initial-branch', {
+      '../lib/create-branch': ({ transforms }) => {
+        transforms[2].transform(
+          'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.sv',
+          'README.md'
+        )
+      }
+    })
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/finnp/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        content: encodePkg({ dependencies: {} })
+      })
+      .get('/repos/finnp/test/contents/package-lock.json')
+      .reply(200, {
+        path: 'package-lock.json',
+        content: encodePkg({ who: 'cares' })
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+    const newJob = await worker({
+      repositoryId: 45
+    })
+    t.ok(newJob)
+    t.equal(newJob.data.name, 'update-payments')
+    t.equal(newJob.data.accountId, '123')
+    t.end()
+  })
+
   t.test('ignore forks without issues enabled', async t => {
     await repositories.put({
       _id: '43',
@@ -195,13 +247,15 @@ test('create-initial-branch', async t => {
 })
 
 tearDown(async () => {
-  const { installations, repositories } = await dbs()
+  const { installations, repositories, payments } = await dbs()
 
   await Promise.all([
     removeIfExists(installations, '123'),
+    removeIfExists(payments, '123'),
     removeIfExists(repositories, '42'),
     removeIfExists(repositories, '43'),
     removeIfExists(repositories, '44'),
+    removeIfExists(repositories, '45'),
     removeIfExists(repositories, '42:branch:1234abcd')
   ])
 })
