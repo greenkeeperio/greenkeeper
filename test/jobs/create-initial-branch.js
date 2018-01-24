@@ -2,6 +2,7 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 const proxyquire = require('proxyquire').noCallThru()
 const _ = require('lodash')
+const removeIfExists = require('../helpers/remove-if-exists')
 
 const dbs = require('../../lib/dbs')
 
@@ -197,11 +198,11 @@ tearDown(async () => {
   const { installations, repositories } = await dbs()
 
   await Promise.all([
-    installations.remove(await installations.get('123')),
-    repositories.remove(await repositories.get('42')),
-    repositories.remove(await repositories.get('43')),
-    repositories.remove(await repositories.get('44')),
-    repositories.remove(await repositories.get('42:branch:1234abcd'))
+    removeIfExists(installations, '123'),
+    removeIfExists(repositories, '42'),
+    removeIfExists(repositories, '43'),
+    removeIfExists(repositories, '44'),
+    removeIfExists(repositories, '42:branch:1234abcd')
   ])
 })
 
