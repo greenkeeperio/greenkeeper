@@ -2,7 +2,7 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event/marketplace_purchase/purchased')
-const removeIfExists = require('../../../remove-if-exists.js')
+const removeIfExists = require('../../../helpers/remove-if-exists.js')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
