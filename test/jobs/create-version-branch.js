@@ -3,11 +3,18 @@ const nock = require('nock')
 const proxyquire = require('proxyquire').noCallThru()
 
 const dbs = require('../../lib/dbs')
+const { cleanCache } = require('../helpers/module-cache-helpers')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 test('create-version-branch', async t => {
+  t.beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
+    return Promise.resolve()
+  })
+
   const { installations, repositories, payments } = await dbs()
 
   await installations.put({
@@ -274,6 +281,137 @@ test('create-version-branch', async t => {
       dependency: '@finnpauls/dep',
       accountId: '124',
       repositoryId: '421',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    t.notOk(newJob, 'no new job scheduled')
+    const branch = await repositories.get('42:branch:1234abcd')
+    const pr = await repositories.get('42:pr:321')
+    t.ok(branch.processed, 'branch is processed')
+    t.is(pr.number, 66, 'correct pr number')
+    t.is(pr.state, 'open', 'pr status open')
+  })
+
+  t.test('new pull request private repo within GKE', async t => {
+    process.env.IS_ENTERPRISE = true
+
+    await repositories.put({
+      _id: '422',
+      accountId: '124',
+      fullName: 'finnp/testtest',
+      private: true,
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    t.plan(13)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/38/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/testtest/pulls')
+      .reply(200, () => {
+        t.pass('pull request created')
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/testtest')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+      '/repos/finnp/testtest/issues/66/labels',
+      body => body[0] === 'customlabel'
+      )
+      .reply(201, () => {
+        t.pass('label created')
+        return {}
+      })
+      .post(
+      '/repos/finnp/testtest/statuses/1234abcd',
+      ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        t.pass('status created')
+        return {}
+      })
+
+    const worker = proxyquire('../../jobs/create-version-branch', {
+      '../lib/get-infos': (
+        { installationId, dependency, version, diffBase, versions }
+      ) => {
+        t.pass('used get-infos')
+        t.same(
+          versions,
+          {
+            '1.0.0': {},
+            '2.0.0': {}
+          },
+          'passed the versions'
+        )
+        t.is(version, '2.0.0', 'passed correct version')
+        t.is(installationId, 38, 'passed the installationId object')
+        t.is(dependency, '@finnpauls/dep', 'passed correct dependency')
+        return {
+          dependencyLink: '[]()',
+          release: 'the release',
+          diffCommits: 'commits...'
+        }
+      },
+      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
+      '../lib/get-diff-commits': () => ({
+        html_url: 'https://github.com/lkjlsgfj/',
+        total_commits: 0,
+        behind_by: 0,
+        commits: []
+      }),
+      '../lib/create-branch': ({ transform }) => {
+        const newPkg = JSON.parse(
+          transform(
+            JSON.stringify({
+              devDependencies: {
+                '@finnpauls/dep': '^1.0.0'
+              }
+            })
+          )
+        )
+        t.is(
+          newPkg.devDependencies['@finnpauls/dep'],
+          '^2.0.0',
+          'changed to the right version'
+        )
+        return '1234abcd'
+      }
+    })
+
+    const newJob = await worker({
+      dependency: '@finnpauls/dep',
+      accountId: '124',
+      repositoryId: '422',
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
@@ -825,6 +963,7 @@ tearDown(async () => {
     repositories.remove(await repositories.get('43')),
     repositories.remove(await repositories.get('44')),
     repositories.remove(await repositories.get('421')),
+    repositories.remove(await repositories.get('422')),
     repositories.remove(await repositories.get('45')),
     repositories.remove(await repositories.get('46')),
     repositories.remove(await repositories.get('47')),
