@@ -3,6 +3,7 @@ const Log = require('gk-log')
 
 const dbs = require('../../../lib/dbs')
 const statsd = require('../../../lib/statsd')
+const env = require('../../../lib/env')
 const { maybeUpdatePaymentsJob } = require('../../../lib/payments')
 
 module.exports = async function ({ installation, repositories_removed }) {
@@ -34,6 +35,10 @@ module.exports = async function ({ installation, repositories_removed }) {
   statsd.decrement('repositories', repositories.length)
 
   await reposDb.bulkDocs(repositories)
+
+  if (env.IS_ENTERPRISE) {
+    return
+  }
 
   const hasPrivateRepos = repositories.some(repo => repo.private)
 
