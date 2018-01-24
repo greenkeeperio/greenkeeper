@@ -1,7 +1,7 @@
 const { test, tearDown } = require('tap')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event/marketplace_purchase/changed')
-const removeIfExists = require('../../../remove-if-exists.js')
+const removeIfExists = require('../../../helpers/remove-if-exists.js')
 
 test('marketplace changed', async t => {
   t.test('change entry in payments database', async t => {

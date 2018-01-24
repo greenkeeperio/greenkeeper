@@ -1,7 +1,7 @@
 const { test } = require('tap')
 const nock = require('nock')
 const worker = require('../../jobs/reset')
-const removeIfExists = require('../remove-if-exists.js')
+const removeIfExists = require('../helpers/remove-if-exists.js')
 
 const dbs = require('../../lib/dbs')
 const timeToWaitAfterTests = 500
