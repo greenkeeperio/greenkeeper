@@ -86,10 +86,12 @@ module.exports = async function (
     return
   }
 
-  const billing = await getActiveBilling(accountId)
-  if (repository.private && (!billing || await getAccountNeedsMarketplaceUpgrade(accountId))) {
-    log.warn('exited: payment required')
-    return
+  if (repository.private) {
+    const billing = await getActiveBilling(accountId)
+    if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
+      log.warn('exited: payment required')
+      return
+    }
   }
 
   const [owner, repo] = repository.fullName.split('/')
@@ -233,8 +235,6 @@ module.exports = async function (
 
   const title = `Update ${dependency} to the latest version 🚀`
 
-  const plan = _.get(billing, 'plan', 'free')
-
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -242,9 +242,7 @@ module.exports = async function (
     dependency,
     type,
     release,
-    diffCommits,
-    plan,
-    isPrivate: repository.private
+    diffCommits
   })
 
   // verify pull requests commit
