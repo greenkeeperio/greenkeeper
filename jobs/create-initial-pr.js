@@ -64,24 +64,26 @@ module.exports = async function (
   }))
   log.info('github: set greenkeeper/verify status')
 
-  const billingAccount = await getActiveBilling(accountId)
-  const hasBillingAccount = !!billingAccount
-  const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
+  if (repodoc.private) {
+    const billingAccount = await getActiveBilling(accountId)
+    const hasBillingAccount = !!billingAccount
+    const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
 
-  if (repodoc.private && (!hasBillingAccount || accountNeedsMarketplaceUpgrade)) {
-    log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
-    const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
+    if (!hasBillingAccount || accountNeedsMarketplaceUpgrade) {
+      log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
+      const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
 
-    await ghqueue.write(github => github.repos.createStatus({
-      owner,
-      repo,
-      sha,
-      state: 'pending',
-      context: 'greenkeeper/payment',
-      description: 'Payment required, merging will have no effect',
-      target_url: targetUrl
-    }))
-    log.info('github: set greenkeeper/payment status')
+      await ghqueue.write(github => github.repos.createStatus({
+        owner,
+        repo,
+        sha,
+        state: 'pending',
+        context: 'greenkeeper/payment',
+        description: 'Payment required, merging will have no effect',
+        target_url: targetUrl
+      }))
+      log.info('github: set greenkeeper/payment status')
+    }
   }
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))

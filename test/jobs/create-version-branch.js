@@ -4,6 +4,9 @@ const proxyquire = require('proxyquire').noCallThru()
 
 const dbs = require('../../lib/dbs')
 
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
 test('create-version-branch', async t => {
   const { installations, repositories, payments } = await dbs()
 
@@ -18,6 +21,14 @@ test('create-version-branch', async t => {
   await installations.put({
     _id: '125',
     installation: 39
+  })
+  await installations.put({
+    _id: '126',
+    installation: 41
+  })
+  await installations.put({
+    _id: '127',
+    installation: 42
   })
   await installations.put({
     _id: '2323',
@@ -41,10 +52,12 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, () => {
@@ -172,10 +185,12 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
       .reply(200, () => {
@@ -365,7 +380,7 @@ test('create-version-branch', async t => {
       }),
       repositories.put({
         _id: '43',
-        accountId: '123',
+        accountId: '126',
         fullName: 'finnp/test2',
         packages: {
           'package.json': {
@@ -379,22 +394,14 @@ test('create-version-branch', async t => {
 
     t.plan(9)
 
-    nock('https://registry.npmjs.org')
-      .get('/@finnpauls%2Fdep2')
-      .reply(200, () => {
-        return {
-          repository: {
-            url: 'https://github.com/finnp/dep2'
-          }
-        }
-      })
-
-    nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/41/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test2')
       .reply(200, {
@@ -420,7 +427,7 @@ test('create-version-branch', async t => {
           'passed the versions'
         )
         t.is(version, '2.0.0', 'passed correct version')
-        t.is(installationId, 37, 'passed the installationId object')
+        t.is(installationId, 41, 'passed the installationId object')
         t.is(dependency, '@finnpauls/dep2', 'passed correct dependency')
         return {
           dependencyLink: '[]()',
@@ -456,7 +463,7 @@ test('create-version-branch', async t => {
 
     const newJob = await worker({
       dependency: '@finnpauls/dep2',
-      accountId: '123',
+      accountId: '126',
       repositoryId: '43',
       type: 'devDependencies',
       distTag: 'latest',
@@ -471,6 +478,7 @@ test('create-version-branch', async t => {
       }
     })
 
+    githubMock.done()
     t.notOk(newJob, 'no new job scheduled')
     const branch = await repositories.get('43:branch:1234abcd')
     t.ok(branch.processed, 'branch is processed')
@@ -479,7 +487,7 @@ test('create-version-branch', async t => {
   t.test('no downgrades', async t => {
     await repositories.put({
       _id: '44',
-      accountId: '123',
+      accountId: '127',
       fullName: 'finnp/test',
       packages: {
         'package.json': {
@@ -506,6 +514,14 @@ test('create-version-branch', async t => {
     })
 
     const githubMock = nock('https://api.github.com')
+      .post('/installations/42/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
         default_branch: 'master'
@@ -513,7 +529,7 @@ test('create-version-branch', async t => {
 
     const newJob = await worker({
       dependency: '@finnpauls/dep',
-      accountId: '123',
+      accountId: '127',
       repositoryId: '42',
       type: 'devDependencies',
       distTag: 'latest',
@@ -706,9 +722,13 @@ test('create-version-branch', async t => {
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .post('/repos/espy/test/pulls')
       .reply(200, () => {
         t.pass('pull request created')
@@ -794,6 +814,8 @@ tearDown(async () => {
     installations.remove(await installations.get('123')),
     installations.remove(await installations.get('124')),
     installations.remove(await installations.get('125')),
+    installations.remove(await installations.get('126')),
+    installations.remove(await installations.get('127')),
     installations.remove(await installations.get('2323')),
     repositories.remove(await repositories.get('42:branch:1234abcd')),
     repositories.remove(await repositories.get('43:branch:1234abcd')),
