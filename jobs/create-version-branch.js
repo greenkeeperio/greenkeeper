@@ -86,7 +86,7 @@ module.exports = async function (
     return
   }
 
-  if (repository.private) {
+  if (repository.private && !env.IS_ENTERPRISE) {
     const billing = await getActiveBilling(accountId)
     if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
       log.warn('exited: payment required')
