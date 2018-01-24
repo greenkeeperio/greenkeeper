@@ -3,9 +3,15 @@ const nock = require('nock')
 const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
-const createInitial = require('../../jobs/create-initial-pr')
+const { requireFresh, cleanCache } = require('../helpers/module-cache-helpers')
 
 test('create-initial-pr', async t => {
+  t.beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
+    return Promise.resolve()
+  })
+
   const { repositories, payments } = await dbs()
 
   await payments.put({
@@ -51,6 +57,8 @@ test('create-initial-pr', async t => {
   const branchDoc = await repositories.get('repoId:branch:1234abcd')
 
   t.test('create pr for account with `free` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '42',
       accountId: '123free',
@@ -108,6 +116,8 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo for account with `free` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '42b',
       accountId: '123free',
@@ -171,6 +181,8 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo for account with `opensource` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '46',
       accountId: '123opensource',
@@ -233,7 +245,70 @@ test('create-initial-pr', async t => {
     })
   })
 
+  t.test('create pr for private repo within GKE', async t => {
+    process.env.IS_ENTERPRISE = true
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
+    await repositories.put({
+      _id: '47',
+      accountId: '123opensource',
+      fullName: 'finnp/private',
+      private: true
+    })
+
+    t.plan(3)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/finnp/private')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/private/statuses/1234abcd')
+      .reply(201, () => {
+        t.pass('payment required status added')
+        return {}
+      })
+      .post(
+      '/repos/finnp/private/pulls',
+      ({ head }) => head === 'greenkeeper/initial'
+      )
+      .reply(201, () => {
+        t.pass('pull request created')
+        return {
+          id: 333,
+          number: 3
+        }
+      })
+      .post(
+      '/repos/finnp/private/issues/3/labels',
+      body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        t.pass('label created')
+        return {}
+      })
+
+    await createInitial({
+      repository: { id: 47 },
+      branchDoc: branchDoc,
+      combined: {
+        state: 'success',
+        combined: []
+      },
+      installationId: 11,
+      accountId: '123opensource'
+    })
+  })
+
   t.test('create pr for private repo and account with stripe `personal` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '43',
       accountId: '123stripe',
@@ -292,6 +367,8 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo and account with Github `team` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '44',
       accountId: '123team',
@@ -350,6 +427,7 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo and account with Github `team` plan with payment required', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
     const payments = require('../../lib/payments')
 
     await repositories.put({
@@ -418,6 +496,8 @@ test('create-initial-pr', async t => {
   })
 
   t.test('create pr for private repo and account with Github `business` plan', async t => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+
     await repositories.put({
       _id: '45',
       accountId: '123business',
@@ -492,4 +572,5 @@ tearDown(async () => {
   await repositories.remove(await repositories.get('45'))
   await repositories.remove(await repositories.get('46'))
   await repositories.remove(await repositories.get('repoId:branch:1234abcd'))
+  await repositories.remove(await repositories.get('47'))
 })
