@@ -1,13 +1,5 @@
 const { test } = require('tap')
-
-function cleanCache (module) {
-  delete require.cache[require.resolve(module)]
-}
-
-function requireFresh (module) {
-  cleanCache(module)
-  return require(module)
-}
+const { cleanCache, requireFresh } = require('../helpers/module-cache-helpers')
 
 test('timeout issue content', async t => {
   t.afterEach(() => {
