@@ -3,6 +3,7 @@ const _ = require('lodash')
 const githubQueue = require('../../../lib/github-queue')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
+const env = require('../../../lib/env')
 const { maybeUpdatePaymentsJob } = require('../../../lib/payments')
 
 module.exports = async function (data) {
@@ -41,5 +42,7 @@ module.exports = async function (data) {
     }))
   } catch (e) {}
 
-  return maybeUpdatePaymentsJob(accountId, repodoc.private)
+  if (!env.IS_ENTERPRISE) {
+    return maybeUpdatePaymentsJob(accountId, repodoc.private)
+  }
 }
