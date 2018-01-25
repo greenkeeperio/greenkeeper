@@ -1,6 +1,7 @@
 const { test, tearDown } = require('tap')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event/pull_request/opened')
+const removeIfExists = require('../../../helpers/remove-if-exists')
 
 const pullRequestPayLoad = (id, branchName, user) => {
   return {
@@ -91,17 +92,10 @@ test('github-event pull_request opened', async t => {
 
 tearDown(async () => {
   const { repositories } = await dbs()
-  await repositories.remove(await repositories.get('42:pr:666'))
-  await repositories.remove(await repositories.get('42'))
-  const docIds = [667, 668]
+  await removeIfExists(repositories, '42')
+  const prDocIds = [666, 667, 668]
 
-  docIds.forEach(async (docId) => {
-    try {
-      await repositories.remove(await repositories.get(`42:pr:${docId}`))
-    } catch (e) {
-      if (e.status !== 404) {
-        throw e
-      }
-    }
+  prDocIds.forEach(async (docId) => {
+    return removeIfExists(repositories, `42:pr:${docId}`)
   })
 })
