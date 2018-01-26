@@ -4,9 +4,16 @@ const nock = require('nock')
 
 const dbs = require('../../../lib/dbs')
 const removeIfExists = require('../../helpers/remove-if-exists')
-const worker = require('../../../jobs/github-event/push')
+const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers')
+const pathToWorker = require.resolve('../../../jobs/github-event/push')
 
 test('github-event push', async t => {
+  t.beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
+    return Promise.resolve()
+  })
+
   const { repositories, payments } = await dbs()
 
   await Promise.all([
@@ -30,6 +37,13 @@ test('github-event push', async t => {
       },
       {
         _id: '447',
+        fullName: 'finn/private',
+        accountId: '123',
+        enabled: true,
+        private: true
+      },
+      {
+        _id: '448',
         fullName: 'finn/private',
         accountId: '123',
         enabled: true,
@@ -65,6 +79,8 @@ test('github-event push', async t => {
   })
 
   t.test('package.json present', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
@@ -135,6 +151,8 @@ test('github-event push', async t => {
   })
 
   t.test('do branch cleanup on modify', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/38/access_tokens')
       .reply(200, {
@@ -199,6 +217,8 @@ test('github-event push', async t => {
   })
 
   t.test('do branch cleanup on remove', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/39/access_tokens')
       .reply(200, {
@@ -263,6 +283,8 @@ test('github-event push', async t => {
   })
 
   t.test('invalid package.json present', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/40/access_tokens')
       .reply(200, {
@@ -310,6 +332,8 @@ test('github-event push', async t => {
   })
 
   t.test('no relevant changes', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/41/access_tokens')
       .reply(200, {
@@ -350,6 +374,8 @@ test('github-event push', async t => {
   })
 
   t.test('package.json deleted', async t => {
+    const worker = requireFresh(pathToWorker)
+
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
@@ -394,6 +420,8 @@ test('github-event push', async t => {
   })
 
   t.test('package.json deleted on private repo', async t => {
+    const worker = requireFresh(pathToWorker)
+ 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
@@ -437,6 +465,54 @@ test('github-event push', async t => {
     t.notOk(repo.enabled)
     t.end()
   })
+
+  t.test('package.json deleted on private repo within GKE', async t => {
+    process.env.IS_ENTERPRISE = true
+    const worker = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/finn/private/contents/package.json')
+      .reply(404, {})
+
+    const newJobs = await worker({
+      installation: {
+        id: 42
+      },
+      ref: 'refs/heads/master',
+      after: 'deadbeef',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: ['package.json'],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 448,
+        full_name: 'finn/private',
+        name: 'private',
+        owner: {
+          login: 'finn'
+        },
+        private: true,
+        default_branch: 'master'
+      }
+    })
+
+    t.notOk(newJobs)
+    const repo = await repositories.get('448')
+    t.notOk(_.get(repo.packages, ['package.json']))
+    t.is(repo.headSha, 'deadbeef')
+    t.notOk(repo.enabled)
+    t.end()
+  })
 })
 
 tearDown(async () => {
@@ -446,6 +522,7 @@ tearDown(async () => {
   await removeIfExists(repositories, '445')
   await removeIfExists(repositories, '446')
   await removeIfExists(repositories, '447')
+  await removeIfExists(repositories, '448')
   await removeIfExists(repositories, '444:branch:1234abcd')
   await removeIfExists(repositories, '444:branch:1234abce')
   await removeIfExists(payments, '123')
