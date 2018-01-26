@@ -211,9 +211,5 @@ test('marketplace purchased', async t => {
 tearDown(async () => {
   const { payments } = await dbs()
 
-  await removeIfExists(payments, '444')
-  await removeIfExists(payments, '445')
-  await removeIfExists(payments, '446')
-  await removeIfExists(payments, '447')
-  await removeIfExists(payments, '448')
+  await removeIfExists(payments, '444', '445', '446', '447', '448')
 })

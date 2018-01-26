@@ -306,12 +306,7 @@ tearDown(async () => {
   await Promise.all([
     removeIfExists(installations, '123'),
     removeIfExists(payments, '123'),
-    removeIfExists(repositories, '42'),
-    removeIfExists(repositories, '43'),
-    removeIfExists(repositories, '44'),
-    removeIfExists(repositories, '45'),
-    removeIfExists(repositories, '46'),
-    removeIfExists(repositories, '42:branch:1234abcd')
+    removeIfExists(repositories, '42', '43', '44', '45', '46', '42:branch:1234abcd')
   ])
 })
 

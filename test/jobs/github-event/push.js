@@ -421,7 +421,7 @@ test('github-event push', async t => {
 
   t.test('package.json deleted on private repo', async t => {
     const worker = requireFresh(pathToWorker)
- 
+
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
@@ -518,13 +518,7 @@ test('github-event push', async t => {
 tearDown(async () => {
   const { repositories, payments } = await dbs()
 
-  await removeIfExists(repositories, '444')
-  await removeIfExists(repositories, '445')
-  await removeIfExists(repositories, '446')
-  await removeIfExists(repositories, '447')
-  await removeIfExists(repositories, '448')
-  await removeIfExists(repositories, '444:branch:1234abcd')
-  await removeIfExists(repositories, '444:branch:1234abce')
+  await removeIfExists(repositories, '444', '445', '446', '447', '448', '444:branch:1234abcd', '444:branch:1234abce')
   await removeIfExists(payments, '123')
 })
 

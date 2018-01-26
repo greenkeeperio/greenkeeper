@@ -66,13 +66,8 @@ test('reset repo', async t => {
 
   t.afterEach(async () => {
     nock.cleanAll()
-    await removeIfExists(repositories, '42')
-    await installations.remove(await installations.get('123'))
-    await removeIfExists(repositories, '42:pr:123')
-    await removeIfExists(repositories, '42:branch:deadbeef')
-    await removeIfExists(repositories, '42:branch:deadbeef0')
-    await removeIfExists(repositories, '42:issue:67')
-    await removeIfExists(repositories, '42:issue:65')
+    await removeIfExists(repositories, '42', '42:pr:123', '42:branch:deadbeef', '42:branch:deadbeef0', '42:issue:67', '42:issue:65')
+    await removeIfExists(installations, '123')
   })
 
   t.test('response with error if repo cound not be found', async t => {
