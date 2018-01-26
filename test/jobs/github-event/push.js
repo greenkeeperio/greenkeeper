@@ -7,7 +7,7 @@ const removeIfExists = require('../../helpers/remove-if-exists')
 const worker = require('../../../jobs/github-event/push')
 
 test('github-event push', async t => {
-  const { repositories } = await dbs()
+  const { repositories, payments } = await dbs()
 
   await Promise.all([
     repositories.bulkDocs([
@@ -27,6 +27,13 @@ test('github-event push', async t => {
         fullName: 'finn/enabled2',
         accountId: '123',
         enabled: true
+      },
+      {
+        _id: '447',
+        fullName: 'finn/private',
+        accountId: '123',
+        enabled: true,
+        private: true
       },
       {
         _id: '444:branch:1234abcd',
@@ -50,6 +57,12 @@ test('github-event push', async t => {
       }
     ])
   ])
+
+  await payments.put({
+    _id: '123',
+    plan: 'personal',
+    stripeSubscriptionId: 'si123'
+  })
 
   t.test('package.json present', async t => {
     nock('https://api.github.com')
@@ -379,16 +392,63 @@ test('github-event push', async t => {
     t.notOk(repo.enabled)
     t.end()
   })
+
+  t.test('package.json deleted on private repo', async t => {
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/finn/private/contents/package.json')
+      .reply(404, {})
+
+    const newJobs = await worker({
+      installation: {
+        id: 42
+      },
+      ref: 'refs/heads/master',
+      after: 'deadbeef',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: ['package.json'],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 447,
+        full_name: 'finn/private',
+        name: 'private',
+        owner: {
+          login: 'finn'
+        },
+        private: true,
+        default_branch: 'master'
+      }
+    })
+
+    t.equal(newJobs.data.name, 'update-payments')
+    const repo = await repositories.get('447')
+    t.notOk(_.get(repo.packages, ['package.json']))
+    t.is(repo.headSha, 'deadbeef')
+    t.notOk(repo.enabled)
+    t.end()
+  })
 })
 
 tearDown(async () => {
-  const { repositories } = await dbs()
+  const { repositories, payments } = await dbs()
 
   await removeIfExists(repositories, '444')
   await removeIfExists(repositories, '445')
   await removeIfExists(repositories, '446')
+  await removeIfExists(repositories, '447')
   await removeIfExists(repositories, '444:branch:1234abcd')
   await removeIfExists(repositories, '444:branch:1234abce')
+  await removeIfExists(payments, '123')
 })
 
 function encodePkg (pkg) {
