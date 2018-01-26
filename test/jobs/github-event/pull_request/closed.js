@@ -184,12 +184,7 @@ test('github-event pull_request closed', async t => {
 tearDown(async () => {
   const { repositories, payments } = await dbs()
   await Promise.all([
-    removeIfExists(repositories, '42:pr:666'),
-    removeIfExists(repositories, '43:pr:777'),
-    removeIfExists(repositories, '44:pr:888'),
-    removeIfExists(repositories, '42'),
-    removeIfExists(repositories, '43'),
-    removeIfExists(repositories, '44'),
+    removeIfExists(repositories, '42:pr:666', '43:pr:777', '44:pr:888', '42', '43', '44'),
     removeIfExists(payments, '1')
   ])
 })

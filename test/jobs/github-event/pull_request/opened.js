@@ -54,7 +54,7 @@ test('github-event pull_request opened', async t => {
 
   t.test('initial pr opened by user', async t => {
     const worker = requireFresh(pathToWorker)
- 
+
     const newJob = await worker(
       pullRequestPayLoad({
         prId: 666,
@@ -79,7 +79,7 @@ test('github-event pull_request opened', async t => {
 
   t.test('initial pr on private repo opened', async t => {
     const worker = requireFresh(pathToWorker)
-    
+
     t.plan(2)
 
     nock('https://api.github.com')
@@ -201,8 +201,7 @@ test('github-event pull_request opened', async t => {
 
 tearDown(async () => {
   const { repositories } = await dbs()
-  await removeIfExists(repositories, '42')
-  await removeIfExists(repositories, '43')
+  await removeIfExists(repositories, '42', '43')
   const prDocIds = [666, 667, 668, 669, 670]
 
   prDocIds.forEach(async (docId) => {
