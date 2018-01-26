@@ -3,6 +3,7 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../../lib/dbs')
+const removeIfExists = require('../../helpers/remove-if-exists')
 const worker = require('../../../jobs/github-event/push')
 
 test('github-event push', async t => {
@@ -383,11 +384,11 @@ test('github-event push', async t => {
 tearDown(async () => {
   const { repositories } = await dbs()
 
-  await repositories.remove(await repositories.get('444'))
-  await repositories.remove(await repositories.get('445'))
-  await repositories.remove(await repositories.get('446'))
-  await repositories.remove(await repositories.get('444:branch:1234abcd'))
-  await repositories.remove(await repositories.get('444:branch:1234abce'))
+  await removeIfExists(repositories, '444')
+  await removeIfExists(repositories, '445')
+  await removeIfExists(repositories, '446')
+  await removeIfExists(repositories, '444:branch:1234abcd')
+  await removeIfExists(repositories, '444:branch:1234abce')
 })
 
 function encodePkg (pkg) {
