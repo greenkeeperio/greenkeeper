@@ -1,15 +1,19 @@
 const { test, tearDown } = require('tap')
+const nock = require('nock')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event/pull_request/opened')
 const removeIfExists = require('../../../helpers/remove-if-exists')
 
-const pullRequestPayLoad = (id, branchName, user) => {
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
   return {
     installation: {
       id: 37
     },
     pull_request: {
-      id,
+      id: prId,
       merged: false,
       state: 'open',
       head: {
@@ -19,7 +23,7 @@ const pullRequestPayLoad = (id, branchName, user) => {
     },
     repository: {
       full_name: 'finnp/test',
-      id: 42,
+      id: repositoryId,
       owner: {
         id: 10
       }
@@ -34,12 +38,23 @@ test('github-event pull_request opened', async t => {
     enabled: false,
     repositoryId: '42'
   })
+  await repositories.put({
+    _id: '43',
+    enabled: false,
+    repositoryId: '43',
+    private: true
+  })
 
   t.test('initial pr opened by user', async t => {
     const newJob = await worker(
-      pullRequestPayLoad(666, 'greenkeeper/initial', {
-        type: 'User',
-        login: 'finnp'
+      pullRequestPayLoad({
+        prId: 666,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 42
       })
     )
 
@@ -53,11 +68,48 @@ test('github-event pull_request opened', async t => {
     t.end()
   })
 
+  t.test('initial pr on private repo opened', async t => {
+    t.plan(2)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .post('/repos/finnp/test/statuses/')
+      .reply(201, () => {
+        t.pass('payment required status added')
+        return {}
+      })
+
+    const newJob = await worker(
+      pullRequestPayLoad({
+        prId: 669,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 43
+      })
+    )
+
+    t.notOk(newJob, 'no new job')
+    t.end()
+  })
+
   t.test('initial pr opened by greenkeeper', async t => {
     const newJob = await worker(
-      pullRequestPayLoad(667, 'greenkeeper/initial', {
-        type: 'Bot',
-        login: 'greenkeeper[bot]'
+      pullRequestPayLoad({
+        prId: 667,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'Bot',
+          login: 'greenkeeper[bot]'
+        },
+        repositoryId: 42
       })
     )
 
@@ -73,9 +125,14 @@ test('github-event pull_request opened', async t => {
 
   t.test('pr opened but is not our initial branch', async t => {
     const newJob = await worker(
-      pullRequestPayLoad(668, 'some-random-branch', {
-        type: 'User',
-        login: 'finnp'
+      pullRequestPayLoad({
+        prId: 668,
+        branchName: 'some-random-branch',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 42
       })
     )
 
@@ -93,7 +150,8 @@ test('github-event pull_request opened', async t => {
 tearDown(async () => {
   const { repositories } = await dbs()
   await removeIfExists(repositories, '42')
-  const prDocIds = [666, 667, 668]
+  await removeIfExists(repositories, '43')
+  const prDocIds = [666, 667, 668, 669]
 
   prDocIds.forEach(async (docId) => {
     return removeIfExists(repositories, `42:pr:${docId}`)
