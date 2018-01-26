@@ -1,6 +1,7 @@
 const _ = require('lodash')
 
 const dbs = require('../../lib/dbs')
+const env = require('../../lib/env')
 const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
@@ -107,5 +108,7 @@ function hasRelevantChanges (commits, files) {
 async function disableRepo ({ repositories, repodoc, repository }) {
   repodoc.enabled = false
   await updateDoc(repositories, repository, repodoc)
-  return maybeUpdatePaymentsJob(repodoc.accountId, repodoc.private)
+  if (!env.IS_ENTERPRISE) {
+    return maybeUpdatePaymentsJob(repodoc.accountId, repodoc.private)
+  }
 }
