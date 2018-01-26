@@ -1,4 +1,5 @@
 const dbs = require('../../../lib/dbs')
+const env = require('../../../lib/env')
 const getConfig = require('../../../lib/get-config')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../../../lib/payments')
 const githubQueue = require('../../../lib/github-queue')
@@ -36,7 +37,7 @@ module.exports = async function (data) {
     }
   )
 
-  if (!repoDoc.private) {
+  if (!repoDoc.private || env.IS_ENTERPRISE) {
     return
   }
 
