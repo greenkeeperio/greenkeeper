@@ -1,7 +1,8 @@
 const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/pull_request/opened')
+const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request/opened')
+const { cleanCache, requireFresh } = require('../../../helpers/module-cache-helpers')
 const removeIfExists = require('../../../helpers/remove-if-exists')
 
 nock.disableNetConnect()
@@ -32,6 +33,12 @@ const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
 }
 
 test('github-event pull_request opened', async t => {
+  t.beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
+    return Promise.resolve()
+  })
+
   const { repositories } = await dbs()
   await repositories.put({
     _id: '42',
@@ -46,6 +53,8 @@ test('github-event pull_request opened', async t => {
   })
 
   t.test('initial pr opened by user', async t => {
+    const worker = requireFresh(pathToWorker)
+ 
     const newJob = await worker(
       pullRequestPayLoad({
         prId: 666,
@@ -69,6 +78,8 @@ test('github-event pull_request opened', async t => {
   })
 
   t.test('initial pr on private repo opened', async t => {
+    const worker = requireFresh(pathToWorker)
+    
     t.plan(2)
 
     nock('https://api.github.com')
@@ -100,7 +111,46 @@ test('github-event pull_request opened', async t => {
     t.end()
   })
 
+  t.test('initial pr on private repo opened within GKE', async t => {
+    process.env.IS_ENTERPRISE = true
+
+    const worker = requireFresh(pathToWorker)
+
+    t.plan(1)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .post('/repos/finnp/test/statuses/')
+      .optionally()
+      .reply(201, () => {
+        t.fail('should not add payment required status')
+        return {}
+      })
+
+    const newJob = await worker(
+      pullRequestPayLoad({
+        prId: 670,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 43
+      })
+    )
+
+    t.notOk(newJob, 'no new job')
+    t.end()
+  })
+
   t.test('initial pr opened by greenkeeper', async t => {
+    const worker = requireFresh(pathToWorker)
+
     const newJob = await worker(
       pullRequestPayLoad({
         prId: 667,
@@ -124,6 +174,8 @@ test('github-event pull_request opened', async t => {
   })
 
   t.test('pr opened but is not our initial branch', async t => {
+    const worker = requireFresh(pathToWorker)
+
     const newJob = await worker(
       pullRequestPayLoad({
         prId: 668,
@@ -151,9 +203,12 @@ tearDown(async () => {
   const { repositories } = await dbs()
   await removeIfExists(repositories, '42')
   await removeIfExists(repositories, '43')
-  const prDocIds = [666, 667, 668, 669]
+  const prDocIds = [666, 667, 668, 669, 670]
 
   prDocIds.forEach(async (docId) => {
-    return removeIfExists(repositories, `42:pr:${docId}`)
+    return Promise.all([
+      removeIfExists(repositories, `42:pr:${docId}`),
+      removeIfExists(repositories, `43:pr:${docId}`)
+    ])
   })
 })
