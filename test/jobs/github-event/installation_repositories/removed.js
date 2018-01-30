@@ -3,7 +3,7 @@ const { test } = require('tap')
 const dbs = require('../../../../lib/dbs')
 const worker = require('../../../../jobs/github-event')
 
-test('github-event integration_installation_repositories removed', async t => {
+test('github-event installation_repositories removed', async t => {
   const { repositories } = await dbs()
 
   await repositories.bulkDocs([
@@ -15,7 +15,7 @@ test('github-event integration_installation_repositories removed', async t => {
   ])
 
   const newJobs = await worker({
-    type: 'integration_installation_repositories',
+    type: 'installation_repositories',
     action: 'removed',
     installation: { account: { id: 2 } },
     repositories_removed: [{ id: 22 }, { id: 25 }, { id: 26 }]

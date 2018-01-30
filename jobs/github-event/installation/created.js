@@ -10,7 +10,12 @@ const upsert = require('../../../lib/upsert')
 
 module.exports = async function ({ installation }) {
   const { installations, repositories: reposDb, logs } = await dbs()
-  const log = Log({logsDb: logs, accountId: installation.account.id, repoSlug: null, context: 'integration-installation-created'})
+  const log = Log({
+    logsDb: logs,
+    accountId: installation.account.id,
+    repoSlug: null,
+    context: 'installation-created'
+  })
   log.info('started')
   const docId = String(installation.account.id)
   const doc = await upsert(
@@ -30,7 +35,7 @@ module.exports = async function ({ installation }) {
   github.authenticate({ type: 'token', token })
 
   // getting installation repos from github
-  let res = await github.integrations.getInstallationRepositories({
+  let res = await github.apps.getInstallationRepositories({
     per_page: 100
   })
   let { repositories } = res.data

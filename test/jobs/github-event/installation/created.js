@@ -2,9 +2,9 @@ const _ = require('lodash')
 const { test, tearDown } = require('tap')
 const nock = require('nock')
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/integration_installation/created')
+const worker = require('../../../../jobs/github-event/installation/created')
 
-test('github-event integration_installation created', async t => {
+test('github-event installation created', async t => {
   const { installations, repositories } = await dbs()
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
@@ -13,7 +13,7 @@ test('github-event integration_installation created', async t => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/installation/repositories')
+    .get('/installation/repositories?per_page=100')
     .reply('200', {
       repositories: [
         {
@@ -22,9 +22,9 @@ test('github-event integration_installation created', async t => {
           private: true
         }
       ]}, {
-        Link: '<https://api.github.com/installation/repositories?page=2>; rel="next"'
+        Link: '<https://api.github.com/installation/repositories?per_page=100&page=2>; rel="next"'
       })
-    .get('/installation/repositories?page=2')
+    .get('/installation/repositories?per_page=100&page=2')
     .reply('200', {
       repositories: [
         {

@@ -9,7 +9,12 @@ const { createDocs } = require('../../../lib/repository-docs')
 
 module.exports = async function ({ installation, repositories_added }) {
   const { repositories: reposDb, logs } = await dbs()
-  const log = Log({logsDb: logs, accountId: installation.account.id, repoSlug: null, context: 'integration-installation-repositories-added'})
+  const log = Log({
+    logsDb: logs,
+    accountId: installation.account.id,
+    repoSlug: null,
+    context: 'installation-repositories-added'
+  })
   log.info('started', { repositories_added })
   if (!repositories_added.length) {
     log.warn('exited: no repositories selected')
@@ -18,7 +23,8 @@ module.exports = async function ({ installation, repositories_added }) {
 
   const repositories = await Promise.mapSeries(repositories_added, doc => {
     const [owner, repo] = doc.full_name.split('/')
-    return GithubQueue(installation.id).read(github => github.repos.get({ owner, repo }))
+    return GithubQueue(installation.id).read(github =>
+      github.repos.get({ owner, repo }))
   })
 
   log.info('added repositories', repositories)

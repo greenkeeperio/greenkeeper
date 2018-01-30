@@ -3,9 +3,9 @@ const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/integration_installation_repositories/added')
+const worker = require('../../../../jobs/github-event/installation_repositories/added')
 
-test('github-event integration_installation_repositories added', async t => {
+test('github-event installation_repositories added', async t => {
   const { repositories } = await dbs()
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
