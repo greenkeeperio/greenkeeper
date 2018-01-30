@@ -53,8 +53,6 @@ $ npm run test
 
 * Tests fail with: **incorrect header check**
   * you need the fake private key in your .env !
-* Test fail with: **nock: No match for request**
-  * some tests are flaky but pass on re-runs, we are not sure what is causing this but others seem to have similar problems: [Tests aren’t cleaning up nock scope correctly · Issue #705 · node-nock/nock · GitHub](https://github.com/node-nock/nock/issues/705)
 
 ## Submitting a Pull Request
 
