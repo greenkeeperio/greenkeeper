@@ -64,7 +64,7 @@ module.exports = async function (
   }))
   log.info('github: set greenkeeper/verify status')
 
-  if (!env.IS_ENTERPRISE && repodoc.private) {
+  if (repodoc.private && !env.IS_ENTERPRISE) {
     const billingAccount = await getActiveBilling(accountId)
     const hasBillingAccount = !!billingAccount
     const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
