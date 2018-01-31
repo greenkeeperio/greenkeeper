@@ -144,10 +144,10 @@ module.exports = async function ({ repositoryId }) {
   const badgesTokenMaybe = repoDoc.private
     ? `?token=${tokenHash}&ts=${Date.now()}`
     : ''
-  const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
+  const badgeUrl = `https://${env.BADGES_HOST}/${slug}.svg${badgesTokenMaybe}`
   log.info('badge: url', {badgeUrl})
 
-  const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
+  const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
   let badgeAlreadyAdded = false
   const transforms = [
@@ -187,7 +187,7 @@ module.exports = async function ({ repositoryId }) {
 
         badgeAlreadyAdded = _.includes(
           readme,
-          'https://badges.greenkeeper.io/'
+          `https://${env.BADGES_HOST}/`
         )
         if (!repoDoc.private && badgeAlreadyAdded) {
           log.info('badge: Repository already has badge')

@@ -10,6 +10,7 @@ const dbs = require('../../lib/dbs')
 test('create-initial-branch', async t => {
   t.beforeEach(() => {
     delete process.env.IS_ENTERPRISE
+    delete process.env.BADGES_HOST
     cleanCache('../../lib/env')
     return Promise.resolve()
   })
@@ -123,6 +124,76 @@ test('create-initial-branch', async t => {
     t.is(
       newBranch.badgeUrl,
       'https://badges.greenkeeper.io/finnp/test.svg',
+      'badgeUrl'
+    )
+  })
+
+  t.test('uses the BADGES_HOST to create the badge url', async t => {
+    process.env.BADGES_HOST = 'badges.staging.greenkeeper.io'
+    await repositories.put({
+      _id: '47',
+      accountId: '123',
+      fullName: 'finnp/test'
+    })
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/finnp/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        content: encodePkg({ devDependencies })
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/labels', {
+        name: 'greenkeeper',
+        color: '00c775'
+      })
+      .reply(201)
+
+    nock('https://registry.npmjs.org')
+      .get('/@finnpauls%2Fdep')
+      .reply(200, {
+        'dist-tags': {
+          latest: '2.0.0'
+        }
+      })
+      .get('/@finnpauls%2Fdep2')
+      .reply(200, {
+        'dist-tags': {
+          latest: '3.0.0-rc1'
+        },
+        versions: {
+          '3.0.0-rc1': true
+        }
+      })
+
+    const worker = proxyquire('../../jobs/create-initial-branch', {
+      '../lib/create-branch': ({ transforms }) => {
+        transforms[2].transform(
+          'readme-badger\n=============\n',
+          'README.md'
+        )
+
+        return '1234abcd'
+      }
+    })
+
+    await worker({
+      repositoryId: 47
+    })
+
+    const newBranch = await repositories.get('47:branch:1234abcd')
+    t.is(
+      newBranch.badgeUrl,
+      'https://badges.staging.greenkeeper.io/finnp/test.svg',
       'badgeUrl'
     )
   })
@@ -306,7 +377,7 @@ tearDown(async () => {
   await Promise.all([
     removeIfExists(installations, '123'),
     removeIfExists(payments, '123'),
-    removeIfExists(repositories, '42', '43', '44', '45', '46', '42:branch:1234abcd')
+    removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '42:branch:1234abcd', '47:branch:1234abcd')
   ])
 })
 
