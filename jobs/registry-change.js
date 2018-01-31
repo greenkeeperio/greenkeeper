@@ -43,7 +43,41 @@ module.exports = async function (
   // we want to handle different distTags in the future
   if (distTag !== 'latest') return
 
-  // probably update/create new  View for 'by_dependency'
+  /*
+  Update: 'by_dependency' already handles multiple package.json files, but not in the same result.
+
+  You get one result per matching dependency per depencyType per file in `packages`. The `value`
+  object for each result (used below, in `filteredSortedPackages` for example), looks like:
+
+  "value": {
+    "fullName": "aveferrum/angular-material-demo",
+    "accountId": "462667",
+    "filename": "frontend/package.json", // <- yay, works
+    "type": "dependencies",
+    "oldVersion": "^4.2.4"
+  }
+
+  Then in a separate result, you’d get
+
+  "value": {
+    "fullName": "aveferrum/angular-material-demo",
+    "accountId": "462667",
+    "filename": "backend/package.json",
+    "type": "dependencies",
+    "oldVersion": "^4.2.4"
+  }
+
+  So we’d need to either completely change how that view works (boo), or maybe add a clever reduce (?),
+  or collect the results per repo in this file, so we only fire off 'create-version-branch' once per
+  repo, not once per file per repo.
+
+  Note that we also have these views that still need to be checked:
+  - pr_open_by_dependency
+  - branch_by_dependency
+  - issue_open_by_dependency
+
+  */
+
   // packages are a list of all repoDocs that have that dependency (should rename that)
   const packages = (await repositories.query('by_dependency', {
     key: dependency
