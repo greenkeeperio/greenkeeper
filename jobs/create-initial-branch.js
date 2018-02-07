@@ -15,6 +15,7 @@ const env = require('../lib/env')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const { updateRepoDoc } = require('../lib/repository-docs')
@@ -153,7 +154,7 @@ module.exports = async function ({ repositoryId }) {
   const transforms = [
     {
       path: 'package.json',
-      message: 'chore(package): update dependencies',
+      message: getMessage(config.commitMessages, 'initialDependencies'),
       transform: oldPkg => {
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
@@ -168,13 +169,13 @@ module.exports = async function ({ repositoryId }) {
     },
     {
       path: '.travis.yml',
-      message: 'chore(travis): whitelist greenkeeper branches',
+      message: getMessage(config.commitMessages, 'initialBranches'),
       transform: raw => travisTransform(config, raw)
     },
     {
       path: 'README.md',
       create: true,
-      message: 'docs(readme): add Greenkeeper badge',
+      message: getMessage(config.commitMessages, 'initialBadge'),
       transform: (readme, path) => {
         // TODO: empty readme, no image support
         const ext = extname(path).slice(1)

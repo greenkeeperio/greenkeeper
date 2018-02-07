@@ -5,6 +5,7 @@ const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const getMessage = require('../lib/get-message')
 const getInfos = require('../lib/get-infos')
 const getRangedVersion = require('../lib/get-ranged-version')
 const createBranch = require('../lib/create-branch')
@@ -139,17 +140,17 @@ module.exports = async function (
   )
   log.info('database: found open PR for this dependency', {openPR})
 
-  const commitMessageScope = !satisfies && type === 'dependencies'
-    ? 'fix'
-    : 'chore'
-  let commitMessage = `${commitMessageScope}(package): update ${dependency} to version ${version}`
-
+  const commitMessageKey = !satisfies && type === 'dependencies'
+    ? 'dependencyUpdate'
+    : 'devDependencyUpdate'
+  const commitMessageValues = { dependency, version }
+  let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
   if (!satisfies && openPR) {
     await upsert(repositories, openPR._id, {
       comments: [...(openPR.comments || []), version]
     })
 
-    commitMessage += `\n\nCloses #${openPR.number}`
+    commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
   }
   log.info('commit message created', {commitMessage})
 
