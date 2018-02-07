@@ -34,6 +34,7 @@
     "yml-in-place": "^1.0.2"
   },
   "devDependencies": {
+    "jest": "^22.1.4",
     "nock": "^9.0.0",
     "nyc": "^11.0.3",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
@@ -53,6 +54,17 @@
       "lib"
     ]
   },
+  "jest": {
+    "testRegex": "/test/.*\\.js$",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/test/helpers/.*\\.js$"
+    ],
+    "unmockedModulePathPatterns": [
+      "<rootDir>/node_modules/nock"
+    ],
+    "testEnvironment": "node"
+  },
   "publishConfig": {
     "access": "restricted"
   },
@@ -66,9 +78,14 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing nyc tap test"
+    "test": "NODE_ENV=testing jest",
+    "test:debug": "NODE_ENV=testing jest --debug",
+    "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {
+    "env": {
+      "jest": true
+    },
     "ignore": [
       "couchdb"
     ]
