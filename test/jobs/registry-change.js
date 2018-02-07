@@ -55,6 +55,15 @@ describe('registry change create jobs', async () => {
     ])
   })
 
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '999'),
+      removeIfExists(repositories, '775', '776', '777', '888'),
+      removeIfExists(npm, 'standard', 'eslint')
+    ])
+  })
+
   test('registry change create job', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
@@ -191,12 +200,67 @@ describe('registry change create jobs', async () => {
     expect(newJobs[0].data.type).toEqual('dependencies')
   })
 
-  afterAll(async () => {
+  test('registry change creates one monorepo job for group', async () => {
     const { installations, repositories, npm } = await dbs()
+
     await Promise.all([
-      removeIfExists(installations, '999'),
-      removeIfExists(repositories, '775', '776', '777', '888'),
-      removeIfExists(npm, 'standard', 'eslint')
+      installations.put({
+        _id: '123-two-packages',
+        installation: 87,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '123-monorepo',
+        enabled: true,
+        type: 'repository',
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        packages: {
+          'package.json': {
+            dependencies: {
+              react: '1.0.0'
+            },
+            greenkeeper: {
+              'groups': {
+                'default': {
+                  'packages': [
+                    'package.json',
+                    'backend/package.json'
+                  ]
+                }
+              }
+            }
+          },
+          'backend/package.json': {
+            dependencies: {
+              react: '1.0.0'
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'react',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
     ])
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'react',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'deadbeef'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJobs).toHaveLength(1)
+    expect(newJobs[0].data.name).toEqual('create-group-version-branch')
   })
 })

@@ -4,6 +4,7 @@ const semver = require('semver')
 const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
+const getConfig = require('../lib/get-config')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -17,7 +18,7 @@ module.exports = async function (
     versions
   }
 
-  // use prefix for packages sent via webhook
+  // use prefix for packageFilesForUpdatedDependency sent via webhook
   if (isFromHook) npmDoc._id = `${installation}:${npmDoc._id}`
 
   try {
@@ -46,7 +47,7 @@ module.exports = async function (
   /*
   Update: 'by_dependency' already handles multiple package.json files, but not in the same result.
 
-  You get one result per matching dependency per depencyType per file in `packages`. The `value`
+  You get one result per matching dependency per depencyType per file in `packageFilesForUpdatedDependency`. The `value`
   object for each result (used below, in `filteredSortedPackages` for example), looks like:
 
   "value": {
@@ -78,28 +79,81 @@ module.exports = async function (
 
   */
 
-  // packages are a list of all repoDocs that have that dependency (should rename that)
-  const packages = (await repositories.query('by_dependency', {
+  // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
+  const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     key: dependency
   })).rows
 
-  if (!packages.length) return
+  if (!packageFilesForUpdatedDependency.length) return
 
-  if (packages.length > 100) statsd.event('popular_package')
+  if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
+
+  // check if package has a greenkeeperrc / more then 1 package json or package.json is in subdirectory
+  // continue with the rest but send all otheres to a 'new' version branch job
+
+  let jobs = []
+  const resultsByRepo = _.groupBy(packageFilesForUpdatedDependency, 'value.fullName')
+
+  // filter packageFilesForUpdatedDependency for ones with only one update per repository
+  const withOnlyRootPackageJSON = _.flatten(_.filter(resultsByRepo, (result) => {
+    return result.length === 1 && result[0].value.filename === 'package.json'
+  }))
+  console.log('withOnlyRootPackageJSON', withOnlyRootPackageJSON)
+
+// TODO: if dependency occures in multiple dependencies in the package.json it also returns as 2 results with differnet types
+// find a way to get them also in the `withOnlyRootPackageJSON` array
+  const withMultiplePackageJSON = _.filter(resultsByRepo, (result) => {
+    return result.length > 1 || (result.length === 1 && result[0].value.filename !== 'package.json')
+  })
+
+  // get config
+  console.log('withMultiplePackageJSON', withMultiplePackageJSON)
+  console.log('Keys:   ', _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName)))
+  const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
+  if (keysToFindMonorepoDocs.length) {
+    const monorepoDocs = (await repositories.query('by_full_name', {
+      keys: keysToFindMonorepoDocs,
+      include_docs: true
+    })).rows
+
+    _.forEach(withMultiplePackageJSON, monorepo => {
+      const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
+      if (!repoDoc) return
+      const config = getConfig(repoDoc.doc)
+      if (config && config.groups) {
+        const packageFiles = monorepo.map(result => result.value.filename)
+        const groups = _.compact(_.map(config.groups, (group, key) => {
+          let result = {}
+          result[key] = group
+          if (_.intersection(group.packages, packageFiles).length) {
+            return result
+          }
+        }))
+        console.log('groups', groups)
+        groups.map((group) => {
+          jobs.push({
+            data: Object.assign(
+              {
+                name: 'create-group-version-branch'
+              }
+            )
+          })
+        })
+      }
+    })
+  }
 
   const accounts = _.keyBy(
     _.map(
       (await installations.allDocs({
-        keys: _.compact(_.map(packages, 'value.accountId')),
+        keys: _.compact(_.map(withOnlyRootPackageJSON, 'value.accountId')),
         include_docs: true
       })).rows,
       'doc'
     ),
     '_id'
   )
-
-  // check if package has a greenkeeperrc / more then 1 package json or package.json is in subdirectory
-  // continue with the rest but send all otheres to a 'new' version branch job
+  console.log('accounts', accounts)
 
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
@@ -117,11 +171,11 @@ module.exports = async function (
     return order[packageA.value.type] - order[packageB.value.type]
   }
 
-  const filteredSortedPackages = packages
+  const filteredSortedPackages = withOnlyRootPackageJSON
     .filter(pkg => pkg.value.type !== 'peerDependencies')
     .sort(sortByDependency)
 
-  return _.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
+  jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
@@ -153,5 +207,9 @@ module.exports = async function (
         ),
         plan
       }
-    })
+    }))
+  ]
+  console.log('JOBS', jobs)
+  console.log('********************** JOBS', ...jobs)
+  return jobs
 }
