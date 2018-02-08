@@ -5,6 +5,13 @@ const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
+const {
+  sepperateNormalAndMonorepos,
+  getJobsPerGroup,
+  filterAndSortPackages,
+  getSatisfyingVersions,
+  getOldVersionResolved
+} = require('../utils/registry-change-utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -92,23 +99,13 @@ module.exports = async function (
   // continue with the rest but send all otheres to a 'new' version branch job
 
   let jobs = []
-  const resultsByRepo = _.groupBy(packageFilesForUpdatedDependency, 'value.fullName')
+  const sepperatedResults = sepperateNormalAndMonorepos(packageFilesForUpdatedDependency)
 
-  // filter packageFilesForUpdatedDependency for ones with only one update per repository
-  const withOnlyRootPackageJSON = _.flatten(_.filter(resultsByRepo, (result) => {
-    return result.length === 1 && result[0].value.filename === 'package.json'
-  }))
-  console.log('withOnlyRootPackageJSON', withOnlyRootPackageJSON)
+  const withOnlyRootPackageJSON = _.flatten(sepperatedResults[1])
+  const withMultiplePackageJSON = sepperatedResults[0]
 
-// TODO: if dependency occures in multiple dependencies in the package.json it also returns as 2 results with differnet types
-// find a way to get them also in the `withOnlyRootPackageJSON` array
-  const withMultiplePackageJSON = _.filter(resultsByRepo, (result) => {
-    return result.length > 1 || (result.length === 1 && result[0].value.filename !== 'package.json')
-  })
-
+  // ******** Monorepos begin
   // get config
-  console.log('withMultiplePackageJSON', withMultiplePackageJSON)
-  console.log('Keys:   ', _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName)))
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
   if (keysToFindMonorepoDocs.length) {
     const monorepoDocs = (await repositories.query('by_full_name', {
@@ -120,28 +117,10 @@ module.exports = async function (
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
-      if (config && config.groups) {
-        const packageFiles = monorepo.map(result => result.value.filename)
-        const groups = _.compact(_.map(config.groups, (group, key) => {
-          let result = {}
-          result[key] = group
-          if (_.intersection(group.packages, packageFiles).length) {
-            return result
-          }
-        }))
-        console.log('groups', groups)
-        groups.map((group) => {
-          jobs.push({
-            data: Object.assign(
-              {
-                name: 'create-group-version-branch'
-              }
-            )
-          })
-        })
-      }
+      jobs = jobs.concat(getJobsPerGroup(config, monorepo))
     })
   }
+  // ******** Monorepos end
 
   const accounts = _.keyBy(
     _.map(
@@ -153,40 +132,19 @@ module.exports = async function (
     ),
     '_id'
   )
-  console.log('accounts', accounts)
 
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
 
-  // put all this logic in an utils function and return an object that we would need to start
-  // the version branch or group version branch job
-
-  const order = {
-    'dependencies': 1,
-    'devDependencies': 2,
-    'optionalDependencies': 3
-  }
-
-  const sortByDependency = (packageA, packageB) => {
-    return order[packageA.value.type] - order[packageB.value.type]
-  }
-
-  const filteredSortedPackages = withOnlyRootPackageJSON
-    .filter(pkg => pkg.value.type !== 'peerDependencies')
-    .sort(sortByDependency)
+  const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
 
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
 
-      const satisfyingVersions = Object.keys(versions)
-        .filter(version => semver.satisfies(version, pkg.value.oldVersion))
-        .sort(semver.rcompare)
-
-      const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
-        ? satisfyingVersions[1]
-        : satisfyingVersions[0]
+      const satisfyingVersions = getSatisfyingVersions(versions, pkg)
+      const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
 
@@ -209,7 +167,5 @@ module.exports = async function (
       }
     }))
   ]
-  console.log('JOBS', jobs)
-  console.log('********************** JOBS', ...jobs)
   return jobs
 }
