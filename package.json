@@ -9,7 +9,6 @@
     "catbox-memory": "^2.0.4",
     "couchdb-bootstrap": "^1.14.0",
     "envalid": "^4.0.1",
-    "es6-template-strings": "^2.0.1",
     "escape-string-regexp": "^1.0.5",
     "github-url-from-git": "^1.4.0",
     "gk-log": "1.2.0",
