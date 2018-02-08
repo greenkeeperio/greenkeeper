@@ -5,6 +5,7 @@ const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
+const {sepperateNormalAndMonorepos, getJobsPerGroup} = require('../utils/registry-change-utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -92,23 +93,12 @@ module.exports = async function (
   // continue with the rest but send all otheres to a 'new' version branch job
 
   let jobs = []
-  const resultsByRepo = _.groupBy(packageFilesForUpdatedDependency, 'value.fullName')
+  const sepperatedResults = sepperateNormalAndMonorepos(packageFilesForUpdatedDependency)
 
-  // filter packageFilesForUpdatedDependency for ones with only one update per repository
-  const withOnlyRootPackageJSON = _.flatten(_.filter(resultsByRepo, (result) => {
-    return result.length === 1 && result[0].value.filename === 'package.json'
-  }))
-  console.log('withOnlyRootPackageJSON', withOnlyRootPackageJSON)
-
-// TODO: if dependency occures in multiple dependencies in the package.json it also returns as 2 results with differnet types
-// find a way to get them also in the `withOnlyRootPackageJSON` array
-  const withMultiplePackageJSON = _.filter(resultsByRepo, (result) => {
-    return result.length > 1 || (result.length === 1 && result[0].value.filename !== 'package.json')
-  })
+  const withOnlyRootPackageJSON = _.flatten(sepperatedResults[1])
+  const withMultiplePackageJSON = sepperatedResults[0]
 
   // get config
-  console.log('withMultiplePackageJSON', withMultiplePackageJSON)
-  console.log('Keys:   ', _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName)))
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
   if (keysToFindMonorepoDocs.length) {
     const monorepoDocs = (await repositories.query('by_full_name', {
@@ -120,26 +110,7 @@ module.exports = async function (
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
-      if (config && config.groups) {
-        const packageFiles = monorepo.map(result => result.value.filename)
-        const groups = _.compact(_.map(config.groups, (group, key) => {
-          let result = {}
-          result[key] = group
-          if (_.intersection(group.packages, packageFiles).length) {
-            return result
-          }
-        }))
-        console.log('groups', groups)
-        groups.map((group) => {
-          jobs.push({
-            data: Object.assign(
-              {
-                name: 'create-group-version-branch'
-              }
-            )
-          })
-        })
-      }
+      jobs = jobs.concat(getJobsPerGroup(config, monorepo))
     })
   }
 
@@ -153,7 +124,6 @@ module.exports = async function (
     ),
     '_id'
   )
-  console.log('accounts', accounts)
 
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
@@ -209,7 +179,6 @@ module.exports = async function (
       }
     }))
   ]
-  console.log('JOBS', jobs)
-  console.log('********************** JOBS', ...jobs)
+
   return jobs
 }
