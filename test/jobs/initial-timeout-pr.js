@@ -1,22 +1,25 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
+
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
 const worker = require('../../jobs/initial-timeout-pr')
 
-test('initial-timeout-pr', async t => {
-  const { installations, repositories } = await dbs()
-  await installations.put({
-    _id: '10101',
-    installation: 37
-  })
-  await repositories.put({
-    _id: '666',
-    fullName: 'finnp/test'
+describe('initial-timeout-pr', async () => {
+  beforeAll(async () => {
+    const { installations, repositories } = await dbs()
+    await installations.put({
+      _id: '10101',
+      installation: 37
+    })
+    await repositories.put({
+      _id: '666',
+      fullName: 'finnp/test'
+    })
   })
 
-  t.test('create', async t => {
-    const ghMock = nock('https://api.github.com')
+  test('create', async () => {
+    const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
         token: 'secret'
@@ -24,13 +27,14 @@ test('initial-timeout-pr', async t => {
       .get('/rate_limit')
       .reply(200, {})
       .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
-        t.ok(title, 'github issue has title')
-        t.same(labels, ['greenkeeper'], 'github issue label')
-        t.ok(body, 'github issue has body')
+        expect(title).toBeTruthy()
+        expect(body).toBeTruthy()
+        expect(labels).toContain('greenkeeper')
         return true
       })
       .reply(201, () => {
-        t.pass('issue created')
+        // issue created
+        expect(true).toBeTruthy()
         return {
           number: 10
         }
@@ -40,19 +44,22 @@ test('initial-timeout-pr', async t => {
       repositoryId: 666,
       accountId: 10101
     })
-    t.notOk(newJobs)
+    expect(newJobs).toBeFalsy()
+
+    const { repositories } = await dbs()
     const issue = await repositories.get('666:issue:10')
-    t.ok(issue.initial)
-    t.is(issue.type, 'issue')
-    t.is(issue.repositoryId, 666)
-    t.is(issue.number, 10)
-    ghMock.done()
-    t.end()
+    expect(issue.initial).toBeTruthy()
+    expect(issue.type).toEqual('issue')
+    expect(issue.number).toBe(10)
+    expect(issue.repositoryId).toBe(666)
+    githubMock.done()
   })
 
-  t.test('already exists', async t => {
+  test('already exists', async () => {
     nock('https://api.github.com') // no request should be made
+    expect.assertions(2)
 
+    const { installations, repositories } = await dbs()
     await installations.put({
       _id: '1338',
       installation: 38
@@ -69,25 +76,21 @@ test('initial-timeout-pr', async t => {
       accountId: 1338
     })
 
-    t.notOk(newJobs)
+    expect(newJobs).toBeFalsy()
+
     try {
       await repositories.get('6666:issue:10')
-      t.fail('created an issue')
     } catch (e) {
-      t.pass('throws')
+      // throws
+      expect(true).toBeTruthy()
     }
-    t.end()
   })
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { repositories, installations } = await dbs()
-
   await Promise.all([
-    repositories.remove(await repositories.get('666')),
-    repositories.remove(await repositories.get('666:issue:10')),
-    repositories.remove(await repositories.get('6666:pr:11')),
-    installations.remove(await installations.get('10101')),
-    installations.remove(await installations.get('1338'))
+    removeIfExists(installations, '10101', '1338'),
+    removeIfExists(repositories, '666', '666:pr:11', '666:issue:10')
   ])
 })
