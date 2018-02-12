@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const semver = require('semver')
 
 function sepperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
@@ -61,8 +62,22 @@ function filterAndSortPackages (packageFiles) {
     .sort(sortByDependency)
 }
 
+function getSatisfyingVersions (versions, pkg) {
+  return Object.keys(versions)
+    .filter(version => semver.satisfies(version, pkg.value.oldVersion))
+    .sort(semver.rcompare)
+}
+
+function getOldVersionResolved (satisfyingVersions, distTags, distTag) {
+  return satisfyingVersions[0] === distTags[distTag]
+    ? satisfyingVersions[1]
+    : satisfyingVersions[0]
+}
+
 module.exports = {
   sepperateNormalAndMonorepos,
   getJobsPerGroup,
-  filterAndSortPackages
+  filterAndSortPackages,
+  getSatisfyingVersions,
+  getOldVersionResolved
 }

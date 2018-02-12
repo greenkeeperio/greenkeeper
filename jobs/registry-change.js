@@ -5,7 +5,13 @@ const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
-const {sepperateNormalAndMonorepos, getJobsPerGroup, filterAndSortPackages} = require('../utils/registry-change-utils')
+const {
+  sepperateNormalAndMonorepos,
+  getJobsPerGroup,
+  filterAndSortPackages,
+  getSatisfyingVersions,
+  getOldVersionResolved
+} = require('../utils/registry-change-utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -98,6 +104,7 @@ module.exports = async function (
   const withOnlyRootPackageJSON = _.flatten(sepperatedResults[1])
   const withMultiplePackageJSON = sepperatedResults[0]
 
+  // ******** Monorepos begin
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
   if (keysToFindMonorepoDocs.length) {
@@ -113,6 +120,7 @@ module.exports = async function (
       jobs = jobs.concat(getJobsPerGroup(config, monorepo))
     })
   }
+  // ******** Monorepos end
 
   const accounts = _.keyBy(
     _.map(
@@ -135,13 +143,8 @@ module.exports = async function (
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
 
-      const satisfyingVersions = Object.keys(versions)
-        .filter(version => semver.satisfies(version, pkg.value.oldVersion))
-        .sort(semver.rcompare)
-
-      const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
-        ? satisfyingVersions[1]
-        : satisfyingVersions[0]
+      const satisfyingVersions = getSatisfyingVersions(versions, pkg)
+      const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
 
@@ -164,6 +167,5 @@ module.exports = async function (
       }
     }))
   ]
-
   return jobs
 }

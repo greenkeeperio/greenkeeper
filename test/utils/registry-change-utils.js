@@ -3,7 +3,9 @@ const { test } = require('tap')
 const {
   sepperateNormalAndMonorepos,
   getJobsPerGroup,
-  filterAndSortPackages
+  filterAndSortPackages,
+  getSatisfyingVersions,
+  getOldVersionResolved
 } = require('../../utils/registry-change-utils')
 
 test('sepperateNormalAndMonorepos', t => {
@@ -161,5 +163,37 @@ test('filterAndSortPackages', t => {
   t.ok(outputByType[0] === 'dependencies', 'sortes `dependencies` to the top')
   t.ok(outputByType[1] === 'devDependencies', 'sortes `devDependencies` to the middle')
   t.ok(outputByType[2] === 'optionalDependencies', 'sortes `optionalDependencies` to the buttom')
+  t.end()
+})
+
+test('getSatisfyingVersions', t => {
+  const pkg =
+    { id: 'devDependencies',
+      key: 'react',
+      value: {
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        filename: 'package.json',
+        type: 'devDependencies',
+        oldVersion: '^1.0.0' }}
+
+  const versions = {
+    '2.0.0': { gitHead: 'b75aeb5' },
+    '1.1.0': { gitHead: 'b75aeb4' },
+    '1.0.0': { gitHead: 'b75aeb3' }
+  }
+
+  const output = getSatisfyingVersions(versions, pkg)
+  t.ok(output.length === 2 && output.includes('1.1.0') && output.includes('1.0.0'), 'returns all satisfining versions')
+  t.end()
+})
+
+test('getOldVersionResolved', t => {
+  const satisfyingVersions = ['9.3.1', '9.3.0', '9.2.0']
+  const distTags = { latest: '10.0.0' }
+  const distTag = 'latest'
+
+  const output = getOldVersionResolved(satisfyingVersions, distTags, distTag)
+  t.ok(output === '9.3.1', 'returns the last satisfying version')
   t.end()
 })
