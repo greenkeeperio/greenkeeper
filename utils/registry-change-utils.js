@@ -45,7 +45,24 @@ function getJobsPerGroup (config, monorepo) {
   return jobs
 }
 
+const order = {
+  'dependencies': 1,
+  'devDependencies': 2,
+  'optionalDependencies': 3
+}
+
+function sortByDependency (packageA, packageB) {
+  return order[packageA.value.type] - order[packageB.value.type]
+}
+
+function filterAndSortPackages (packageFiles) {
+  return packageFiles
+    .filter(pkg => pkg.value.type !== 'peerDependencies')
+    .sort(sortByDependency)
+}
+
 module.exports = {
   sepperateNormalAndMonorepos,
-  getJobsPerGroup
+  getJobsPerGroup,
+  filterAndSortPackages
 }

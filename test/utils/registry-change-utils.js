@@ -1,6 +1,10 @@
 const { test } = require('tap')
 
-const {sepperateNormalAndMonorepos, getJobsPerGroup} = require('../../utils/registry-change-utils')
+const {
+  sepperateNormalAndMonorepos,
+  getJobsPerGroup,
+  filterAndSortPackages
+} = require('../../utils/registry-change-utils')
 
 test('sepperateNormalAndMonorepos', t => {
   const input = [
@@ -112,5 +116,50 @@ test('getJobsPerGroup', t => {
 
   t.ok(getJobsPerGroup(config, monorepo).length === 1, 'creates one job if all package.json files are in the same group')
   t.ok(getJobsPerGroup(config2, monorepo).length === 2, 'creates two jobs if all package.json files are in two groups')
+  t.end()
+})
+
+test('filterAndSortPackages', t => {
+  const packages = [
+    { id: 'devDependencies',
+      key: 'react',
+      value: {
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        filename: 'package.json',
+        type: 'devDependencies',
+        oldVersion: '1.0.0' }},
+    { id: 'optionalDependencies',
+      key: 'react',
+      value: {
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        filename: 'package.json',
+        type: 'optionalDependencies',
+        oldVersion: '1.0.0' }},
+    { id: 'dependencies',
+      key: 'react',
+      value: {
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        filename: 'backend/package.json',
+        type: 'dependencies',
+        oldVersion: '1.0.0' }},
+    { id: 'peerDependencies',
+      key: 'react',
+      value: {
+        fullName: 'owner/repo2',
+        accountId: '999',
+        filename: 'package.json',
+        type: 'peerDependencies',
+        oldVersion: '1.0.0' }}
+  ]
+
+  const output = filterAndSortPackages(packages)
+  const outputByType = output.map(p => p.value.type)
+  t.ok(output.length === 3 && !outputByType.includes('peerDependencies'), 'throws away peerDependencies')
+  t.ok(outputByType[0] === 'dependencies', 'sortes `dependencies` to the top')
+  t.ok(outputByType[1] === 'devDependencies', 'sortes `devDependencies` to the middle')
+  t.ok(outputByType[2] === 'optionalDependencies', 'sortes `optionalDependencies` to the buttom')
   t.end()
 })

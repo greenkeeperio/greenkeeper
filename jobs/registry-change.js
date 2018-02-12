@@ -5,7 +5,7 @@ const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
-const {sepperateNormalAndMonorepos, getJobsPerGroup} = require('../utils/registry-change-utils')
+const {sepperateNormalAndMonorepos, getJobsPerGroup, filterAndSortPackages} = require('../utils/registry-change-utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -128,22 +128,7 @@ module.exports = async function (
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
 
-  // put all this logic in an utils function and return an object that we would need to start
-  // the version branch or group version branch job
-
-  const order = {
-    'dependencies': 1,
-    'devDependencies': 2,
-    'optionalDependencies': 3
-  }
-
-  const sortByDependency = (packageA, packageB) => {
-    return order[packageA.value.type] - order[packageB.value.type]
-  }
-
-  const filteredSortedPackages = withOnlyRootPackageJSON
-    .filter(pkg => pkg.value.type !== 'peerDependencies')
-    .sort(sortByDependency)
+  const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
 
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
