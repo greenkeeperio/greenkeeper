@@ -1,20 +1,22 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
-const worker = require('../../jobs/cancel-stripe-subscription')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
+
+const worker = require('../../jobs/cancel-stripe-subscription')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-test('Cancel Stripe Subscription', async t => {
+test('Cancel Stripe Subscription', async () => {
   const { payments } = await dbs()
-  t.plan(3)
+  expect.assertions(3)
 
   nock('https://api.stripe.com/v1')
     .delete('/subscriptions/345')
     .reply(200, () => {
-      t.pass('Stripe called')
+      // Stripe called
+      expect(true).toBeTruthy()
       return {
         stripeSubscriptionId: '345'
       }
@@ -34,12 +36,13 @@ test('Cancel Stripe Subscription', async t => {
   })
 
   const payment = await payments.get('123')
-  t.is(payment.stripeItemId, null)
-  t.is(payment.stripeSubscriptionId, null)
-  t.end()
+  expect(payment.stripeItemId).toBeNull()
+  expect(payment.stripeSubscriptionId).toBeNull()
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { payments } = await dbs()
-  await payments.remove(await payments.get('123'))
+  await Promise.all([
+    removeIfExists(payments, '123')
+  ])
 })
