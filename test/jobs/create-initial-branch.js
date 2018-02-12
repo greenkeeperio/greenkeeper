@@ -1,8 +1,8 @@
 const nock = require('nock')
-const removeIfExists = require('../helpers/remove-if-exists')
-const { cleanCache } = require('../helpers/module-cache-helpers')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
+const { cleanCache } = require('../helpers/module-cache-helpers')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -31,7 +31,7 @@ describe('create initial brach', () => {
     })
   })
 
-  test('create pr', async () => {
+  test('create pull request', async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '42',
