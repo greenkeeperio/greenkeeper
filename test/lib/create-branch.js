@@ -1,6 +1,7 @@
 const nock = require('nock')
 
 const createBranch = require('../../lib/create-branch')
+const { createTransformFunction } = require('../../utils/registry-change-utils')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -16,7 +17,7 @@ function ghToken (nocked) {
 }
 
 describe('create branch', async () => {
-  test('change one file', async () => {
+  test('change one file (package.json)', async () => {
     ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/contents/package.json')
       .query({ ref: 'master' })
@@ -72,7 +73,7 @@ describe('create branch', async () => {
     expect(sha).toEqual('789beef')
   })
 
-  test('change multiple files', async () => {
+  test('change multiple files (package.json, readme.md)', async () => {
     ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/readme?ref=master')
       .reply(200, {
@@ -157,6 +158,95 @@ describe('create branch', async () => {
           path: 'README.md',
           message: 'readme',
           transform: (old, path) => path === 'readme.md' && old.toLowerCase()
+        }
+      ]
+    })
+
+    expect(sha).toEqual('789beef2')
+  })
+
+  const testThreeData = {
+    'package.json': {
+      dependencies: {
+        react: '1.0.0'
+      }
+    },
+    'backend/package.json': {
+      dependencies: {
+        react: '1.0.0'
+      }
+    }
+  }
+
+  test('change multiple monorepo files (package.json, backend/package.json)', async () => {
+    expect.assertions(12)
+
+    ghToken(nock('https://api.github.com'))
+      .get('/repos/owner/repo/contents/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(testThreeData['package.json'])).toString('base64')
+      })
+      .get('/repos/owner/repo/contents/backend/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(testThreeData['backend/package.json'])).toString('base64')
+      })
+      .get('/repos/owner/repo/git/refs/heads/master')
+      .reply(200, {
+        object: {
+          sha: '123abc2'
+        }
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('package.json')
+        expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"react":"2.0.0"}}')
+        return {sha: 'def457'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
+        expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"react":"2.0.0"}}')
+        return {sha: 'def458'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def457')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('123abc2')
+        expect(JSON.parse(requestBody).message).toEqual('pkg')
+        return {sha: '789beef1'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def458')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef1')
+        expect(JSON.parse(requestBody).message).toEqual('pkg2')
+        return {sha: '789beef2'}
+      })
+      .post('/repos/owner/repo/git/refs')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).sha).toEqual('789beef2')
+      })
+
+    const sha = await createBranch({
+      installationId: 123,
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'master',
+      newBranch: 'testBranch',
+      transforms: [
+        {
+          path: 'package.json',
+          message: 'pkg',
+          transform: (old, path) => createTransformFunction('dependencies', 'react', '2.0.0', console)(old)
+        },
+        {
+          path: 'backend/package.json',
+          message: 'pkg2',
+          transform: (old, path) => createTransformFunction('dependencies', 'react', '2.0.0', console)(old)
         }
       ]
     })
