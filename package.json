@@ -78,8 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest --runInBand test/jobs/create-initial-pr.js",
-    "test:debug": "NODE_ENV=testing jest --debug",
+    "test": "NODE_ENV=testing jest --runInBand test/jobs/registry-change.js",
     "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {
