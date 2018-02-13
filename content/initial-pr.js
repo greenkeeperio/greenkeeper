@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const md = require('./template')
+const env = require('../lib/env')
 
 module.exports = prBody
 
@@ -21,13 +22,13 @@ Public scoped packages (\`@scope/name\`) work out of the box, but private scoped
 npm install --global wombat
 
 # Adding a single private scoped package
-wombat hook add @scope/name https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add @scope/name https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Adding all packages of a scope
-wombat hook add @scope https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add @scope https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Adding all packages by a specific owner
-wombat hook add --type owner substack https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add --type owner substack https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 \`\`\`
 `
