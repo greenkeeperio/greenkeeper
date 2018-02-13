@@ -78,7 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest test/jobs/initial-timeout-pr.js",
+    "test": "NODE_ENV=testing jest test/jobs/github-event/installation/*.js",
     "test:debug": "NODE_ENV=testing jest --debug test/jobs/create-initial-branch.js",
     "test:coverage": "NODE_ENV=testing jest --coverage test/jobs/create-version-branch.js"
   },
