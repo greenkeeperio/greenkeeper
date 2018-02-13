@@ -64,6 +64,7 @@ function getJobsPerGroup ({
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
   const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
+  const types = monorepo.map((x) => { return {type: x.value.type, filename: x.value.filename} })
   if (config && config.groups) {
     const packageFiles = monorepo.map(result => result.value.filename)
 
@@ -87,8 +88,11 @@ function getJobsPerGroup ({
           repositoryId,
           plan,
           oldVersionResolved,
-          installation: account.installation
-        }, monorepo[0].value),
+          installation: account.installation,
+          types,
+          oldVersion: monorepo[0].value.oldVersion,
+          monorepo
+        }),
         plan
       }
     })
