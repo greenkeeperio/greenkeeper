@@ -20,32 +20,6 @@ function hasDiffernetFilenames (group) {
   return false
 }
 
-function getJobsPerGroup (config, monorepo) {
-  let jobs = []
-
-  if (config && config.groups) {
-    const packageFiles = monorepo.map(result => result.value.filename)
-
-    const groups = _.compact(_.map(config.groups, (group, key) => {
-      let result = {}
-      result[key] = group
-      if (_.intersection(group.packages, packageFiles).length) {
-        return result
-      }
-    }))
-
-    jobs = groups.map((group) => {
-      return {
-        data: {
-          name: 'create-group-version-branch'
-        }
-      }
-    })
-  }
-
-  return jobs
-}
-
 const order = {
   'dependencies': 1,
   'devDependencies': 2,
@@ -72,6 +46,55 @@ function getOldVersionResolved (satisfyingVersions, distTags, distTag) {
   return satisfyingVersions[0] === distTags[distTag]
     ? satisfyingVersions[1]
     : satisfyingVersions[0]
+}
+
+function getJobsPerGroup ({
+  config,
+  monorepo,
+  distTags,
+  distTag,
+  dependency,
+  versions,
+  account,
+  repositoryId,
+  plan
+}) {
+  let jobs = []
+
+  const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
+  const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
+
+  if (config && config.groups) {
+    const packageFiles = monorepo.map(result => result.value.filename)
+
+    const groups = _.compact(_.map(config.groups, (group, key) => {
+      let result = {}
+      result[key] = group
+      if (_.intersection(group.packages, packageFiles).length) {
+        return result
+      }
+    }))
+
+    jobs = groups.map((group) => {
+      return {
+        data: Object.assign({
+          name: 'create-group-version-branch',
+          group,
+          distTags,
+          distTag,
+          dependency,
+          versions,
+          repositoryId,
+          plan,
+          oldVersionResolved,
+          installation: account.installation
+        }, monorepo[0].value),
+        plan
+      }
+    })
+  }
+
+  return jobs
 }
 
 module.exports = {
