@@ -104,6 +104,17 @@ module.exports = async function (
   const withOnlyRootPackageJSON = _.flatten(sepperatedResults[1])
   const withMultiplePackageJSON = sepperatedResults[0]
 
+  const accounts = _.keyBy(
+    _.map(
+      (await installations.allDocs({
+        keys: _.compact(_.map(_.flattenDeep(sepperatedResults), 'value.accountId')),
+        include_docs: true
+      })).rows,
+      'doc'
+    ),
+    '_id'
+  )
+
   // ******** Monorepos begin
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
@@ -114,24 +125,24 @@ module.exports = async function (
     })).rows
 
     _.forEach(withMultiplePackageJSON, monorepo => {
+      const account = accounts[monorepo[0].value.accountId]
+      const plan = account.plan
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
-      jobs = jobs.concat(getJobsPerGroup(config, monorepo))
+      jobs = jobs.concat(getJobsPerGroup({
+        config,
+        monorepo,
+        distTags,
+        distTag,
+        dependency,
+        versions,
+        account,
+        repositoryId: repoDoc.id,
+        plan}))
     })
   }
   // ******** Monorepos end
-
-  const accounts = _.keyBy(
-    _.map(
-      (await installations.allDocs({
-        keys: _.compact(_.map(withOnlyRootPackageJSON, 'value.accountId')),
-        include_docs: true
-      })).rows,
-      'doc'
-    ),
-    '_id'
-  )
 
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
@@ -167,5 +178,6 @@ module.exports = async function (
       }
     }))
   ]
+  console.log('jobs', jobs)
   return jobs
 }
