@@ -1,9 +1,11 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
+
 const dbs = require('../../../../lib/dbs')
-const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request/opened')
 const { cleanCache, requireFresh } = require('../../../helpers/module-cache-helpers')
 const removeIfExists = require('../../../helpers/remove-if-exists')
+// requireFresh uses a path relative to THEIR path, that's why we use the resolved
+// path here, making it a bit clearer which file we're actually requiring
+const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request/opened')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -32,27 +34,29 @@ const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
   }
 }
 
-test('github-event pull_request opened', async t => {
-  t.beforeEach(() => {
+describe('github-event pull_request opened', async () => {
+  beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
-    return Promise.resolve()
   })
 
-  const { repositories } = await dbs()
-  await repositories.put({
-    _id: '42',
-    enabled: false,
-    repositoryId: '42'
-  })
-  await repositories.put({
-    _id: '43',
-    enabled: false,
-    repositoryId: '43',
-    private: true
+  beforeAll(async() => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '40',
+      enabled: false,
+      repositoryId: '40'
+    })
+    await repositories.put({
+      _id: '41',
+      enabled: false,
+      repositoryId: '41',
+      private: true
+    })
   })
 
-  t.test('initial pr opened by user', async t => {
+  test('initial pr opened by user', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     const newJob = await worker(
@@ -63,24 +67,25 @@ test('github-event pull_request opened', async t => {
           type: 'User',
           login: 'finnp'
         },
-        repositoryId: 42
+        repositoryId: 40
       })
     )
+    expect(newJob).toBeFalsy()
 
-    t.notOk(newJob, 'no new job')
-    const pr = await repositories.get('42:pr:666')
-    t.is(pr.state, 'open', 'pr status is opened')
-    t.is(pr.merged, false, 'pr is not merged')
-    t.is(pr.initial, true, 'is initial pr')
-    t.ok(pr.createdAt, 'createdAt is set')
-    t.is(pr.createdByUser, true, 'pr is created by the user')
-    t.end()
+    const pr = await repositories.get('40:pr:666')
+
+    expect(pr.state).toEqual('open')
+    expect(pr.merged).toBeFalsy()
+    expect(pr.createdAt).toBeTruthy()
+    expect(pr.updatedAt).toBeFalsy()
+    expect(pr.initial).toBeTruthy()
+    expect(pr.createdByUser).toBeTruthy()
   })
 
-  t.test('initial pr on private repo opened', async t => {
+  test('initial pr on private repo opened', async () => {
     const worker = requireFresh(pathToWorker)
 
-    t.plan(2)
+    expect.assertions(2)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -88,10 +93,11 @@ test('github-event pull_request opened', async t => {
         token: 'secret'
       })
       .get('/rate_limit')
-      .reply(200, {})
+      .reply(200)
       .post('/repos/finnp/test/statuses/')
       .reply(201, () => {
-        t.pass('payment required status added')
+        // payment required status added
+        expect(true).toBeTruthy()
         return {}
       })
 
@@ -103,20 +109,17 @@ test('github-event pull_request opened', async t => {
           type: 'User',
           login: 'finnp'
         },
-        repositoryId: 43
+        repositoryId: 41
       })
     )
-
-    t.notOk(newJob, 'no new job')
-    t.end()
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('initial pr on private repo opened within GKE', async t => {
+  test('initial pr on private repo opened within GKE', async () => {
     process.env.IS_ENTERPRISE = true
-
     const worker = requireFresh(pathToWorker)
 
-    t.plan(1)
+    expect.assertions(1)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -124,11 +127,11 @@ test('github-event pull_request opened', async t => {
         token: 'secret'
       })
       .get('/rate_limit')
-      .reply(200, {})
+      .reply(200)
       .post('/repos/finnp/test/statuses/')
       .optionally()
       .reply(201, () => {
-        t.fail('should not add payment required status')
+        // not add payment required status
         return {}
       })
 
@@ -140,15 +143,14 @@ test('github-event pull_request opened', async t => {
           type: 'User',
           login: 'finnp'
         },
-        repositoryId: 43
+        repositoryId: 41
       })
     )
-
-    t.notOk(newJob, 'no new job')
-    t.end()
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('initial pr opened by greenkeeper', async t => {
+  test('initial pr opened by greenkeeper', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     const newJob = await worker(
@@ -159,22 +161,23 @@ test('github-event pull_request opened', async t => {
           type: 'Bot',
           login: 'greenkeeper[bot]'
         },
-        repositoryId: 42
+        repositoryId: 40
       })
     )
+    expect(newJob).toBeFalsy()
 
-    t.notOk(newJob, 'no new job')
     try {
-      await repositories.get('42:pr:667')
-      t.fail('unexpected prdoc in database')
+      await repositories.get('40:pr:667')
     } catch (e) {
-      t.equals(e.status, 404, 'prdoc was not created')
+      // prdoc was not created
+      expect(e.status).toBe(404)
     }
-    t.end()
   })
 
-  t.test('pr opened but is not our initial branch', async t => {
+  test('pr opened but is not our initial branch', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
+    expect.assertions(2)
 
     const newJob = await worker(
       pullRequestPayLoad({
@@ -184,30 +187,25 @@ test('github-event pull_request opened', async t => {
           type: 'User',
           login: 'finnp'
         },
-        repositoryId: 42
+        repositoryId: 40
       })
     )
+    expect(newJob).toBeFalsy()
 
-    t.notOk(newJob, 'no new job')
     try {
-      await repositories.get('42:pr:668')
-      t.fail('unexpected prdoc in database')
+      await repositories.get('40:pr:668')
     } catch (e) {
-      t.equals(e.status, 404, 'prdoc was not created')
+      // prdoc was not created
+      expect(e.status).toBe(404)
     }
-    t.end()
   })
-})
 
-tearDown(async () => {
-  const { repositories } = await dbs()
-  await removeIfExists(repositories, '42', '43')
-  const prDocIds = [666, 667, 668, 669, 670]
-
-  prDocIds.forEach(async (docId) => {
-    return Promise.all([
-      removeIfExists(repositories, `42:pr:${docId}`),
-      removeIfExists(repositories, `43:pr:${docId}`)
+  afterAll(async () => {
+    const { repositories } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '40', '41'),
+      removeIfExists(repositories, '40:pr:666', '40:pr:667', '40:pr:668', '40:pr:669', '40:pr:670'),
+      removeIfExists(repositories, '41:pr:666', '41:pr:667', '41:pr:668', '41:pr:669', '41:pr:670')
     ])
   })
 })
