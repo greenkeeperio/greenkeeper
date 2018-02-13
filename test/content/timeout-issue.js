@@ -2,6 +2,7 @@ const { cleanCache, requireFresh } = require('../helpers/module-cache-helpers')
 
 describe('timeout issue content', async () => {
   beforeEach(() => {
+    jest.resetModules()
     delete process.env.GITHUB_HOST
     delete process.env.GITHUB_URL
     cleanCache('../../lib/env')
