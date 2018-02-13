@@ -26,6 +26,11 @@ const order = {
   'optionalDependencies': 3
 }
 
+function getHighestPriorityDependency(dependencies) {
+  const types = dependencies.map(d => d.type)
+  return types.sort((depA, depB) => order[depA] - order[depB])[0]
+}
+
 function sortByDependency (packageA, packageB) {
   return order[packageA.value.type] - order[packageB.value.type]
 }
@@ -60,10 +65,8 @@ function getJobsPerGroup ({
   plan
 }) {
   let jobs = []
-
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
   const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
-
   const types = monorepo.map((x) => { return {type: x.value.type, filename: x.value.filename} })
   if (config && config.groups) {
     const packageFiles = monorepo.map(result => result.value.filename)
@@ -106,5 +109,6 @@ module.exports = {
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  getHighestPriorityDependency
 }
