@@ -32,7 +32,7 @@ To run the tests you will need [Docker](https://docs.docker.com/engine/installat
 
 ```bash
 # Install CouchDB on Docker
-$ docker pull klaemo/couchdb:2.0.0
+$ docker pull apache/couchdb:2.1.1
 ```
 A fake private key in the .env file is needed generate it like this:
 * Linux
