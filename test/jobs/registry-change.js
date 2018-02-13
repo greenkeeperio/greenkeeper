@@ -255,6 +255,9 @@ describe('registry change create jobs', async () => {
       versions: {
         '8.0.0': {
           gitHead: 'deadbeef'
+        },
+        '1.0.0': {
+          gitHead: 'deadbeet'
         }
       },
       registry: 'https://skimdb.npmjs.com/registry'
