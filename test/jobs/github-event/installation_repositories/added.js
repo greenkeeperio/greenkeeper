@@ -1,12 +1,13 @@
-const _ = require('lodash')
-const { test, tearDown } = require('tap')
 const nock = require('nock')
+const _ = require('lodash')
 
 const dbs = require('../../../../lib/dbs')
+const removeIfExists = require('../../../helpers/remove-if-exists')
 const worker = require('../../../../jobs/github-event/installation_repositories/added')
 
-test('github-event installation_repositories added', async t => {
+test('github-event installation_repositories added', async () => {
   const { repositories } = await dbs()
+
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
     .reply(200, {
@@ -43,41 +44,31 @@ test('github-event installation_repositories added', async t => {
     ]
   })
 
-  t.is(newJobs.length, 2)
+  expect(newJobs).toHaveLength(2)
 
   const repos = await Promise.all([
     repositories.get('31'),
     repositories.get('32')
   ])
-
-  t.same(_.uniq(_.map(newJobs, 'data.name')), ['create-initial-branch'])
+  expect(_.uniq(_.map(newJobs, 'data.name'))).toContain('create-initial-branch')
 
   newJobs.forEach((job, i) => {
-    t.is(job.data.accountId, '2', 'accountId')
+    expect(job.data.accountId).toEqual('2')
   })
 
   const [repo] = repos
-  t.is(repo._id, '31')
-  t.is(repo.enabled, false)
-  t.is(repo.accountId, '2')
-  t.is(repo.fullName, 'bar/repo1')
-  t.is(repo.private, true)
-  t.is(repo.fork, false)
-  t.is(repo.hasIssues, true)
-
-  t.end()
+  expect(repo._id).toEqual('31')
+  expect(repo.enabled).toBeFalsy()
+  expect(repo.accountId).toEqual('2')
+  expect(repo.fullName).toEqual('bar/repo1')
+  expect(repo.private).toBeTruthy()
+  expect(repo.fork).toBeFalsy()
+  expect(repo.hasIssues).toBeTruthy()
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { repositories } = await dbs()
-
-  await repositories.bulkDocs(
-    (await repositories.allDocs({
-      keys: ['31', '32']
-    })).rows.map(row => ({
-      _id: row.id,
-      _rev: row.value.rev,
-      _deleted: true
-    }))
-  )
+  await Promise.all([
+    removeIfExists(repositories, '31', '32')
+  ])
 })
