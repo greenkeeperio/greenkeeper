@@ -1,84 +1,87 @@
-const _ = require('lodash')
-const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../../lib/dbs')
 const removeIfExists = require('../../helpers/remove-if-exists')
 const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers')
+// requireFresh uses a path relative to THEIR path, that's why we use the resolved
+// path here, making it a bit clearer which file we're actually requiring
 const pathToWorker = require.resolve('../../../jobs/github-event/push')
 
-test('github-event push', async t => {
-  t.beforeEach(() => {
+describe('github-event push', async () => {
+  beforeEach(() => {
+    jest.resetModules()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
-    return Promise.resolve()
   })
 
-  const { repositories, payments } = await dbs()
+  beforeAll(async() => {
+    const { repositories, payments } = await dbs()
 
-  await Promise.all([
-    repositories.bulkDocs([
-      {
-        _id: '444',
-        fullName: 'finn/test',
-        accountId: '123'
-      },
-      {
-        _id: '445',
-        fullName: 'finn/enabled',
-        accountId: '123',
-        enabled: true
-      },
-      {
-        _id: '446',
-        fullName: 'finn/enabled2',
-        accountId: '123',
-        enabled: true
-      },
-      {
-        _id: '447',
-        fullName: 'finn/private',
-        accountId: '123',
-        enabled: true,
-        private: true
-      },
-      {
-        _id: '448',
-        fullName: 'finn/private',
-        accountId: '123',
-        enabled: true,
-        private: true
-      },
-      {
-        _id: '444:branch:1234abcd',
-        type: 'branch',
-        sha: '1234abcd',
-        repositoryId: '444',
-        version: '2.0.0',
-        dependency: 'lodash',
-        dependencyType: 'dependencies',
-        head: 'gk-lodash-2.0.0'
-      },
-      {
-        _id: '444:branch:1234abce',
-        type: 'branch',
-        sha: '1234abce',
-        repositoryId: '444',
-        version: '3.0.0',
-        dependency: 'lodash',
-        dependencyType: 'dependencies',
-        head: 'gk-lodash-3.0.0'
-      }
+    await Promise.all([
+      repositories.bulkDocs([
+        {
+          _id: '444',
+          fullName: 'finn/test',
+          accountId: '123'
+        },
+        {
+          _id: '445',
+          fullName: 'finn/enabled',
+          accountId: '123',
+          enabled: true
+        },
+        {
+          _id: '446',
+          fullName: 'finn/enabled2',
+          accountId: '123',
+          enabled: true
+        },
+        {
+          _id: '447',
+          fullName: 'finn/private',
+          accountId: '123',
+          enabled: true,
+          private: true
+        },
+        {
+          _id: '448',
+          fullName: 'finn/private',
+          accountId: '123',
+          enabled: true,
+          private: true
+        },
+        {
+          _id: '444:branch:1234abcd',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '444',
+          version: '2.0.0',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'gk-lodash-2.0.0'
+        },
+        {
+          _id: '444:branch:1234abce',
+          type: 'branch',
+          sha: '1234abce',
+          repositoryId: '444',
+          version: '3.0.0',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'gk-lodash-3.0.0'
+        }
+      ])
     ])
-  ])
 
-  await payments.put({
-    _id: '123',
-    plan: 'personal',
-    stripeSubscriptionId: 'si123'
+    await payments.put({
+      _id: '123',
+      plan: 'personal',
+      stripeSubscriptionId: 'si123'
+    })
   })
 
-  t.test('package.json present', async t => {
+  test('package.json present', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -104,7 +107,7 @@ test('github-event push', async t => {
         content: encodePkg({})
       })
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 37
       },
@@ -129,28 +132,36 @@ test('github-event push', async t => {
       }
     })
 
-    t.ok(newJobs, 'new job scheduled')
-    t.is(newJobs.data.name, 'create-initial-branch', 'create-initial-branch')
-    t.is(newJobs.data.repositoryId, '444', 'repositoryId')
-    t.is(newJobs.data.accountId, '123', 'repositoryId')
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-branch')
+    expect(job.accountId).toEqual('123')
+    expect(job.repositoryId).toEqual('444')
 
     const repo = await repositories.get('444')
-    t.ok(repo.files['package.json'])
-    t.ok(repo.files['package-lock.json'])
-    t.notOk(repo.files['npm-shrinkwrap.json'])
-    t.same(repo.packages, {
+    const expectedFiles = {
+      'npm-shrinkwrap.json': false,
+      'package-lock.json': true,
+      'package.json': true,
+      'yarn.lock': false
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+
+    const expectedPackages = {
       'package.json': {
         name: 'testpkg',
         dependencies: {
           lodash: '^1.0.0'
         }
       }
-    })
-    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab3b')
-    t.end()
+    }
+    expect(repo.packages).toMatchObject(expectedPackages)
+
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
-  t.test('do branch cleanup on modify', async t => {
+  test('do branch cleanup on modify', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -173,7 +184,7 @@ test('github-event push', async t => {
       .delete('/repos/finn/test/git/refs/heads/gk-lodash-2.0.0')
       .reply(200, {})
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 38
       },
@@ -198,25 +209,26 @@ test('github-event push', async t => {
       }
     })
 
-    t.notOk(newJobs)
+    expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('444')
-    t.same(repo.packages, {
+    const expectedPackages = {
       'package.json': {
         name: 'testpkg',
         dependencies: {
           lodash: '^2.0.0'
         }
       }
-    })
+    }
+    expect(repo.packages).toMatchObject(expectedPackages)
 
     const branch = await repositories.get('444:branch:1234abcd')
-    t.ok(branch.referenceDeleted)
-    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab2b')
-    t.end()
+    expect(branch.referenceDeleted).toBeTruthy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab2b')
   })
 
-  t.test('do branch cleanup on remove', async t => {
+  test('do branch cleanup on remove', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -239,7 +251,7 @@ test('github-event push', async t => {
       .delete('/repos/finn/test/git/refs/heads/gk-lodash-3.0.0')
       .reply(200, {})
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 39
       },
@@ -263,26 +275,26 @@ test('github-event push', async t => {
         default_branch: 'master'
       }
     })
-
-    t.notOk(newJobs)
+    expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('444')
-    t.same(repo.packages, {
+    const expectedPackages = {
       'package.json': {
         name: 'testpkg',
         dependencies: {
           underscore: '*'
         }
       }
-    })
+    }
+    expect(repo.packages).toMatchObject(expectedPackages)
 
     const branch = await repositories.get('444:branch:1234abce')
-    t.ok(branch.referenceDeleted)
-    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab1b')
-    t.end()
+    expect(branch.referenceDeleted).toBeTruthy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab1b')
   })
 
-  t.test('invalid package.json present', async t => {
+  test('invalid package.json present', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -298,7 +310,7 @@ test('github-event push', async t => {
         content: Buffer.from('test').toString('base64')
       })
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 40
       },
@@ -323,29 +335,31 @@ test('github-event push', async t => {
       }
     })
 
-    t.notOk(newJobs)
+    expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('446')
-    t.notOk(repo.enabled)
-    t.is(repo.headSha, '9049f1265b7d61be4a8904a9a27120d2064dab3c')
-    t.end()
+    expect(repo.enabled).toBeFalsy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3c')
   })
 
-  t.test('no relevant changes', async t => {
+  test('no relevant changes', async () => {
     const worker = requireFresh(pathToWorker)
+    expect.assertions(1)
 
     nock('https://api.github.com')
       .post('/installations/41/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, () => {
-        t.fail('should not request package.json')
+        // should not request package.json
       })
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 41
       },
@@ -369,24 +383,26 @@ test('github-event push', async t => {
         default_branch: 'master'
       }
     })
-    t.notOk(newJobs)
-    t.end()
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('package.json deleted', async t => {
+  test('package.json deleted', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(404, {})
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 42
       },
@@ -411,28 +427,32 @@ test('github-event push', async t => {
       }
     })
 
-    t.notOk(newJobs)
+    expect(newJob).toBeFalsy()
+
     const repo = await repositories.get('445')
-    t.notOk(_.get(repo.packages, ['package.json']))
-    t.is(repo.headSha, 'deadbeef')
-    t.notOk(repo.enabled)
-    t.end()
+    expect(repo).not.toHaveProperty('packages')
+    expect(repo.files).not.toHaveProperty('package.json')
+    expect(repo.headSha).toEqual('deadbeef')
+    expect(repo.enabled).toBeFalsy()
   })
 
-  t.test('package.json deleted on private repo', async t => {
+  test('package.json deleted on private repo', async () => {
+    const { repositories } = await dbs()
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 42
       },
@@ -458,29 +478,34 @@ test('github-event push', async t => {
       }
     })
 
-    t.equal(newJobs.data.name, 'update-payments')
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('update-payments')
+
     const repo = await repositories.get('447')
-    t.notOk(_.get(repo.packages, ['package.json']))
-    t.is(repo.headSha, 'deadbeef')
-    t.notOk(repo.enabled)
-    t.end()
+    expect(repo).not.toHaveProperty('packages')
+    expect(repo.files).not.toHaveProperty('package.json')
+    expect(repo.headSha).toEqual('deadbeef')
+    expect(repo.enabled).toBeFalsy()
   })
 
-  t.test('package.json deleted on private repo within GKE', async t => {
+  test('package.json deleted on private repo within GKE', async () => {
+    const { repositories } = await dbs()
     process.env.IS_ENTERPRISE = true
     const worker = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
-    const newJobs = await worker({
+    const newJob = await worker({
       installation: {
         id: 42
       },
@@ -506,20 +531,21 @@ test('github-event push', async t => {
       }
     })
 
-    t.notOk(newJobs)
+    expect(newJob).toBeFalsy()
+
     const repo = await repositories.get('448')
-    t.notOk(_.get(repo.packages, ['package.json']))
-    t.is(repo.headSha, 'deadbeef')
-    t.notOk(repo.enabled)
-    t.end()
+    expect(repo).not.toHaveProperty('packages')
+    expect(repo.files).not.toHaveProperty('package.json')
+    expect(repo.headSha).toEqual('deadbeef')
+    expect(repo.enabled).toBeFalsy()
   })
-})
 
-tearDown(async () => {
-  const { repositories, payments } = await dbs()
+  afterAll(async () => {
+    const { repositories, payments } = await dbs()
 
-  await removeIfExists(repositories, '444', '445', '446', '447', '448', '444:branch:1234abcd', '444:branch:1234abce')
-  await removeIfExists(payments, '123')
+    await removeIfExists(repositories, '444', '445', '446', '447', '448', '444:branch:1234abcd', '444:branch:1234abce')
+    await removeIfExists(payments, '123')
+  })
 })
 
 function encodePkg (pkg) {
