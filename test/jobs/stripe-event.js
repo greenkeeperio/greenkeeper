@@ -1,6 +1,7 @@
 const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -38,5 +39,5 @@ test('enqueue email job when recieving stripe cancel event', async () => {
 
 afterAll(async () => {
   const { payments } = await dbs()
-  await payments.remove(await payments.get('1'))
+  await removeIfExists(payments, '1')
 })
