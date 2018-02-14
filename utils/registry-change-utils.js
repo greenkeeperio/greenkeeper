@@ -1,5 +1,7 @@
 const _ = require('lodash')
+const jsonInPlace = require('json-in-place')
 const semver = require('semver')
+const getRangedVersion = require('../lib/get-ranged-version')
 
 function sepperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
@@ -26,7 +28,7 @@ const order = {
   'optionalDependencies': 3
 }
 
-function getHighestPriorityDependency(dependencies) {
+function getHighestPriorityDependency (dependencies) {
   const types = dependencies.map(d => d.type)
   return types.sort((depA, depB) => order[depA] - order[depB])[0]
 }
@@ -104,11 +106,36 @@ function getJobsPerGroup ({
   return jobs
 }
 
+function createTransformFunction (type, dependency, version, log) {
+  return (pkg) => {
+    try {
+      var json = JSON.parse(pkg)
+      var parsed = jsonInPlace(pkg)
+    } catch (e) {
+      return // ignore parse errors
+    }
+    const oldPkgVersion = _.get(json, [type, dependency])
+    if (!oldPkgVersion) {
+      log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
+      return
+    }
+
+    if (semver.ltr(version, oldPkgVersion)) { // no downgrades
+      log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+      return
+    }
+
+    parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
+    return parsed.toString()
+  }
+}
+
 module.exports = {
   sepperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved,
-  getHighestPriorityDependency
+  getHighestPriorityDependency,
+  createTransformFunction
 }

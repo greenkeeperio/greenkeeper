@@ -1,19 +1,17 @@
 const _ = require('lodash')
-const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
-const getRangedVersion = require('../lib/get-ranged-version')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { getHighestPriorityDependency } = require('../utils/registry-change-utils')
+const { createTransformFunction, getHighestPriorityDependency } = require('../utils/registry-change-utils')
 
 const prContent = require('../content/update-pr')
 
@@ -141,28 +139,7 @@ module.exports = async function (
       // }
       log.info('commit message created', {commitMessage})
       return {
-        transform: (pkg) => {
-          try {
-            var json = JSON.parse(pkg)
-            var parsed = jsonInPlace(pkg)
-          } catch (e) {
-            return // ignore parse errors
-          }
-
-          const oldPkgVersion = _.get(json, [type.type, dependency])
-          if (!oldPkgVersion) {
-            log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
-            return
-          }
-
-          if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-            log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
-            return
-          }
-
-          parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
-          return parsed.toString()
-        },
+        transform: createTransformFunction(type.type, dependency, version, log),
         path: pkg.filename,
         message: commitMessage
       }
