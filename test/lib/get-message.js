@@ -51,3 +51,24 @@ test("throws when it doesn't know a message", t => {
   t.plan(1)
   t.throws(() => getMessage(commitMessages, 'bar'), message)
 })
+
+test('ignores invalid variables and replaces the commit message with the default one', t => {
+  const commitMessages = {
+    dependencyUpdate: 'fix(package): update ${console.log("hallo")} to version ${lalala}',
+    closes: '\n\nCloses #${111111}'
+  }
+  const values = {
+    dependency: 'foo',
+    version: 'bar',
+    oldVersion: 'rab',
+    number: 42
+  }
+  const expected = {
+    dependencyUpdate: 'fix(package): update foo to version bar',
+    closes: '\n\nCloses #42'
+  }
+
+  t.plan(Object.keys(commitMessages).length)
+  t.is(getMessage(commitMessages, 'dependencyUpdate', values), expected.dependencyUpdate)
+  t.is(getMessage(commitMessages, 'closes', values), expected.closes)
+})
