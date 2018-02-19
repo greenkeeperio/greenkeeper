@@ -48,7 +48,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     await repositories.remove(await repositories.get('42'))
   })
 
-  test.only('send reminders for stale initial pr', async () => {
+  test('send reminders for stale initial pr', async () => {
     expect.assertions(3)
 
     githubNock
