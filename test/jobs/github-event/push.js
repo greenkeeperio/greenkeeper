@@ -94,6 +94,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
@@ -104,6 +105,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
+        name: 'package-lock.json',
         content: encodePkg({})
       })
 
@@ -139,13 +141,10 @@ describe('github-event push', async () => {
     expect(job.repositoryId).toEqual('444')
 
     const repo = await repositories.get('444')
-    const expectedFiles = {
-      'npm-shrinkwrap.json': false,
-      'package-lock.json': true,
-      'package.json': true,
-      'yarn.lock': false
-    }
-    expect(repo.files).toMatchObject(expectedFiles)
+
+    expect(repo.files['package.json'].length).toBeGreaterThan(0)
+    expect(repo.files['package-lock.json'].length).toBeGreaterThan(0)
+    expect(repo.files['npm-shrinkwrap.json']).toHaveLength(0)
 
     const expectedPackages = {
       'package.json': {
@@ -174,6 +173,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
@@ -241,6 +241,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({
           name: 'testpkg',
           dependencies: {
@@ -307,6 +308,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: Buffer.from('test').toString('base64')
       })
 

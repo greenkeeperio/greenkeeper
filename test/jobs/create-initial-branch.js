@@ -54,6 +54,7 @@ describe('create initial branch', () => {
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({ devDependencies })
       })
       .get('/repos/finnp/test')
@@ -151,11 +152,13 @@ describe('create initial branch', () => {
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({ dependencies: {} })
       })
       .get('/repos/finnp/test/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
+        name: 'package-lock.json',
         content: encodePkg({ who: 'cares' })
       })
       .get('/repos/finnp/test')
@@ -166,15 +169,9 @@ describe('create initial branch', () => {
     const newJob = await createInitialBranch({repositoryId: 44})
     expect(newJob).toBeFalsy()
     const repodoc = await repositories.get('44')
-    const files = repodoc.files
-    const expectedFiles = {
-      'npm-shrinkwrap.json': false,
-      'package-lock.json': true,
-      'package.json': true,
-      'yarn.lock': false
-    }
-
-    expect(files).toMatchObject(expectedFiles)
+    expect(repodoc.files['package.json']).not.toHaveLength(0)
+    expect(repodoc.files['package-lock.json']).not.toHaveLength(0)
+    expect(repodoc.files['yarn.lock']).toHaveLength(0)
     expect(repodoc.enabled).toBeTruthy()
   })
 
@@ -205,11 +202,13 @@ describe('create initial branch', () => {
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({ dependencies: {} })
       })
       .get('/repos/finnp/test/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
+        name: 'package-lock.json',
         content: encodePkg({ who: 'cares' })
       })
       .get('/repos/finnp/test')
@@ -253,11 +252,13 @@ describe('create initial branch', () => {
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
+        name: 'package.json',
         content: encodePkg({ dependencies: {} })
       })
       .get('/repos/finnp/test/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
+        name: 'package-lock.json',
         content: encodePkg({ who: 'cares' })
       })
       .get('/repos/finnp/test')
