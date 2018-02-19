@@ -78,7 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest --runInBand test/jobs/send-stale-initial-pr-reminder",
+    "test": "NODE_ENV=testing jest --runInBand test/jobs/create-initial-pr-comment",
     "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {
