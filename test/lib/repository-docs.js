@@ -19,24 +19,22 @@ test('updateRepoDoc with package.json', async () => {
     .reply(200, {
       type: 'file',
       path: 'package.json',
+      name: 'package.json',
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
     .get('/repos/owner/repo/contents/package-lock.json')
     .reply(200, {
       type: 'file',
       path: 'package-lock.json',
+      name: 'package-lock.json',
       content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
     })
 
   const doc = await updateRepoDoc('123', { fullName: 'owner/repo' })
   expect(doc.packages['package.json'].name).toEqual('test')
-  const expectedFiles = {
-    'npm-shrinkwrap.json': false,
-    'package-lock.json': true,
-    'package.json': true,
-    'yarn.lock': false
-  }
-  expect(doc.files).toMatchObject(expectedFiles)
+  expect(doc.files['package-lock.json']).toHaveLength(1)
+  expect(doc.files['package.json']).toHaveLength(1)
+  expect(doc.files['yarn.lock']).toHaveLength(0)
 })
 
 test('get invalid package.json', async () => {
@@ -51,6 +49,7 @@ test('get invalid package.json', async () => {
     .reply(200, {
       type: 'file',
       path: 'package.json',
+      name: 'package.json',
       content: Buffer.from('test').toString('base64')
     })
 
@@ -62,16 +61,11 @@ test('get invalid package.json', async () => {
       }
     }
   })
-
   expect(doc.packages).not.toContain('package.json')
-  expect(doc.packages['package.json']).toBeFalsy()
-  const expectedFiles = {
-    'npm-shrinkwrap.json': false,
-    'package-lock.json': false,
-    'package.json': true,
-    'yarn.lock': false
-  }
-  expect(doc.files).toMatchObject(expectedFiles)
+  expect(doc.packages).toMatchObject({})
+  expect(doc.files['package.json']).toHaveLength(1)
+  expect(doc.files['package-lock.json']).toHaveLength(0)
+  expect(doc.files['yarn.lock']).toHaveLength(0)
 })
 
 test('create docs', async () => {
