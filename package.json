@@ -78,7 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest --runInBand test/lib/create-branch.js",
+    "test": "NODE_ENV=testing jest --runInBand test/lib/delete-branches.js",
     "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {
