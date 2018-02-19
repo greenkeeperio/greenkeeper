@@ -1,7 +1,9 @@
 const nock = require('nock')
-const { test } = require('tap')
 
 const createBranch = require('../../lib/create-branch')
+
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
 function ghToken (nocked) {
   return nocked
@@ -13,8 +15,8 @@ function ghToken (nocked) {
     .reply(200, {})
 }
 
-test('create branch', async t => {
-  t.test('change one file', async t => {
+describe('create branch', async () => {
+  test('change one file', async () => {
     ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/contents/package.json')
       .query({ ref: 'master' })
@@ -67,11 +69,10 @@ test('create branch', async t => {
       message: 'new commit'
     })
 
-    t.equal(sha, '789beef', 'sha')
-    t.end()
+    expect(sha).toEqual('789beef')
   })
 
-  t.test('change multiple files', async t => {
+  test('change multiple files', async () => {
     ghToken(nock('https://api.github.com'))
       .get('/repos/owner/repo/readme?ref=master')
       .reply(200, {
@@ -160,7 +161,6 @@ test('create branch', async t => {
       ]
     })
 
-    t.equal(sha, '789beef2', 'sha')
-    t.end()
+    expect(sha).toEqual('789beef2')
   })
 })
