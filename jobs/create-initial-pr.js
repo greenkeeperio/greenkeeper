@@ -23,6 +23,7 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr'})
 
   log.info('started')
+  log.info(`config for ${repodoc.fullName}`, {config})
 
   const [owner, repo] = repodoc.fullName.split('/')
   const {
