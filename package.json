@@ -78,7 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest --runInBand test/lib/get-message.js",
+    "test": "NODE_ENV=testing jest --runInBand test/lib/open-issue.js",
     "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {
