@@ -1,13 +1,27 @@
-const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire')
 const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
-test('handle-branch-status', async t => {
-  const { repositories, installations, npm } = await dbs()
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-  t.test('without issue', async t => {
+describe('handle-branch-status', async () => {
+  afterAll(async () => {
+    const { repositories, installations, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '42:branch:deadbeef', '42:branch:deadbeef2', '43:branch:deadbeef3', '43:issue:5'),
+      removeIfExists(installations, '10'),
+      removeIfExists(npm, 'test', 'test2')
+    ])
+  })
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  beforeAll(async() => {
+    const { repositories, installations, npm } = await dbs()
     await Promise.all([
       installations.put({
         _id: '10',
@@ -38,85 +52,95 @@ test('handle-branch-status', async t => {
         version: '1.0.2'
       })
     ])
-
-    t.test('success', async t => {
-      const handleBranchStatus = proxyquire('../../lib/handle-branch-status', {
-        './open-issue': data => {
-          t.pass('opened an issue')
-        }
-      })
-
-      nock('https://api.github.com')
-        .post('/installations/123/access_tokens')
-        .reply(200, {
-          token: 'secret'
-        })
-        .get('/rate_limit')
-        .reply(200, {})
-        .delete('/repos/club/mate/git/refs/heads/branchname')
-        .reply(422, () => {
-          t.pass('deleted branch')
-          // simulate reference already been deleted
-          return {
-            message: 'Reference does not exist'
-          }
-        })
-
-      const newJob = await handleBranchStatus({
-        installationId: '123',
-        accountId: '10',
-        repository: {
-          id: '42',
-          full_name: 'club/mate'
-        },
-        branchDoc: await repositories.get('42:branch:deadbeef'),
-        combined: {
-          state: 'success',
-          combined: []
-        }
-      })
-
-      t.notOk(newJob, 'no new job scheduled')
-      const branch = await repositories.get('42:branch:deadbeef')
-      t.ok(branch.processed, 'branch is processed')
-      t.ok(branch.referenceDeleted, 'referenceDeleted')
-      t.same(branch.state, 'success', 'status is success')
-    })
-
-    t.test('failure', async t => {
-      t.plan(4)
-      const handleBranchStatus = proxyquire('../../lib/handle-branch-status', {
-        './open-issue': data => {
-          t.pass('opened an issue')
-        }
-      })
-
-      nock('https://api.github.com')
-
-      const newJob = await handleBranchStatus({
-        installationId: '123',
-        accountId: 42,
-        combined: { state: 'failure', statuses: [] },
-        branchDoc: await repositories.get('42:branch:deadbeef2'),
-        repository: {
-          id: 42,
-          full_name: 'club/mate',
-          owner: {
-            id: 10
-          }
-        }
-      })
-
-      t.notOk(newJob, 'does not schedule new job')
-      const branch = await repositories.get('42:branch:deadbeef2')
-      t.ok(branch.processed, 'branch is processed')
-      t.same(branch.state, 'failure', 'status is failure')
-    })
   })
 
-  t.test('with issue', async t => {
+  test('success', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
-    t.plan(5)
+
+    jest.mock('../../lib/open-issue', data => data => {
+      // open an issue
+      expect(true).toBeTruthy()
+    })
+
+    nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .delete('/repos/club/mate/git/refs/heads/branchname')
+      .reply(422, () => {
+        // simulate reference already been deleted
+        expect(true).toBeTruthy()
+        return {
+          message: 'Reference does not exist'
+        }
+      })
+
+    const { repositories } = await dbs()
+
+    const newJob = await handleBranchStatus({
+      installationId: '123',
+      accountId: '10',
+      repository: {
+        id: '42',
+        full_name: 'club/mate'
+      },
+      branchDoc: await repositories.get('42:branch:deadbeef'),
+      combined: {
+        state: 'success',
+        combined: []
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('42:branch:deadbeef')
+    expect(branch.processed).toBeTruthy()
+    expect(branch.referenceDeleted).toBeTruthy()
+    expect(branch.state).toEqual('success')
+  })
+
+  test('failure', async () => {
+    const { repositories } = await dbs()
+
+    expect.assertions(4)
+    const handleBranchStatus = require('../../lib/handle-branch-status')
+    jest.mock('../../lib/open-issue', data => data => {
+      // open an issue
+      console.log('###', data)
+      expect(true).toBeTruthy()
+    })
+
+    nock('https://api.github.com')
+
+    const newJob = await handleBranchStatus({
+      installationId: '123',
+      accountId: 42,
+      combined: { state: 'failure', statuses: [] },
+      branchDoc: await repositories.get('42:branch:deadbeef2'),
+      repository: {
+        id: 42,
+        full_name: 'club/mate',
+        owner: {
+          id: 10
+        }
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('42:branch:deadbeef2')
+    expect(branch.processed).toBeTruthy()
+    expect(branch.state).toEqual('failure')
+  })
+
+  test('with issue', async () => {
+    const handleBranchStatus = require('../../lib/handle-branch-status')
+    const { repositories, npm } = await dbs()
+
+    expect.assertions(5)
     await Promise.all([
       repositories.put({
         _id: '43:issue:5',
@@ -149,7 +173,8 @@ test('handle-branch-status', async t => {
       .reply(200, {})
       .post('/repos/club/mate/issues/5/comments')
       .reply(201, () => {
-        t.pass('commented on right issue')
+        // commented on right issue
+        expect(true).toBeTruthy()
       })
 
     const newJob = await handleBranchStatus({
@@ -165,23 +190,10 @@ test('handle-branch-status', async t => {
         }
       }
     })
-    t.notOk(newJob, 'no new job scheduled')
+    expect(newJob).toBeFalsy()
     const branch = await repositories.get('43:branch:deadbeef3')
-    t.ok(branch.processed, 'branch is processed')
-    t.notOk(branch.referenceDeleted, 'referenceDeleted')
-    t.same(branch.state, 'success', 'status is success')
+    expect(branch.processed).toBeTruthy()
+    expect(branch.referenceDeleted).toBeFalsy()
+    expect(branch.state).toEqual('success')
   })
-})
-
-tearDown(async () => {
-  const { repositories, installations, npm } = await dbs()
-  await Promise.all([
-    repositories.remove(await repositories.get('42:branch:deadbeef')),
-    repositories.remove(await repositories.get('42:branch:deadbeef2')),
-    repositories.remove(await repositories.get('43:branch:deadbeef3')),
-    repositories.remove(await repositories.get('43:issue:5')),
-    installations.remove(await installations.get('10')),
-    npm.remove(await npm.get('test')),
-    npm.remove(await npm.get('test2'))
-  ])
 })
