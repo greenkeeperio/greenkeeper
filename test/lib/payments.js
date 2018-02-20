@@ -1,242 +1,229 @@
-const { test, tearDown } = require('tap')
 const simple = require('simple-mock')
 
 const dbs = require('../../lib/dbs')
-const { getActiveBilling, maybeUpdatePaymentsJob, hasStripeBilling, getAccountNeedsMarketplaceUpgrade, getAmountOfCurrentlyPrivateAndEnabledRepos } = require(
-  '../../lib/payments'
-)
+const removeIfExists = require('../helpers/remove-if-exists')
 
-test('payments', async t => {
-  const { payments, repositories } = await dbs()
-  await payments.put({
-    _id: '123',
-    stripeSubscriptionId: 'stripe123',
-    plan: 'personal'
-  })
-  await payments.put({
-    _id: '123free',
-    plan: 'free'
-  })
-  await payments.put({
-    _id: '123org',
-    stripeSubscriptionId: 'stripe124',
-    plan: 'org'
-  })
-  await payments.put({
-    _id: '123opensource',
-    plan: 'opensource'
-  })
-  await payments.put({
-    _id: '123team',
-    plan: 'team'
-  })
-  await payments.put({
-    _id: '123business',
-    plan: 'business'
-  })
+const {
+  getActiveBilling,
+  maybeUpdatePaymentsJob,
+  hasStripeBilling,
+  getAccountNeedsMarketplaceUpgrade,
+  getAmountOfCurrentlyPrivateAndEnabledRepos
+} = require('../../lib/payments')
 
-  await repositories.put({
-    _id: '44a',
-    accountId: '123team',
-    fullName: 'finnp/private',
-    private: true,
-    enabled: true
-  })
+describe('payments', async () => {
+  beforeAll(async() => {
+    const { payments, repositories } = await dbs()
+    await payments.put({
+      _id: '123',
+      stripeSubscriptionId: 'stripe123',
+      plan: 'personal'
+    })
+    await payments.put({
+      _id: '123free',
+      plan: 'free'
+    })
+    await payments.put({
+      _id: '123org',
+      stripeSubscriptionId: 'stripe124',
+      plan: 'org'
+    })
+    await payments.put({
+      _id: '123opensource',
+      plan: 'opensource'
+    })
+    await payments.put({
+      _id: '123team',
+      plan: 'team'
+    })
+    await payments.put({
+      _id: '123business',
+      plan: 'business'
+    })
 
-  await repositories.put({
-    _id: '44b',
-    accountId: '123team',
-    fullName: 'finnp/public',
-    private: false,
-    enabled: true
-  })
+    await repositories.put({
+      _id: '44a',
+      accountId: '123team',
+      fullName: 'finnp/private',
+      private: true,
+      enabled: true
+    })
 
-  await repositories.put({
-    _id: '44c',
-    accountId: '123team',
-    fullName: 'finnp/public',
-    private: false,
-    enabled: false
-  })
+    await repositories.put({
+      _id: '44b',
+      accountId: '123team',
+      fullName: 'finnp/public',
+      private: false,
+      enabled: true
+    })
+    await repositories.put({
+      _id: '44c',
+      accountId: '123team',
+      fullName: 'finnp/public',
+      private: false,
+      enabled: false
+    })
 
-  await repositories.put({
-    _id: '44d',
-    accountId: '123team',
-    fullName: 'finnp/private',
-    private: true,
-    enabled: false
-  })
-
-  /* getActiveBilling */
-
-  t.test('getActiveBilling with billing personal', async t => {
-    const billing = await getActiveBilling('123')
-    t.equal(billing.stripeSubscriptionId, 'stripe123', 'stripe id')
-    t.equal(billing.plan, 'personal', 'plan')
-    t.end()
-  })
-  t.test('getActiveBilling with billing org', async t => {
-    const billing = await getActiveBilling('123org')
-    t.equal(billing.stripeSubscriptionId, 'stripe124', 'stripe id')
-    t.equal(billing.plan, 'org', 'plan')
-    t.end()
-  })
-  t.test('getActiveBilling without billing', async t => {
-    const billing = await getActiveBilling('000')
-    t.notOk(billing)
-    t.end()
-  })
-  t.test('getActiveBilling with free billing', async t => {
-    const billing = await getActiveBilling('123free')
-    t.notOk(billing)
-    t.end()
-  })
-  t.test('getActiveBilling with opensource billing', async t => {
-    const billing = await getActiveBilling('123opensource')
-    t.notOk(billing)
-    t.end()
-  })
-  t.test('getActiveBilling with billing team', async t => {
-    const billing = await getActiveBilling('123team')
-    t.equal(billing.plan, 'team', 'plan')
-    t.end()
-  })
-  t.test('getActiveBilling with billing business', async t => {
-    const billing = await getActiveBilling('123business')
-    t.equal(billing.plan, 'business', 'plan')
-    t.end()
-  })
-  t.test('throw on missing accountId', async t => {
-    try {
-      await getActiveBilling()
-      t.fail('should not succeed')
-    } catch (e) {
-      t.ok(e)
-    }
-    t.end()
+    await repositories.put({
+      _id: '44d',
+      accountId: '123team',
+      fullName: 'finnp/private',
+      private: true,
+      enabled: false
+    })
   })
 
-  /* hasStripeBilling */
-
-  t.test('hasStripeBilling without stripe', async t => {
-    const billing = await hasStripeBilling('123team')
-    t.notOk(billing)
-    t.end()
-  })
-  t.test('hasStripeBilling with stripe', async t => {
-    const billing = await hasStripeBilling('123')
-    t.ok(billing)
-    t.end()
+  afterAll(async () => {
+    const { payments, repositories } = await dbs()
+    await Promise.all([
+      removeIfExists(payments, '123', '123free', '123org', '123opensource', '123team', '123business'),
+      removeIfExists(repositories, '44a', '44b', '44c', '44d')
+    ])
   })
 
-    /* maybeUpdatePaymentsJob */
+  describe('getActiveBilling', async() => {
+    test('getActiveBilling with billing personal', async () => {
+      const billing = await getActiveBilling('123')
+      expect(billing.stripeSubscriptionId).toEqual('stripe123')
+      expect(billing.plan).toEqual('personal')
+    })
 
-  t.test('maybeUpdatePaymentsJob without billing', async t => {
-    const newJob = await maybeUpdatePaymentsJob('000', true)
-    t.notOk(newJob)
-    t.end()
-  })
+    test('getActiveBilling with billing org', async () => {
+      const billing = await getActiveBilling('123org')
+      expect(billing.stripeSubscriptionId).toEqual('stripe124')
+      expect(billing.plan).toEqual('org')
+    })
 
-  t.test('maybeUpdatePaymentsJob without stripe', async t => {
-    const newJob = await maybeUpdatePaymentsJob('123business', true)
-    t.notOk(newJob)
-    t.end()
-  })
-  t.test('maybeUpdatePaymentsJob with billing, not private', async t => {
-    const newJob = await maybeUpdatePaymentsJob('123', false)
-    t.notOk(newJob)
-    t.end()
-  })
-  t.test('maybeUpdatePaymentsJob with billing', async t => {
-    const newJob = await maybeUpdatePaymentsJob('123', true)
-    t.same(newJob, {
-      data: {
-        name: 'update-payments',
-        accountId: '123'
+    test('getActiveBilling without billing', async () => {
+      const billing = await getActiveBilling('000')
+      expect(billing).toBeFalsy()
+    })
+
+    test('getActiveBilling with free billing', async () => {
+      const billing = await getActiveBilling('123free')
+      expect(billing).toBeFalsy()
+    })
+
+    test('getActiveBilling with opensource billing', async () => {
+      const billing = await getActiveBilling('123opensource')
+      expect(billing).toBeFalsy()
+    })
+
+    test('getActiveBilling with billing team', async () => {
+      const billing = await getActiveBilling('123team')
+      expect(billing.plan).toEqual('team')
+    })
+
+    test('getActiveBilling with billing business', async () => {
+      const billing = await getActiveBilling('123business')
+      expect(billing.plan).toEqual('business')
+    })
+
+    test('throw on missing accountId', async () => {
+      try {
+        await getActiveBilling()
+      } catch (error) {
+        expect(error).toBeTruthy()
       }
     })
-    t.end()
   })
 
-  /* getAmountOfCurrentlyPrivateAndEnabledRepos */
+  describe('hasStripeBilling', async() => {
+    test('hasStripeBilling without stripe', async () => {
+      const billing = await hasStripeBilling('123team')
+      expect(billing).toBeFalsy()
+    })
 
-  t.test('getAmountOfCurrentlyPrivateAndEnabledRepos with no Repos', async t => {
-    const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123')
-    t.equal(result, 0, '0 private and enabled repos')
-    t.end()
+    test('hasStripeBilling with stripe', async () => {
+      const billing = await hasStripeBilling('123')
+      expect(billing).toBeTruthy()
+    })
   })
 
-  t.test('getAmountOfCurrentlyPrivateAndEnabledRepos with one Repo', async t => {
-    const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123team')
-    t.equal(result, 1, '1 private and enabled repo')
-    t.end()
+  describe('maybeUpdatePaymentsJob', async() => {
+    test('maybeUpdatePaymentsJob without billing', async () => {
+      const newJob = await maybeUpdatePaymentsJob('000', true)
+      expect(newJob).toBeFalsy()
+    })
+
+    test('maybeUpdatePaymentsJob without stripe', async () => {
+      const newJob = await maybeUpdatePaymentsJob('123business', true)
+      expect(newJob).toBeFalsy()
+    })
+
+    test('maybeUpdatePaymentsJob with billing, not private', async () => {
+      const newJob = await maybeUpdatePaymentsJob('123', false)
+      expect(newJob).toBeFalsy()
+    })
+
+    test('maybeUpdatePaymentsJob with billing', async () => {
+      const newJob = await maybeUpdatePaymentsJob('123', true)
+      expect(newJob).toMatchObject({
+        data: {
+          name: 'update-payments',
+          accountId: '123'
+        }
+      })
+    })
   })
 
-  /* getAccountNeedsMarketplaceUpgrade */
+  describe('getAmountOfCurrentlyPrivateAndEnabledRepos', async() => {
+    test('getAmountOfCurrentlyPrivateAndEnabledRepos with no Repos', async () => {
+      const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123')
+      // zero private, enabled repos
+      expect(result).toBe(0)
+    })
 
-  t.test('getAccountNeedsMarketplaceUpgrade without billing', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('000')
-    t.notOk(result)
-    t.end()
+    test('getAmountOfCurrentlyPrivateAndEnabledRepos with one Repo', async () => {
+      const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123team')
+      // one private, enabled repos
+      expect(result).toBe(1)
+    })
   })
 
-  t.test('getAccountNeedsMarketplaceUpgrade with `free` plan', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123free')
-    t.notOk(result)
-    t.end()
+  describe('getAccountNeedsMarketplaceUpgrade', async() => {
+    test('getAccountNeedsMarketplaceUpgrade without billing', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('000')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with `free` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123free')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with stripe `personal` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with stripe `org` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123org')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with `opensource` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123opensource')
+      expect(result).toBeTruthy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with `team` plan and under repo limit', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123team')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with `team` plan and reached repo limit', async () => {
+      const payments = require('../../lib/payments')
+      simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').resolveWith(15)
+      const result = await getAccountNeedsMarketplaceUpgrade('123team')
+      simple.restore()
+
+      expect(result).toBeTruthy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with stripe `business` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123business')
+      expect(result).toBeFalsy()
+    })
   })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with stripe `personal` plan', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123')
-    t.notOk(result)
-    t.end()
-  })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with stripe `org` plan', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123org')
-    t.notOk(result)
-    t.end()
-  })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with `opensource` plan', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123opensource')
-    t.ok(result)
-    t.end()
-  })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with `team` plan and under repo limit', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123team')
-    t.notOk(result)
-    t.end()
-  })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with `team` plan and reached repo limit', async t => {
-    const payments = require('../../lib/payments')
-    simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').resolveWith(15)
-    const result = await getAccountNeedsMarketplaceUpgrade('123team')
-    simple.restore()
-
-    t.ok(result)
-    t.end()
-  })
-
-  t.test('getAccountNeedsMarketplaceUpgrade with stripe `business` plan', async t => {
-    const result = await getAccountNeedsMarketplaceUpgrade('123business')
-    t.notOk(result)
-    t.end()
-  })
-})
-
-tearDown(async () => {
-  const { payments, repositories } = await dbs()
-  payments.remove(await payments.get('123'))
-  payments.remove(await payments.get('123free'))
-  payments.remove(await payments.get('123org'))
-  payments.remove(await payments.get('123opensource'))
-  payments.remove(await payments.get('123team'))
-  payments.remove(await payments.get('123business'))
-  repositories.remove(await repositories.get('44a'))
-  repositories.remove(await repositories.get('44b'))
-  repositories.remove(await repositories.get('44c'))
-  repositories.remove(await repositories.get('44d'))
 })
