@@ -178,6 +178,5 @@ module.exports = async function (
       }
     }))
   ]
-  console.log('jobs', jobs)
   return jobs
 }
