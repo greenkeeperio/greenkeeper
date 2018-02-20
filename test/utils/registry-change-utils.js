@@ -115,9 +115,39 @@ test('getJobsPerGroup', t => {
       }
     }
   }
+  const distTags = { latest: '10.0.0' }
+  const distTag = 'latest'
+  const dependency = 'react'
+  const versions = {
+    '10.0.0': { gitHead: 'b75aeb5' },
+    '1.1.0': { gitHead: 'b75aeb4' },
+    '1.0.0': { gitHead: 'b75aeb3' }
+  }
+  const account = { installation: 123 }
+  const repositoryId = '123-monorepo'
+  const plan = {}
 
-  t.ok(getJobsPerGroup(config, monorepo).length === 1, 'creates one job if all package.json files are in the same group')
-  t.ok(getJobsPerGroup(config2, monorepo).length === 2, 'creates two jobs if all package.json files are in two groups')
+  t.ok(getJobsPerGroup({
+    config,
+    monorepo,
+    distTag,
+    distTags,
+    dependency,
+    versions,
+    account,
+    repositoryId,
+    plan
+  }).length === 1, 'creates one job if all package.json files are in the same group')
+  t.ok(getJobsPerGroup({
+    config: config2,
+    monorepo,
+    distTag,
+    distTags,
+    dependency,
+    versions,
+    account,
+    repositoryId,
+    plan}).length === 2, 'creates two jobs if all package.json files are in two groups')
   t.end()
 })
 
