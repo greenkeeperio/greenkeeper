@@ -45,13 +45,12 @@ test("throws when it doesn't know a message", () => {
   const commitMessages = {
     foo: '42'
   }
-  // const message = "Unknown message key 'bar'"
+  const message = "Unknown message key 'bar'"
 
   expect.assertions(1)
   expect(() => {
-    getMessage(commitMessages)
-  }).toThrow()
-  // t.throws(() => getMessage(commitMessages, 'bar'), message)
+    getMessage(commitMessages, 'bar')
+  }).toThrow(message)
 })
 
 test('ignores invalid variables and replaces the commit message with the default one', t => {
