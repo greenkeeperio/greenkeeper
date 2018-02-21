@@ -1,29 +1,40 @@
-// const { resolve } = require('path')
+beforeEach(() => {
+  jest.clearAllMocks()
+  jest.resetModules()
+})
 
-test('github-event index', () => {
-  expect.assertions(2)
+describe('github-event index', () => {
+  test('calls the resolve function', () => {
+    expect.assertions(1)
 
-  // const githubEvent = proxyquire('../../jobs/github-event.js', {
-  //   [resolve(__dirname, '../../jobs/github-event/foo')]: () => expect(true).toBeTruthy(),
-  //   [resolve(__dirname, '../../jobs/github-event/foo/bar')]: () => expect(true).toBeTruthy()
-  // })
+    const githubEvent = require('../../jobs/github-event.js')
+    jest.mock('path', () => {
+      return {
+        resolve: (dirname, eventType, type) => {
+          // resolve is called with /foo
+          expect(`${dirname}/${eventType}/${type}`).toEqual(`${dirname}/github-event/foo`)
+          return dirname
+        }
+      }
+    })
 
-  const githubEvent = require('../../jobs/github-event.js')
-  jest.mock('path', () => () => {
-    const { resolve } = require('path')
-    expect(resolve).toBeCalledWith(__dirname, '../../jobs/github-event/foo')
+    githubEvent({ type: 'foo' })
   })
-  // jest.mock(resolve(__dirname, '../../jobs/github-event/foo'), () => () => {
-  //   console.log('bla')
-  //   expect(true).toBeTruthy()
-  // })
 
-  //  {
-  //   [resolve(__dirname, '../../jobs/github-event/foo')]: () => expect(true).toBeTruthy(),
-  //   [resolve(__dirname, '../../jobs/github-event/foo/bar')]: () => expect(true).toBeTruthy()
-  // })
+  test('calls the resolve function with action', () => {
+    expect.assertions(1)
 
-  const test = githubEvent({ type: 'foo' })
-  console.log(test)
-  // githubEvent({ type: 'foo', action: 'bar' }, '456')
+    const githubEvent = require('../../jobs/github-event.js')
+    jest.mock('path', () => {
+      return {
+        resolve: (dirname, eventType, type, action) => {
+          // resolve is called with /foo/bar
+          expect(`${dirname}/${eventType}/${type}/${action}`).toEqual(`${dirname}/github-event/foo/bar`)
+          return dirname
+        }
+      }
+    })
+
+    githubEvent({ type: 'foo', action: 'bar' }, '456')
+  })
 })
