@@ -3,7 +3,7 @@ const _ = require('lodash')
 
 const dbs = require('../../../../lib/dbs')
 const removeIfExists = require('../../../helpers/remove-if-exists')
-const worker = require('../../../../jobs/github-event/installation_repositories/added')
+const repoAdded = require('../../../../jobs/github-event/installation_repositories/added')
 
 test('github-event installation_repositories added', async () => {
   const { repositories } = await dbs()
@@ -31,7 +31,7 @@ test('github-event installation_repositories added', async () => {
       fork: false,
       has_issues: true
     })
-  const newJobs = await worker({
+  const newJobs = await repoAdded({
     installation: {
       id: 1,
       account: {
