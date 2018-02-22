@@ -78,7 +78,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest --runInBand test/jobs/github-event.js",
+    "test": "NODE_ENV=testing jest --runInBand test/lib/worker.js",
     "test:coverage": "NODE_ENV=testing jest --coverage"
   },
   "standard": {

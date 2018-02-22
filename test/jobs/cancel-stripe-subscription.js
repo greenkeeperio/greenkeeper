@@ -3,7 +3,7 @@ const nock = require('nock')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-const worker = require('../../jobs/cancel-stripe-subscription')
+const cancelStripeSubscription = require('../../jobs/cancel-stripe-subscription')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -30,7 +30,7 @@ test('Cancel Stripe Subscription', async () => {
     stripeSubscriptionId: '345'
   })
 
-  await worker({
+  await cancelStripeSubscription({
     accountId: '123',
     stripeSubscriptionId: '345'
   })
