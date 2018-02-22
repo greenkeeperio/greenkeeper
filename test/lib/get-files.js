@@ -1,9 +1,26 @@
 const nock = require('nock')
 const { test } = require('tap')
 
-const { getFiles, formatPackageJson } = require('../../lib/get-files')
+const { getFiles, formatPackageJson, getGreenkeeperConfigFile, getPackagePathsFromConfigFile } = require('../../lib/get-files')
 
 nock.disableNetConnect()
+
+test('getFiles: with no fileList provided', async t => {
+  t.plan(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+
+  const files = await getFiles('123', 'owner/repo')
+
+  t.true(Object.keys(files).length === 4, 'returns an Object with the 4 standard files')
+  t.end()
+})
 
 test('getFiles: 2 package.json files', async t => {
   t.plan(6)
@@ -126,5 +143,107 @@ test('formatPackageJson: for a missing package.json array', async t => {
   const output = formatPackageJson(input)
 
   t.same(output, null, 'returns null')
+  t.end()
+})
+
+test('getGreenkeeperConfigFile', async t => {
+  t.plan(1)
+
+  const configFileContent = {
+    groups: {
+      backend: {
+        ignore: [
+          'lodash'
+        ],
+        packages: [
+          'apps/backend/hapiserver/package.json',
+          'apps/backend/bla/package.json'
+        ]
+      },
+      frontend: {
+        ignore: [
+          'lodash'
+        ],
+        packages: [
+          'apps/frontend/react/package.json',
+          'apps/frontend/react-native/package.json'
+        ]
+      }
+    }
+  }
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/repos/owner/repo/contents/greenkeeper.json')
+    .reply(200, {
+      type: 'file',
+      path: 'greenkeeper.json',
+      name: 'greenkeeper.json',
+      content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+    })
+
+  const result = await getGreenkeeperConfigFile('123', 'owner/repo')
+
+  t.same(result, configFileContent, 'returns the content of the `greenkeeper.json`')
+  t.end()
+})
+
+test('getGreenkeeperConfigFile: when no config file is present', async t => {
+  t.plan(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/repos/owner/repo/contents/greenkeeper.json')
+    .reply(404)
+
+  const result = await getGreenkeeperConfigFile('123', 'owner/repo')
+
+  t.same(result, {}, 'returns empty Object')
+  t.end()
+})
+
+test('getPackagePathsFromConfigFile', async t => {
+  t.plan(1)
+
+  const input = {
+    groups: {
+      backend: {
+        ignore: [
+          'lodash'
+        ],
+        packages: [
+          'apps/backend/hapiserver/package.json',
+          'apps/backend/bla/package.json'
+        ]
+      },
+      frontend: {
+        ignore: [
+          'lodash'
+        ],
+        packages: [
+          'apps/frontend/react/package.json',
+          'apps/frontend/react-native/package.json'
+        ]
+      }
+    }
+  }
+  const result = await getPackagePathsFromConfigFile(input)
+
+  t.same(result, [
+    'apps/backend/hapiserver/package.json',
+    'apps/backend/bla/package.json',
+    'apps/frontend/react/package.json',
+    'apps/frontend/react-native/package.json'
+  ], 'returns all paths in an array')
   t.end()
 })
