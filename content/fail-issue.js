@@ -18,6 +18,8 @@ ${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${st
 `
 
 module.exports = ({version, dependencyLink, owner, repo, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => md`
+☝️ Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
+
 ## Version **${version}** of ${dependencyLink} was just published.
 
 <table>
