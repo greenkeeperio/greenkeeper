@@ -57,9 +57,9 @@ describe('github-event pull_request opened', async () => {
 
   test('initial pr opened by user', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const prOpened = requireFresh(pathToWorker)
 
-    const newJob = await worker(
+    const newJob = await prOpened(
       pullRequestPayLoad({
         prId: 666,
         branchName: 'greenkeeper/initial',
@@ -83,7 +83,7 @@ describe('github-event pull_request opened', async () => {
   })
 
   test('initial pr on private repo opened', async () => {
-    const worker = requireFresh(pathToWorker)
+    const prOpened = requireFresh(pathToWorker)
 
     expect.assertions(2)
 
@@ -101,7 +101,7 @@ describe('github-event pull_request opened', async () => {
         return {}
       })
 
-    const newJob = await worker(
+    const newJob = await prOpened(
       pullRequestPayLoad({
         prId: 669,
         branchName: 'greenkeeper/initial',
@@ -117,7 +117,7 @@ describe('github-event pull_request opened', async () => {
 
   test('initial pr on private repo opened within GKE', async () => {
     process.env.IS_ENTERPRISE = true
-    const worker = requireFresh(pathToWorker)
+    const prOpened = requireFresh(pathToWorker)
 
     expect.assertions(1)
 
@@ -135,7 +135,7 @@ describe('github-event pull_request opened', async () => {
         return {}
       })
 
-    const newJob = await worker(
+    const newJob = await prOpened(
       pullRequestPayLoad({
         prId: 670,
         branchName: 'greenkeeper/initial',
@@ -151,9 +151,9 @@ describe('github-event pull_request opened', async () => {
 
   test('initial pr opened by greenkeeper', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const prOpened = requireFresh(pathToWorker)
 
-    const newJob = await worker(
+    const newJob = await prOpened(
       pullRequestPayLoad({
         prId: 667,
         branchName: 'greenkeeper/initial',
@@ -176,10 +176,10 @@ describe('github-event pull_request opened', async () => {
 
   test('pr opened but is not our initial branch', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const prOpened = requireFresh(pathToWorker)
     expect.assertions(2)
 
-    const newJob = await worker(
+    const newJob = await prOpened(
       pullRequestPayLoad({
         prId: 668,
         branchName: 'some-random-branch',
