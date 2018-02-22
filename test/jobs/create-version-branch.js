@@ -452,7 +452,6 @@ describe('create version brach', () => {
       .post('/installations/38/access_tokens')
       .optionally()
       .reply(200, () => {
-        // t.fail('should not talk to github')
         return { token: 'secret' }
       })
 

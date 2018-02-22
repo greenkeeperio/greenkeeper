@@ -14,7 +14,6 @@ test('no change', () => {
     }
   }
   expect(diff(a, b)).toEqual({})
-  // t.same(diff(a, b), {})
 })
 
 test('update dependency', () => {
@@ -39,7 +38,6 @@ test('update dependency', () => {
     }
   }
   expect(diff(a, b)).toMatchObject(expected)
-  // t.same(diff(a, b), )
 })
 
 test('add dependency', () => {
@@ -64,16 +62,6 @@ test('add dependency', () => {
     }
   }
   expect(diff(a, b)).toMatchObject(expected)
-  // t.same(diff(a, b), {
-  //   dependencies: {
-  //     async: {
-  //       change: 'added',
-  //       before: undefined,
-  //       after: '^1.0.0'
-  //     }
-  //   }
-  // })
-  // t.end()
 })
 
 test('remove dependency', () => {
@@ -98,14 +86,4 @@ test('remove dependency', () => {
     }
   }
   expect(diff(a, b)).toMatchObject(expected)
-  // t.same(diff(a, b), {
-  //   dependencies: {
-  //     async: {
-  //       change: 'removed',
-  //       before: '^1.0.0',
-  //       after: undefined
-  //     }
-  //   }
-  // })
-  // t.end()
 })

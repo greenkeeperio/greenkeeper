@@ -15,7 +15,6 @@ afterAll(async () => {
 })
 
 test('open-issue', async () => {
-  // t.plan(29)
   expect.assertions(30)
   const { repositories } = await dbs()
 

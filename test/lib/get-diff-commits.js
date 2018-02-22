@@ -32,7 +32,6 @@ test('get-diff-commits', async () => {
     })
     .post('/markdown', ({ text }) => {
       expect(text).toMatch(/abccommitmessage/)
-      // t.ok(_.includes(text, `abccommitmessage`), 'includes commit message')
       return true
     })
     .reply(200, 'body <a href="https://github.com/greenkeeperio/greenkeeper">', {
@@ -48,9 +47,4 @@ test('get-diff-commits', async () => {
   })
   expect(diff).toMatch(/<summary>Commits<\/summary>/)
   expect(diff).toMatch(/https:\/\/urls.greenkeeper.io/)
-  // t.ok(_.includes(diff, `<summary>Commits</summary>`), 'commits summary')
-  // t.ok(
-  //   _.includes(diff, `https://urls.greenkeeper.io/`),
-  //   'github link was replaced'
-  // )
 })

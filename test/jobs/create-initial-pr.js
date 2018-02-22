@@ -66,7 +66,6 @@ describe('create-initial-pr', async () => {
       fullName: 'finnp/test'
     })
 
-    // t.plan(3)
     expect.assertions(3)
 
     nock('https://api.github.com')
@@ -134,7 +133,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(4)
     expect.assertions(4)
 
     nock('https://api.github.com')
@@ -208,7 +206,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(4)
     expect.assertions(4)
 
     nock('https://api.github.com')
@@ -283,7 +280,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(3)
     expect.assertions(3)
 
     nock('https://api.github.com')
@@ -349,7 +345,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(3)
     expect.assertions(3)
 
     nock('https://api.github.com')
@@ -415,7 +410,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(3)
     expect.assertions(3)
 
     nock('https://api.github.com')
@@ -482,7 +476,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(4)
     expect.assertions(4)
 
     nock('https://api.github.com')
@@ -557,7 +550,6 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    // t.plan(3)
     expect.assertions(3)
 
     nock('https://api.github.com')

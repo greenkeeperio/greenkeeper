@@ -110,7 +110,6 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     jest.mock('../../lib/open-issue', data => data => {
       // open an issue
-      console.log('###', data)
       expect(true).toBeTruthy()
     })
 
