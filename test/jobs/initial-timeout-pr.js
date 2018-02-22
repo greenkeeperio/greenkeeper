@@ -3,7 +3,7 @@ const nock = require('nock')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-const worker = require('../../jobs/initial-timeout-pr')
+const initTimeoutPr = require('../../jobs/initial-timeout-pr')
 
 describe('initial-timeout-pr', async () => {
   beforeAll(async () => {
@@ -40,7 +40,7 @@ describe('initial-timeout-pr', async () => {
         }
       })
 
-    const newJobs = await worker({
+    const newJobs = await initTimeoutPr({
       repositoryId: 666,
       accountId: 10101
     })
@@ -71,7 +71,7 @@ describe('initial-timeout-pr', async () => {
       head: 'greenkeeper/initial'
     })
 
-    const newJobs = await worker({
+    const newJobs = await initTimeoutPr({
       repositoryId: 6666,
       accountId: 1338
     })
