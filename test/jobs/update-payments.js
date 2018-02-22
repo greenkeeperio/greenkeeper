@@ -3,24 +3,31 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 describe('update-payments', async () => {
   beforeAll(async() => {
-    const { repositories } = await dbs()
+    const { repositories, installations } = await dbs()
+
+    await installations.put({
+      _id: '111',
+      installation: 11,
+      plan: 'free'
+    })
+
     await repositories.put({
       _id: '1',
-      accountId: '123',
+      accountId: '111',
       fullName: 'finnp/private1',
       enabled: true,
       private: true
     })
     await repositories.put({
       _id: '2',
-      accountId: '123',
+      accountId: '111',
       fullName: 'finnp/private2',
       enabled: true,
       private: true
     })
     await repositories.put({
       _id: '3',
-      accountId: '123',
+      accountId: '111',
       fullName: 'finnp/public',
       enabled: true,
       private: false
@@ -40,9 +47,10 @@ describe('update-payments', async () => {
   })
 
   afterAll(async () => {
-    const { repositories } = await dbs()
+    const { repositories, installations } = await dbs()
     await Promise.all([
-      removeIfExists(repositories, '1', '2', '3', '4')
+      removeIfExists(repositories, '1', '2', '3', '4'),
+      removeIfExists(installations, '111')
     ])
   })
 
@@ -77,7 +85,7 @@ describe('update-payments', async () => {
       }
     })
 
-    const newJob = await updatePayments({ accountId: '123' })
+    const newJob = await updatePayments({ accountId: '111' })
     expect(newJob).toBeFalsy()
   })
 
@@ -107,7 +115,7 @@ describe('update-payments', async () => {
       }
     })
 
-    const newJob = await updatePayments({ accountId: '123' })
+    const newJob = await updatePayments({ accountId: '111' })
     expect(newJob).toBeFalsy()
   })
 })
