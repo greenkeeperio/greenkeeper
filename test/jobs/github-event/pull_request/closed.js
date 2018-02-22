@@ -65,7 +65,7 @@ describe('github-event pull_request closed', async () => {
   test('initial pr merged', async () => {
     const { repositories } = await dbs()
 
-    const worker = requireFresh(pathToWorker)
+    const prClosed = requireFresh(pathToWorker)
 
     expect.assertions(6)
     const githubMock = nock('https://api.github.com')
@@ -83,7 +83,7 @@ describe('github-event pull_request closed', async () => {
         expect(true).toBeTruthy()
       })
 
-    const newJob = await worker({
+    const newJob = await prClosed({
       installation: {
         id: 37
       },
@@ -114,7 +114,7 @@ describe('github-event pull_request closed', async () => {
   })
 
   test('initial pr merged on private repo with payment plan', async () => {
-    const worker = requireFresh(pathToWorker)
+    const prClosed = requireFresh(pathToWorker)
     expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
@@ -129,7 +129,7 @@ describe('github-event pull_request closed', async () => {
       .delete('/repos/finnp/test/git/refs/heads/thehead')
       .reply(200)
 
-    const newJob = await worker({
+    const newJob = await prClosed({
       installation: {
         id: 37
       },
@@ -154,7 +154,7 @@ describe('github-event pull_request closed', async () => {
 
   test('initial pr merged on private repo with payment plan on GKE', async () => {
     process.env.IS_ENTERPRISE = true
-    const worker = requireFresh(pathToWorker)
+    const prClosed = requireFresh(pathToWorker)
 
     expect.assertions(1)
     const githubMock = nock('https://api.github.com')
@@ -169,7 +169,7 @@ describe('github-event pull_request closed', async () => {
       .delete('/repos/finnp/test/git/refs/heads/thehead')
       .reply(200)
 
-    const newJob = await worker({
+    const newJob = await prClosed({
       installation: {
         id: 37
       },
