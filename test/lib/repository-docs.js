@@ -68,6 +68,67 @@ test('get invalid package.json', async () => {
   expect(doc.files['yarn.lock']).toHaveLength(0)
 })
 
+test('updateRepoDoc with greenkeeper.json present', async () => {
+  const configFileContent = {
+    groups: {
+      backend: {
+        packages: [
+          'apps/backend/hapiserver/package.json',
+          'apps/backend/bla/package.json'
+        ]
+      },
+      frontend: {
+        packages: [
+          'apps/frontend/react/package.json'
+        ]
+      }
+    }
+  }
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/repos/owner/repo/contents/greenkeeper.json')
+    .reply(200, {
+      type: 'file',
+      path: 'greenkeeper.json',
+      name: 'greenkeeper.json',
+      content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/backend/hapiserver/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/backend/hapiserver/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'one' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/backend/bla/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/backend/bla/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'two' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/frontend/react/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/frontend/react/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'three' })).toString('base64')
+    })
+
+  const doc = await updateRepoDoc('123', { fullName: 'owner/repo' })
+  expect(Object.keys(doc.packages)).toHaveLength(3)
+  expect(doc.packages['apps/backend/hapiserver/package.json'].name).toEqual('one')
+  expect(doc.packages['apps/backend/bla/package.json'].name).toEqual('two')
+  expect(doc.packages['apps/frontend/react/package.json'].name).toEqual('three')
+  expect(doc.greenkeeper).toMatchObject(configFileContent)
+})
+
 test('create docs', async () => {
   const docs = await createDocs({
     repositories: [
