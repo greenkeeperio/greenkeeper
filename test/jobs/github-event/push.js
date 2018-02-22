@@ -82,7 +82,7 @@ describe('github-event push', async () => {
 
   test('package.json present', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -107,7 +107,7 @@ describe('github-event push', async () => {
         content: encodePkg({})
       })
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 37
       },
@@ -162,7 +162,7 @@ describe('github-event push', async () => {
 
   test('do branch cleanup on modify', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -184,7 +184,7 @@ describe('github-event push', async () => {
       .delete('/repos/finn/test/git/refs/heads/gk-lodash-2.0.0')
       .reply(200, {})
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 38
       },
@@ -229,7 +229,7 @@ describe('github-event push', async () => {
 
   test('do branch cleanup on remove', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/39/access_tokens')
@@ -251,7 +251,7 @@ describe('github-event push', async () => {
       .delete('/repos/finn/test/git/refs/heads/gk-lodash-3.0.0')
       .reply(200, {})
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 39
       },
@@ -295,7 +295,7 @@ describe('github-event push', async () => {
 
   test('invalid package.json present', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -310,7 +310,7 @@ describe('github-event push', async () => {
         content: Buffer.from('test').toString('base64')
       })
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 40
       },
@@ -343,7 +343,7 @@ describe('github-event push', async () => {
   })
 
   test('no relevant changes', async () => {
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
     expect.assertions(1)
 
     nock('https://api.github.com')
@@ -359,7 +359,7 @@ describe('github-event push', async () => {
       .reply(200, () => {
         // should not request package.json
       })
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 41
       },
@@ -388,7 +388,7 @@ describe('github-event push', async () => {
 
   test('package.json deleted', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -402,7 +402,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/test/contents/package.json')
       .reply(404, {})
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 42
       },
@@ -438,7 +438,7 @@ describe('github-event push', async () => {
 
   test('package.json deleted on private repo', async () => {
     const { repositories } = await dbs()
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -452,7 +452,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 42
       },
@@ -491,7 +491,7 @@ describe('github-event push', async () => {
   test('package.json deleted on private repo within GKE', async () => {
     const { repositories } = await dbs()
     process.env.IS_ENTERPRISE = true
-    const worker = requireFresh(pathToWorker)
+    const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -505,7 +505,7 @@ describe('github-event push', async () => {
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
-    const newJob = await worker({
+    const newJob = await githubPush({
       installation: {
         id: 42
       },
