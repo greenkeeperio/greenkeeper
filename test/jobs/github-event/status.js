@@ -23,7 +23,7 @@ describe('github-event status', async () => {
   test('initial pr', async () => {
     const { repositories } = await dbs()
     expect.assertions(6)
-    const worker = require('../../../jobs/github-event/status')
+    const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
       .post('/installations/1336/access_tokens')
@@ -47,7 +47,7 @@ describe('github-event status', async () => {
       sha: 'deadbeef'
     })
 
-    const newJob = await worker({
+    const newJob = await githubStatus({
       state: 'success',
       sha: 'deadbeef',
       installation: { id: 1336 },
@@ -73,7 +73,7 @@ describe('github-event status', async () => {
     const { repositories } = await dbs()
     expect.assertions(8)
 
-    const worker = require('../../../jobs/github-event/status')
+    const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
       .post('/installations/1336/access_tokens')
@@ -105,7 +105,7 @@ describe('github-event status', async () => {
       createdByUser: true
     })
 
-    const newJob = await worker({
+    const newJob = await githubStatus({
       state: 'success',
       sha: 'deadbeef',
       installation: { id: 1336 },
