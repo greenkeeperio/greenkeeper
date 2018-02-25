@@ -35,7 +35,9 @@ test('get-diff-commits', async t => {
       t.ok(_.includes(text, `abccommitmessage`), 'includes commit message')
       return true
     })
-    .reply(200, 'body <a href="https://github.com/greenkeeperio/greenkeeper">')
+    .reply(200, 'body <a href="https://github.com/greenkeeperio/greenkeeper">', {
+      'content-type': 'text/html;charset=utf-8'
+    })
 
   const diff = await getDiffCommits({
     installationId: '123',
