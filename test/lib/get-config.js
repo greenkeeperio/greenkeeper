@@ -1,10 +1,9 @@
-const { test } = require('tap')
 const getConfig = require('../../lib/get-config')
 
 /* eslint-disable no-template-curly-in-string */
 
-test('get default config', t => {
-  t.plan(1)
+test('get default config', () => {
+  expect.assertions(1)
 
   const repository = {
     packages: {
@@ -27,12 +26,11 @@ test('get default config', t => {
       closes: '\n\nCloses #${number}'
     }
   }
-
-  t.same(getConfig(repository), expected)
+  expect(getConfig(repository)).toEqual(expected)
 })
 
-test('get custom commit message', t => {
-  t.plan(1)
+test('get custom commit message', () => {
+  expect.assertions(1)
 
   const repository = {
     packages: {
@@ -61,7 +59,6 @@ test('get custom commit message', t => {
       closes: '\n\nCloses #${number}'
     }
   }
-
-  t.same(getConfig(repository), expected)
+  expect(getConfig(repository)).toEqual(expected)
 })
 /* eslint-enable no-template-curly-in-string */
