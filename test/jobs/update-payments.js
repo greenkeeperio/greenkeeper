@@ -12,21 +12,21 @@ describe('update-payments', async () => {
     })
 
     await repositories.put({
-      _id: '1',
+      _id: '1_update-payments',
       accountId: '111',
       fullName: 'finnp/private1',
       enabled: true,
       private: true
     })
     await repositories.put({
-      _id: '2',
+      _id: '2_update-payments',
       accountId: '111',
       fullName: 'finnp/private2',
       enabled: true,
       private: true
     })
     await repositories.put({
-      _id: '3',
+      _id: '3_update-payments',
       accountId: '111',
       fullName: 'finnp/public',
       enabled: true,
@@ -34,7 +34,7 @@ describe('update-payments', async () => {
     })
     await repositories.put({
       _id: '4',
-      accountId: '124',
+      accountId: '11',
       fullName: 'other/private',
       enabled: true,
       private: true
