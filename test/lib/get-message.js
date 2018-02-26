@@ -45,15 +45,15 @@ test("throws when it doesn't know a message", () => {
   const commitMessages = {
     foo: '42'
   }
-  const message = "Unknown message key 'bar'"
+  const message = "Unknown message messageKey 'bar'"
 
   expect.assertions(1)
   expect(() => {
     getMessage(commitMessages, 'bar')
-  }).toThrow(message)
+  }).toThrowError(message)
 })
 
-test('ignores invalid variables and replaces the commit message with the default one', t => {
+test('ignores invalid variables and replaces the commit message with the default one', () => {
   const commitMessages = {
     dependencyUpdate: 'fix(package): update ${console.log("hallo")} to version ${lalala}',
     closes: '\n\nCloses #${111111}'
@@ -69,7 +69,7 @@ test('ignores invalid variables and replaces the commit message with the default
     closes: '\n\nCloses #42'
   }
 
-  t.plan(Object.keys(commitMessages).length)
-  t.is(getMessage(commitMessages, 'dependencyUpdate', values), expected.dependencyUpdate)
-  t.is(getMessage(commitMessages, 'closes', values), expected.closes)
+  expect.assertions(Object.keys(commitMessages).length)
+  expect(getMessage(commitMessages, 'closes', values)).toEqual(expected.closes)
+  expect(getMessage(commitMessages, 'dependencyUpdate', values)).toEqual(expected.dependencyUpdate)
 })
