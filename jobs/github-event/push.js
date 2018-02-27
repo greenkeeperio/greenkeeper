@@ -20,7 +20,8 @@ module.exports = async function (data) {
     'package.json',
     'package-lock.json',
     'npm-shrinkwrap.json',
-    'yarn.lock'
+    'yarn.lock',
+    'greenkeeper.json'
   ]
 
   // if .greenkeeperrc
