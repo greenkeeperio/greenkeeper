@@ -9,10 +9,10 @@ nock.enableNetConnect('localhost')
 
 describe('create version brach', () => {
   beforeEach(() => {
-    // nock.cleanAll()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
     jest.resetModules()
+    jest.clearAllMocks()
   })
   beforeAll(async () => {
     const { installations } = await dbs()
@@ -100,9 +100,9 @@ describe('create version brach', () => {
         return {}
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
-    // mock relative dependencies
-    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
+    jest.mock('../../lib/get-infos', () => ({
+      installationId, dependency, version, diffBase, versions
+    }) => {
       // used get-infos
       expect(true).toBeTruthy()
 
@@ -140,6 +140,7 @@ describe('create version brach', () => {
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
     })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
@@ -231,7 +232,6 @@ describe('create version brach', () => {
         return {}
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
       expect(versions).toEqual({
         '1.0.0': {},
@@ -267,6 +267,7 @@ describe('create version brach', () => {
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
     })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
@@ -357,7 +358,6 @@ describe('create version brach', () => {
         return {}
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
       // used get-infos
       expect(true).toBeTruthy()
@@ -398,6 +398,7 @@ describe('create version brach', () => {
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
     })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
@@ -455,7 +456,6 @@ describe('create version brach', () => {
         return { token: 'secret' }
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/get-infos', () => () => {
       return {
         dependencyLink: '[]()',
@@ -470,6 +470,7 @@ describe('create version brach', () => {
       commits: []
     }))
     jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
@@ -541,7 +542,6 @@ describe('create version brach', () => {
         return {}
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
       // used get-infos
       expect(true).toBeTruthy()
@@ -582,6 +582,7 @@ describe('create version brach', () => {
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
     })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep2',
@@ -637,7 +638,6 @@ describe('create version brach', () => {
         default_branch: 'master'
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/create-branch', () => ({ transform }) => {
       const newPkg = transform(
         JSON.stringify({
@@ -649,6 +649,7 @@ describe('create version brach', () => {
       // abort on downgrade
       expect(newPkg).toBeFalsy()
     })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
@@ -896,7 +897,6 @@ describe('create version brach', () => {
         return {}
       })
 
-    const createVersionBranch = require('../../jobs/create-version-branch')
     jest.mock('../../lib/get-infos', () => () => {
       return {
         dependencyLink: '[]()',
@@ -912,6 +912,7 @@ describe('create version brach', () => {
       commits: []
     }))
     jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
