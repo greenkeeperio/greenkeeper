@@ -62,16 +62,15 @@ describe('update-payments', async () => {
     // To mock only specific modules, use require.requireActual to restore the original modules,
     // then overwrite the one you want to mock
     jest.mock('../../lib/payments', () => {
-      return {
-        ...require.requireActual('../../lib/payments'),
-        getActiveBilling: async() => {
-          return {
-            plan: 'personal',
-            stripeSubscriptionId: 'stripe123',
-            stripeItemId: 'si123'
-          }
+      const payments = require.requireActual('../../lib/payments')
+      payments.getActiveBilling = async() => {
+        return {
+          plan: 'personal',
+          stripeSubscriptionId: 'stripe123',
+          stripeItemId: 'si123'
         }
       }
+      return payments
     })
 
     jest.mock('stripe', key => key => {
@@ -94,14 +93,13 @@ describe('update-payments', async () => {
 
     const updatePayments = require('../../jobs/update-payments')
     jest.mock('../../lib/payments', () => {
-      return {
-        ...require.requireActual('../../lib/payments'),
-        getActiveBilling: async() => {
-          return {
-            plan: 'org'
-          }
+      const payments = require.requireActual('../../lib/payments')
+      payments.getActiveBilling = async() => {
+        return {
+          plan: 'org'
         }
       }
+      return payments
     })
 
     jest.mock('stripe', key => key => {
