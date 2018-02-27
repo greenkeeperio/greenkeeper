@@ -65,6 +65,8 @@ module.exports = async function (data) {
     }
   }
 
+// needs to happen for all the package.jsons
+// delete all branches for modified or deleted dependencies
   const changes = diff(oldPkg, pkg)
 
   const branches = []
@@ -111,7 +113,9 @@ function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {
       return _.some(commits, commit => {
-        return _.includes(commit[changeType], file)
+        return _.some(commit[changeType], (path) => {
+          return path.includes(file)
+        })
       })
     })
   })
