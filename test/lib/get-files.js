@@ -23,7 +23,7 @@ test('getFiles: with no fileList provided', async t => {
 })
 
 test('getFiles: 2 package.json files', async t => {
-  t.plan(6)
+  t.plan(7)
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
@@ -46,6 +46,13 @@ test('getFiles: 2 package.json files', async t => {
       name: 'package.json',
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
+    .get('/repos/owner/repo/contents/backend/yarn.lock')
+    .reply(200, {
+      type: 'file',
+      path: 'backend/yarn.lock',
+      name: 'yarn.lock',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
 
   const fileList = [
     'package.json',
@@ -53,13 +60,13 @@ test('getFiles: 2 package.json files', async t => {
   ]
 
   const files = await getFiles('123', 'owner/repo', fileList)
-
-  t.true(Object.keys(files).length === 1 && files['package.json'], 'returns an Object with the key `package.json`')
+  t.is(Object.keys(files).length, 4, 'returns an Object with the 4 file types')
   t.is(files['package.json'].length, 2, 'The Object has 2 files at the `package.json` key')
   t.is(files['package.json'][0].path, 'package.json')
   t.is(files['package.json'][0].content, 'eyJuYW1lIjoidGVzdCJ9')
   t.is(files['package.json'][1].path, 'backend/package.json')
   t.is(files['package.json'][1].content, 'eyJuYW1lIjoidGVzdCJ9')
+  t.is(files['yarn.lock'].length, 2)
   t.end()
 })
 
@@ -88,7 +95,7 @@ test('getFiles: 2 package.json files but one is not found on github', async t =>
 
   const files = await getFiles('123', 'owner/repo', fileList)
 
-  t.true(Object.keys(files).length === 1 && files['package.json'], 'returns an Object with the key `package.json`')
+  t.true(Object.keys(files).length === 4 && files['package.json'], 'returns an Object with the key `package.json`')
   t.is(files['package.json'].length, 2, 'The Object has 2 files at the `package.json` key')
   t.is(files['package.json'][0].path, 'package.json')
   t.is(files['package.json'][0].content, false, 'content for the package.json file that was not found set to `false`')
