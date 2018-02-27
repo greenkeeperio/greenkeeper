@@ -117,7 +117,7 @@ describe('handle-branch-status', async () => {
 
     const newJob = await handleBranchStatus({
       installationId: '123',
-      accountId: 42,
+      accountId: 10,
       combined: { state: 'failure', statuses: [] },
       branchDoc: await repositories.get('42:branch:deadbeef2'),
       repository: {
@@ -178,7 +178,7 @@ describe('handle-branch-status', async () => {
 
     const newJob = await handleBranchStatus({
       installationId: '123',
-      accountId: 43,
+      accountId: 10,
       combined: { state: 'success', statuses: [] },
       branchDoc: await repositories.get('43:branch:deadbeef3'),
       repository: {
