@@ -1,17 +1,40 @@
-const { resolve } = require('path')
+beforeEach(() => {
+  jest.clearAllMocks()
+  jest.resetModules()
+})
 
-const { test } = require('tap')
+describe('github-event index', () => {
+  test('calls the resolve function', () => {
+    expect.assertions(1)
 
-const proxyquire = require('proxyquire').noCallThru()
+    const githubEvent = require('../../jobs/github-event.js')
+    jest.mock('path', () => {
+      return {
+        resolve: (dirname, eventType, type) => {
+          // resolve is called with /foo
+          expect(`${dirname}/${eventType}/${type}`).toEqual(`${dirname}/github-event/foo`)
+          return dirname
+        }
+      }
+    })
 
-test('github-event index', t => {
-  t.plan(2)
-
-  const worker = proxyquire('../../jobs/github-event.js', {
-    [resolve(__dirname, '../../jobs/github-event/foo')]: () => t.pass(),
-    [resolve(__dirname, '../../jobs/github-event/foo/bar')]: () => t.pass()
+    githubEvent({ type: 'foo' })
   })
 
-  worker({ type: 'foo' })
-  worker({ type: 'foo', action: 'bar' }, '456')
+  test('calls the resolve function with action', () => {
+    expect.assertions(1)
+
+    const githubEvent = require('../../jobs/github-event.js')
+    jest.mock('path', () => {
+      return {
+        resolve: (dirname, eventType, type, action) => {
+          // resolve is called with /foo/bar
+          expect(`${dirname}/${eventType}/${type}/${action}`).toEqual(`${dirname}/github-event/foo/bar`)
+          return dirname
+        }
+      }
+    })
+
+    githubEvent({ type: 'foo', action: 'bar' }, '456')
+  })
 })

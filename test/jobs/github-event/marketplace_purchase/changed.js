@@ -1,17 +1,16 @@
-const { test, tearDown } = require('tap')
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/marketplace_purchase/changed')
 const removeIfExists = require('../../../helpers/remove-if-exists.js')
+const changePurchase = require('../../../../jobs/github-event/marketplace_purchase/changed')
 
-test('marketplace changed', async t => {
-  t.test('change entry in payments database', async t => {
+describe('marketplace changed', async () => {
+  test('change entry in payments database', async () => {
     const { payments } = await dbs()
     await payments.put({
       _id: '444',
       plan: 'team'
     })
 
-    const newJobs = await worker({
+    const newJobs = await changePurchase({
       marketplace_purchase: {
         account: {
           type: 'Organization',
@@ -34,15 +33,14 @@ test('marketplace changed', async t => {
       }
     })
 
-    t.notOk(newJobs, 'no new job scheduled')
+    expect(newJobs).toBeFalsy()
 
     const payment = await payments.get('444')
-    t.is(payment.plan, 'opensource', 'plan: opensource')
-    t.end()
+    expect(payment.plan).toEqual('opensource')
   })
-})
 
-tearDown(async () => {
-  const { payments } = await dbs()
-  await removeIfExists(payments, '444')
+  afterAll(async () => {
+    const { payments } = await dbs()
+    await removeIfExists(payments, '444')
+  })
 })

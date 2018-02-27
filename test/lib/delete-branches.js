@@ -1,12 +1,23 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
 const deleteBranches = require('../../lib/delete-branches')
 
-test('delete-branches', async t => {
-  t.plan(5)
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+afterAll(async () => {
+  const { installations, repositories } = await dbs()
+  await Promise.all([
+    removeIfExists(installations, '123'),
+    removeIfExists(repositories, '41:branch:deadbeef', '42:branch:deadbeef0', '42:branch:deadbeef1')
+  ])
+})
+
+test('delete-branches', async () => {
+  expect.assertions(5)
 
   const { installations, repositories } = await dbs()
 
@@ -46,19 +57,23 @@ test('delete-branches', async t => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .delete('/repos/brot/lecker/git/refs/heads/greenkeeper-standard-10.0.0')
     .reply(200, () => {
-      t.pass('deleted 10.0.0')
+      // deleted 10.0.0
+      expect(true).toBeTruthy()
       return {}
     })
     .delete('/repos/brot/lecker/git/refs/heads/greenkeeper-standard-9.0.0')
     .reply(200, () => {
-      t.pass('deleted 9.0.0')
+      // deleted 9.0.0
+      expect(true).toBeTruthy()
       return {}
     })
 
@@ -77,16 +92,8 @@ test('delete-branches', async t => {
     repositories.get('42:branch:deadbeef0'),
     repositories.get('42:branch:deadbeef1')
   ])
-  t.ok(branch.referenceDeleted, 'Branch was deleted')
-  t.ok(older.referenceDeleted, 'Older Branch was deleted')
-  t.notOk(newer.referenceDeleted, 'Newer Branch was not deleted')
-})
 
-tearDown(async () => {
-  const { installations, repositories } = await dbs()
-
-  await installations.remove(await installations.get('123'))
-  await repositories.remove(await repositories.get('42:branch:deadbeef'))
-  await repositories.remove(await repositories.get('42:branch:deadbeef0'))
-  await repositories.remove(await repositories.get('42:branch:deadbeef1'))
+  expect(branch.referenceDeleted).toBeTruthy()
+  expect(older.referenceDeleted).toBeTruthy()
+  expect(newer.referenceDeleted).toBeFalsy()
 })

@@ -1,11 +1,15 @@
 const nock = require('nock')
 const simple = require('simple-mock')
-const { test } = require('tap')
 
-test('parse github host', async t => {
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+test('parse github host', async () => {
   nock('https://enterprise.github')
     .get('/api/v3/repos/greenkeeperio/greenkeeper')
-    .reply(200, {})
+    .reply(200, () => {
+      expect(true).toBeTruthy()
+    })
 
   simple.mock(process.env, 'GITHUB_HOST', 'https://enterprise.github/api/v3/')
 
@@ -15,9 +19,8 @@ test('parse github host', async t => {
   try {
     await github.repos.get({owner: 'greenkeeperio', repo: 'greenkeeper'})
   } catch (error) {
-    t.error(error)
+    expect(error).toBeFalsy()
   }
 
   simple.restore()
-  t.end()
 })

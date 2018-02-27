@@ -1,27 +1,38 @@
-const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire').noCallThru()
 const nock = require('nock')
 
 const dbs = require('../../../lib/dbs')
+const removeIfExists = require('../../helpers/remove-if-exists')
 
-test('github-event status', async t => {
-  const { repositories, installations } = await dbs()
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-  await installations.put({
-    _id: '10',
-    installation: '1337'
+describe('github-event status', async () => {
+  beforeAll(async() => {
+    const { installations } = await dbs()
+
+    await installations.put({
+      _id: '10',
+      installation: '1337'
+    })
   })
 
-  t.test('initial pr', async t => {
-    t.plan(6)
-    const worker = require('../../../jobs/github-event/status')
+  beforeEach(() => {
+    jest.resetModules()
+  })
+
+  test('initial pr', async () => {
+    const { repositories } = await dbs()
+    expect.assertions(6)
+    const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
       .post('/installations/1336/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/club/mate/commits/deadbeef/status')
       .reply(200, {
@@ -36,7 +47,7 @@ test('github-event status', async t => {
       sha: 'deadbeef'
     })
 
-    const newJob = await worker({
+    const newJob = await githubStatus({
       state: 'success',
       sha: 'deadbeef',
       installation: { id: 1336 },
@@ -49,24 +60,29 @@ test('github-event status', async t => {
       }
     })
 
-    t.ok(newJob, 'new Job')
-    t.equals(newJob.data.name, 'create-initial-pr', 'create-initial-pr')
-    t.is(newJob.data.branchDoc.sha, 'deadbeef', 'branchDoc sha')
-    t.is(newJob.data.repository.id, 42, 'repositoryId')
-    t.is(newJob.data.combined.state, 'success', 'combined status')
-    t.is(newJob.data.installationId, 1336)
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-pr')
+    expect(job.branchDoc.sha).toEqual('deadbeef')
+    expect(job.combined.state).toEqual('success')
+    expect(job.repository.id).toBe(42)
+    expect(job.installationId).toEqual(1336)
   })
 
-  t.test('initial pr by user', async t => {
-    t.plan(8)
-    const worker = require('../../../jobs/github-event/status')
+  test('initial pr by user', async () => {
+    const { repositories } = await dbs()
+    expect.assertions(8)
+
+    const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
       .post('/installations/1336/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/club/mate/commits/deadbeef/status')
       .reply(200, {
@@ -89,7 +105,7 @@ test('github-event status', async t => {
       createdByUser: true
     })
 
-    const newJob = await worker({
+    const newJob = await githubStatus({
       state: 'success',
       sha: 'deadbeef',
       installation: { id: 1336 },
@@ -102,37 +118,38 @@ test('github-event status', async t => {
       }
     })
 
-    t.ok(newJob, 'new Job')
-    t.equals(newJob.data.name, 'create-initial-pr-comment', 'create-initial-pr-comment')
-    t.is(newJob.data.branchDoc.sha, 'deadbeef', 'branchDoc sha')
-    t.is(newJob.data.repository.id, 44, 'repositoryId')
-    t.is(newJob.data.combined.state, 'success', 'combined status')
-    t.is(newJob.data.prDocId, '44:pr:1234', 'prDocId')
-    t.is(newJob.data.accountId, '10', 'accountId')
-    t.is(newJob.data.installationId, 1336)
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-pr-comment')
+    expect(job.branchDoc.sha).toEqual('deadbeef')
+    expect(job.combined.state).toEqual('success')
+    expect(job.prDocId).toEqual('44:pr:1234')
+    expect(job.accountId).toEqual('10')
+    expect(job.repository.id).toBe(44)
+    expect(job.installationId).toEqual(1336)
   })
 
-  t.test('version branch', async t => {
-    t.plan(6)
-    const worker = proxyquire('../../../jobs/github-event/status', {
-      '../../lib/create-initial-pr': () => {
-        t.fail('create initial pr called')
-      },
-      '../../lib/handle-branch-status': args => {
-        t.is(args.installationId, 1337, 'installationId')
-        t.is(args.branchDoc.dependency, 'test')
-        t.is(args.accountId, '10', 'accountId')
-        t.is(args.repository.id, 43, 'repositoryId')
-        t.is(args.combined.state, 'success', 'state === sucess')
-      }
+  test('version branch', async () => {
+    const { repositories } = await dbs()
+    expect.assertions(6)
+
+    const githubStatus = require('../../../jobs/github-event/status')
+    jest.mock('../../../lib/handle-branch-status', () => (args) => {
+      expect(args.installationId).toBe(1337)
+      expect(args.repository.id).toBe(43)
+      expect(args.branchDoc.dependency).toEqual('test')
+      expect(args.accountId).toEqual('10')
+      expect(args.combined.state).toEqual('success')
     })
 
     nock('https://api.github.com')
       .post('/installations/1337/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/club/mate/commits/deadbeef2/status')
       .reply(200, {
@@ -149,7 +166,7 @@ test('github-event status', async t => {
       version: '1.0.1'
     })
 
-    const newJobs = await worker({
+    const newJob = await githubStatus({
       state: 'success',
       sha: 'deadbeef2',
       installation: { id: 1337 },
@@ -161,18 +178,14 @@ test('github-event status', async t => {
         }
       }
     })
-
-    t.notOk(newJobs, 'no new jobs')
+    expect(newJob).toBeFalsy()
   })
-})
 
-tearDown(async () => {
-  const { repositories, installations } = await dbs()
-  await Promise.all([
-    repositories.remove(await repositories.get('42:branch:deadbeef')),
-    repositories.remove(await repositories.get('43:branch:deadbeef')),
-    repositories.remove(await repositories.get('44:branch:deadbeef')),
-    repositories.remove(await repositories.get('44:pr:1234')),
-    installations.remove(await installations.get('10'))
-  ])
+  afterAll(async () => {
+    const { repositories, installations } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '10'),
+      removeIfExists(repositories, '42:branch:deadbeef', '43:branch:deadbeef', '44:branch:deadbeef', '44:pr:1234')
+    ])
+  })
 })

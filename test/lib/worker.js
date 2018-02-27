@@ -1,22 +1,22 @@
-const { resolve } = require('path')
+beforeEach(() => {
+  jest.resetModules()
+  jest.clearAllMocks()
+})
 
-const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire').noCallThru()
+afterAll(() => require('../../lib/statsd').close())
 
-const jobPath = resolve.bind(null, __dirname, '../../jobs')
-
-test('worker throws away unimplemented job', async t => {
-  t.plan(2)
+test('worker throws away unimplemented job', async () => {
+  expect.assertions(2)
 
   const worker = require('../../lib/worker')
 
   await worker(
-    t.fail,
+    expect.anything(),
     {
-      ack: t.fail,
+      ack: expect.anything(),
       nack: (job, allUpTo, requeue) => {
-        t.notOk(allUpTo)
-        t.notOk(requeue)
+        expect(allUpTo).toBeFalsy()
+        expect(requeue).toBeFalsy()
       }
     },
     {
@@ -25,62 +25,84 @@ test('worker throws away unimplemented job', async t => {
   )
 })
 
-test('worker throws away unimplemented job action', async t => {
-  t.plan(2)
+test('worker throws away unimplemented job action', async () => {
+  expect.assertions(3)
 
-  const worker = proxyquire('../../lib/worker', {
-    [jobPath('unimplemented-job')]: () => {
+  const worker = require('../../lib/worker')
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => {
       throw new Error('not implemented')
     }
+    return path
   })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('unimplemented-job')
+  }).toThrow('not implemented')
 
   await worker(
-    t.fail,
+    expect.anything(),
     {
-      ack: t.fail,
+      ack: expect.anything(),
       nack: (job, allUpTo, requeue) => {
-        t.notOk(allUpTo)
-        t.notOk(requeue)
+        expect(allUpTo).toBeFalsy()
+        expect(requeue).toBeFalsy()
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'unimplemented-job', accountId: 123 }))
+      content: Buffer.from(JSON.stringify({
+        name: 'unimplemented-job', accountId: 123
+      }))
     }
   )
 })
 
-test('worker requeues job on error, then throws away', async t => {
-  t.plan(3)
+test('worker requeues job on error, then throws away', async () => {
+  expect.assertions(4)
 
-  const worker = proxyquire('../../lib/worker', {
-    [jobPath('failing-job')]: () => {
+  const worker = require('../../lib/worker')
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => {
       throw new Error('something went wrong')
     }
+    return path
   })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('failing-job')
+  }).toThrow('something went wrong')
 
   await worker(
-    t.fail,
+    expect.anything(),
     {
-      ack: t.fail,
-      nack: t.pass
+      ack: expect.anything(),
+      nack: () => expect(true).toBeTruthy()
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-job', accountId: 123 })),
+      content: Buffer.from(JSON.stringify({
+        name: 'failing-job', accountId: 123
+      })),
       fields: {}
     }
   )
 
   await worker(
-    t.fail,
+    expect.anything(),
     {
-      ack: t.fail,
+      ack: expect.anything(),
       nack: (job, allUpTo, requeue) => {
-        t.notOk(allUpTo)
-        t.notOk(requeue)
+        expect(allUpTo).toBeFalsy()
+        expect(requeue).toBeFalsy()
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-job', accountId: 123 })),
+      content: Buffer.from(JSON.stringify({
+        name: 'failing-job', accountId: 123
+      })),
       fields: {
         redelivered: true
       }
@@ -88,30 +110,48 @@ test('worker requeues job on error, then throws away', async t => {
   )
 })
 
-test('worker acks job on success w/o further work', async t => {
-  t.plan(1)
+test('worker acks job on success w/o further work', async () => {
+  expect.assertions(2)
 
-  const worker = proxyquire('../../lib/worker', {
-    [jobPath('successful-job')]: () => {}
+  const worker = require('../../lib/worker')
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => {}
+    return path
   })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('successful-job')
+  }).not.toThrow()
 
   await worker(
-    t.fail,
+    expect.anything(),
     {
-      ack: t.pass,
-      nack: t.fail
+      ack: expect(true).toBeTruthy(),
+      nack: () => expect.anything()
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'successful-job', repository: { owner: { id: 111 }, full_name: 'testOrg/testRepo' } }))
+      content: Buffer.from(JSON.stringify({
+        name: 'successful-job',
+        repository: {
+          owner: {
+            id: 111
+          },
+          full_name: 'testOrg/testRepo'
+        }
+      }))
     }
   )
 })
 
-test('worker schedules further jobs on success', async t => {
-  t.plan(4)
+test('worker schedules further jobs on success', async () => {
+  expect.assertions(3)
 
-  const worker = proxyquire('../../lib/worker', {
-    [jobPath('successful-job')]: () => [
+  const worker = require('../../lib/worker')
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => [
       {
         data: true,
         plan: 'free'
@@ -127,25 +167,35 @@ test('worker schedules further jobs on success', async t => {
         data: false
       }
     ]
+    return path
   })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('successful-job')
+  }).not.toThrow()
 
   await worker(
-    t.pass,
+    expect(true).toBeTruthy(),
     {
-      ack: t.pass,
-      nack: t.fail
+      ack: expect(true).toBeTruthy(),
+      nack: () => expect.anything()
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'successful-job', accountId: 234 }))
+      content: Buffer.from(JSON.stringify({
+        name: 'successful-job', accountId: 234
+      }))
     }
   )
 })
 
-test('worker requeues job on scheduling error, then throws away', async t => {
-  t.plan(3)
+test('worker requeues job on scheduling error, then throws away', async () => {
+  expect.assertions(5)
 
-  const worker = proxyquire('../../lib/worker', {
-    [jobPath('failing-schedule')]: () => [
+  const worker = require('../../lib/worker')
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => [
       {
         data: true
       },
@@ -153,18 +203,26 @@ test('worker requeues job on scheduling error, then throws away', async t => {
         data: true
       }
     ]
+    return path
   })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('failing-schedule')
+  }).not.toThrow()
 
   await worker(
     () => {
       throw new Error('scheduling fail')
     },
     {
-      ack: t.fail,
-      nack: t.pass
+      ack: expect.anything(),
+      nack: () => expect(true).toBeTruthy()
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-schedule', accountId: 233 })),
+      content: Buffer.from(JSON.stringify({
+        name: 'failing-schedule', accountId: 233
+      })),
       fields: {}
     }
   )
@@ -174,19 +232,19 @@ test('worker requeues job on scheduling error, then throws away', async t => {
       throw new Error('scheduling fail')
     },
     {
-      ack: t.pass,
+      ack: expect(true).toBeTruthy(),
       nack: (job, allUpTo, requeue) => {
-        t.notOk(allUpTo)
-        t.notOk(requeue)
+        expect(allUpTo).toBeFalsy()
+        expect(requeue).toBeFalsy()
       }
     },
     {
-      content: Buffer.from(JSON.stringify({ name: 'failing-schedule', accountId: 344 })),
+      content: Buffer.from(JSON.stringify({
+        name: 'failing-schedule', accountId: 344
+      })),
       fields: {
         redelivered: true
       }
     }
   )
 })
-
-tearDown(() => require('../../lib/statsd').close())

@@ -1,15 +1,19 @@
 const nock = require('nock')
-const { test } = require('tap')
 
 const { createDocs, updateRepoDoc } = require('../../lib/repository-docs')
 
-test('updateRepoDoc with package.json', async t => {
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+test('updateRepoDoc with package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
@@ -25,14 +29,17 @@ test('updateRepoDoc with package.json', async t => {
     })
 
   const doc = await updateRepoDoc('123', { fullName: 'owner/repo' })
-  t.is(doc.packages['package.json'].name, 'test')
-  t.ok(doc.files['package-lock.json'], 'package-lock.json')
-  t.ok(doc.files['package.json'], 'package.json')
-  t.notOk(doc.files['yarn.lock'], 'yarn.lock')
-  t.end()
+  expect(doc.packages['package.json'].name).toEqual('test')
+  const expectedFiles = {
+    'npm-shrinkwrap.json': false,
+    'package-lock.json': true,
+    'package.json': true,
+    'yarn.lock': false
+  }
+  expect(doc.files).toMatchObject(expectedFiles)
 })
 
-test('get invalid package.json', async t => {
+test('get invalid package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
     .reply(200, {
@@ -55,14 +62,19 @@ test('get invalid package.json', async t => {
       }
     }
   })
-  t.notOk(doc.packages['package.json'])
-  t.ok(doc.files['package.json'])
-  t.notOk(doc.files['package-lock.json'])
-  t.notOk(doc.files['yarn.lock'])
-  t.end()
+
+  expect(doc.packages).not.toContain('package.json')
+  expect(doc.packages['package.json']).toBeFalsy()
+  const expectedFiles = {
+    'npm-shrinkwrap.json': false,
+    'package-lock.json': false,
+    'package.json': true,
+    'yarn.lock': false
+  }
+  expect(doc.files).toMatchObject(expectedFiles)
 })
 
-test('create docs', async t => {
+test('create docs', async () => {
   const docs = await createDocs({
     repositories: [
       { id: 1, full_name: 'owner/repo1' },
@@ -70,9 +82,9 @@ test('create docs', async t => {
     ],
     accountId: '123'
   })
-  t.is(docs[0]._id, '1')
-  t.is(docs[0].type, 'repository')
-  t.is(docs[1]._id, '2')
-  t.is(docs[1].type, 'repository')
-  t.end()
+
+  expect(docs[0]._id).toEqual('1')
+  expect(docs[0].type).toEqual('repository')
+  expect(docs[1]._id).toEqual('2')
+  expect(docs[1].type).toEqual('repository')
 })

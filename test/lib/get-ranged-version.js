@@ -1,9 +1,7 @@
-const _ = require('lodash')
-const { test } = require('tap')
-
 const { extractPrefix } = require('../../lib/get-ranged-version')
+const _ = require('lodash')
 
-test('get ranged version', t => {
+test('get ranged version', () => {
   const assertions = {
     latest: '^',
     next: '^',
@@ -32,6 +30,6 @@ test('get ranged version', t => {
     '': '>='
   }
 
-  t.plan(Object.keys(assertions).length)
-  _.each(assertions, (prefix, range) => t.is(extractPrefix(range), prefix))
+  expect.assertions(Object.keys(assertions))
+  _.each(assertions, (prefix, range) => expect(extractPrefix(range)).toEqual(prefix))
 })

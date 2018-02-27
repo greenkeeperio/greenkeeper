@@ -1,47 +1,48 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire').noCallThru()
-const _ = require('lodash')
+
+const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 const { cleanCache } = require('../helpers/module-cache-helpers')
 
-const dbs = require('../../lib/dbs')
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-test('create-initial-branch', async t => {
-  t.beforeEach(() => {
+describe('create initial brach', () => {
+  beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     delete process.env.BADGES_HOST
     cleanCache('../../lib/env')
-    return Promise.resolve()
+    jest.resetModules()
   })
 
-  const { installations, repositories, payments } = await dbs()
+  beforeAll(async () => {
+    const { installations, payments } = await dbs()
 
-  await installations.put({
-    _id: '123',
-    installation: 37,
-    plan: 'free'
+    await installations.put({
+      _id: '123',
+      installation: 37,
+      plan: 'free'
+    })
+
+    await payments.put({
+      _id: '123',
+      stripeSubscriptionId: 'stripe123',
+      plan: 'personal'
+    })
   })
 
-  await payments.put({
-    _id: '123',
-    stripeSubscriptionId: 'stripe123',
-    plan: 'personal'
-  })
-
-  const devDependencies = {
-    '@finnpauls/dep': '1.0.0',
-    '@finnpauls/dep2': '1.0.0'
-  }
-
-  t.test('create pr', async t => {
+  test('create pull request', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '42',
       accountId: '123',
       fullName: 'finnp/test'
     })
-
-    t.plan(10)
+    const devDependencies = {
+      '@finnpauls/dep': '1.0.0',
+      '@finnpauls/dep2': '1.0.0'
+    }
+    expect.assertions(10)
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -86,131 +87,58 @@ test('create-initial-branch', async t => {
         }
       })
 
-    const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/create-branch': ({ transforms }) => {
-        const newPkg = JSON.parse(
-          transforms[0].transform(JSON.stringify({ devDependencies }))
-        )
-        transforms[0].created = true
-        t.is(newPkg.devDependencies['@finnpauls/dep'], '2.0.0')
-        t.is(newPkg.devDependencies['@finnpauls/dep2'], '2.0.0')
-
-        const newReadme = transforms[2].transform(
-          'readme-badger\n=============\n',
-          'README.md'
-        )
-        t.ok(
-          _.includes(
-            newReadme,
-            'https://badges.greenkeeper.io/finnp/test.svg',
-            'includes badge'
-          )
-        )
-        return '1234abcd'
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
+      const devDependencies = {
+        '@finnpauls/dep': '1.0.0',
+        '@finnpauls/dep2': '1.0.0'
       }
+
+      const newPkg = JSON.parse(
+        transforms[0].transform(JSON.stringify({ devDependencies }))
+      )
+      transforms[0].created = true
+      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+
+      const newReadme = transforms[2].transform(
+        'readme-badger\n=============\n',
+        'README.md'
+      )
+      // 'includes badge'
+      expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
+
+      return '1234abcd'
     })
 
-    const newJob = await worker({
-      repositoryId: 42
-    })
-
-    t.ok(newJob)
-    t.is(newJob.data.name, 'initial-timeout-pr')
-    t.is(newJob.data.repositoryId, 42)
-    t.ok(newJob.delay > 10000, 'some delay present')
+    const newJob = await createInitialBranch({repositoryId: 42})
     const newBranch = await repositories.get('42:branch:1234abcd')
-    t.is(newBranch.type, 'branch', 'type === branch')
-    t.ok(newBranch.initial, 'initial')
-    t.is(
-      newBranch.badgeUrl,
-      'https://badges.greenkeeper.io/finnp/test.svg',
-      'badgeUrl'
-    )
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('initial-timeout-pr')
+    expect(newJob.data.repositoryId).toBe(42)
+    expect(newJob.delay).toBeGreaterThan(10000)
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeTruthy()
+    expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
   })
 
-  t.test('uses the BADGES_HOST to create the badge url', async t => {
-    process.env.BADGES_HOST = 'badges.staging.greenkeeper.io'
-    await repositories.put({
-      _id: '47',
-      accountId: '123',
-      fullName: 'finnp/test'
-    })
-
-    nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .reply(200, {})
-      .get('/repos/finnp/test/contents/package.json')
-      .reply(200, {
-        path: 'package.json',
-        content: encodePkg({ devDependencies })
-      })
-      .get('/repos/finnp/test')
-      .reply(200, {
-        default_branch: 'custom'
-      })
-      .post('/repos/finnp/test/labels', {
-        name: 'greenkeeper',
-        color: '00c775'
-      })
-      .reply(201)
-
-    nock('https://registry.npmjs.org')
-      .get('/@finnpauls%2Fdep')
-      .reply(200, {
-        'dist-tags': {
-          latest: '2.0.0'
-        }
-      })
-      .get('/@finnpauls%2Fdep2')
-      .reply(200, {
-        'dist-tags': {
-          latest: '3.0.0-rc1'
-        },
-        versions: {
-          '3.0.0-rc1': true
-        }
-      })
-
-    const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/create-branch': ({ transforms }) => {
-        transforms[2].transform(
-          'readme-badger\n=============\n',
-          'README.md'
-        )
-
-        return '1234abcd'
-      }
-    })
-
-    await worker({
-      repositoryId: 47
-    })
-
-    const newBranch = await repositories.get('47:branch:1234abcd')
-    t.is(
-      newBranch.badgeUrl,
-      'https://badges.staging.greenkeeper.io/finnp/test.svg',
-      'badgeUrl'
-    )
-  })
-
-  t.test('badge already added', async t => {
+  test('badge already added', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '44',
       accountId: '123',
       fullName: 'finnp/test'
     })
-    const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/create-branch': ({ transforms }) => {
-        transforms[2].transform(
-          'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.sv',
-          'README.md'
-        )
-      }
+
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      transforms[2].transform(
+        'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
+        'README.md'
+      )
     })
 
     nock('https://api.github.com')
@@ -234,32 +162,37 @@ test('create-initial-branch', async t => {
       .reply(200, {
         default_branch: 'custom'
       })
-    const newJob = await worker({
-      repositoryId: 44
-    })
-    t.notOk(newJob)
+
+    const newJob = await createInitialBranch({repositoryId: 44})
+    expect(newJob).toBeFalsy()
     const repodoc = await repositories.get('44')
-    t.ok(repodoc.files['package.json'])
-    t.ok(repodoc.files['package-lock.json'])
-    t.notOk(repodoc.files['yarn.lock'])
-    t.ok(repodoc.enabled, 'repository was enabled')
-    t.end()
+    const files = repodoc.files
+    const expectedFiles = {
+      'npm-shrinkwrap.json': false,
+      'package-lock.json': true,
+      'package.json': true,
+      'yarn.lock': false
+    }
+
+    expect(files).toMatchObject(expectedFiles)
+    expect(repodoc.enabled).toBeTruthy()
   })
 
-  t.test('badge already added for private repo', async t => {
+  test('badge already added for private repo', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '45',
       accountId: '123',
       fullName: 'finnp/test',
       private: true
     })
-    const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/create-branch': ({ transforms }) => {
-        transforms[2].transform(
-          'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.sv',
-          'README.md'
-        )
-      }
+
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      transforms[2].transform(
+        'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
+        'README.md'
+      )
     })
 
     nock('https://api.github.com')
@@ -283,17 +216,17 @@ test('create-initial-branch', async t => {
       .reply(200, {
         default_branch: 'custom'
       })
-    const newJob = await worker({
-      repositoryId: 45
-    })
-    t.ok(newJob)
-    t.equal(newJob.data.name, 'update-payments')
-    t.equal(newJob.data.accountId, '123')
-    t.end()
+
+    const newJob = await createInitialBranch({repositoryId: 45})
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('update-payments')
+    expect(newJob.data.accountId).toEqual('123')
   })
 
-  t.test('badge already added for private repo within GKE', async t => {
+  test('badge already added for private repo within GKE', async () => {
     process.env.IS_ENTERPRISE = true
+    const { repositories } = await dbs()
 
     await repositories.put({
       _id: '46',
@@ -301,13 +234,13 @@ test('create-initial-branch', async t => {
       fullName: 'finnp/test',
       private: true
     })
-    const worker = proxyquire('../../jobs/create-initial-branch', {
-      '../lib/create-branch': ({ transforms }) => {
-        transforms[2].transform(
-          'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.sv',
-          'README.md'
-        )
-      }
+
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      transforms[2].transform(
+        'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
+        'README.md'
+      )
     })
 
     nock('https://api.github.com')
@@ -331,15 +264,13 @@ test('create-initial-branch', async t => {
       .reply(200, {
         default_branch: 'custom'
       })
-    const newJob = await worker({
-      repositoryId: 46
-    })
 
-    t.notOk(newJob)
-    t.end()
+    const newJob = await createInitialBranch({repositoryId: 46})
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('ignore forks without issues enabled', async t => {
+  test('ignore forks without issues enabled', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '43',
       accountId: '123',
@@ -347,40 +278,40 @@ test('create-initial-branch', async t => {
       fork: true,
       hasIssues: false
     })
+    expect.assertions(2)
 
-    const worker = require('../../jobs/create-initial-branch')
+    const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
-    .post('/installations/37/access_tokens')
-    .reply(200, {
-      token: 'secret'
-    })
-    .get('/rate_limit')
-    .reply(200, {})
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
 
-    const newJob = await worker({
+    const newJob = await createInitialBranch({
       repositoryId: 43
     })
-    t.notOk(newJob)
+    expect(newJob).toBeFalsy()
     try {
       await repositories.get('43:branch:1234abcd')
     } catch (e) {
-      t.pass('no pr created')
+      // no pr created
+      expect(true).toBeTruthy()
     }
-    t.end()
   })
+
+  afterAll(async () => {
+    const { installations, repositories, payments } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '123'),
+      removeIfExists(payments, '123'),
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '42:branch:1234abcd')
+    ])
+  })
+
+  function encodePkg (pkg) {
+    return Buffer.from(JSON.stringify(pkg)).toString('base64')
+  }
 })
-
-tearDown(async () => {
-  const { installations, repositories, payments } = await dbs()
-
-  await Promise.all([
-    removeIfExists(installations, '123'),
-    removeIfExists(payments, '123'),
-    removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '42:branch:1234abcd', '47:branch:1234abcd')
-  ])
-})
-
-function encodePkg (pkg) {
-  return Buffer.from(JSON.stringify(pkg)).toString('base64')
-}

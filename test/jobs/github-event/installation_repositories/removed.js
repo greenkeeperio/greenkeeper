@@ -1,9 +1,7 @@
-const { test } = require('tap')
-
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event')
+const githubEvent = require('../../../../jobs/github-event')
 
-test('github-event installation_repositories removed', async t => {
+test('github-event installation_repositories removed', async () => {
   const { repositories } = await dbs()
 
   await repositories.bulkDocs([
@@ -14,19 +12,16 @@ test('github-event installation_repositories removed', async t => {
     { _id: '26', accountId: '3' }
   ])
 
-  const newJobs = await worker({
+  const newJobs = await githubEvent({
     type: 'installation_repositories',
     action: 'removed',
     installation: { account: { id: 2 } },
     repositories_removed: [{ id: 22 }, { id: 25 }, { id: 26 }]
   })
-
-  t.notOk(newJobs)
+  expect(newJobs).toBeFalsy()
 
   const repos = await repositories.query('by_account', {
     key: '2'
   })
-
-  t.is(repos.rows.length, 2)
-  t.end()
+  expect(repos.rows).toHaveLength(2)
 })
