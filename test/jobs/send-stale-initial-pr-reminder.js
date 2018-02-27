@@ -15,16 +15,6 @@ nock.enableNetConnect('localhost')
 describe('send-stale-initial-pr-reminder', async () => {
   const sendStaleInitialPrReminder = require('../../jobs/send-stale-initial-pr-reminder')
 
-  let githubNock = nock('https://api.github.com')
-  .post('/installations/37/access_tokens')
-  .optionally()
-  .reply(200, {
-    token: 'secret'
-  })
-  .get('/rate_limit')
-  .optionally()
-  .reply(200, {})
-
   beforeEach(async () => {
     const { installations, repositories } = await dbs()
 
@@ -51,7 +41,15 @@ describe('send-stale-initial-pr-reminder', async () => {
   test('send reminders for stale initial pr', async () => {
     expect.assertions(3)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
@@ -81,7 +79,15 @@ describe('send-stale-initial-pr-reminder', async () => {
     const { repositories } = await dbs()
     await upsert(repositories, '42', {enabled: true})
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, () => {
         // Should not query issue status
@@ -110,7 +116,15 @@ describe('send-stale-initial-pr-reminder', async () => {
     const { repositories } = await dbs()
     await upsert(repositories, '42', {staleInitialPRReminder: true})
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, () => {
         // Should not query issue status
@@ -137,7 +151,15 @@ describe('send-stale-initial-pr-reminder', async () => {
   test('does nothing if the issue was closed in the meanwhile', async () => {
     expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'closed',
@@ -163,7 +185,15 @@ describe('send-stale-initial-pr-reminder', async () => {
   test('does nothing if the issue was locked in the meanwhile', async () => {
     expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
