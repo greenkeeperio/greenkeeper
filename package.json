@@ -34,7 +34,7 @@
     "yml-in-place": "^1.0.2"
   },
   "devDependencies": {
-    "jest": "22.1.4",
+    "jest": "^22.1.4",
     "nock": "^9.0.0",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
     "simple-mock": "^0.8.0",
