@@ -1,6 +1,5 @@
 node_modules/
 .env
-.nyc_output/
 package-lock.json
 
 # jest coverage output
