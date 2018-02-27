@@ -1,13 +1,12 @@
-beforeEach(() => {
-  jest.clearAllMocks()
-  jest.resetModules()
-})
-
 describe('github-event index', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    jest.resetModules()
+  })
+
   test('calls the resolve function', () => {
     expect.assertions(1)
 
-    const githubEvent = require('../../jobs/github-event.js')
     jest.mock('path', () => {
       return {
         resolve: (dirname, eventType, type) => {
@@ -17,6 +16,7 @@ describe('github-event index', () => {
         }
       }
     })
+    const githubEvent = require('../../jobs/github-event.js')
 
     githubEvent({ type: 'foo' })
   })
@@ -24,7 +24,6 @@ describe('github-event index', () => {
   test('calls the resolve function with action', () => {
     expect.assertions(1)
 
-    const githubEvent = require('../../jobs/github-event.js')
     jest.mock('path', () => {
       return {
         resolve: (dirname, eventType, type, action) => {
@@ -34,6 +33,7 @@ describe('github-event index', () => {
         }
       }
     })
+    const githubEvent = require('../../jobs/github-event.js')
 
     githubEvent({ type: 'foo', action: 'bar' }, '456')
   })
