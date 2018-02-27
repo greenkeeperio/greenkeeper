@@ -89,10 +89,12 @@ describe('github-event pull_request opened', async () => {
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200)
       .post('/repos/finnp/test/statuses/')
       .reply(201, () => {
@@ -123,10 +125,12 @@ describe('github-event pull_request opened', async () => {
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200)
       .post('/repos/finnp/test/statuses/')
       .optionally()
