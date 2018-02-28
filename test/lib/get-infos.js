@@ -1,21 +1,19 @@
-const { test } = require('tap')
-const _ = require('lodash')
-const proxyquire = require('proxyquire')
 const nock = require('nock')
 
-test('get changelog', async t => {
-  const getInfos = proxyquire('../../lib/get-infos', {
-    './get-diff-commits': () => {
-      return 'diff commits'
-    }
+test('get changelog', async () => {
+  jest.mock('../../lib/get-diff-commits', () => () => {
+    return 'diff commits'
   })
+  const getInfos = require('../../lib/get-infos')
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/finnp/test/releases/tags/v2.2.2')
     .reply(200, {
@@ -42,20 +40,9 @@ test('get changelog', async t => {
     }
   })
 
-  t.is(
-    infos.dependencyLink,
-    '[@finnpauls/dep](https://github.com/finnp/test)',
-    'dependencyLink'
-  )
-  t.is(infos.diffCommits, 'diff commits', 'diffCommits')
-  t.ok(_.includes(infos.release, 'Cool new features'))
-  t.ok(
-    _.includes(
-      infos.release,
-      'https://urls.greenkeeper.io/finnp/test/issues/1'
-    ),
-    'replaced link correctly'
-  )
-  t.ok(_.includes(infos.release, 'thename'))
-  t.end()
+  expect(infos.dependencyLink).toEqual('[@finnpauls/dep](https://github.com/finnp/test)')
+  expect(infos.diffCommits).toEqual('diff commits')
+  expect(infos.release).toMatch(/Cool new features/)
+  expect(infos.release).toMatch(/thename/)
+  expect(infos.release).toMatch(/https:\/\/urls.greenkeeper.io\/finnp\/test\/issues\/1/)
 })
