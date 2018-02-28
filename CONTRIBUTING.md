@@ -46,8 +46,10 @@ $ (echo -n "PRIVATE_KEY="; openssl genrsa 2>/dev/null | gzip | base64) >> .env
 
 And at last try to run the tests
 ```bash
-$ npm run test
+$ npm test
 ```
+
+Read more about our Jest [tests](https://github.com/greenkeeperio/greenkeeper/tree/master/test)
 
 #### Test Troubleshooting
 
