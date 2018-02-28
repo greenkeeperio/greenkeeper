@@ -75,6 +75,7 @@
     "env": {
       "jest": true
     },
+    "globals": [ "jest", "expect", "describe", "test", "beforeAll", "beforeEach", "afterAll", "aftereach"],
     "ignore": [
       "couchdb"
     ]
