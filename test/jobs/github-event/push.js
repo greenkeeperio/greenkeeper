@@ -432,7 +432,7 @@ describe('github-event push', async () => {
     expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('445')
-    expect(repo).not.toHaveProperty('packages')
+    expect(repo.packages).toMatchObject({})
     expect(repo.files).not.toHaveProperty('package.json')
     expect(repo.headSha).toEqual('deadbeef')
     expect(repo.enabled).toBeFalsy()
@@ -484,7 +484,7 @@ describe('github-event push', async () => {
     expect(newJob.data.name).toEqual('update-payments')
 
     const repo = await repositories.get('447')
-    expect(repo).not.toHaveProperty('packages')
+    expect(repo.packages).toMatchObject({})
     expect(repo.files).not.toHaveProperty('package.json')
     expect(repo.headSha).toEqual('deadbeef')
     expect(repo.enabled).toBeFalsy()
@@ -536,7 +536,7 @@ describe('github-event push', async () => {
     expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('448')
-    expect(repo).not.toHaveProperty('packages')
+    expect(repo.packages).toMatchObject({})
     expect(repo.files).not.toHaveProperty('package.json')
     expect(repo.headSha).toEqual('deadbeef')
     expect(repo.enabled).toBeFalsy()

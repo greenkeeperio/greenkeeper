@@ -1,14 +1,12 @@
-const { test } = require('tap')
-
 const {
-  sepperateNormalAndMonorepos,
+  seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved
 } = require('../../utils/registry-change-utils')
 
-test('sepperateNormalAndMonorepos', t => {
+test('seperateNormalAndMonorepos', () => {
   const input = [
     { id: '123-monorepo',
       key: 'react',
@@ -60,15 +58,20 @@ test('sepperateNormalAndMonorepos', t => {
         oldVersion: '1.0.0' }}
   ]
 
-  const output = sepperateNormalAndMonorepos(input)
-  t.ok(output.length === 2 && output[0].length && output[1].length, 'sepperates Monorepos from normal repos')
-  t.ok(output[0].length === 2 && output[0][0].length === 2 && output[0][1].length === 1, 'finds 2 Monorepos, two with two package.jsons and one with one')
-  t.ok(output[1].length === 2 && output[1][0].length === 2 && output[1][1].length === 1, 'finds 2 Normal repos where one has a doubled dependency')
-
-  t.end()
+  const output = seperateNormalAndMonorepos(input)
+  // seperates Monorepos from normal repos
+  expect(output).toHaveLength(2)
+  // finds 2 Monorepos, two with two package.jsons and one with one
+  expect(output[0]).toHaveLength(2)
+  expect(output[0][0]).toHaveLength(2)
+  expect(output[0][1]).toHaveLength(1)
+  // finds 2 Normal repos where one has a doubled dependency
+  expect(output[1]).toHaveLength(2)
+  expect(output[1][0]).toHaveLength(2)
+  expect(output[1][1]).toHaveLength(1)
 })
 
-test('getJobsPerGroup', t => {
+test('getJobsPerGroup', () => {
   const monorepo = [
     { id: '123-monorepo',
       key: 'react',
@@ -127,7 +130,8 @@ test('getJobsPerGroup', t => {
   const repositoryId = '123-monorepo'
   const plan = {}
 
-  t.ok(getJobsPerGroup({
+  // creates one job if all package.json files are in the same group
+  expect(getJobsPerGroup({
     config,
     monorepo,
     distTag,
@@ -137,8 +141,9 @@ test('getJobsPerGroup', t => {
     account,
     repositoryId,
     plan
-  }).length === 1, 'creates one job if all package.json files are in the same group')
-  t.ok(getJobsPerGroup({
+  })).toHaveLength(1)
+  // creates two jobs if all package.json files are in two groups
+  expect(getJobsPerGroup({
     config: config2,
     monorepo,
     distTag,
@@ -147,11 +152,10 @@ test('getJobsPerGroup', t => {
     versions,
     account,
     repositoryId,
-    plan}).length === 2, 'creates two jobs if all package.json files are in two groups')
-  t.end()
+    plan})).toHaveLength(2)
 })
 
-test('filterAndSortPackages', t => {
+test('filterAndSortPackages', () => {
   const packages = [
     { id: 'devDependencies',
       key: 'react',
@@ -189,14 +193,18 @@ test('filterAndSortPackages', t => {
 
   const output = filterAndSortPackages(packages)
   const outputByType = output.map(p => p.value.type)
-  t.ok(output.length === 3 && !outputByType.includes('peerDependencies'), 'throws away peerDependencies')
-  t.ok(outputByType[0] === 'dependencies', 'sortes `dependencies` to the top')
-  t.ok(outputByType[1] === 'devDependencies', 'sortes `devDependencies` to the middle')
-  t.ok(outputByType[2] === 'optionalDependencies', 'sortes `optionalDependencies` to the buttom')
-  t.end()
+  expect(output).toHaveLength(3)
+  // throws away peerDependencies
+  expect(outputByType).not.toContain('peerDependencies')
+  // sorts `dependencies` to the top
+  expect(outputByType[0]).toEqual('dependencies')
+  // sorts `devDependencies` to the middle
+  expect(outputByType[1]).toEqual('devDependencies')
+  // sorts `optionalDependencies` to the bottom
+  expect(outputByType[2]).toEqual('optionalDependencies')
 })
 
-test('getSatisfyingVersions', t => {
+test('getSatisfyingVersions', () => {
   const pkg =
     { id: 'devDependencies',
       key: 'react',
@@ -214,16 +222,18 @@ test('getSatisfyingVersions', t => {
   }
 
   const output = getSatisfyingVersions(versions, pkg)
-  t.ok(output.length === 2 && output.includes('1.1.0') && output.includes('1.0.0'), 'returns all satisfining versions')
-  t.end()
+  expect(output).toHaveLength(2)
+  // returns all satisfying versions
+  expect(output).toContain('1.1.0')
+  expect(output).toContain('1.0.0')
 })
 
-test('getOldVersionResolved', t => {
+test('getOldVersionResolved', () => {
   const satisfyingVersions = ['9.3.1', '9.3.0', '9.2.0']
   const distTags = { latest: '10.0.0' }
   const distTag = 'latest'
 
   const output = getOldVersionResolved(satisfyingVersions, distTags, distTag)
-  t.ok(output === '9.3.1', 'returns the last satisfying version')
-  t.end()
+  // returns the last satisfying version
+  expect(output).toEqual('9.3.1')
 })
