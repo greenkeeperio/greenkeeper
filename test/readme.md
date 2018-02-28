@@ -59,14 +59,14 @@ Jest puts each of these [methods and objects](https://facebook.github.io/jest/do
 #### Jest Object
 The [jest object](https://facebook.github.io/jest/docs/en/jest-object.html) is automatically in scope within every test file. The methods in the jest object help create mocks and let you control Jest's overall behavior.
 Below are the one we use.
-
+      
 **jest.mock()**
  Mocks a module with an auto-mocked version when it is being required. factory and options are optional. Modules that are mocked with `jest.mock` are mocked only for the file that calls `jest.mock`. Another file that imports the module will get the original implementation even if run after the test file that mocks the module.
  [See example](https://facebook.github.io/jest/docs/en/jest-object.html#jestmockmodulename-factory-options)
 
 **jest.resetModules()**
 Resets the module registry - the cache of all required modules. This is useful to isolate modules where local state might conflict between tests.
-[See example](https://facebook.github.io/jest/docs/en/jest-object.html#jestresetmodules)
+[See example](https://facebook.github.io/jest/docs/en/jest-object.html#jestresetmodules)     
 **jest.clearAllMocks()**
 Clears the `mock.calls` and `mock.instances` properties of all mocks. Equivalent to calling `.mockClear()` on every mocked function.
 
