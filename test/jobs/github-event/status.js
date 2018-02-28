@@ -133,7 +133,6 @@ describe('github-event status', async () => {
     const { repositories } = await dbs()
     expect.assertions(6)
 
-    const githubStatus = require('../../../jobs/github-event/status')
     jest.mock('../../../lib/handle-branch-status', () => (args) => {
       expect(args.installationId).toBe(1337)
       expect(args.repository.id).toBe(43)
@@ -141,6 +140,7 @@ describe('github-event status', async () => {
       expect(args.accountId).toEqual('10')
       expect(args.combined.state).toEqual('success')
     })
+    const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
       .post('/installations/1337/access_tokens')

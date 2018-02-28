@@ -87,7 +87,6 @@ describe('create initial brach', () => {
         }
       })
 
-    const createInitialBranch = require('../../jobs/create-initial-branch')
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
@@ -112,6 +111,7 @@ describe('create initial brach', () => {
 
       return '1234abcd'
     })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
 
     const newJob = await createInitialBranch({repositoryId: 42})
     const newBranch = await repositories.get('42:branch:1234abcd')
@@ -133,13 +133,13 @@ describe('create initial brach', () => {
       fullName: 'finnp/test'
     })
 
-    const createInitialBranch = require('../../jobs/create-initial-branch')
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       transforms[2].transform(
         'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
         'README.md'
       )
     })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -187,13 +187,13 @@ describe('create initial brach', () => {
       private: true
     })
 
-    const createInitialBranch = require('../../jobs/create-initial-branch')
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       transforms[2].transform(
         'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
         'README.md'
       )
     })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -235,13 +235,13 @@ describe('create initial brach', () => {
       private: true
     })
 
-    const createInitialBranch = require('../../jobs/create-initial-branch')
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       transforms[2].transform(
         'readme-badger\n=============\nhttps://badges.greenkeeper.io/finnp/test.svg',
         'README.md'
       )
     })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')

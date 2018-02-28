@@ -33,7 +33,6 @@ describe('send-stripe-cancel-survey', async () => {
     await payments.remove(await payments.get('2'))
   })
 
-  const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
   jest.mock('nodemailer', () => {
     return {
       createTransport: () => {
@@ -45,6 +44,7 @@ describe('send-stripe-cancel-survey', async () => {
       }
     }
   })
+  const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
 
   test('exit if the paymentsDoc has a stripeSubscriptionId', async () => {
     expect.assertions(1)
@@ -118,7 +118,6 @@ describe('send-stripe-cancel-survey', async () => {
     expect.assertions(2)
 
     jest.resetModules()
-    const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
     jest.mock('nodemailer', () => {
       return {
         createTransport: () => {
@@ -131,6 +130,7 @@ describe('send-stripe-cancel-survey', async () => {
         }
       }
     })
+    const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
 
     nock('https://api.stripe.com')
       .get('/v1/subscriptions/oldSubscriptionId')

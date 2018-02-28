@@ -30,7 +30,6 @@ test('open-issue', async () => {
     }
   })
 
-  const openIssue = require('../../lib/open-issue')
   jest.mock('../../lib/create-branch', () => ({
     installationId, owner, repo, branch, newBranch, path, message, transform
   }) => {
@@ -56,6 +55,7 @@ test('open-issue', async () => {
     }))
     return 'deadbeef'
   })
+  const openIssue = require('../../lib/open-issue')
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')

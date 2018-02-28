@@ -1,10 +1,10 @@
 const nock = require('nock')
 
 test('get changelog', async () => {
-  const getInfos = require('../../lib/get-infos')
   jest.mock('../../lib/get-diff-commits', () => () => {
     return 'diff commits'
   })
+  const getInfos = require('../../lib/get-infos')
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')

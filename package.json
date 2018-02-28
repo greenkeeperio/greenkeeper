@@ -50,6 +50,7 @@
       "/node_modules/",
       "/test/helpers/.*\\.js$"
     ],
+    "collectCoverage": true,
     "unmockedModulePathPatterns": [
       "<rootDir>/node_modules/nock"
     ],
@@ -68,7 +69,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest -i test/jobs/create-version-branch.js"
+    "test": "NODE_ENV=testing jest -i"
   },
   "standard": {
     "env": {

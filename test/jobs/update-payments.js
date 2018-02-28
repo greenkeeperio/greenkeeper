@@ -57,8 +57,6 @@ describe('update-payments', async () => {
   test('update stripe', async () => {
     expect.assertions(3)
 
-    const updatePayments = require('../../jobs/update-payments')
-
     // To mock only specific modules, use require.requireActual to restore the original modules,
     // then overwrite the one you want to mock
     jest.mock('../../lib/payments', () => {
@@ -83,6 +81,7 @@ describe('update-payments', async () => {
         }
       }
     })
+    const updatePayments = require('../../jobs/update-payments')
 
     const newJob = await updatePayments({ accountId: '111' })
     expect(newJob).toBeFalsy()
@@ -91,7 +90,6 @@ describe('update-payments', async () => {
   test('ignore if stripeSubscriptionId is missing', async () => {
     expect.assertions(1)
 
-    const updatePayments = require('../../jobs/update-payments')
     jest.mock('../../lib/payments', () => {
       const payments = require.requireActual('../../lib/payments')
       payments.getActiveBilling = async() => {
@@ -112,6 +110,7 @@ describe('update-payments', async () => {
         }
       }
     })
+    const updatePayments = require('../../jobs/update-payments')
 
     const newJob = await updatePayments({ accountId: '111' })
     expect(newJob).toBeFalsy()

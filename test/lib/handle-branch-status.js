@@ -55,12 +55,11 @@ describe('handle-branch-status', async () => {
   })
 
   test('success', async () => {
-    const handleBranchStatus = require('../../lib/handle-branch-status')
-
     jest.mock('../../lib/open-issue', data => data => {
       // open an issue
       expect(true).toBeTruthy()
     })
+    const handleBranchStatus = require('../../lib/handle-branch-status')
 
     nock('https://api.github.com')
       .post('/installations/123/access_tokens')
@@ -107,11 +106,11 @@ describe('handle-branch-status', async () => {
     const { repositories } = await dbs()
 
     expect.assertions(4)
-    const handleBranchStatus = require('../../lib/handle-branch-status')
     jest.mock('../../lib/open-issue', data => data => {
       // open an issue
       expect(true).toBeTruthy()
     })
+    const handleBranchStatus = require('../../lib/handle-branch-status')
 
     nock('https://api.github.com')
 

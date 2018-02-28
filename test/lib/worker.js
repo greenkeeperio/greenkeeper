@@ -28,7 +28,6 @@ test('worker throws away unimplemented job', async () => {
 test('worker throws away unimplemented job action', async () => {
   expect.assertions(3)
 
-  const worker = require('../../lib/worker')
   jest.mock('path', () => {
     const path = require.requireActual('path')
     path.jobPath = (job) => {
@@ -37,6 +36,7 @@ test('worker throws away unimplemented job action', async () => {
     return path
   })
   const path = require('path')
+  const worker = require('../../lib/worker')
 
   expect(() => {
     path.jobPath('unimplemented-job')
@@ -62,7 +62,6 @@ test('worker throws away unimplemented job action', async () => {
 test('worker requeues job on error, then throws away', async () => {
   expect.assertions(4)
 
-  const worker = require('../../lib/worker')
   jest.mock('path', () => {
     const path = require.requireActual('path')
     path.jobPath = (job) => {
@@ -71,6 +70,7 @@ test('worker requeues job on error, then throws away', async () => {
     return path
   })
   const path = require('path')
+  const worker = require('../../lib/worker')
 
   expect(() => {
     path.jobPath('failing-job')
@@ -113,13 +113,13 @@ test('worker requeues job on error, then throws away', async () => {
 test('worker acks job on success w/o further work', async () => {
   expect.assertions(2)
 
-  const worker = require('../../lib/worker')
   jest.mock('path', () => {
     const path = require.requireActual('path')
     path.jobPath = (job) => {}
     return path
   })
   const path = require('path')
+  const worker = require('../../lib/worker')
 
   expect(() => {
     path.jobPath('successful-job')
@@ -148,7 +148,6 @@ test('worker acks job on success w/o further work', async () => {
 test('worker schedules further jobs on success', async () => {
   expect.assertions(3)
 
-  const worker = require('../../lib/worker')
   jest.mock('path', () => {
     const path = require.requireActual('path')
     path.jobPath = (job) => [
@@ -170,6 +169,7 @@ test('worker schedules further jobs on success', async () => {
     return path
   })
   const path = require('path')
+  const worker = require('../../lib/worker')
 
   expect(() => {
     path.jobPath('successful-job')
@@ -192,7 +192,6 @@ test('worker schedules further jobs on success', async () => {
 test('worker requeues job on scheduling error, then throws away', async () => {
   expect.assertions(5)
 
-  const worker = require('../../lib/worker')
   jest.mock('path', () => {
     const path = require.requireActual('path')
     path.jobPath = (job) => [
@@ -206,6 +205,7 @@ test('worker requeues job on scheduling error, then throws away', async () => {
     return path
   })
   const path = require('path')
+  const worker = require('../../lib/worker')
 
   expect(() => {
     path.jobPath('failing-schedule')

@@ -18,7 +18,6 @@ test('get token', async () => {
     .get('/rate_limit')
     .reply(200)
 
-  const getToken = require('../../lib/get-token')
   jest.mock('zlib', () => {
     return {
       gunzipSync: () => 'cert'
@@ -30,6 +29,7 @@ test('get token', async () => {
       }
     }
   })
+  const getToken = require('../../lib/get-token')
 
   const token = (await getToken(1337)).token
   expect(token).toEqual('the-token') // uncached
