@@ -15,19 +15,19 @@ Jest's configuration is defined in the package.json file. Here are the [options]
     "testEnvironment": "node"
   },
 ```
-- **testRegex**
+- **testRegex**    
     By default Jest looks for files inside of `__tests__` folders. It will also find files called `test.js` or `spec.js`. We need this regex to Jets can find and run our tests. We want Jest to to detect our test files in the `test` folder.
-- **testPathIgnorePatterns**
+- **testPathIgnorePatterns**    
     is an Array of (regexp pattern strings) files in our test folder, we don't want to test (e.g. our helpers)
-- **collectCoverage**
+- **collectCoverage**    
     Jest can collect code coverage information from entire projects, including untested files. Easily create code coverage reports with `collectCoverage: true`
-- **unmockedModulePathPatterns**
+- **unmockedModulePathPatterns**   
     An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them. If a module's path matches any of the patterns in this list, it will not be automatically mocked by the module loader.
-- **testEnvironment**
+- **testEnvironment**    
     The test environment that will be used for testing. The default environment in Jest is a browser-like environment through jsdom. We use the node option to use a node-like environment instead.
-- **globalSetup**
+- **globalSetup**    
     *not implemented yet* (This option allows the use of a custom global setup module which exports an async function that is triggered once before all test suites.)
-- **globalTeardown**
+- **globalTeardown**    
     *not implemented yet* (This option allows the use of a custom global teardown module which exports an async function that is triggered once after all test suites.)
 
 #### StandardJS
@@ -72,9 +72,10 @@ Clears the `mock.calls` and `mock.instances` properties of all mocks. Equivalent
 
 ## Use Cases
 <details>
-### <summary> How to mock relative dependencies </summary>
+<summary> How to mock relative dependencies </summary>
 In this example the `getInfos-worker` uses the `getDiffCommits()` function from `lib/get-diff-commits`.
-We mock the diffCommits(), called in getInfos():
+We mock the diffCommits(), called in getInfos().
+  
 ```
   jest.mock('../../lib/get-diff-commits', () => () => {
     return 'diff commits'
@@ -83,13 +84,14 @@ We mock the diffCommits(), called in getInfos():
 ```
 You can see that we use the **path relative to the test file** to mock the dependency.
 </details>
+
 <details>
-### <summary> How to mock only one function of a dependency </summary>
+<summary> How to mock only one function of a dependency </summary>
 To mock only specific modules, use require.requireActual to restore the original modules,
 then overwrite the one you want to mock.
 
 In this example we only want to mock the `getActiveBilling()` from `payments`, which is called in `updatePayments`.
-You can see that we use the **path relative to the test file** to mock the dependency.github-event
+You can see that we use the **path relative to the test file** to mock the dependency.github-event.
 ```
 jest.mock('../../lib/payments', () => {
   const payments = require.requireActual('../../lib/payments')
@@ -105,10 +107,12 @@ jest.mock('../../lib/payments', () => {
 const updatePayments = require('../../jobs/update-payments') // <-- called after jest.mock()
 ```
 </details>
+
 <details>
-### <summary> How to mock a function call and test the given parameters </summary>
+<summary> How to mock a function call and test the given parameters</summary>
 In this example we want to mock a dependency-function an check if the given parameters are exepted.
 The `githubEvent` calls the `resolve`-function with specific parameters. The `resolve`-function comes from an external module.
+  
 ```
 jest.mock('path', () => {
     return {
