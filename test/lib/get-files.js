@@ -1,12 +1,12 @@
 const nock = require('nock')
-const { test } = require('tap')
 
 const { getFiles, formatPackageJson, getGreenkeeperConfigFile, getPackagePathsFromConfigFile } = require('../../lib/get-files')
 
 nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-test('getFiles: with no fileList provided', async t => {
-  t.plan(1)
+test('getFiles: with no fileList provided', async () => {
+  expect.assertions(1)
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
@@ -18,12 +18,12 @@ test('getFiles: with no fileList provided', async t => {
 
   const files = await getFiles('123', 'owner/repo')
 
-  t.true(Object.keys(files).length === 4, 'returns an Object with the 4 standard files')
-  t.end()
+  // returns an Object with the 4 standard files
+  expect(Object.keys(files)).toHaveLength(4)
 })
 
-test('getFiles: 2 package.json files', async t => {
-  t.plan(7)
+test('getFiles: 2 package.json files', async () => {
+  expect.assertions(7)
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
@@ -60,18 +60,19 @@ test('getFiles: 2 package.json files', async t => {
   ]
 
   const files = await getFiles('123', 'owner/repo', fileList)
-  t.is(Object.keys(files).length, 4, 'returns an Object with the 4 file types')
-  t.is(files['package.json'].length, 2, 'The Object has 2 files at the `package.json` key')
-  t.is(files['package.json'][0].path, 'package.json')
-  t.is(files['package.json'][0].content, 'eyJuYW1lIjoidGVzdCJ9')
-  t.is(files['package.json'][1].path, 'backend/package.json')
-  t.is(files['package.json'][1].content, 'eyJuYW1lIjoidGVzdCJ9')
-  t.is(files['yarn.lock'].length, 2)
-  t.end()
+  // returns an Object with the 4 file types
+  expect(Object.keys(files)).toHaveLength(4)
+  // The Object has 2 files at the `package.json` key
+  expect(files['package.json']).toHaveLength(2)
+  expect(files['package.json'][0].path).toEqual('package.json')
+  expect(files['package.json'][0].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
+  expect(files['package.json'][1].path).toEqual('backend/package.json')
+  expect(files['package.json'][1].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
+  expect(files['yarn.lock']).toHaveLength(2)
 })
 
-test('getFiles: 2 package.json files but one is not found on github', async t => {
-  t.plan(6)
+test('getFiles: 2 package.json files but one is not found on github', async () => {
+  expect.assertions(7)
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
@@ -95,16 +96,19 @@ test('getFiles: 2 package.json files but one is not found on github', async t =>
 
   const files = await getFiles('123', 'owner/repo', fileList)
 
-  t.true(Object.keys(files).length === 4 && files['package.json'], 'returns an Object with the key `package.json`')
-  t.is(files['package.json'].length, 2, 'The Object has 2 files at the `package.json` key')
-  t.is(files['package.json'][0].path, 'package.json')
-  t.is(files['package.json'][0].content, false, 'content for the package.json file that was not found set to `false`')
-  t.is(files['package.json'][1].path, 'backend/package.json')
-  t.is(files['package.json'][1].content, 'eyJuYW1lIjoidGVzdCJ9')
-  t.end()
+  expect(Object.keys(files)).toHaveLength(4)
+  // returns an Object with the key `package.json`
+  expect(files['package.json']).toBeDefined()
+  // The Object has 2 files at the `package.json` key
+  expect(files['package.json']).toHaveLength(2)
+  expect(files['package.json'][0].path).toEqual('package.json')
+  // content for the package.json file that was not found set to `false`
+  expect(files['package.json'][0].content).toEqual(false)
+  expect(files['package.json'][1].path).toEqual('backend/package.json')
+  expect(files['package.json'][1].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
 })
 
-test('formatPackageJson: 2 package.json files', async t => {
+test('formatPackageJson: 2 package.json files', async () => {
   const input = [
     { type: 'file',
       path: 'package.json',
@@ -121,11 +125,11 @@ test('formatPackageJson: 2 package.json files', async t => {
     'backend/package.json': { name: 'test' }
   }
 
-  t.same(output, expected, 'returns an Object with two package.json files and their paths as a key')
-  t.end()
+  // returns an Object with two package.json files and their paths as a key
+  expect(output).toMatchObject(expected)
 })
 
-test('formatPackageJson: 2 package.json files but one was not found on github', async t => {
+test('formatPackageJson: 2 package.json files but one was not found on github', async () => {
   const input = [
     { type: 'file',
       path: 'package.json',
@@ -141,20 +145,20 @@ test('formatPackageJson: 2 package.json files but one was not found on github', 
     'backend/package.json': { name: 'test' }
   }
 
-  t.same(output, expected, 'returns an Object with one package.json file')
-  t.end()
+  // returns an Object with one package.json file
+  expect(output).toMatchObject(expected)
 })
 
-test('formatPackageJson: for a missing package.json array', async t => {
+test('formatPackageJson: for a missing package.json array', async () => {
   const input = undefined
   const output = formatPackageJson(input)
 
-  t.same(output, null, 'returns null')
-  t.end()
+  // returns null
+  expect(output).toBeNull()
 })
 
-test('getGreenkeeperConfigFile', async t => {
-  t.plan(1)
+test('getGreenkeeperConfigFile', async () => {
+  expect.assertions(1)
 
   const configFileContent = {
     groups: {
@@ -196,12 +200,12 @@ test('getGreenkeeperConfigFile', async t => {
 
   const result = await getGreenkeeperConfigFile('123', 'owner/repo')
 
-  t.same(result, configFileContent, 'returns the content of the `greenkeeper.json`')
-  t.end()
+  // returns the content of the `greenkeeper.json`
+  expect(result).toMatchObject(configFileContent)
 })
 
-test('getGreenkeeperConfigFile: when no config file is present', async t => {
-  t.plan(1)
+test('getGreenkeeperConfigFile: when no config file is present', async () => {
+  expect.assertions(1)
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
@@ -215,12 +219,12 @@ test('getGreenkeeperConfigFile: when no config file is present', async t => {
 
   const result = await getGreenkeeperConfigFile('123', 'owner/repo')
 
-  t.same(result, {}, 'returns empty Object')
-  t.end()
+  // returns empty Object
+  expect(result).toMatchObject({})
 })
 
-test('getPackagePathsFromConfigFile', async t => {
-  t.plan(1)
+test('getPackagePathsFromConfigFile', async () => {
+  expect.assertions(1)
 
   const input = {
     groups: {
@@ -246,11 +250,11 @@ test('getPackagePathsFromConfigFile', async t => {
   }
   const result = await getPackagePathsFromConfigFile(input)
 
-  t.same(result, [
+  // returns all paths in an array
+  expect(result).toEqual([
     'apps/backend/hapiserver/package.json',
     'apps/backend/bla/package.json',
     'apps/frontend/react/package.json',
     'apps/frontend/react-native/package.json'
-  ], 'returns all paths in an array')
-  t.end()
+  ])
 })

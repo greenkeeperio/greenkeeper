@@ -3,7 +3,7 @@ const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
 
-function sepperateNormalAndMonorepos (packageFiles) {
+function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
 
   return _.partition(resultsByRepo, (result) => {
@@ -131,7 +131,7 @@ function createTransformFunction (type, dependency, version, log) {
 }
 
 module.exports = {
-  sepperateNormalAndMonorepos,
+  seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
