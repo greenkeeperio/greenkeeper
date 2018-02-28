@@ -7,7 +7,7 @@ const { cleanCache } = require('../helpers/module-cache-helpers')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-describe('create initial brach', () => {
+describe('create initial branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     delete process.env.BADGES_HOST

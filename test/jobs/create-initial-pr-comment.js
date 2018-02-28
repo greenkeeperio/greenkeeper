@@ -3,7 +3,7 @@ const dbs = require('../../lib/dbs')
 const upsert = require('../../lib/upsert')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-const timeToWaitAfterTests = 50
+const timeToWaitAfterTests = 500
 const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
