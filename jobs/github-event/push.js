@@ -7,6 +7,7 @@ const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
 const { maybeUpdatePaymentsJob } = require('../../lib/payments')
+const { cleanUpBranches } = require('../../lib/cleanup-branches')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -15,7 +16,6 @@ module.exports = async function (data) {
   const branchRef = `refs/heads/${repository.default_branch}`
   if (!data.head_commit || data.ref !== branchRef) return
 
-// add .greenkeeperrc
   const relevantFiles = [
     'package.json',
     'package-lock.json',
@@ -32,58 +32,48 @@ module.exports = async function (data) {
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
   const repositoryId = String(repository.id)
 
-  let repodoc = await repositories.get(repositoryId)
+  let repoDoc = await repositories.get(repositoryId)
 
   // Already synced the sha
-  if (after === repodoc.headSha) return
-  repodoc.headSha = after
+  if (after === repoDoc.headSha) return
+  repoDoc.headSha = after
 
   // get path of changed package json
   // always put package.jsons in the repoDoc (new & old)
   // if remove event: delete key of package.json
-  const oldPkg = _.get(repodoc, ['packages', 'package.json'])
-  await updateRepoDoc(installation.id, repodoc)
-  const pkg = _.get(repodoc, ['packages', 'package.json'])
+  const oldPkg = _.get(repoDoc, ['packages'])
+  await updateRepoDoc(installation.id, repoDoc)
+  const pkg = _.get(repoDoc, ['packages'])
 
-  if (!pkg) return disableRepo({ repositories, repository, repodoc })
+  if (!pkg) return disableRepo({ repositories, repository, repoDoc })
 
-  if (_.isEqual(oldPkg, pkg)) return updateDoc(repositories, repository, repodoc)
+  if (_.isEqual(oldPkg, pkg)) {
+    await updateDoc(repositories, repository, repoDoc)
+    return null
+  }
 
-  const disabled = _.get(pkg, ['greenkeeper', 'disabled'])
-  if (disabled) return disableRepo({ repositories, repository, repodoc })
+  await updateDoc(repositories, repository, repoDoc)
 
-  await updateDoc(repositories, repository, repodoc)
-
-  const wasDisabled = _.get(oldPkg, ['greenkeeper', 'disabled'])
-  if (!oldPkg || wasDisabled) {
+  if (!oldPkg) {
     return {
       data: {
         name: 'create-initial-branch',
         repositoryId,
-        accountId: repodoc.accountId
+        accountId: repoDoc.accountId
       }
     }
   }
 
 // needs to happen for all the package.jsons
 // delete all branches for modified or deleted dependencies
-  const changes = diff(oldPkg, pkg)
+  console.log('oldPkg', oldPkg)
+  console.log('pkg', pkg)
 
-  const branches = []
-  _.each(changes, (type, dependencyType) => {
-    _.each(type, (dep, dependency) => {
-      if (dep.change === 'added') return
-      branches.push(
-        Object.assign(
-          {
-            dependency,
-            dependencyType
-          },
-          dep
-        )
-      )
-    })
-  })
+  const changes = diff(oldPkg, pkg)
+  console.log('changes', changes)
+
+  const branches = cleanUpBranches(changes)
+  console.log('branches to be deleted!!', branches)
   await Promise.mapSeries(
     branches,
     deleteBranches.bind(null, {
@@ -94,10 +84,10 @@ module.exports = async function (data) {
   )
 }
 
-function updateDoc (repositories, repository, repodoc) {
+function updateDoc (repositories, repository, repoDoc) {
   return repositories.put(
     updatedAt(
-      Object.assign(repodoc, {
+      Object.assign(repoDoc, {
         private: repository.private,
         fullName: repository.full_name,
         fork: repository.fork,
@@ -121,10 +111,11 @@ function hasRelevantChanges (commits, files) {
   })
 }
 
-async function disableRepo ({ repositories, repodoc, repository }) {
-  repodoc.enabled = false
-  await updateDoc(repositories, repository, repodoc)
+async function disableRepo ({ repositories, repoDoc, repository }) {
+  console.log('disableRepo')
+  repoDoc.enabled = false
+  await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
-    return maybeUpdatePaymentsJob(repodoc.accountId, repodoc.private)
+    return maybeUpdatePaymentsJob(repoDoc.accountId, repoDoc.private)
   }
 }

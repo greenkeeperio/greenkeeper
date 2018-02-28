@@ -13,9 +13,8 @@ const waitFor = (milliseconds) => {
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+const createInitialPrComment = require('../../jobs/create-initial-pr-comment')
 describe('create-initial-pr-comment', async () => {
-  const createInitialPrComment = require('../../jobs/create-initial-pr-comment')
-
   beforeEach(async () => {
     const { installations, repositories } = await dbs()
 

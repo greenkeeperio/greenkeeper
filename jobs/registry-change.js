@@ -6,7 +6,7 @@ const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
 const {
-  sepperateNormalAndMonorepos,
+  seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
@@ -99,15 +99,15 @@ module.exports = async function (
   // continue with the rest but send all otheres to a 'new' version branch job
 
   let jobs = []
-  const sepperatedResults = sepperateNormalAndMonorepos(packageFilesForUpdatedDependency)
+  const seperatedResults = seperateNormalAndMonorepos(packageFilesForUpdatedDependency)
 
-  const withOnlyRootPackageJSON = _.flatten(sepperatedResults[1])
-  const withMultiplePackageJSON = sepperatedResults[0]
+  const withOnlyRootPackageJSON = _.flatten(seperatedResults[1])
+  const withMultiplePackageJSON = seperatedResults[0]
 
   const accounts = _.keyBy(
     _.map(
       (await installations.allDocs({
-        keys: _.compact(_.map(_.flattenDeep(sepperatedResults), 'value.accountId')),
+        keys: _.compact(_.map(_.flattenDeep(seperatedResults), 'value.accountId')),
         include_docs: true
       })).rows,
       'doc'
