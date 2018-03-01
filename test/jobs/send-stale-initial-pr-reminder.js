@@ -1,6 +1,4 @@
-const { test } = require('tap')
 const nock = require('nock')
-const worker = require('../../jobs/send-stale-initial-pr-reminder')
 const upsert = require('../../lib/upsert')
 
 const dbs = require('../../lib/dbs')
@@ -11,19 +9,14 @@ const waitFor = (milliseconds) => {
   })
 }
 
-test('send-stale-initial-pr-reminder', async t => {
-  const { installations, repositories } = await dbs()
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-  let githubNock
+describe('send-stale-initial-pr-reminder', async () => {
+  const sendStaleInitialPrReminder = require('../../jobs/send-stale-initial-pr-reminder')
 
-  t.beforeEach(async () => {
-    githubNock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .reply(200, {})
+  beforeEach(async () => {
+    const { installations, repositories } = await dbs()
 
     await installations.put({
       _id: '123',
@@ -38,16 +31,25 @@ test('send-stale-initial-pr-reminder', async t => {
     })
   })
 
-  t.afterEach(async () => {
+  afterEach(async () => {
     nock.cleanAll()
+    const { installations, repositories } = await dbs()
     await installations.remove(await installations.get('123'))
     await repositories.remove(await repositories.get('42'))
   })
 
-  t.test('send reminders for stale initial pr', async t => {
-    t.plan(3)
+  test('send reminders for stale initial pr', async () => {
+    expect.assertions(3)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
@@ -55,80 +57,109 @@ test('send-stale-initial-pr-reminder', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, (uri, requestBody) => {
-        t.hasFields(requestBody, 'body', 'has comment body')
-        t.pass('comment added')
+        expect(requestBody).toBeDefined()
+        expect(requestBody).toMatch(/body/)
         return {}
       })
 
-    await worker({
+    await sendStaleInitialPrReminder({
       prNumber: 1234,
       repositoryId: 42,
       accountId: 123
     })
 
+    const { repositories } = await dbs()
     const repoDoc = await repositories.get('42')
-    t.ok(repoDoc.staleInitialPRReminder, 'staleInitialPRReminder set to true')
+    expect(repoDoc.staleInitialPRReminder).toBeTruthy()
     await waitFor(50)
   })
 
-  t.test('does nothing if the repo is already enabled', async t => {
-    t.plan(1)
-
+  test('does nothing if the repo is already enabled', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
     await upsert(repositories, '42', {enabled: true})
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, () => {
-        t.fail('Should not query issue status')
+        // Should not query issue status
+        expect(false).toBeFalsy()
         return {}
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await worker({
+    const newJob = await sendStaleInitialPrReminder({
       prNumber: 1234,
       repositoryId: 42,
       accountId: 123
     })
 
-    t.notOk(newJob, 'no new job')
+    expect(newJob).toBeFalsy()
     await waitFor(50)
   })
 
-  t.test('does nothing if the repo has already received the reminder', async t => {
-    t.plan(1)
-
+  test('does nothing if the repo has already received the reminder', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
     await upsert(repositories, '42', {staleInitialPRReminder: true})
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, () => {
-        t.fail('Should not query issue status')
+        // Should not query issue status
+        expect(false).toBeFalsy()
         return {}
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await worker({
+    const newJob = await sendStaleInitialPrReminder({
       prNumber: 1234,
       repositoryId: 42,
       accountId: 123
     })
 
-    t.notOk(newJob, 'no new job')
+    expect(newJob).toBeFalsy()
     await waitFor(50)
   })
 
-  t.test('does nothing if the issue was closed in the meanwhile', async t => {
-    t.plan(1)
+  test('does nothing if the issue was closed in the meanwhile', async () => {
+    expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'closed',
@@ -136,24 +167,33 @@ test('send-stale-initial-pr-reminder', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await worker({
+    const newJob = await sendStaleInitialPrReminder({
       prNumber: 1234,
       repositoryId: 42,
       accountId: 123
     })
 
-    t.notOk(newJob, 'no new job')
+    expect(newJob).toBeFalsy()
     await waitFor(50)
   })
 
-  t.test('does nothing if the issue was locked in the meanwhile', async t => {
-    t.plan(1)
+  test('does nothing if the issue was locked in the meanwhile', async () => {
+    expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
@@ -161,17 +201,18 @@ test('send-stale-initial-pr-reminder', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await worker({
+    const newJob = await sendStaleInitialPrReminder({
       prNumber: 1234,
       repositoryId: 42,
       accountId: 123
     })
 
-    t.notOk(newJob, 'no new job')
+    expect(newJob).toBeFalsy()
     await waitFor(50)
   })
 })

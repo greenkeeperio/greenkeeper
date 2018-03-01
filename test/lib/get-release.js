@@ -1,16 +1,16 @@
 const nock = require('nock')
-const { test } = require('tap')
-const _ = require('lodash')
 
 const getRelease = require('../../lib/get-release')
 
-test('get-release from tag with v prefix', async t => {
+test('get-release from tag with v prefix', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/finnp/test/releases/tags/v1.33.7')
     .reply(200, {
@@ -24,15 +24,11 @@ test('get-release from tag with v prefix', async t => {
     version: '1.33.7'
   })
 
-  t.ok(_.includes(notes, `<summary>Release Notes</summary>`), 'release notes')
-  t.ok(
-    _.includes(notes, `https://urls.greenkeeper.io/`),
-    'github link was replaced'
-  )
-  t.end()
+  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })
 
-test('get-release from tag with version as name', async t => {
+test('get-release from tag with version as name', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
     .reply(200, {
@@ -54,15 +50,11 @@ test('get-release from tag with version as name', async t => {
     version: '1.33.7'
   })
 
-  t.ok(_.includes(notes, `<summary>Release Notes</summary>`), 'release notes')
-  t.ok(
-    _.includes(notes, `https://urls.greenkeeper.io/`),
-    'github link was replaced'
-  )
-  t.end()
+  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })
 
-test('get-release from tag at sha', async t => {
+test('get-release from tag at sha', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
     .reply(200, {
@@ -91,10 +83,6 @@ test('get-release from tag at sha', async t => {
     sha: 'deadbeef'
   })
 
-  t.ok(_.includes(notes, `<summary>Release Notes</summary>`), 'release notes')
-  t.ok(
-    _.includes(notes, `https://urls.greenkeeper.io/`),
-    'github link was replaced'
-  )
-  t.end()
+  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })
