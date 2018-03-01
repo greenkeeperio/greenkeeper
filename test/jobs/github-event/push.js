@@ -12,6 +12,7 @@ describe('github-event push', async () => {
     jest.resetModules()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
+    nock.cleanAll()
   })
 
   beforeAll(async() => {
@@ -20,9 +21,23 @@ describe('github-event push', async () => {
     await Promise.all([
       repositories.bulkDocs([
         {
+          _id: '333',
+          fullName: 'finn/disabled',
+          accountId: '123'
+        },
+        {
           _id: '444',
           fullName: 'finn/test',
-          accountId: '123'
+          accountId: '123',
+          enabled: true,
+          packages: {
+            'package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^0.1.0'
+              }
+            }
+          }
         },
         {
           _id: '445',
@@ -49,6 +64,30 @@ describe('github-event push', async () => {
           accountId: '123',
           enabled: true,
           private: true
+        },
+        {
+          _id: '555',
+          fullName: 'hans/monorepo',
+          accountId: '321',
+          enabled: true,
+          headSha: 'hallo',
+          packages: {
+            'packages/frontend/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^0.9.0'
+              }
+            }
+          },
+          greenkeeper: {
+            groups: {
+              frontend: {
+                packages: [
+                  'packages/frontend/package.json'
+                ]
+              }
+            }
+          }
         },
         {
           _id: '444:branch:1234abcd',
@@ -80,7 +119,7 @@ describe('github-event push', async () => {
     })
   })
 
-  test('package.json present', async () => {
+  test('package.json added/modified for a not enabled repo', async () => {
     const { repositories } = await dbs()
     const githubPush = requireFresh(pathToWorker)
 
@@ -91,7 +130,7 @@ describe('github-event push', async () => {
       })
       .get('/rate_limit')
       .reply(200, {})
-      .get('/repos/finn/test/contents/package.json')
+      .get('/repos/finn/disabled/contents/package.json')
       .reply(200, {
         path: 'package.json',
         name: 'package.json',
@@ -102,7 +141,7 @@ describe('github-event push', async () => {
           }
         })
       })
-      .get('/repos/finn/test/contents/package-lock.json')
+      .get('/repos/finn/disabled/contents/package-lock.json')
       .reply(200, {
         path: 'package-lock.json',
         name: 'package-lock.json',
@@ -124,7 +163,7 @@ describe('github-event push', async () => {
         }
       ],
       repository: {
-        id: 444,
+        id: 333,
         full_name: 'finn/test',
         name: 'test',
         owner: {
@@ -138,9 +177,9 @@ describe('github-event push', async () => {
     const job = newJob.data
     expect(job.name).toEqual('create-initial-branch')
     expect(job.accountId).toEqual('123')
-    expect(job.repositoryId).toEqual('444')
+    expect(job.repositoryId).toEqual('333')
 
-    const repo = await repositories.get('444')
+    const repo = await repositories.get('333')
 
     expect(repo.files['package.json'].length).toBeGreaterThan(0)
     expect(repo.files['package-lock.json'].length).toBeGreaterThan(0)
@@ -159,7 +198,193 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
-  test('do branch cleanup on modify', async () => {
+  test('subdirectory package.json was modified', async () => {
+    const { repositories } = await dbs()
+    const githubPush = requireFresh(pathToWorker)
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        }
+      }
+    }
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package-lock.json')
+      .reply(200, {
+        path: 'packages/frontend/package-lock.json',
+        name: 'package-lock.json',
+        content: encodePkg({name: 'hallo'})
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['packages/frontend/package.json', 'packages/frontend/package-lock.json']
+        }
+      ],
+      repository: {
+        id: 555,
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+
+    const repo = await repositories.get('555')
+    console.log('repoDoc', repo)
+    expect(repo.files['package.json'].length).toBeGreaterThan(0)
+    expect(repo.files['package-lock.json'].length).toBeGreaterThan(0)
+    expect(repo.files['npm-shrinkwrap.json']).toHaveLength(0)
+
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json' ],
+      'package-lock.json': [ 'packages/frontend/package-lock.json' ],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'packages/frontend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
+  test('subdirectory package.json, which is not listed in the config, was modified', async () => {
+    const { repositories } = await dbs()
+    const githubPush = requireFresh(pathToWorker)
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        }
+      }
+    }
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package-lock.json')
+      .reply(200, {
+        path: 'packages/frontend/package-lock.json',
+        name: 'package-lock.json',
+        content: encodePkg({name: 'hallo'})
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b-yup',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['packages/backend/package.json', 'packages/backend/package-lock.json']
+        }
+      ],
+      repository: {
+        id: 555,
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+
+    const repo = await repositories.get('555')
+    expect(repo.files['package.json']).toHaveLength(1)
+    expect(repo.files['package-lock.json']).toHaveLength(1)
+    expect(repo.files['npm-shrinkwrap.json']).toHaveLength(0)
+
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json' ],
+      'package-lock.json': [ 'packages/frontend/package-lock.json' ],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages['packages/backend/package.json']).toBeFalsy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b-yup')
+  })
+
+  test.only('do branch cleanup on modify', async () => {
     const { repositories } = await dbs()
     const githubPush = requireFresh(pathToWorker)
 
