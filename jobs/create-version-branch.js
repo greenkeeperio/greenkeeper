@@ -81,6 +81,7 @@ module.exports = async function (
 
   // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const config = getConfig(repository)
+  log.info(`config for ${repository.fullName}`, {config})
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
   if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
     log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true')

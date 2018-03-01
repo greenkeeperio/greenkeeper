@@ -23,7 +23,6 @@ module.exports = async function (data) {
     prDocId,
     _.pick(pullRequest, ['state', 'merged'])
   )
-
   if (!prdoc.merged || !prdoc.initial) return
 
   let repodoc = await repositories.get(String(repository.id))

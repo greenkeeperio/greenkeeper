@@ -48,6 +48,7 @@ module.exports = async function ({ repositoryId }) {
   await upsert(repositories, repoDoc._id, repoDoc)
 
   const config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
