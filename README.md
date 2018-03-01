@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
+  <img src="https://user-images.githubusercontent.com/391124/36849148-8a73f484-1d63-11e8-8f2b-d7ffa940cb31.jpg" alt="Greenkeeper" align="center" />
 </div>
 <div align="center">
   <a href="https://greenkeeper.io/">
