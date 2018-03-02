@@ -7,7 +7,8 @@ const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
 const { maybeUpdatePaymentsJob } = require('../../lib/payments')
-const { cleanUpBranches } = require('../../lib/cleanup-branches')
+const { getBranchesToDelete } = require('../../lib/branches-to-delete')
+const getConfig = require('../../lib/get-config')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -24,15 +25,16 @@ module.exports = async function (data) {
     'greenkeeper.json'
   ]
 
-  // if .greenkeeperrc
-  // updated repoDoc with new .greenkeeperrc
-  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
-  // close all open prs for that groupname
-
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
   const repositoryId = String(repository.id)
 
   let repoDoc = await repositories.get(repositoryId)
+  const config = getConfig(repoDoc.doc)
+  const isMonorepo = !!_.get(config, ['groups'])
+  // if greenkeeper.json with at least one file in a group
+  // updated repoDoc with new .greenkeeperrc
+  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
+  // close all open prs for that groupname
 
   // Already synced the sha
   if (after === repoDoc.headSha) return
@@ -44,8 +46,12 @@ module.exports = async function (data) {
   const oldPkg = _.get(repoDoc, ['packages'])
   await updateRepoDoc(installation.id, repoDoc)
   const pkg = _.get(repoDoc, ['packages'])
-
   if (!pkg) return disableRepo({ repositories, repository, repoDoc })
+  if (!isMonorepo) {
+    if (!Object.keys(pkg).length) {
+      return disableRepo({ repositories, repository, repoDoc })
+    }
+  }
 
   if (_.isEqual(oldPkg, pkg)) {
     await updateDoc(repositories, repository, repoDoc)
@@ -53,6 +59,9 @@ module.exports = async function (data) {
   }
 
   await updateDoc(repositories, repository, repoDoc)
+
+  console.log('oldPkg', oldPkg)
+  console.log('pkg', pkg)
 
   if (!oldPkg) {
     return {
@@ -64,18 +73,34 @@ module.exports = async function (data) {
     }
   }
 
-// needs to happen for all the package.jsons
-// delete all branches for modified or deleted dependencies
-  console.log('oldPkg', oldPkg)
-  console.log('pkg', pkg)
+  // needs to happen for all the package.jsons
+  // delete all branches for modified or deleted dependencies
+  // do diff + getBranchesToDelete per file for each group
 
+  const branches = []
+  Object.keys(pkg).forEach((key) => {
+    const changes = diff(oldPkg[key], pkg[key])
+    branches.push(getBranchesToDelete(changes))
+  })
+
+  /*
   const changes = diff(oldPkg, pkg)
   console.log('changes', changes)
 
-  const branches = cleanUpBranches(changes)
+  const branches = getBranchesToDelete(changes)
+  */
   console.log('branches to be deleted!!', branches)
+  // do this per group, if groups, else once
+
+  // MONDAY CONTINUE HERE
+
+  // TODO: config includes no groups
+  console.log('config', config)
+  // Object.keys(config.groups).map((group, key) => {
+  //   console.log('group, key', group, key)
+  // })
   await Promise.mapSeries(
-    branches,
+    _.flatten(branches), // TODO: UNIQ!
     deleteBranches.bind(null, {
       installationId: installation.id,
       fullName: repository.full_name,
@@ -98,7 +123,7 @@ function updateDoc (repositories, repository, repoDoc) {
 }
 
 // check for relevant files in all folders!
-// currently we might just detect those files in the root directory
+// TODO: currently we might just detect those files in the root directory
 function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {

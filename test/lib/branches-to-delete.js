@@ -1,9 +1,9 @@
-const { cleanUpBranches } = require('../../lib/cleanup-branches')
+const { getBranchesToDelete } = require('../../lib/branches-to-delete')
 
 test('no change', () => {
   const changes = {}
 
-  expect(cleanUpBranches(changes)).toEqual([])
+  expect(getBranchesToDelete(changes)).toEqual([])
 })
 
 test('modified', () => {
@@ -17,7 +17,7 @@ test('modified', () => {
     }
   }
 
-  expect(cleanUpBranches(changes)).toEqual([
+  expect(getBranchesToDelete(changes)).toEqual([
     {
       'after': '^2.0.0',
       'before': '^1.0.0',
