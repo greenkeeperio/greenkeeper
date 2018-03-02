@@ -21,33 +21,8 @@ describe('github-event push', async () => {
     await Promise.all([
       repositories.bulkDocs([
         {
-          _id: '333',
-          fullName: 'finn/disabled',
-          accountId: '123'
-        },
-        {
-          _id: '444',
-          fullName: 'finn/test',
-          accountId: '123',
-          enabled: true,
-          packages: {
-            'package.json': {
-              name: 'testpkg',
-              dependencies: {
-                lodash: '^0.1.0'
-              }
-            }
-          }
-        },
-        {
           _id: '445',
           fullName: 'finn/enabled',
-          accountId: '123',
-          enabled: true
-        },
-        {
-          _id: '446',
-          fullName: 'finn/enabled2',
           accountId: '123',
           enabled: true
         },
@@ -64,50 +39,6 @@ describe('github-event push', async () => {
           accountId: '123',
           enabled: true,
           private: true
-        },
-        {
-          _id: '555',
-          fullName: 'hans/monorepo',
-          accountId: '321',
-          enabled: true,
-          headSha: 'hallo',
-          packages: {
-            'packages/frontend/package.json': {
-              name: 'testpkg',
-              dependencies: {
-                lodash: '^0.9.0'
-              }
-            }
-          },
-          greenkeeper: {
-            groups: {
-              frontend: {
-                packages: [
-                  'packages/frontend/package.json'
-                ]
-              }
-            }
-          }
-        },
-        {
-          _id: '444:branch:1234abcd',
-          type: 'branch',
-          sha: '1234abcd',
-          repositoryId: '444',
-          version: '2.0.0',
-          dependency: 'lodash',
-          dependencyType: 'dependencies',
-          head: 'gk-lodash-2.0.0'
-        },
-        {
-          _id: '444:branch:1234abce',
-          type: 'branch',
-          sha: '1234abce',
-          repositoryId: '444',
-          version: '3.0.0',
-          dependency: 'lodash',
-          dependencyType: 'dependencies',
-          head: 'gk-lodash-3.0.0'
         }
       ])
     ])
@@ -119,8 +50,15 @@ describe('github-event push', async () => {
     })
   })
 
-  test('package.json added/modified for a not enabled repo', async () => {
+  test('package.json added/modified for a not enabled repo (333)', async () => {
     const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '333',
+      fullName: 'finn/disabled',
+      accountId: '123'
+    })
+
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -198,8 +136,34 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
-  test('subdirectory package.json was modified', async () => {
+  test('subdirectory package.json was modified (555)', async () => {
     const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '555',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'packages/frontend/package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^0.9.0'
+          }
+        }
+      },
+      greenkeeper: {
+        groups: {
+          frontend: {
+            packages: [
+              'packages/frontend/package.json'
+            ]
+          }
+        }
+      }
+    })
+
     const githubPush = requireFresh(pathToWorker)
     const configFileContent = {
       groups: {
@@ -296,7 +260,7 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
-  test('subdirectory package.json, which is not listed in the config, was modified', async () => {
+  test('subdirectory package.json, which is not listed in the config, was modified (555)', async () => {
     const { repositories } = await dbs()
     const githubPush = requireFresh(pathToWorker)
     const configFileContent = {
@@ -384,8 +348,48 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b-yup')
   })
 
-  test.only('do branch cleanup on modify', async () => {
+  test('do branch cleanup on modify (444)', async () => {
     const { repositories } = await dbs()
+
+    await Promise.all([
+      repositories.bulkDocs([
+        {
+          _id: '444',
+          fullName: 'finn/test',
+          accountId: '123',
+          enabled: true,
+          packages: {
+            'package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^0.1.0'
+              }
+            }
+          }
+        },
+        {
+          _id: '444:branch:1234abcd',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '444',
+          version: '2.0.0',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'gk-lodash-2.0.0'
+        },
+        {
+          _id: '444:branch:1234abce',
+          type: 'branch',
+          sha: '1234abce',
+          repositoryId: '444',
+          version: '3.0.0',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'gk-lodash-3.0.0'
+        }
+      ])
+    ])
+
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -519,8 +523,18 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab1b')
   })
 
-  test('invalid package.json present', async () => {
+  // FIX: this needs checks to see if only the root level package.json is
+  // broken, but only if we actually care about it (ie. no greenkeeper.json)
+  test.skip('invalid package.json present (446)', async () => {
     const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '446',
+      fullName: 'finn/enabled2',
+      accountId: '123',
+      enabled: true
+    })
+
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')

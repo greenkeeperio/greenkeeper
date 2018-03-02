@@ -24,7 +24,7 @@ module.exports = async function (data) {
     'greenkeeper.json'
   ]
 
-  // if .greenkeeperrc
+  // if greenkeeper.json with at least one file in a group
   // updated repoDoc with new .greenkeeperrc
   //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
   // close all open prs for that groupname
@@ -45,7 +45,15 @@ module.exports = async function (data) {
   await updateRepoDoc(installation.id, repoDoc)
   const pkg = _.get(repoDoc, ['packages'])
 
+  // FIX: Disable if there’s no package. This made sense when
+  // the line above was
+  // const pkg = _.get(repodoc, ['packages', 'package.json'])
+  // but not anymore
   if (!pkg) return disableRepo({ repositories, repository, repoDoc })
+
+  // TODO: disableRepo if root package.json is invalid
+  // ie. pkg is empty? See test file.
+  // if(isRootLevel && !Object.keys(pkg).length) return disableRepo({ repositories, repository, repoDoc })
 
   if (_.isEqual(oldPkg, pkg)) {
     await updateDoc(repositories, repository, repoDoc)
@@ -53,6 +61,9 @@ module.exports = async function (data) {
   }
 
   await updateDoc(repositories, repository, repoDoc)
+
+  console.log('oldPkg', oldPkg)
+  console.log('pkg', pkg)
 
   if (!oldPkg) {
     return {
@@ -67,17 +78,23 @@ module.exports = async function (data) {
   // needs to happen for all the package.jsons
   // delete all branches for modified or deleted dependencies
   // do diff + getBranchesToDelete per file for each group
-  console.log('oldPkg', oldPkg)
-  console.log('pkg', pkg)
 
+  const branches = []
+  Object.keys(pkg).forEach((key) => {
+    const changes = diff(oldPkg[key], pkg[key])
+    branches.push(getBranchesToDelete(changes))
+  })
+
+  /*
   const changes = diff(oldPkg, pkg)
   console.log('changes', changes)
 
   const branches = getBranchesToDelete(changes)
+  */
   console.log('branches to be deleted!!', branches)
   // do this per group, if groups, else once
   await Promise.mapSeries(
-    branches,
+    _.flatten(branches), // TODO: UNIQ!
     deleteBranches.bind(null, {
       installationId: installation.id,
       fullName: repository.full_name,
@@ -100,7 +117,7 @@ function updateDoc (repositories, repository, repoDoc) {
 }
 
 // check for relevant files in all folders!
-// currently we might just detect those files in the root directory
+// TODO: currently we might just detect those files in the root directory
 function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {
