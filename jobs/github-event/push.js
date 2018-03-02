@@ -8,6 +8,7 @@ const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
 const { maybeUpdatePaymentsJob } = require('../../lib/payments')
 const { getBranchesToDelete } = require('../../lib/branches-to-delete')
+const getConfig = require('../../lib/get-config')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -24,15 +25,16 @@ module.exports = async function (data) {
     'greenkeeper.json'
   ]
 
-  // if greenkeeper.json with at least one file in a group
-  // updated repoDoc with new .greenkeeperrc
-  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
-  // close all open prs for that groupname
-
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
   const repositoryId = String(repository.id)
 
   let repoDoc = await repositories.get(repositoryId)
+  const config = getConfig(repoDoc.doc)
+  const isMonorepo = !!_.get(config, ['groups'])
+  // if greenkeeper.json with at least one file in a group
+  // updated repoDoc with new .greenkeeperrc
+  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
+  // close all open prs for that groupname
 
   // Already synced the sha
   if (after === repoDoc.headSha) return
@@ -44,16 +46,12 @@ module.exports = async function (data) {
   const oldPkg = _.get(repoDoc, ['packages'])
   await updateRepoDoc(installation.id, repoDoc)
   const pkg = _.get(repoDoc, ['packages'])
-
-  // FIX: Disable if there’s no package. This made sense when
-  // the line above was
-  // const pkg = _.get(repodoc, ['packages', 'package.json'])
-  // but not anymore
   if (!pkg) return disableRepo({ repositories, repository, repoDoc })
-
-  // TODO: disableRepo if root package.json is invalid
-  // ie. pkg is empty? See test file.
-  // if(isRootLevel && !Object.keys(pkg).length) return disableRepo({ repositories, repository, repoDoc })
+  if (!isMonorepo) {
+    if (!Object.keys(pkg).length) {
+      return disableRepo({ repositories, repository, repoDoc })
+    }
+  }
 
   if (_.isEqual(oldPkg, pkg)) {
     await updateDoc(repositories, repository, repoDoc)
@@ -93,6 +91,14 @@ module.exports = async function (data) {
   */
   console.log('branches to be deleted!!', branches)
   // do this per group, if groups, else once
+
+  // MONDAY CONTINUE HERE
+
+  // TODO: config includes no groups
+  console.log('config', config)
+  // Object.keys(config.groups).map((group, key) => {
+  //   console.log('group, key', group, key)
+  // })
   await Promise.mapSeries(
     _.flatten(branches), // TODO: UNIQ!
     deleteBranches.bind(null, {
