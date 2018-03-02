@@ -189,6 +189,7 @@ test('delete-branches in monorepo', async () => {
     })
     .delete('/repos/brot/lecker/git/refs/heads/greenkeeper/backend/standard-9.0.0')
     .reply(200, () => {
+      // should not delete this one
       expect(true).toBeFalsy()
       return {}
     })
