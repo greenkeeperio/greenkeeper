@@ -7,7 +7,7 @@ const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
 const { maybeUpdatePaymentsJob } = require('../../lib/payments')
-const { cleanUpBranches } = require('../../lib/cleanup-branches')
+const { getBranchesToDelete } = require('../../lib/branches-to-delete')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -64,16 +64,18 @@ module.exports = async function (data) {
     }
   }
 
-// needs to happen for all the package.jsons
-// delete all branches for modified or deleted dependencies
+  // needs to happen for all the package.jsons
+  // delete all branches for modified or deleted dependencies
+  // do diff + getBranchesToDelete per file for each group
   console.log('oldPkg', oldPkg)
   console.log('pkg', pkg)
 
   const changes = diff(oldPkg, pkg)
   console.log('changes', changes)
 
-  const branches = cleanUpBranches(changes)
+  const branches = getBranchesToDelete(changes)
   console.log('branches to be deleted!!', branches)
+  // do this per group, if groups, else once
   await Promise.mapSeries(
     branches,
     deleteBranches.bind(null, {
