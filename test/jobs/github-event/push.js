@@ -350,7 +350,7 @@ describe('github-event push', async () => {
           version: '2.0.0',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'gk-lodash-2.0.0'
+          head: 'greenkeeper/lodash-2.0.0'
         },
         {
           _id: '444:branch:1234abce',
@@ -360,7 +360,7 @@ describe('github-event push', async () => {
           version: '3.0.0',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'gk-lodash-3.0.0'
+          head: 'greenkeeper/lodash-3.0.0'
         }
       ])
     ])
@@ -385,8 +385,14 @@ describe('github-event push', async () => {
           }
         })
       })
-      .delete('/repos/finn/test/git/refs/heads/gk-lodash-2.0.0')
+      .delete('/repos/finn/test/git/refs/heads/greenkeeper/lodash-2.0.0')
       .reply(200, {})
+      .delete('/repos/finn/test/git/refs/heads/greenkeeper/lodash-3.0.0')
+      .reply(200, () => {
+        // this should not happen
+        expect(true).toBeFalsy()
+        return {}
+      })
 
     const newJob = await githubPush({
       installation: {
@@ -453,11 +459,11 @@ describe('github-event push', async () => {
           _id: '444A:branch:1234abcd',
           type: 'branch',
           sha: '1234abcd',
-          repositoryId: '444',
+          repositoryId: '444A',
           version: '2.0.0',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'gk-lodash-2.0.0'
+          head: 'greenkeeper/lodash-2.0.0'
         },
         {
           _id: '444A:branch:1234abce',
@@ -467,7 +473,7 @@ describe('github-event push', async () => {
           version: '3.0.0',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'gk-lodash-3.0.0'
+          head: 'greenkeeper/lodash-3.0.0'
         }
       ])
     ])
@@ -491,7 +497,9 @@ describe('github-event push', async () => {
           }
         })
       })
-      .delete('/repos/finn/test/git/refs/heads/gk-lodash-3.0.0')
+      .delete('/repos/finn/test/git/refs/heads/greenkeeper/lodash-3.0.0')
+      .reply(200, {})
+      .delete('/repos/finn/test/git/refs/heads/greenkeeper/lodash-2.0.0')
       .reply(200, {})
 
     const newJob = await githubPush({
@@ -531,8 +539,10 @@ describe('github-event push', async () => {
     }
     expect(repo.packages).toMatchObject(expectedPackages)
 
-    const branch = await repositories.get('444A:branch:1234abce')
-    expect(branch.referenceDeleted).toBeTruthy()
+    const branch1 = await repositories.get('444A:branch:1234abcd')
+    expect(branch1.referenceDeleted).toBeTruthy()
+    const branch2 = await repositories.get('444A:branch:1234abce')
+    expect(branch2.referenceDeleted).toBeTruthy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab1b')
   })
 
@@ -970,7 +980,7 @@ describe('github-event push', async () => {
     - [ ] dependency in file in group added -> nothing should happen except package.json update
     Modifications ?
   */
-  test.only('monorepo: 2 package.jsons in 2 groups with existing branches (777)', async () => {
+  test('monorepo: 2 package.jsons in 2 groups with existing branches (777)', async () => {
     const configFileContent = {
       groups: {
         frontend: {
@@ -981,6 +991,11 @@ describe('github-event push', async () => {
         backend: {
           packages: [
             'packages/backend/package.json'
+          ]
+        },
+        'i-live-again': {
+          packages: [
+            'packages/lalalalala/package.json'
           ]
         }
       }
