@@ -77,6 +77,7 @@ module.exports = async function (data) {
   // delete all branches for modified or deleted dependencies
   // do diff + getBranchesToDelete per file for each group
 
+  // TODO: for Tuesday -> deleting a package.json needs to be detected!!
   const branches = []
   Object.keys(pkg).forEach((path) => {
     let groupName = null
