@@ -29,7 +29,7 @@ module.exports = async function (data) {
   const repositoryId = String(repository.id)
 
   let repoDoc = await repositories.get(repositoryId)
-  const config = getConfig(repoDoc.doc)
+  const config = getConfig(repoDoc)
   const isMonorepo = !!_.get(config, ['groups'])
   // if greenkeeper.json with at least one file in a group
   // updated repoDoc with new .greenkeeperrc
@@ -46,8 +46,8 @@ module.exports = async function (data) {
   const oldPkg = _.get(repoDoc, ['packages'])
   await updateRepoDoc(installation.id, repoDoc)
   const pkg = _.get(repoDoc, ['packages'])
-  if (!pkg) return disableRepo({ repositories, repository, repoDoc })
-  if (!isMonorepo) {
+  if (!pkg || _.isEmpty(pkg)) return disableRepo({ repositories, repository, repoDoc })
+  if (!isMonorepo) { // does this make sense??
     if (!Object.keys(pkg).length) {
       return disableRepo({ repositories, repository, repoDoc })
     }
@@ -77,9 +77,18 @@ module.exports = async function (data) {
   // delete all branches for modified or deleted dependencies
   // do diff + getBranchesToDelete per file for each group
 
+  // TODO: for Tuesday -> deleting a package.json needs to be detected!!
   const branches = []
-  Object.keys(pkg).forEach((key) => {
-    const changes = diff(oldPkg[key], pkg[key])
+  Object.keys(pkg).forEach((path) => {
+    let groupName = null
+    if (config.groups) {
+      Object.keys(config.groups).map((group) => {
+        if (config.groups[group].packages.includes(path)) {
+          groupName = group
+        }
+      })
+    }
+    const changes = diff(oldPkg[path], pkg[path], groupName)
     branches.push(getBranchesToDelete(changes))
   })
 
@@ -89,18 +98,16 @@ module.exports = async function (data) {
 
   const branches = getBranchesToDelete(changes)
   */
-  console.log('branches to be deleted!!', branches)
+  // console.log('branches to be deleted!!', branches)
   // do this per group, if groups, else once
 
   // MONDAY CONTINUE HERE
 
   // TODO: config includes no groups
-  console.log('config', config)
-  // Object.keys(config.groups).map((group, key) => {
-  //   console.log('group, key', group, key)
-  // })
+  // console.log('config', config)
+
   await Promise.mapSeries(
-    _.flatten(branches), // TODO: UNIQ!
+    _.uniqWith(_.flatten(branches), _.isEqual),
     deleteBranches.bind(null, {
       installationId: installation.id,
       fullName: repository.full_name,
@@ -137,7 +144,7 @@ function hasRelevantChanges (commits, files) {
 }
 
 async function disableRepo ({ repositories, repoDoc, repository }) {
-  console.log('disableRepo')
+  // console.log('disableRepo')
   repoDoc.enabled = false
   await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
