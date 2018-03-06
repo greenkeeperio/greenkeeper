@@ -1,9 +1,8 @@
-const { test, tearDown } = require('tap')
-
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/issues/closed')
+const removeIfExists = require('../../../helpers/remove-if-exists')
+const closeIssue = require('../../../../jobs/github-event/issues/closed')
 
-test('github-event issues closed', async t => {
+test('github-event issues closed', async () => {
   const { repositories } = await dbs()
 
   await repositories.put({
@@ -13,7 +12,7 @@ test('github-event issues closed', async t => {
     repositoryId: '42'
   })
 
-  const newJob = await worker({
+  const newJob = await closeIssue({
     issue: {
       number: 666
     },
@@ -26,14 +25,14 @@ test('github-event issues closed', async t => {
     }
   })
 
-  t.notOk(newJob, 'no new job')
+  expect(newJob).toBeFalsy()
   const issue = await repositories.get('42:issue:666')
-  t.is(issue.state, 'closed', 'status is closed')
-  t.ok(issue.updatedAt, 'updated updatedAt')
-  t.end()
+
+  expect(issue.state).toEqual('closed')
+  expect(issue.updatedAt).toBeTruthy()
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { repositories } = await dbs()
-  repositories.remove(await repositories.get('42:issue:666'))
+  await removeIfExists(repositories, '42:issue:666')
 })

@@ -23,6 +23,7 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr'})
 
   log.info('started')
+  log.info(`config for ${repodoc.fullName}`, {config})
 
   const [owner, repo] = repodoc.fullName.split('/')
   const {
@@ -64,24 +65,26 @@ module.exports = async function (
   }))
   log.info('github: set greenkeeper/verify status')
 
-  const billingAccount = await getActiveBilling(accountId)
-  const hasBillingAccount = !!billingAccount
-  const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
+  if (repodoc.private && !env.IS_ENTERPRISE) {
+    const billingAccount = await getActiveBilling(accountId)
+    const hasBillingAccount = !!billingAccount
+    const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
 
-  if (repodoc.private && (!hasBillingAccount || accountNeedsMarketplaceUpgrade)) {
-    log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
-    const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
+    if (!hasBillingAccount || accountNeedsMarketplaceUpgrade) {
+      log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
+      const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
 
-    await ghqueue.write(github => github.repos.createStatus({
-      owner,
-      repo,
-      sha,
-      state: 'pending',
-      context: 'greenkeeper/payment',
-      description: 'Payment required, merging will have no effect',
-      target_url: targetUrl
-    }))
-    log.info('github: set greenkeeper/payment status')
+      await ghqueue.write(github => github.repos.createStatus({
+        owner,
+        repo,
+        sha,
+        state: 'pending',
+        context: 'greenkeeper/payment',
+        description: 'Payment required, merging will have no effect',
+        target_url: targetUrl
+      }))
+      log.info('github: set greenkeeper/payment status')
+    }
   }
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))

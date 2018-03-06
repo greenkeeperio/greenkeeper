@@ -15,6 +15,7 @@ const env = require('../lib/env')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const { updateRepoDoc } = require('../lib/repository-docs')
@@ -47,6 +48,7 @@ module.exports = async function ({ repositoryId }) {
   await upsert(repositories, repoDoc._id, repoDoc)
 
   const config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
@@ -144,16 +146,16 @@ module.exports = async function ({ repositoryId }) {
   const badgesTokenMaybe = repoDoc.private
     ? `?token=${tokenHash}&ts=${Date.now()}`
     : ''
-  const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
+  const badgeUrl = `https://${env.BADGES_HOST}/${slug}.svg${badgesTokenMaybe}`
   log.info('badge: url', {badgeUrl})
 
-  const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
+  const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
   let badgeAlreadyAdded = false
   const transforms = [
     {
       path: 'package.json',
-      message: 'chore(package): update dependencies',
+      message: getMessage(config.commitMessages, 'initialDependencies'),
       transform: oldPkg => {
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
@@ -168,13 +170,13 @@ module.exports = async function ({ repositoryId }) {
     },
     {
       path: '.travis.yml',
-      message: 'chore(travis): whitelist greenkeeper branches',
+      message: getMessage(config.commitMessages, 'initialBranches'),
       transform: raw => travisTransform(config, raw)
     },
     {
       path: 'README.md',
       create: true,
-      message: 'docs(readme): add Greenkeeper badge',
+      message: getMessage(config.commitMessages, 'initialBadge'),
       transform: (readme, path) => {
         // TODO: empty readme, no image support
         const ext = extname(path).slice(1)
@@ -187,7 +189,7 @@ module.exports = async function ({ repositoryId }) {
 
         badgeAlreadyAdded = _.includes(
           readme,
-          'https://badges.greenkeeper.io/'
+          `https://${env.BADGES_HOST}/`
         )
         if (!repoDoc.private && badgeAlreadyAdded) {
           log.info('badge: Repository already has badge')
@@ -219,7 +221,11 @@ module.exports = async function ({ repositoryId }) {
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
       log.info('Repository silently enabled')
-      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      if (env.IS_ENTERPRISE) {
+        return
+      } else {
+        return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      }
     } else {
       log.error('Could not create initial branch')
       throw new Error('Could not create initial branch')

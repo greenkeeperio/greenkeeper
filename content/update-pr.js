@@ -2,6 +2,8 @@ const _ = require('lodash')
 const md = require('./template')
 
 module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type, release, diffCommits}) => md`
+☝️ Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
+
 ## Version **${version}** of ${dependencyLink} was just published.
 
 <table>

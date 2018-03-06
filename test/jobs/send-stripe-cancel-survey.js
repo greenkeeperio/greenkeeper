@@ -1,21 +1,7 @@
-const { test } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire').noCallThru()
-const worker = proxyquire('../../jobs/send-stripe-cancel-survey', {
-  'nodemailer': {
-    createTransport () {
-      return {
-        sendMail (message, callback) {
-          callback(null, {})
-        }
-      }
-    }
-  }
-})
-
 const dbs = require('../../lib/dbs')
-const timeToWaitAfterTests = 1000
 
+const timeToWaitAfterTests = 1000
 const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
@@ -25,10 +11,9 @@ const waitFor = (milliseconds) => {
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-test('send-stripe-cancel-survey', async t => {
-  const { payments } = await dbs()
-
-  t.beforeEach(async () => {
+describe('send-stripe-cancel-survey', async () => {
+  beforeEach(async () => {
+    const { payments } = await dbs()
     await payments.put({
       _id: '1',
       stripeSubscriptionId: null
@@ -37,34 +22,52 @@ test('send-stripe-cancel-survey', async t => {
       _id: '2',
       stripeSubscriptionId: 'hello'
     })
+
+    jest.clearAllMocks()
   })
 
-  t.afterEach(async () => {
+  afterEach(async () => {
     nock.cleanAll()
+    const { payments } = await dbs()
     await payments.remove(await payments.get('1'))
     await payments.remove(await payments.get('2'))
   })
 
-  t.test('exit if the paymentsDoc has a stripeSubscriptionId', async t => {
-    t.plan(1)
+  jest.mock('nodemailer', () => {
+    return {
+      createTransport: () => {
+        return {
+          sendMail (message, callback) {
+            callback(null, {})
+          }
+        }
+      }
+    }
+  })
+  const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
+
+  test('exit if the paymentsDoc has a stripeSubscriptionId', async () => {
+    expect.assertions(1)
     nock('https://api.stripe.com')
       .get('/v1/subscriptions/oldSubscriptionId')
       .optionally()
       .reply(200, () => {
-        t.fail('should not have contacted stripe')
+        // should not have contacted stripe
+        expect(false).toBeFalsy()
         return {}
       })
 
-    await worker({
+    await sendStripeCancelSurvey({
       accountId: '2',
       stripeSubscriptionId: 'oldSubscriptionId'
     })
-    t.ok(true)
+    expect(true).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('exit if canceled_at in the stripe subscription is null', async t => {
-    t.plan(1)
+  test('exit if canceled_at in the stripe subscription is null', async () => {
+    expect.assertions(1)
+
     nock('https://api.stripe.com')
       .get('/v1/subscriptions/oldSubscriptionId')
       .reply(200, {
@@ -74,20 +77,23 @@ test('send-stripe-cancel-survey', async t => {
       .get('/v1/customers/julia')
       .optionally()
       .reply(200, () => {
-        t.fail('should not have contacted stripe')
+        // should not have contacted stripe
+        expect(false).toBeFalsy()
         return {}
       })
 
-    await worker({
+    await sendStripeCancelSurvey({
       accountId: '1',
       stripeSubscriptionId: 'oldSubscriptionId'
     })
-    t.ok(true)
+    expect(true).toBeTruthy()
+
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('exit if stripe customer has no email', async t => {
-    t.plan(1)
+  test('exit if stripe customer has no email', async () => {
+    expect.assertions(1)
+
     nock('https://api.stripe.com')
       .get('/v1/subscriptions/oldSubscriptionId')
       .reply(200, {
@@ -99,29 +105,32 @@ test('send-stripe-cancel-survey', async t => {
         email: ''
       })
 
-    await worker({
+    await sendStripeCancelSurvey({
       accountId: '1',
       stripeSubscriptionId: 'oldSubscriptionId'
     })
-    t.ok(true)
+    expect(true).toBeTruthy()
+
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('send email', async t => {
-    t.plan(2)
+  test('send email', async () => {
+    expect.assertions(2)
 
-    const emailWorker = proxyquire('../../jobs/send-stripe-cancel-survey', {
-      'nodemailer': {
-        createTransport () {
+    jest.resetModules()
+    jest.mock('nodemailer', () => {
+      return {
+        createTransport: () => {
           return {
             sendMail (message, callback) {
-              t.ok(true)
+              expect(true).toBeTruthy()
               callback(null, {})
             }
           }
         }
       }
     })
+    const sendStripeCancelSurvey = require('../../jobs/send-stripe-cancel-survey')
 
     nock('https://api.stripe.com')
       .get('/v1/subscriptions/oldSubscriptionId')
@@ -134,11 +143,12 @@ test('send-stripe-cancel-survey', async t => {
         email: 'julia@julia.com'
       })
 
-    await emailWorker({
+    await sendStripeCancelSurvey({
       accountId: '1',
       stripeSubscriptionId: 'oldSubscriptionId'
     })
-    t.ok(true)
+    expect(true).toBeTruthy()
+
     await waitFor(timeToWaitAfterTests)
   })
 })

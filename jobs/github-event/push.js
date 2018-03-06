@@ -1,11 +1,12 @@
 const _ = require('lodash')
 
 const dbs = require('../../lib/dbs')
+const env = require('../../lib/env')
 const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
 const deleteBranches = require('../../lib/delete-branches')
-const { hasStripeBilling } = require('../../lib/payments')
+const { maybeUpdatePaymentsJob } = require('../../lib/payments')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -107,12 +108,7 @@ function hasRelevantChanges (commits, files) {
 async function disableRepo ({ repositories, repodoc, repository }) {
   repodoc.enabled = false
   await updateDoc(repositories, repository, repodoc)
-  if (repodoc.private && (await hasStripeBilling(repodoc.accountId))) {
-    return {
-      data: {
-        name: 'update-payments',
-        accountId: repodoc.accountId
-      }
-    }
+  if (!env.IS_ENTERPRISE) {
+    return maybeUpdatePaymentsJob(repodoc.accountId, repodoc.private)
   }
 }

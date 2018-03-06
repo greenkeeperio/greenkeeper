@@ -1,8 +1,9 @@
 const nock = require('nock')
-const { test } = require('tap')
-const proxyquire = require('proxyquire')
 
-test('get token', async t => {
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+test('get token', async () => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'Bearer jwtToken' }
   })
@@ -17,16 +18,20 @@ test('get token', async t => {
     .get('/rate_limit')
     .reply(200)
 
-  const getToken = proxyquire('../../lib/get-token', {
-    zlib: { gunzipSync: () => 'cert' },
-    jsonwebtoken: {
+  jest.mock('zlib', () => {
+    return {
+      gunzipSync: () => 'cert'
+    }
+  }).mock('jsonwebtoken', () => {
+    return {
       sign: (payload, cert) => {
         if (cert === 'cert') return 'jwtToken'
       }
     }
   })
+  const getToken = require('../../lib/get-token')
 
-  t.is((await getToken(1337)).token, 'the-token', 'uncached')
-  t.is((await getToken(1337)).token, 'the-token', 'cached')
-  t.end()
+  const token = (await getToken(1337)).token
+  expect(token).toEqual('the-token') // uncached
+  expect(token).toEqual('the-token') // cached
 })

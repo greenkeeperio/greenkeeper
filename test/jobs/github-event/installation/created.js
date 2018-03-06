@@ -1,11 +1,13 @@
-const _ = require('lodash')
-const { test, tearDown } = require('tap')
 const nock = require('nock')
-const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/installation/created')
+const _ = require('lodash')
 
-test('github-event installation created', async t => {
+const dbs = require('../../../../lib/dbs')
+const removeIfExists = require('../../../helpers/remove-if-exists')
+const createInstallation = require('../../../../jobs/github-event/installation/created')
+
+test('github-event installation created', async () => {
   const { installations, repositories } = await dbs()
+
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
     .reply(200, {
@@ -13,7 +15,7 @@ test('github-event installation created', async t => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/installation/repositories')
+    .get('/installation/repositories?per_page=100')
     .reply('200', {
       repositories: [
         {
@@ -22,9 +24,9 @@ test('github-event installation created', async t => {
           private: true
         }
       ]}, {
-        Link: '<https://api.github.com/installation/repositories?page=2>; rel="next"'
+        Link: '<https://api.github.com/installation/repositories?per_page=100&page=2>; rel="next"'
       })
-    .get('/installation/repositories?page=2')
+    .get('/installation/repositories?per_page=100&page=2')
     .reply('200', {
       repositories: [
         {
@@ -34,7 +36,7 @@ test('github-event installation created', async t => {
         }
       ]})
 
-  const newJobs = await worker({
+  const newJobs = await createInstallation({
     installation: {
       id: 1,
       account: {
@@ -46,50 +48,39 @@ test('github-event installation created', async t => {
     }
   })
 
-  t.is(newJobs.length, 2)
+  expect(newJobs).toHaveLength(2)
 
   const repos = await Promise.all([
     repositories.get('123'),
     repositories.get('234')
   ])
 
-  t.same(_.uniq(_.map(newJobs, 'data.name')), ['create-initial-branch'])
+  expect(_.uniq(_.map(newJobs, 'data.name'))).toContain('create-initial-branch')
 
   newJobs.forEach((job, i) => {
-    t.is(job.data.repositoryId, repos[i]._id)
-  })
-
-  newJobs.forEach((job, i) => {
-    t.is(job.data.accountId, '2')
+    expect(job.data.repositoryId).toEqual(repos[i]._id)
+    expect(job.data.accountId).toEqual('2')
   })
 
   const [repo] = repos
-  t.is(repo._id, '123')
-  t.is(repo.enabled, false)
-  t.is(repo.accountId, '2')
-  t.is(repo.fullName, 'bar/repo')
-  t.is(repo.private, true)
+  expect(repo._id).toEqual('123')
+  expect(repo.enabled).toBeFalsy()
+  expect(repo.accountId).toEqual('2')
+  expect(repo.fullName).toEqual('bar/repo')
+  expect(repo.private).toBeTruthy()
 
   const doc = await installations.get('2')
-
-  t.is(doc.installation, 1)
-  t.is(doc.login, 'bar')
-  t.is(doc.type, 'baz')
-  t.end()
+  expect(doc.installation).toBe(1)
+  expect(doc.login).toBe('bar')
+  expect(doc.type).toBe('baz')
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { installations, repositories } = await dbs()
 
-  await repositories.bulkDocs(
-    (await repositories.allDocs({
-      keys: ['123', '234']
-    })).rows.map(row => ({
-      _id: row.id,
-      _rev: row.value.rev,
-      _deleted: true
-    }))
-  )
-  await installations.remove(await installations.get('2'))
+  await Promise.all([
+    removeIfExists(installations, '2'),
+    removeIfExists(repositories, '123', '234')
+  ])
   require('../../../../lib/statsd').close()
 })
