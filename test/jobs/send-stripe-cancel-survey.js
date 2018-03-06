@@ -8,9 +8,6 @@ const waitFor = (milliseconds) => {
   })
 }
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 describe('send-stripe-cancel-survey', async () => {
   beforeEach(async () => {
     const { payments } = await dbs()

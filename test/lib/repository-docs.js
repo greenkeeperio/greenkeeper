@@ -2,9 +2,6 @@ const nock = require('nock')
 
 const { createDocs, updateRepoDoc } = require('../../lib/repository-docs')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 test('updateRepoDoc with package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')

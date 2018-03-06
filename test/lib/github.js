@@ -1,9 +1,6 @@
 const nock = require('nock')
 const simple = require('simple-mock')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 test('parse github host', async () => {
   nock('https://enterprise.github')
     .get('/api/v3/repos/greenkeeperio/greenkeeper')

@@ -4,9 +4,6 @@ const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 const { cleanCache } = require('../helpers/module-cache-helpers')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 describe('create initial branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE

@@ -1,8 +1,5 @@
 const nock = require('nock')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 test('get token', async () => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'Bearer jwtToken' }

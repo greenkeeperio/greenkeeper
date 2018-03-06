@@ -10,9 +10,6 @@ const waitFor = (milliseconds) => {
   })
 }
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 describe('create-initial-pr-comment', async () => {
   const createInitialPrComment = require('../../jobs/create-initial-pr-comment')
 

@@ -2,9 +2,6 @@ const nock = require('nock')
 
 const createBranch = require('../../lib/create-branch')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 function ghToken (nocked) {
   return nocked
     .post('/installations/123/access_tokens')
