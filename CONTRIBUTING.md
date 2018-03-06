@@ -32,7 +32,7 @@ To run the tests you will need [Docker](https://docs.docker.com/engine/installat
 
 ```bash
 # Install CouchDB on Docker
-$ docker pull klaemo/couchdb:2.0.0
+$ docker pull apache/couchdb:2.1.1
 ```
 A fake private key in the .env file is needed generate it like this:
 * Linux
@@ -46,8 +46,10 @@ $ (echo -n "PRIVATE_KEY="; openssl genrsa 2>/dev/null | gzip | base64) >> .env
 
 And at last try to run the tests
 ```bash
-$ npm run test
+$ npm test
 ```
+
+Read more about our Jest [tests](https://github.com/greenkeeperio/greenkeeper/tree/master/test)
 
 #### Test Troubleshooting
 

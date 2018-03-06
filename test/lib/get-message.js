@@ -1,9 +1,8 @@
-const { test } = require('tap')
 const getMessage = require('../../lib/get-message')
 
 /* eslint-disable no-template-curly-in-string */
 
-test('get default commit messages', t => {
+test('get default commit messages', () => {
   const commitMessages = {
     initialBadge: 'docs(readme): add Greenkeeper badge',
     initialDependencies: 'chore(package): update dependencies',
@@ -31,23 +30,46 @@ test('get default commit messages', t => {
     closes: '\n\nCloses #42'
   }
 
-  t.plan(Object.keys(commitMessages).length)
-  t.is(getMessage(commitMessages, 'initialBadge'), expected.initialBadge)
-  t.is(getMessage(commitMessages, 'initialDependencies'), expected.initialDependencies)
-  t.is(getMessage(commitMessages, 'initialBranches'), expected.initialBranches)
-  t.is(getMessage(commitMessages, 'dependencyUpdate', values), expected.dependencyUpdate)
-  t.is(getMessage(commitMessages, 'devDependencyUpdate', values), expected.devDependencyUpdate)
-  t.is(getMessage(commitMessages, 'dependencyPin', values), expected.dependencyPin)
-  t.is(getMessage(commitMessages, 'devDependencyPin', values), expected.devDependencyPin)
-  t.is(getMessage(commitMessages, 'closes', values), expected.closes)
+  expect.assertions(Object.keys(commitMessages).length)
+  expect(getMessage(commitMessages, 'initialBadge')).toEqual(expected.initialBadge)
+  expect(getMessage(commitMessages, 'initialDependencies')).toEqual(expected.initialDependencies)
+  expect(getMessage(commitMessages, 'initialBranches')).toEqual(expected.initialBranches)
+  expect(getMessage(commitMessages, 'dependencyUpdate', values)).toEqual(expected.dependencyUpdate)
+  expect(getMessage(commitMessages, 'devDependencyUpdate', values)).toEqual(expected.devDependencyUpdate)
+  expect(getMessage(commitMessages, 'dependencyPin', values)).toEqual(expected.dependencyPin)
+  expect(getMessage(commitMessages, 'devDependencyPin', values)).toEqual(expected.devDependencyPin)
+  expect(getMessage(commitMessages, 'closes', values)).toEqual(expected.closes)
 })
 
-test("throws when it doesn't know a message", t => {
+test("throws when it doesn't know a message", () => {
   const commitMessages = {
     foo: '42'
   }
-  const message = "Unknown message key 'bar'"
+  const message = "Unknown message messageKey 'bar'"
 
-  t.plan(1)
-  t.throws(() => getMessage(commitMessages, 'bar'), message)
+  expect.assertions(1)
+  expect(() => {
+    getMessage(commitMessages, 'bar')
+  }).toThrowError(message)
+})
+
+test('ignores invalid variables and replaces the commit message with the default one', () => {
+  const commitMessages = {
+    dependencyUpdate: 'fix(package): update ${console.log("hallo")} to version ${lalala}',
+    closes: '\n\nCloses #${111111}'
+  }
+  const values = {
+    dependency: 'foo',
+    version: 'bar',
+    oldVersion: 'rab',
+    number: 42
+  }
+  const expected = {
+    dependencyUpdate: 'fix(package): update foo to version bar',
+    closes: '\n\nCloses #42'
+  }
+
+  expect.assertions(Object.keys(commitMessages).length)
+  expect(getMessage(commitMessages, 'closes', values)).toEqual(expected.closes)
+  expect(getMessage(commitMessages, 'dependencyUpdate', values)).toEqual(expected.dependencyUpdate)
 })

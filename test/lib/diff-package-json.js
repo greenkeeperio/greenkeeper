@@ -1,8 +1,6 @@
-const { test } = require('tap')
-
 const diff = require('../../lib/diff-package-json')
 
-test('no change', t => {
+test('no change', () => {
   const a = {
     name: 'a',
     dependencies: {
@@ -15,11 +13,10 @@ test('no change', t => {
       lodash: '^1.0.0'
     }
   }
-  t.same(diff(a, b), {})
-  t.end()
+  expect(diff(a, b)).toEqual({})
 })
 
-test('update dependency', t => {
+test('update dependency', () => {
   const a = {
     dependencies: {
       lodash: '^1.0.0'
@@ -30,7 +27,8 @@ test('update dependency', t => {
       lodash: '^2.0.0'
     }
   }
-  t.same(diff(a, b), {
+
+  const expected = {
     dependencies: {
       lodash: {
         change: 'modified',
@@ -38,11 +36,11 @@ test('update dependency', t => {
         after: '^2.0.0'
       }
     }
-  })
-  t.end()
+  }
+  expect(diff(a, b)).toMatchObject(expected)
 })
 
-test('add dependency', t => {
+test('add dependency', () => {
   const a = {
     dependencies: {
       lodash: '^1.0.0'
@@ -54,7 +52,7 @@ test('add dependency', t => {
       async: '^1.0.0'
     }
   }
-  t.same(diff(a, b), {
+  const expected = {
     dependencies: {
       async: {
         change: 'added',
@@ -62,11 +60,11 @@ test('add dependency', t => {
         after: '^1.0.0'
       }
     }
-  })
-  t.end()
+  }
+  expect(diff(a, b)).toMatchObject(expected)
 })
 
-test('remove dependency', t => {
+test('remove dependency', () => {
   const a = {
     dependencies: {
       lodash: '^1.0.0',
@@ -78,7 +76,7 @@ test('remove dependency', t => {
       lodash: '^1.0.0'
     }
   }
-  t.same(diff(a, b), {
+  const expected = {
     dependencies: {
       async: {
         change: 'removed',
@@ -86,6 +84,6 @@ test('remove dependency', t => {
         after: undefined
       }
     }
-  })
-  t.end()
+  }
+  expect(diff(a, b)).toMatchObject(expected)
 })
