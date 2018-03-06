@@ -18,7 +18,7 @@
     <img src="https://david-dm.org/greenkeeperio/greenkeeper/master.svg"
       alt="Dependency Status" />
   </a>
-  <a href="https://david-dm.org/greenkeeperio/greenkeeper/master#info=devDependencies">
+  <a href="https://david-dm.org/greenkeeperio/greenkeeper/master?type=dev">
     <img src="https://david-dm.org/greenkeeperio/greenkeeper/master/dev-status.svg"
       alt="devDependency Status" />
   </a>
