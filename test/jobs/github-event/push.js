@@ -972,7 +972,7 @@ describe('github-event push', async () => {
     TODO:
     Deletions:
     - [ ] group deleted -> should delete all group’s branches
-    - [ ] file in group deleted -> should delete all group’s branches
+    - [-] file in group deleted -> should delete all group’s branches
     - [x] dependency in file in group deleted -> should delete all group’s branches
     Additions:
     - [ ] group added -> should return create-initial-group-branch job
@@ -1590,7 +1590,7 @@ describe('github-event push', async () => {
     const frontend = await repositories.get('888:branch:1234abca')
     expect(frontend.referenceDeleted).toBeTruthy()
     const backend = await repositories.get('888:branch:1234abcb')
-    expect(backend.referenceDeleted).toBeTruthy()
+    expect(backend.referenceDeleted).toBeFalsy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
