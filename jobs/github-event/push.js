@@ -5,9 +5,13 @@ const env = require('../../lib/env')
 const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
 const diff = require('../../lib/diff-package-json')
+const diffGreenkeeperJson = require('../../lib/diff-greenkeeper-json')
 const deleteBranches = require('../../lib/delete-branches')
 const { maybeUpdatePaymentsJob } = require('../../lib/payments')
-const { getBranchesToDelete } = require('../../lib/branches-to-delete')
+const {
+  getDependencyBranchesToDelete,
+  getGroupBranchesToDelete
+} = require('../../lib/branches-to-delete')
 const getConfig = require('../../lib/get-config')
 
 module.exports = async function (data) {
@@ -78,27 +82,21 @@ module.exports = async function (data) {
   // do diff + getBranchesToDelete per file for each group
 
   // TODO: for Tuesday -> deleting a package.json needs to be detected!!
-  const branches = []
-  Object.keys(pkg).forEach((path) => {
-    let groupName = null
-    if (config.groups) {
-      Object.keys(config.groups).map((group) => {
-        if (config.groups[group].packages.includes(path)) {
-          groupName = group
-        }
-      })
-    }
-    const changes = diff(oldPkg[path], pkg[path], groupName)
-    branches.push(getBranchesToDelete(changes))
-  })
+  const branches = await getDependencyBranchesForAllGroups({pkg, oldPkg, config, repositories, repositoryId})
+  const configChanges = diffGreenkeeperJson(config, repoDoc.greenkeeper)
+  console.log('configChanges', configChanges)
+  console.log('dependencyChanges', branches)
 
-  /*
-  const changes = diff(oldPkg, pkg)
-  console.log('changes', changes)
+  const groupBranchesToDelete = await getGroupBranchesToDelete({configChanges, repositories, repositoryId})
+  console.log('branches in push', branches)
+  const allBranchesToDelete = branches.concat(groupBranchesToDelete)
+  console.log('allBranchesToDelete', allBranchesToDelete)
+  const _branches = _.uniqWith(_.flatten(allBranchesToDelete), _.isEqual)
 
-  const branches = getBranchesToDelete(changes)
-  */
-  // console.log('branches to be deleted!!', branches)
+  if (configChanges.added.length) {
+    // create subgroup initial pr
+  }
+
   // do this per group, if groups, else once
 
   // MONDAY CONTINUE HERE
@@ -107,7 +105,7 @@ module.exports = async function (data) {
   // console.log('config', config)
 
   await Promise.mapSeries(
-    _.uniqWith(_.flatten(branches), _.isEqual),
+    _branches,
     deleteBranches.bind(null, {
       installationId: installation.id,
       fullName: repository.full_name,
@@ -129,8 +127,6 @@ function updateDoc (repositories, repository, repoDoc) {
   )
 }
 
-// check for relevant files in all folders!
-// TODO: currently we might just detect those files in the root directory
 function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {
@@ -150,4 +146,24 @@ async function disableRepo ({ repositories, repoDoc, repository }) {
   if (!env.IS_ENTERPRISE) {
     return maybeUpdatePaymentsJob(repoDoc.accountId, repoDoc.private)
   }
+}
+
+async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, repositories, repositoryId}) {
+  return Promise.all(Object.keys(pkg).map(async (path) => {
+    let groupName = null
+    if (config.groups) {
+      Object.keys(config.groups).map((group) => {
+        if (config.groups[group].packages.includes(path)) {
+          groupName = group
+        }
+      })
+    }
+   // this can only happen if a package.json was modified
+    const dependencyDiff = diff(oldPkg[path], pkg[path], groupName)
+    console.log('dependencyDiff', dependencyDiff)
+    if (!_.isEmpty(dependencyDiff)) {
+      return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId})
+    }
+    return []
+  }))
 }
