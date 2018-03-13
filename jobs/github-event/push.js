@@ -93,10 +93,27 @@ module.exports = async function (data) {
   const _branches = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
   console.log('allBranchesToDelete flattend&uniq', _branches)
 
-  if (configChanges.added.length) {
-    console.log('configChanges.added', configChanges.added)
+  await Promise.mapSeries(
+    _branches,
+    deleteBranches.bind(null, {
+      installationId: installation.id,
+      fullName: repository.full_name,
+      repositoryId
+    })
+  )
+
+  if (configChanges.added.length || configChanges.modified.length) {
+    const relevantModifiedGroups = configChanges.modified.filter((group) => {
+      if (!_.isEmpty(_.difference(repoDoc.greenkeeper.groups[group].packages, config.groups[group].packages))) {
+        return true
+      }
+    })
+    console.log('relevantModifiedGroups', relevantModifiedGroups)
+    const groupsToRecvieveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
+    console.log('groupsToRecvieveInitialBranch', groupsToRecvieveInitialBranch)
+    if (_.isEmpty(groupsToRecvieveInitialBranch)) return
     // create subgroup initial pr
-    return _(configChanges.added)
+    return _(groupsToRecvieveInitialBranch)
       .map(groupName => ({
         data: {
           name: 'create-initial-subgroup-branch',
@@ -114,15 +131,6 @@ module.exports = async function (data) {
 
   // TODO: config includes no groups
   // console.log('config', config)
-
-  await Promise.mapSeries(
-    _branches,
-    deleteBranches.bind(null, {
-      installationId: installation.id,
-      fullName: repository.full_name,
-      repositoryId
-    })
-  )
 }
 
 function updateDoc (repositories, repository, repoDoc) {
