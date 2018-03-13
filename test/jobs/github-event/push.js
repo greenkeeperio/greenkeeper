@@ -980,6 +980,8 @@ describe('github-event push', async () => {
     - [x] dependency in file in group added ->
     Modifications:
     - [x] group renamed -> delete all branches & new initial subgroup branch
+    - [x] package.json renamed -> delete all branches & new initial subgroup branch
+    - [x] package.json moved to another group -> delete all branches & new initial subgroup branch
   */
   test('monorepo: 2 package.jsons in 2 groups with existing branches (777)', async () => {
     const configFileContent = {
@@ -2530,6 +2532,408 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
+  test('monorepo: package.json renamed with existing branches (1115)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/app/package.json'
+          ]
+        }
+      }
+    }
+
+    const newConfigFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/backend/package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+
+    await Promise.all([
+      repositories.bulkDocs([
+        {
+          _id: '1115',
+          fullName: 'hans/monorepo',
+          accountId: '321',
+          enabled: true,
+          headSha: 'hallo',
+          packages: {
+            'packages/frontend/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^1.0.0'
+              }
+            },
+            'packages/app/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^1.0.0'
+              }
+            }
+          },
+          greenkeeper: configFileContent
+        },
+        {
+          _id: '1115:branch:1234abca',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '1115',
+          version: '0.9.1',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'greenkeeper/frontend/lodash-2.0.0'
+        },
+        {
+          _id: '1115:branch:1234abcb',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '1115',
+          version: '0.9.1',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'greenkeeper/backend/lodash-2.0.0'
+        }
+      ])
+    ])
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(newConfigFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/backend/package.json')
+      .reply(200, {
+        path: 'packages/backend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/backend/lodash-2.0.0')
+      .reply(200, {})
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/frontend/lodash-2.0.0')
+      .reply(200, () => {
+        // should not delete this one
+        expect(true).toBeFalsy()
+        return {}
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: '1115',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    expect(newJob).toHaveLength(1)
+    const job = newJob[0].data
+    expect(job.name).toEqual('create-initial-subgroup-branch')
+    expect(job.accountId).toEqual('321')
+    expect(job.repositoryId).toEqual('1115')
+
+    const repo = await repositories.get('1115')
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json', 'packages/backend/package.json' ],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'packages/frontend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/backend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toMatchObject(newConfigFileContent)
+    const frontend = await repositories.get('1115:branch:1234abca')
+    expect(frontend.referenceDeleted).toBeFalsy()
+    const backend = await repositories.get('1115:branch:1234abcb')
+    expect(backend.referenceDeleted).toBeTruthy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
+  test('monorepo: package.json moved to another group (1116)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json',
+            'packages/app/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/app/package.json'
+          ]
+        }
+      }
+    }
+
+    const newConfigFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/backend/package.json',
+            'packages/app/package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+
+    await Promise.all([
+      repositories.bulkDocs([
+        {
+          _id: '1116',
+          fullName: 'hans/monorepo',
+          accountId: '321',
+          enabled: true,
+          headSha: 'hallo',
+          packages: {
+            'packages/frontend/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^1.0.0'
+              }
+            },
+            'packages/backend/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^1.0.0'
+              }
+            },
+            'packages/app/package.json': {
+              name: 'testpkg',
+              dependencies: {
+                lodash: '^1.0.0'
+              }
+            }
+          },
+          greenkeeper: configFileContent
+        },
+        {
+          _id: '1116:branch:1234abca',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '1116',
+          version: '0.9.1',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'greenkeeper/frontend/lodash-2.0.0'
+        },
+        {
+          _id: '1116:branch:1234abcb',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '1116',
+          version: '0.9.1',
+          dependency: 'lodash',
+          dependencyType: 'dependencies',
+          head: 'greenkeeper/backend/lodash-2.0.0'
+        }
+      ])
+    ])
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(newConfigFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/app/package.json')
+      .reply(200, {
+        path: 'packages/app/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/backend/package.json')
+      .reply(200, {
+        path: 'packages/backend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/backend/lodash-2.0.0')
+      .reply(200, {})
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/frontend/lodash-2.0.0')
+      .reply(200, {})
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: '1116',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    expect(newJob).toHaveLength(1)
+    const job = newJob[0].data
+    expect(job.name).toEqual('create-initial-subgroup-branch')
+    expect(job.groupName).toEqual('backend')
+    expect(job.accountId).toEqual('321')
+    expect(job.repositoryId).toEqual('1116')
+
+    const repo = await repositories.get('1116')
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json', 'packages/backend/package.json', 'packages/app/package.json' ],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'packages/frontend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/app/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/backend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toMatchObject(newConfigFileContent)
+    const frontend = await repositories.get('1116:branch:1234abca')
+    expect(frontend.referenceDeleted).toBeTruthy()
+    const backend = await repositories.get('1116:branch:1234abcb')
+    expect(backend.referenceDeleted).toBeTruthy()
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
   afterAll(async () => {
     const { repositories, payments } = await dbs()
 
@@ -2541,7 +2945,9 @@ describe('github-event push', async () => {
     '1111',
     '1112', '1112:branch:1234abca', '1112:branch:1234abcb',
     '1113', '1113:branch:1234abca', '1113:branch:1234abcb',
-    '1114', '1114:branch:1234abca', '1114:branch:1234abcb')
+    '1114', '1114:branch:1234abca', '1114:branch:1234abcb',
+    '1115', '1115:branch:1234abca', '1115:branch:1234abcb',
+    '1116', '1116:branch:1234abca', '1116:branch:1234abcb')
     await removeIfExists(payments, '123')
   })
 })
