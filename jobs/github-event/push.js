@@ -57,7 +57,8 @@ module.exports = async function (data) {
     }
   }
 
-  if (_.isEqual(oldPkg, pkg)) {
+  // check if there are changes in packag.json files or the greenkeeper config
+  if (_.isEqual(oldPkg, pkg) && _.isEqual(config, repoDoc.greenkeeper)) {
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
