@@ -975,7 +975,7 @@ describe('github-event push', async () => {
     - [x] file in group deleted -> should delete all group’s branches
     - [x] dependency in file in group deleted -> should delete all group’s branches
     Additions:
-    - [ ] group added -> should return create-initial-group-branch job
+    - [x] group added -> should return create-initial-group-branch job
     - [ ] file in group added -> should delete all group’s branches, create-initial-group-branch job
     - [ ] dependency in file in group added -> nothing should happen except package.json update
     Modifications ?
@@ -1785,13 +1785,184 @@ describe('github-event push', async () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
+  test('monorepo: group added (1111)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json',
+            'packages/lalalalala/package.json'
+          ]
+        }
+      }
+    }
+
+    const newConfigFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json',
+            'packages/lalalalala/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/backend/package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+
+    await repositories.put(
+      {
+        _id: '1111',
+        fullName: 'hans/monorepo',
+        accountId: '321',
+        enabled: true,
+        headSha: 'hallo',
+        packages: {
+          'packages/frontend/package.json': {
+            name: 'testpkg',
+            dependencies: {
+              lodash: '^1.0.0'
+            }
+          },
+          'packages/lalalalala/package.json': {
+            name: 'testpkg',
+            dependencies: {
+              lodash: '^1.0.0'
+            }
+          }
+        },
+        greenkeeper: configFileContent
+      }
+    )
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(newConfigFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/lalalalala/package.json')
+      .reply(200, {
+        path: 'packages/lalalalala/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/backend/package.json')
+      .reply(200, {
+        path: 'packages/backend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: ['packages/backend/package.json'],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: '1111',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    expect(newJob).toHaveLength(1)
+    const job = newJob[0].data
+    expect(job.name).toEqual('create-initial-subgroup-branch')
+    expect(job.accountId).toEqual('321')
+    expect(job.repositoryId).toEqual('1111')
+
+    const repo = await repositories.get('1111')
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json', 'packages/lalalalala/package.json', 'packages/backend/package.json' ],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'packages/frontend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/lalalalala/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/backend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toMatchObject(newConfigFileContent)
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
   afterAll(async () => {
     const { repositories, payments } = await dbs()
 
     await removeIfExists(repositories, '444', '444A', '445', '445A', '446', '447', '448', '444:branch:1234abcd', '444:branch:1234abce', '444A:branch:1234abcd', '444A:branch:1234abce', '555', '666',
     '777', '777:branch:1234abcd', '777:branch:1234abce', '777:branch:1234abcf', '777:branch:1234abcg',
     '777A', '777A:branch:1234abca', '777A:branch:1234abcb', '777A:branch:1234abcc',
-    '888', '888:branch:1234abca', '888:branch:1234abcb')
+    '888', '888:branch:1234abca', '888:branch:1234abcb',
+    '999', '999:branch:1234abca', '999:branch:1234abcb')
     await removeIfExists(payments, '123')
   })
 })

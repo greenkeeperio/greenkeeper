@@ -94,7 +94,18 @@ module.exports = async function (data) {
   console.log('allBranchesToDelete flattend&uniq', _branches)
 
   if (configChanges.added.length) {
+    console.log('configChanges.added', configChanges.added)
     // create subgroup initial pr
+    return _(configChanges.added)
+      .map(groupName => ({
+        data: {
+          name: 'create-initial-subgroup-branch',
+          repositoryId,
+          accountId: repoDoc.accountId,
+          groupName
+        }
+      }))
+      .value()
   }
 
   // do this per group, if groups, else once
