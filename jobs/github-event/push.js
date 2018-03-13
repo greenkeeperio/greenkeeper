@@ -90,8 +90,8 @@ module.exports = async function (data) {
   const groupBranchesToDelete = await getGroupBranchesToDelete({configChanges, repositories, repositoryId})
   console.log('branches in push', branches)
   const allBranchesToDelete = branches.concat(groupBranchesToDelete)
-  console.log('allBranchesToDelete', allBranchesToDelete)
-  const _branches = _.uniqWith(_.flatten(allBranchesToDelete), _.isEqual)
+  const _branches = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
+  console.log('allBranchesToDelete flattend&uniq', _branches)
 
   if (configChanges.added.length) {
     // create subgroup initial pr
