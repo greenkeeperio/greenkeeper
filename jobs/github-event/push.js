@@ -65,9 +65,6 @@ module.exports = async function (data) {
 
   await updateDoc(repositories, repository, repoDoc)
 
-  console.log('oldPkg', oldPkg)
-  console.log('pkg', pkg)
-
   if (!oldPkg) {
     return {
       data: {
@@ -85,14 +82,10 @@ module.exports = async function (data) {
   // TODO: for Tuesday -> deleting a package.json needs to be detected!!
   const branches = await getDependencyBranchesForAllGroups({pkg, oldPkg, config, repositories, repositoryId})
   const configChanges = diffGreenkeeperJson(config, repoDoc.greenkeeper)
-  console.log('configChanges', configChanges)
-  console.log('dependencyChanges', branches)
 
   const groupBranchesToDelete = await getGroupBranchesToDelete({configChanges, repositories, repositoryId})
-  console.log('branches in push', branches)
   const allBranchesToDelete = branches.concat(groupBranchesToDelete)
   const _branches = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
-  console.log('allBranchesToDelete flattend&uniq', _branches)
 
   await Promise.mapSeries(
     _branches,
@@ -109,9 +102,7 @@ module.exports = async function (data) {
         return true
       }
     })
-    console.log('relevantModifiedGroups', relevantModifiedGroups)
     const groupsToRecvieveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
-    console.log('groupsToRecvieveInitialBranch', groupsToRecvieveInitialBranch)
     if (_.isEmpty(groupsToRecvieveInitialBranch)) return
     // create subgroup initial pr
     return _(groupsToRecvieveInitialBranch)
@@ -160,7 +151,6 @@ function hasRelevantChanges (commits, files) {
 }
 
 async function disableRepo ({ repositories, repoDoc, repository }) {
-  // console.log('disableRepo')
   repoDoc.enabled = false
   await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
@@ -180,7 +170,6 @@ async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, reposito
     }
    // this can only happen if a package.json was modified
     const dependencyDiff = diff(oldPkg[path], pkg[path], groupName)
-    console.log('dependencyDiff', dependencyDiff)
     if (!_.isEmpty(dependencyDiff)) {
       return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId})
     }

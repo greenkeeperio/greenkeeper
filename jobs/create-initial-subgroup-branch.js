@@ -11,14 +11,13 @@ const getConfig = require('../lib/get-config')
 const createBranch = require('../lib/create-branch')
 const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
-const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 
 const registryUrl = env.NPM_REGISTRY
 
 // if we update dependencies find open PRs for that dependency and close the PRs by commit message
 
-module.exports = async function ({ repositoryId, groupname }) {
+module.exports = async function ({ repositoryId, groupName }) {
   const { installations, repositories, logs } = await dbs()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
@@ -28,42 +27,36 @@ module.exports = async function ({ repositoryId, groupname }) {
 
   log.info('started')
 
-  if (repoDoc.fork && !repoDoc.hasIssues) { // we should allways check if issues are disabled and exit
-    log.warn('exited: Issues disabled on fork')
+  await updateRepoDoc(installationId, repoDoc)
+  const config = getConfig(repoDoc)
+  const pathsForGroup = config.groups[groupName].packages
+  if (_.isEmpty(pathsForGroup)) {
+    log.warn(`exited: No packages and package.json found for group: ${groupName}`)
     return
   }
 
-  await updateRepoDoc(installationId, repoDoc)
-
-  // Object.keys(repoDoc.packages).length > 0
-  if (!_.get(repoDoc, ['packages', 'package.json'])) {
-    log.warn('exited: No packages and package.json found')
+  const packageJsonFiles = _.get(repoDoc, ['packages'])
+  if (_.isEmpty(packageJsonFiles)) {
+    log.warn(`exited: No package.json files found`)
     return
   }
   await upsert(repositories, repoDoc._id, repoDoc)
 
-  const config = getConfig(repoDoc)
-  if (config.disabled) {
-    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
-    return
-  }
-  const pkg = _.get(repoDoc, ['packages', 'package.json']) // this is duplicated code (merge with L44)
-  if (!pkg) return
-
   const [owner, repo] = repoDoc.fullName.split('/')
-
-  await createDefaultLabel({ installationId, owner, repo, name: config.label })
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
   // get for all package.jsons in a group
   // every package should be updated to the newest version
-  const dependencyMeta = _.flatten(
-    ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
-      return _.map(pkg[type], (version, name) => ({ name, version, type }))
-    })
-  )
-  log.info('dependencies found', {parsedDependencies: dependencyMeta, packageJson: pkg})
+  const dependencyMeta = _.uniqWith(_.flatten(pathsForGroup.map(path => {
+    return _.flatten(
+     ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
+       return _.map(packageJsonFiles[path][type], (version, name) => ({ name, version, type }))
+     })
+    )
+  })), _.isEqual)
+
+  log.info('dependencies found', {parsedDependencies: dependencyMeta, packageJsonFiles: packageJsonFiles})
   let dependencies = await Promise.mapSeries(dependencyMeta, async dep => {
     try {
       dep.data = await registryGet(registryUrl + dep.name.replace('/', '%2F'), {
@@ -78,7 +71,10 @@ module.exports = async function ({ repositoryId, groupname }) {
     .filter(Boolean)
     .map(dependency => {
       let latest = _.get(dependency, 'data.dist-tags.latest')
-      if (_.includes(config.ignore, dependency.name)) {
+      if (
+        _.includes(config.ignore, dependency.name) ||
+        _.includes(config.groups[groupName].ignore, dependency.name)
+      ) {
         dependencyActionsLog[dependency.name] = 'ignored in config'
         return
       }
@@ -124,7 +120,6 @@ module.exports = async function ({ repositoryId, groupname }) {
     })
     .filter(Boolean)
     .value()
-
   log.info('parsed dependency actions', {dependencyActionsLog})
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
@@ -132,13 +127,12 @@ module.exports = async function ({ repositoryId, groupname }) {
 
   const branch = ghRepo.default_branch
 
-  const newBranch = config.branchPrefix + 'initial' + `-${groupname}`
+  const newBranch = config.branchPrefix + 'initial' + `-${groupName}`
 
-  let badgeAlreadyAdded = false
   // create a transform loop for all the package.json paths and push into the transforms array below
-  const transforms = [
-    {
-      path: 'package.json',
+  const transforms = pathsForGroup.map(path => {
+    return {
+      path,
       message: 'chore(package): update dependencies',
       transform: oldPkg => {
         const oldPkgParsed = JSON.parse(oldPkg)
@@ -152,7 +146,7 @@ module.exports = async function ({ repositoryId, groupname }) {
         return inplace.toString()
       }
     }
-  ]
+  })
 
   const sha = await createBranch({ // try/catch
     installationId,
@@ -163,55 +157,18 @@ module.exports = async function ({ repositoryId, groupname }) {
     transforms
   })
 
-  if (!sha) {
-    // When there are no changes and the badge already exists we can enable right away
-    if (badgeAlreadyAdded) {
-      await upsert(repositories, repoDoc._id, { enabled: true })
-      log.info('Repository silently enabled')
-      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
-    } else {
-      log.error('Could not create initial branch')
-      throw new Error('Could not create initial branch')
-    }
-  }
-
-  const depsUpdated = transforms[0].created
-  const travisModified = false
-  const badgeAdded = false
+  const depsUpdated = _.some(transforms, 'created')
+  if (!depsUpdated) return
 
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
-    initial: true,
+    initial: false, // other flag?
     sha,
     base: branch,
     head: newBranch,
     processed: false,
-    depsUpdated,
-    travisModified,
-    badgeAdded
+    depsUpdated
   })
 
   log.success('success')
-
-  return {
-    delay: 30 * 60 * 1000,
-    data: {
-      name: 'initial-timeout-pr',
-      repositoryId,
-      accountId
-    }
-  }
-}
-
-async function createDefaultLabel ({ installationId, name, owner, repo }) {
-  if (name !== false) {
-    try {
-      await githubQueue(installationId).write(github => github.issues.createLabel({
-        owner,
-        repo,
-        name,
-        color: '00c775'
-      }))
-    } catch (e) {}
-  }
 }
