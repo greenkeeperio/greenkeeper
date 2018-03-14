@@ -210,7 +210,6 @@ describe('github-event push', async () => {
     expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('555')
-    console.log('repoDoc', repo)
     expect(repo.files['package.json'].length).toBeGreaterThan(0)
     expect(repo.files['package-lock.json'].length).toBeGreaterThan(0)
     expect(repo.files['npm-shrinkwrap.json']).toHaveLength(0)
@@ -1152,7 +1151,6 @@ describe('github-event push', async () => {
     expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('777')
-    console.log('repoDoc', repo)
 
     const expectedFiles = {
       'package.json': [ 'packages/frontend/package.json', 'packages/backend/package.json' ],
@@ -1362,7 +1360,6 @@ describe('github-event push', async () => {
     expect(newJob).toBeFalsy()
 
     const repo = await repositories.get('777A')
-    console.log('repoDoc', repo)
 
     const expectedFiles = {
       'package.json': [ 'packages/frontend/package.json', 'packages/backend/package.json', 'packages/lalalalala/package.json' ],
