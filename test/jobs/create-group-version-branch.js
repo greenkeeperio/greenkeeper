@@ -358,14 +358,116 @@ describe('create-group-version-branch', async () => {
     expect(pr.repositoryId).toEqual('123-monorepo-different-types')
     expect(pr.accountId).toEqual('123-two-packages-different-types')
   })
+
+  test('no pull request, 1 group, 1 packages that is ignored on group level', async () => {
+    expect.assertions(1)
+    const { repositories, installations } = await dbs()
+
+    await installations.put({
+      _id: '123-dep-ignored-on-group-level',
+      installation: 2332,
+      plan: 'free'
+    })
+
+    await repositories.put({
+      _id: '123-monorepo-dep-ignored-on-group-level',
+      enabled: true,
+      type: 'repository',
+      fullName: 'hans/monorepo',
+      accountId: '123-dep-ignored-on-group-level',
+      packages: {
+        'package.json': {
+          dependencies: {
+            react: '1.0.0'
+          }
+        },
+        'backend/package.json': {
+          devDependencies: {
+            react: '1.0.0'
+          }
+        }
+      },
+      greenkeeper: {
+        'groups': {
+          'backend': {
+            ignore: [
+              'react'
+            ],
+            'packages': [
+              'package.json',
+              'backend/package.json'
+            ]
+          }
+        }
+      }
+    })
+
+    nock('https://api.github.com')
+      .post('/installations/2332/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/hans/monorepo')
+      .reply(200, () => {
+        // Job should have already stopped!
+        expect(true).toBeFalsy()
+      })
+
+    const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
+
+    const newJob = await createGroupVersionBranch({
+      dependency: 'react',
+      accountId: '123-dep-ignored-on-group-level',
+      repositoryId: '123-monorepo-dep-ignored-on-group-level',
+      types: [
+        {type: 'devDependencies', filename: 'backend/package.json'}
+      ],
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      },
+      group: {
+        'backend': {
+          ignore: [
+            'react'
+          ],
+          'packages': [
+            'package.json',
+            'backend/package.json'
+          ]
+        }
+      },
+      monorepo: [
+        { id: '123-monorepo-dep-ignored-on-group-level',
+          key: 'react',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-dep-ignored-on-group-level',
+            filename: 'backend/package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } } ]
+    })
+
+    expect(newJob).toBeFalsy()
+  })
 })
 
 afterAll(async () => {
   const { installations, repositories } = await dbs()
 
   await Promise.all([
-    removeIfExists(installations, '123-two-packages', '123-two-packages-different-types'),
-    removeIfExists(repositories, '123-monorepo', '123-monorepo-different-types'),
+    removeIfExists(installations, '123-two-packages', '123-two-packages-different-types', '123-dep-ignored-on-group-level'),
+    removeIfExists(repositories, '123-monorepo', '123-monorepo-different-types', '123-monorepo-dep-ignored-on-group-level'),
     removeIfExists(repositories, '123-monorepo:branch:1234abcd', '123-monorepo:pr:321', '123-monorepo-different-types:branch:1234abcd', '123-monorepo-different-types:pr:321')
   ])
 })

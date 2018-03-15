@@ -97,11 +97,15 @@ module.exports = async function (
     }
   }
 
-  const [owner, repo] = repository.fullName.split('/')
-  if (_.includes(config.ignore, dependency)) {
+  if (
+    _.includes(config.ignore, dependency) ||
+    _.includes(config.groups[groupName].ignore, dependency)
+  ) {
     log.warn('exited: dependency ignored by user config')
     return
   }
+
+  const [owner, repo] = repository.fullName.split('/')
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
