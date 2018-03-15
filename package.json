@@ -13,6 +13,7 @@
     "github-url-from-git": "^1.4.0",
     "gk-log": "1.2.0",
     "hot-shots": "^5.0.0",
+    "joi": "^13.1.2",
     "js-yaml": "^3.7.0",
     "json-in-place": "^1.0.1",
     "jsonwebtoken": "^8.1.1",
@@ -69,13 +70,22 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest -i"
+    "test": "NODE_ENV=testing jest validate-greenkeeper-json"
   },
   "standard": {
     "env": {
       "jest": true
     },
-    "globals": [ "jest", "expect", "describe", "test", "beforeAll", "beforeEach", "afterAll", "afterEach"],
+    "globals": [
+      "jest",
+      "expect",
+      "describe",
+      "test",
+      "beforeAll",
+      "beforeEach",
+      "afterAll",
+      "afterEach"
+    ],
     "ignore": [
       "couchdb"
     ]
