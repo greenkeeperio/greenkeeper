@@ -66,44 +66,47 @@ function getJobsPerGroup ({
   repositoryId,
   plan
 }) {
-  let jobs = []
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
   const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
   const types = monorepo.map((x) => { return {type: x.value.type, filename: x.value.filename} })
-  if (config && config.groups) {
-    const packageFiles = monorepo.map(result => result.value.filename)
 
-    const groups = _.compact(_.map(config.groups, (group, key) => {
-      let result = {}
-      result[key] = group
-      if (_.intersection(group.packages, packageFiles).length) {
-        return result
-      }
-    }))
+  if (_.isEmpty(config) || _.isEmpty(config.groups)) return []
 
-    jobs = groups.map((group) => {
-      return {
-        data: Object.assign({
-          name: 'create-group-version-branch',
-          group,
-          distTags,
-          distTag,
-          dependency,
-          versions,
-          repositoryId,
-          plan,
-          oldVersionResolved,
-          installation: account.installation,
-          types,
-          oldVersion: monorepo[0].value.oldVersion,
-          monorepo
-        }),
-        plan
-      }
+  const packageFiles = monorepo.map(result => result.value.filename)
+  const groups = _.compact(_.map(config.groups, (group, key) => {
+    let result = {}
+    result[key] = group
+    if (_.intersection(group.packages, packageFiles).length) {
+      return result
+    }
+  }))
+
+  return groups.map((group) => {
+    // only include chages from
+    const groupName = Object.keys(group)[0]
+    const relevantMonorepoChangeFiles = monorepo.filter(change => {
+      return group[groupName].packages.includes(change.value.filename)
     })
-  }
 
-  return jobs
+    return {
+      data: Object.assign({
+        name: 'create-group-version-branch',
+        group,
+        distTags,
+        distTag,
+        dependency,
+        versions,
+        repositoryId,
+        plan,
+        oldVersionResolved,
+        installation: account.installation,
+        types,
+        oldVersion: monorepo[0].value.oldVersion,
+        monorepo: relevantMonorepoChangeFiles
+      }),
+      plan
+    }
+  })
 }
 
 function createTransformFunction (type, dependency, version, log) {
