@@ -37,6 +37,7 @@ test('invalid: no group/s', () => {
   const result = validate(file)
   expect(result.error).toBeTruthy()
   expect(result.error.name).toEqual('ValidationError')
+  expect(result.error.details.length).toEqual(1)
   expect(result.error.details[0].message).toMatch(/"groups" is required/)
 })
 
@@ -56,5 +57,5 @@ test('invalid: no packages', () => {
     }
   }
   const result = validate(file)
-  expect(result.error).toBeFalsy()
+  expect(result.error).toBeTruthy()
 })
