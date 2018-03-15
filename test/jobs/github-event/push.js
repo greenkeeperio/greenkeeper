@@ -1,4 +1,5 @@
 const nock = require('nock')
+const _ = require('lodash')
 
 const dbs = require('../../../lib/dbs')
 const removeIfExists = require('../../helpers/remove-if-exists')
@@ -982,6 +983,145 @@ describe('github-event push', async () => {
     - [x] package.json renamed -> delete all branches & new initial subgroup branch
     - [x] package.json moved to another group -> delete all branches & new initial subgroup branch
   */
+
+  test('monorepo: new greenkeeper.json is added with 2 groups (3462)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/backend/package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put(
+      {
+        _id: '3462',
+        fullName: 'hans/monorepo',
+        accountId: '321',
+        enabled: true,
+        headSha: 'hallo',
+        packages: {
+          'packages/frontend/package.json': {
+            name: 'testpkg',
+            dependencies: {
+              lodash: '^0.9.0'
+            }
+          },
+          'packages/backend/package.json': {
+            name: 'testpkg',
+            dependencies: {
+              lodash: '^0.9.0'
+            }
+          }
+        }
+      }
+    )
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/backend/package.json')
+      .reply(200, {
+        path: 'packages/backend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: ['greenkeeper.json'],
+          removed: [],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 3462,
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    expect(newJob).toHaveLength(2)
+    expect(_.every(newJob, ['data.name', 'create-initial-subgroup-branch'])).toBeTruthy()
+
+    const repo = await repositories.get('3462')
+
+    const expectedFiles = {
+      'package.json': [ 'packages/frontend/package.json', 'packages/backend/package.json' ],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'packages/frontend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      },
+      'packages/backend/package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
   test('monorepo: 2 package.jsons in 2 groups with existing branches (777)', async () => {
     const configFileContent = {
       groups: {
