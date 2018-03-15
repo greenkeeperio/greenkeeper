@@ -58,9 +58,9 @@ describe('registry change create jobs', async () => {
   afterAll(async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '999'),
-      removeIfExists(repositories, '775', '776', '777', '888'),
-      removeIfExists(npm, 'standard', 'eslint')
+      removeIfExists(installations, '999', '123-two-packages', '123-two-groups'),
+      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups'),
+      removeIfExists(npm, 'standard', 'eslint', 'lodash')
     ])
   })
 
@@ -219,21 +219,21 @@ describe('registry change create jobs', async () => {
           'package.json': {
             dependencies: {
               react: '1.0.0'
-            },
-            greenkeeper: {
-              'groups': {
-                'default': {
-                  'packages': [
-                    'package.json',
-                    'backend/package.json'
-                  ]
-                }
-              }
             }
           },
           'backend/package.json': {
             dependencies: {
               react: '1.0.0'
+            }
+          }
+        },
+        greenkeeper: {
+          'groups': {
+            'default': {
+              'packages': [
+                'package.json',
+                'backend/package.json'
+              ]
             }
           }
         }
@@ -265,5 +265,81 @@ describe('registry change create jobs', async () => {
 
     expect(newJobs).toHaveLength(1)
     expect(newJobs[0].data.name).toEqual('create-group-version-branch')
+  })
+
+  test('creates two monorepo jobs for two groups', async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: '123-two-groups',
+        installation: 14532,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '123-monorepo-two-groups',
+        enabled: true,
+        type: 'repository',
+        fullName: 'ilse/monorepo',
+        accountId: '123-two-groups',
+        packages: {
+          'package.json': {
+            dependencies: {
+              lodash: '1.0.0'
+            }
+          },
+          'frontend/package.json': {
+            dependencies: {
+              lodash: '1.0.0'
+            }
+          }
+        },
+        greenkeeper: {
+          'groups': {
+            'frontend': {
+              'packages': [
+                'frontend/package.json'
+              ]
+            },
+            'backend': {
+              'packages': [
+                'package.json'
+              ]
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'lodash',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'lodash',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'deadbeef'
+        },
+        '1.0.0': {
+          gitHead: 'deadbeet'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJobs).toHaveLength(2)
+    expect(newJobs[0].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[0].data.monorepo).toHaveLength(1)
+    expect(newJobs[0].data.monorepo[0].value.filename).toEqual('frontend/package.json')
+    expect(newJobs[1].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[1].data.monorepo).toHaveLength(1)
+    expect(newJobs[1].data.monorepo[0].value.filename).toEqual('package.json')
   })
 })
