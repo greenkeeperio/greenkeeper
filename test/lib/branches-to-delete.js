@@ -57,6 +57,7 @@ describe('getDependencyChanges', () => {
 })
 
 describe('getDependencyBranchesToDelete', () => {
+  const config = { branchPrefix: 'greenkeeper/' }
   test('not a monorepo', async () => {
     const { repositories } = await dbs()
 
@@ -100,7 +101,8 @@ describe('getDependencyBranchesToDelete', () => {
               before: '^8.0.0',
               after: '^10.0.0',
               groupName: null } } },
-        repositories
+        repositories,
+        config
       }
     )
 
@@ -150,7 +152,8 @@ describe('getDependencyBranchesToDelete', () => {
               before: '^8.0.0',
               after: '^10.0.0',
               groupName: 'frontend' } } },
-        repositories
+        repositories,
+        config
       }
     )
 
