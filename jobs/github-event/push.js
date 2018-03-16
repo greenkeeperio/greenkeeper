@@ -171,7 +171,7 @@ async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, reposito
    // this can only happen if a package.json was modified
     const dependencyDiff = diff(oldPkg[path], pkg[path], groupName)
     if (!_.isEmpty(dependencyDiff)) {
-      return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId})
+      return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId, config})
     }
     return []
   }))
