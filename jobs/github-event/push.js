@@ -57,8 +57,19 @@ module.exports = async function (data) {
     }
   }
 
-  // check if there are changes in packag.json files or the greenkeeper config
+  // if there are no changes in packag.json files or the greenkeeper config
   if (_.isEqual(oldPkg, pkg) && _.isEqual(config, repoDoc.greenkeeper)) {
+    await updateDoc(repositories, repository, repoDoc)
+    return null
+  }
+
+  // if greenkeeper config was deleted but only contained the root package.json
+  // there is no need to delete the branches
+  if (
+    _.isEqual(oldPkg, pkg) &&
+    Object.keys(pkg).length === 1 &&
+    (!_.isEmpty(config) && _.isEmpty(repoDoc.greenkeeper))
+  ) {
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
