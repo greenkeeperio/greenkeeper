@@ -13,6 +13,7 @@ const {
   getGroupBranchesToDelete
 } = require('../../lib/branches-to-delete')
 const getConfig = require('../../lib/get-config')
+const { validate } = require('../../lib/validate-greenkeeper-json')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -30,13 +31,14 @@ module.exports = async function (data) {
   ]
 
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
+
   const repositoryId = String(repository.id)
 
   let repoDoc = await repositories.get(repositoryId)
   const config = getConfig(repoDoc)
   const isMonorepo = !!_.get(config, ['groups'])
   // if greenkeeper.json with at least one file in a group
-  // updated repoDoc with new .greenkeeperrc
+  // updated repoDoc with new .greenkeeper.json
   //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
   // close all open prs for that groupname
 
@@ -57,8 +59,36 @@ module.exports = async function (data) {
     }
   }
 
-  // check if there are changes in packag.json files or the greenkeeper config
+  if (hasRelevantConfigFileChanges(data.commits)) {
+    const configValidation = validate(repoDoc.greenkeeper)
+    if (configValidation.error) {
+      // reset greenkeeper.json and add error-job
+      _.set(repoDoc, ['greenkeeper'], {}) // TODO: reset greenkeeper.json from old pkg
+      await updateDoc(repositories, repository, repoDoc)
+      return {
+        data: {
+          name: 'invalid-config-file',
+          message: configValidation.error.details[0].message,
+          repositoryId,
+          accountId: repoDoc.accountId
+        }
+      }
+    }
+  }
+
+  // if there are no changes in packag.json files or the greenkeeper config
   if (_.isEqual(oldPkg, pkg) && _.isEqual(config, repoDoc.greenkeeper)) {
+    await updateDoc(repositories, repository, repoDoc)
+    return null
+  }
+
+  // if greenkeeper config was deleted but only contained the root package.json
+  // there is no need to delete the branches
+  if (
+    _.isEqual(oldPkg, pkg) &&
+    Object.keys(pkg).length === 1 &&
+    (!_.isEmpty(config) && _.isEmpty(repoDoc.greenkeeper))
+  ) {
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
@@ -102,10 +132,10 @@ module.exports = async function (data) {
         return true
       }
     })
-    const groupsToRecvieveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
-    if (_.isEmpty(groupsToRecvieveInitialBranch)) return
+    const groupsToReceiveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
+    if (_.isEmpty(groupsToReceiveInitialBranch)) return
     // create subgroup initial pr
-    return _(groupsToRecvieveInitialBranch)
+    return _(groupsToReceiveInitialBranch)
       .map(groupName => ({
         data: {
           name: 'create-initial-subgroup-branch',
@@ -145,6 +175,16 @@ function hasRelevantChanges (commits, files) {
         return _.some(commit[changeType], (path) => {
           return path.includes(file)
         })
+      })
+    })
+  })
+}
+
+function hasRelevantConfigFileChanges (commits) {
+  return _.some(commits, commit => {
+    return _.some(['added', 'modified'], changeType => {
+      return _.some(commit[changeType], (path) => {
+        return path.includes('greenkeeper.json')
       })
     })
   })
