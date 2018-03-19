@@ -208,3 +208,13 @@ test('renamed a group', () => {
   }
   expect(diff(oldFile, newFile)).toMatchObject(expected)
 })
+
+test('greenkeeper.json was deleted', () => {
+  const newFile = {}
+  const expected = {
+    added: [],
+    removed: ['frontend', 'backend'],
+    modified: []
+  }
+  expect(diff(oldFile, newFile)).toMatchObject(expected)
+})
