@@ -15,6 +15,7 @@ const env = require('../lib/env')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const { discoverPackageFilePaths } = require('../lib/get-files')
 const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
@@ -157,8 +158,8 @@ module.exports = async function ({ repositoryId }) {
 
   let badgeAlreadyAdded = false
   // create a transform loop for all the package.json paths and push into the transforms array below
-  // add .greenkeeperrc too!
-  const transforms = [
+  // add greenkeeper.json if needed
+  let transforms = [
     {
       path: 'package.json',
       message: getMessage(config.commitMessages, 'initialDependencies'),
@@ -212,6 +213,32 @@ module.exports = async function ({ repositoryId }) {
       }
     }
   ]
+
+  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName)
+
+  if ((packageFilePaths.length === 1 && packageFilePaths[0] === 'package.json') || packageFilePaths.length === 0) {
+    console.log('Not generating a greenkeeper.json: No files, or there’s only a root level package.json')
+  } else {
+    console.log('Need to generate greenkeeper.json')
+    // Generate a new greenkeeeper.json from scratch
+    const greenkeeperJSONTransform = {
+      path: 'greenkeeper.json',
+      message: getMessage(config.commitMessages, 'initialDependencies'),
+      transform: () => {
+        const greenkeeperJSON = {
+          groups: {
+            default: {
+              packages: packageFilePaths
+            }
+          }
+        }
+        return JSON.stringify(greenkeeperJSON)
+      },
+      create: true
+    }
+    // add greenkeeper.json to the _beginning_ of the transforms array
+    transforms.unshift(greenkeeperJSONTransform)
+  }
 
   const sha = await createBranch({ // try/catch
     installationId,

@@ -51,6 +51,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .reply(200, {
+        items: [{path: 'package.json'}]
+      })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -149,6 +153,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .reply(200, {
+        items: [{path: 'package.json'}]
+      })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -199,6 +207,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .reply(200, {
+        items: [{path: 'package.json'}]
+      })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -249,6 +261,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .reply(200, {
+        items: [{path: 'package.json'}]
+      })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -303,12 +319,126 @@ describe('create initial branch', () => {
     }
   })
 
+  test('create pull request for monorepo and add greenkeeper.json', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '47',
+      accountId: '123',
+      fullName: 'finnp/test'
+    })
+    const devDependencies = {
+      '@finnpauls/dep': '1.0.0',
+      '@finnpauls/dep2': '1.0.0'
+    }
+    expect.assertions(12)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .reply(200, {
+        items: [{path: 'package.json'}, {path: 'frontend/package.json'}]
+      })
+      .get('/repos/finnp/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({ devDependencies })
+      })
+      .get('/repos/finnp/test/contents/frontend/package.json')
+      .reply(200, {
+        path: 'frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({ devDependencies })
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/labels', {
+        name: 'greenkeeper',
+        color: '00c775'
+      })
+      .reply(201)
+
+    nock('https://registry.npmjs.org')
+      .get('/@finnpauls%2Fdep')
+      .reply(200, {
+        'dist-tags': {
+          latest: '2.0.0'
+        }
+      })
+      .get('/@finnpauls%2Fdep2')
+      .reply(200, {
+        'dist-tags': {
+          latest: '3.0.0-rc1'
+        },
+        versions: {
+          '2.0.0-rc1': true,
+          '2.0.0-rc2': true,
+          '2.0.0': true,
+          '3.0.0-rc1': true,
+          '1.0.0': true
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
+      const devDependencies = {
+        '@finnpauls/dep': '1.0.0',
+        '@finnpauls/dep2': '1.0.0'
+      }
+
+      const newPkg = JSON.parse(
+        transforms[1].transform(JSON.stringify({ devDependencies }))
+      )
+      transforms[1].created = true
+      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+
+      const newReadme = transforms[3].transform(
+        'readme-badger\n=============\n',
+        'README.md'
+      )
+      // 'includes badge'
+      expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
+
+      expect(transforms[0].path).toBe('greenkeeper.json')
+      expect(JSON.parse(transforms[0].transform())).toEqual({
+        groups: {
+          default: {
+            packages: ['package.json', 'frontend/package.json']
+          }
+        }
+      })
+
+      return '1234abcd'
+    })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+
+    const newJob = await createInitialBranch({repositoryId: 47})
+    const newBranch = await repositories.get('47:branch:1234abcd')
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('initial-timeout-pr')
+    expect(newJob.data.repositoryId).toBe(47)
+    expect(newJob.delay).toBeGreaterThan(10000)
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeTruthy()
+    expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+  })
+
   afterAll(async () => {
     const { installations, repositories, payments } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '42:branch:1234abcd')
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '42:branch:1234abcd', '47:branch:1234abcd')
     ])
   })
 
