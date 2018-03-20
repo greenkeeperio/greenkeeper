@@ -2,8 +2,6 @@ const _ = require('lodash')
 const md = require('./template')
 
 module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type, release, diffCommits}) => md`
-☝️ Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
-
 ## Version **${version}** of ${dependencyLink} was just published.
 
 <table>
@@ -53,6 +51,7 @@ ${_.compact([release, diffCommits])}
   There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
 </details>
 
+☝️ Note: Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
 
 ---
 
