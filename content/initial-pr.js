@@ -138,8 +138,6 @@ const mainMessage = ({enabled, depsUpdated}) => {
 
 function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files}) {
   return md`
-☝️ Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
-
 Let’s get started with automated dependency management for ${ghRepo.name} :muscle:
 
 ${hasLockFileText(files)}
@@ -166,6 +164,7 @@ ${
 
 ---
 
+☝️ Note: Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
 
 Good luck with your project and see you soon :sparkles:
 
