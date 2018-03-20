@@ -43,6 +43,30 @@ test('valid with subgroup level ignore', () => {
   expect(result.error).toBeFalsy()
 })
 
+test('invalid: groupname has invalid characters', () => {
+  const file = {
+    groups: {
+      'front-end': {
+        ignore: [
+          'lodash'
+        ],
+        packages: [
+          'packages/frontend/package.json',
+          'packages/lalalalala/package.json'
+        ]
+      },
+      backend: {
+        packages: [
+          'packages/backend/package.json'
+        ]
+      }
+    }
+  }
+  const result = validate(file)
+  expect(result.error).toBeTruthy()
+  expect(result.error.details[0].message).toMatch(/"front-end" is not allowed/)
+})
+
 test('invalid: absolute paths are not allowed', () => {
   const file = {
     groups: {
