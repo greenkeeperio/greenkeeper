@@ -1141,7 +1141,7 @@ describe('github-event push: monorepo', () => {
             'packages/backend/package.json'
           ]
         },
-        'i-live-again': {
+        'i_live_again': {
           packages: [
             'packages/lalalalala/package.json'
           ]
@@ -1213,7 +1213,7 @@ describe('github-event push: monorepo', () => {
           version: '0.9.1',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'greenkeeper/i-live-again/lodash-0.9.1'
+          head: 'greenkeeper/i_live_again/lodash-0.9.1'
         }
       ])
     ])
@@ -1262,7 +1262,7 @@ describe('github-event push: monorepo', () => {
       .reply(200, {})
       .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/backend/lodash-0.9.1')
       .reply(200, {})
-      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/i-live-again/lodash-0.9.1')
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/i_live_again/lodash-0.9.1')
       .reply(200, () => {
         // should not delete this one
         expect(true).toBeFalsy()
@@ -1345,7 +1345,7 @@ describe('github-event push: monorepo', () => {
             'packages/backend/package.json'
           ]
         },
-        'i-live-again': {
+        'i_live_again': {
           packages: [
             'packages/lalalalala/package.json'
           ]
@@ -1413,7 +1413,7 @@ describe('github-event push: monorepo', () => {
           version: '0.9.1',
           dependency: 'lodash',
           dependencyType: 'dependencies',
-          head: 'greenkeeper/i-live-again/lodash-2.0.0'
+          head: 'greenkeeper/i_live_again/lodash-2.0.0'
         }
       ])
     ])
@@ -1471,7 +1471,7 @@ describe('github-event push: monorepo', () => {
       .reply(200, {})
       .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/backend/lodash-2.0.0')
       .reply(200, {})
-      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/i-live-again/lodash-2.0.0')
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/i_live_again/lodash-2.0.0')
       .reply(200, () => {
         // should not delete this one
         expect(true).toBeFalsy()
@@ -3323,6 +3323,230 @@ describe('github-event push: monorepo', () => {
     expect(frontend.referenceDeleted).toBeFalsy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
+
+  // test greenkeeper.json validation handling
+  test('monorepo: invalid greenkeeper.json added by user (1119)', async () => {
+    const configFileContent = {
+      groups: {
+        '#invalid#groupname#': {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '1119',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      }
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: encodePkg(configFileContent)
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: ['greenkeeper.json'],
+          removed: [],
+          modified: []
+        }
+      ],
+      repository: {
+        id: '1119',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('invalid-config-file')
+    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+
+    const expectedFiles = {
+      'package.json': ['package.json'],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+
+    const repo = await repositories.get('1119')
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toEqual({})
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
+  test('monorepo: greenkeeper.json modified by user and is now invalid (1120)', async () => {
+    const configFileContent = {
+      groups: {
+        'valid_groupname': {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '1120',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: encodePkg({
+          groups: {
+            '#invalid#groupname#': {
+              packages: [
+                '@package.json'
+              ]
+            }
+          }
+        })
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: '1120',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('invalid-config-file')
+    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+
+    const expectedFiles = {
+      'package.json': ['package.json'],
+      'package-lock.json': [],
+      'yarn.lock': [],
+      'npm-shrinkwrap.json': []
+    }
+    const expectedPackages = {
+      'package.json': {
+        name: 'testpkg',
+        dependencies: {
+          lodash: '^1.0.0'
+        }
+      }
+    }
+
+    const repo = await repositories.get('1120')
+    expect(repo.files).toMatchObject(expectedFiles)
+    expect(repo.packages).toMatchObject(expectedPackages)
+    expect(repo.greenkeeper).toEqual({})
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
 })
 
 afterAll(async () => {
@@ -3340,7 +3564,8 @@ afterAll(async () => {
   '1115', '1115:branch:1234abca', '1115:branch:1234abcb',
   '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
   '1117', '1117:branch:1234abca',
-  '1118', '1118:branch:1234abca')
+  '1118', '1118:branch:1234abca',
+  '1119', '1120')
   await removeIfExists(payments, '123')
 })
 
