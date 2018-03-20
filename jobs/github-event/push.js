@@ -113,10 +113,10 @@ module.exports = async function (data) {
         return true
       }
     })
-    const groupsToRecvieveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
-    if (_.isEmpty(groupsToRecvieveInitialBranch)) return
+    const groupsToReceiveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
+    if (_.isEmpty(groupsToReceiveInitialBranch)) return
     // create subgroup initial pr
-    return _(groupsToRecvieveInitialBranch)
+    return _(groupsToReceiveInitialBranch)
       .map(groupName => ({
         data: {
           name: 'create-initial-subgroup-branch',
