@@ -63,12 +63,13 @@ module.exports = async function (data) {
     const configValidation = validate(repoDoc.greenkeeper)
     if (configValidation.error) {
       // reset greenkeeper.json and add error-job
-      _.set(repoDoc, ['greenkeeper'], {}) // TODO: reset greenkeeper.json from old pkg
+      _.set(repoDoc, ['greenkeeper'], config)
       await updateDoc(repositories, repository, repoDoc)
       return {
         data: {
           name: 'invalid-config-file',
           message: configValidation.error.details[0].message,
+          errors: configValidation.error.details,
           repositoryId,
           accountId: repoDoc.accountId
         }
