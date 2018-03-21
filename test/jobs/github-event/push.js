@@ -834,7 +834,7 @@ describe('github-event push', async () => {
   })
 })
 
-describe.only('github-event push: monorepo', () => {
+describe('github-event push: monorepo', () => {
   beforeEach(() => {
     jest.resetModules()
     nock.cleanAll()
@@ -3434,7 +3434,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mga1')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper.groups).toBeFalsy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -3541,7 +3541,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mga2')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper.groups).toBeFalsy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -3648,7 +3648,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mga3')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper.groups).toBeFalsy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -3771,7 +3771,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mgm1')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -3887,7 +3887,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mgm2')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -4003,7 +4003,7 @@ describe.only('github-event push: monorepo', () => {
     const repo = await repositories.get('mgm3')
     expect(repo.files).toMatchObject(expectedFiles)
     expect(repo.packages).toMatchObject(expectedPackages)
-    expect(repo.greenkeeper).toEqual({})
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 })
