@@ -33,7 +33,8 @@ module.exports = async function (
     travisModified,
     depsUpdated,
     badgeAdded,
-    badgeUrl
+    badgeUrl,
+    greenkeeperConfigInfo
   } = branchDoc
 
   let enabled = false
@@ -123,7 +124,8 @@ module.exports = async function (
         success: combined.state === 'success',
         enabled,
         accountTokenUrl,
-        files
+        files,
+        greenkeeperConfigInfo
       }),
       base,
       head
