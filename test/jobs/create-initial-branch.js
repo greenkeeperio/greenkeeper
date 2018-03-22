@@ -20,7 +20,7 @@ describe('create initial branch', () => {
 
     await installations.put({
       _id: '123',
-      installation: 37,
+      installation: 137,
       plan: 'free'
     })
 
@@ -45,7 +45,7 @@ describe('create initial branch', () => {
     expect.assertions(10)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -147,7 +147,7 @@ describe('create initial branch', () => {
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -201,7 +201,7 @@ describe('create initial branch', () => {
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -255,7 +255,7 @@ describe('create initial branch', () => {
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -300,7 +300,7 @@ describe('create initial branch', () => {
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -333,7 +333,7 @@ describe('create initial branch', () => {
     expect.assertions(12)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -487,7 +487,7 @@ describe('create initial branch', () => {
     expect.assertions(12)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/installations/137/access_tokens')
       .reply(200, {
         token: 'secret'
       })
