@@ -1,16 +1,26 @@
+const _ = require('lodash')
+
 const dbs = require('../lib/dbs')
-// const statsd = require('../lib/statsd')
+const statsd = require('../lib/statsd')
 const githubQueue = require('../lib/github-queue')
 const updatedAt = require('../lib/updated-at')
 const invalidConfigBody = require('../content/invalid-config-issue')
 const getConfig = require('../lib/get-config')
 
-module.exports = async function ({ repositoryId, accountId, errors }) {
+module.exports = async function ({ repositoryId, accountId, message }) {
   const { installations, repositories } = await dbs()
   const installation = await installations.get(String(accountId))
   const installationId = installation.installation
 
-  // TODO: don't send too many issues!!
+  const openIssues = _.get(
+    await repositories.query('open_invalid_config_issue', {
+      key: repositoryId,
+      include_docs: true
+    }),
+    'rows'
+  )
+  // don't send too many issues!
+  if (openIssues && openIssues.length) return
 
   // TODO: bring errors messages in a format that can be used in the issue body
   // error example:
@@ -31,11 +41,11 @@ module.exports = async function ({ repositoryId, accountId, errors }) {
     owner,
     repo,
     title: `Invalid Greenkeeper Configuration file`,
-    body: invalidConfigBody({ errors }),
+    body: invalidConfigBody({ message }),
     labels: [label]
   }))
 
-  // statsd.increment('initial_issues')
+  statsd.increment('invalid_config_issues')
 
   await repositories.put(
     updatedAt({

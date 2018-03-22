@@ -2,10 +2,10 @@ const md = require('./template')
 
 // TODO: write something better!
 
-module.exports = ({errors}) =>
+module.exports = ({message, errors}) =>
 md`We have detected a Problem with your Greenkeeper Config File 🚨
 
-Errors: ${errors}
+${message}
 
 Example of a valid config object link
 
