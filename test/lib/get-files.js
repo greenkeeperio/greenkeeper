@@ -1,6 +1,6 @@
 const nock = require('nock')
 
-const { getFiles, formatPackageJson, getGreenkeeperConfigFile, getPackagePathsFromConfigFile } = require('../../lib/get-files')
+const { getFiles, formatPackageJson, discoverPackageFiles, discoverPackageFilePaths, getGreenkeeperConfigFile, getPackagePathsFromConfigFile } = require('../../lib/get-files')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
@@ -257,4 +257,112 @@ test('getPackagePathsFromConfigFile', async () => {
     'apps/frontend/react/package.json',
     'apps/frontend/react-native/package.json'
   ])
+})
+
+test('discoverPackageFiles: regular repo', async () => {
+  expect.assertions(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .reply(200, {
+      items: [{path: 'package.json'}]
+    })
+    .get('/repos/owner/repo/contents/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+
+  const result = await discoverPackageFiles('123', 'owner/repo')
+  expect(result).toEqual([{'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'}])
+})
+
+test('discoverPackageFiles: monorepo', async () => {
+  expect.assertions(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .reply(200, {
+      items: [{path: 'package.json'}, {path: 'frontend/package.json'}, {path: 'backend/package.json'}]
+    })
+    .get('/repos/owner/repo/contents/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/frontend/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'frontend/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/backend/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'backend/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+
+  const result = await discoverPackageFiles('123', 'owner/repo')
+  expect(result).toEqual([
+    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'},
+    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'frontend/package.json', 'type': 'file'},
+    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'backend/package.json', 'type': 'file'}
+  ])
+})
+
+test('discoverPackageFilePaths: regular repo', async () => {
+  expect.assertions(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .reply(200, {
+      items: [{path: 'package.json'}]
+    })
+
+  const result = await discoverPackageFilePaths('123', 'owner/repo')
+  expect(result).toEqual(['package.json'])
+})
+
+test('discoverPackageFilePaths: monorepo', async () => {
+  expect.assertions(1)
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .reply(200, {
+      items: [{path: 'package.json'}, {path: 'frontend/package.json'}, {path: 'backend/package.json'}]
+    })
+
+  const result = await discoverPackageFilePaths('123', 'owner/repo')
+  expect(result).toEqual(['package.json', 'frontend/package.json', 'backend/package.json'])
 })
