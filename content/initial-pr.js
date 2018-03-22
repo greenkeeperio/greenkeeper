@@ -136,7 +136,31 @@ const mainMessage = ({enabled, depsUpdated}) => {
   return '' // no updates, but private repository
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files}) {
+const greenkeeperConfigInfoMessage = (info) => {
+  if (!info) return ''
+  let message = ''
+  if (info.isMonorepo) {
+    message += '📦 📦  Greenkeeper has detected multiple `package.json` files. '
+  }
+  if (info.action === 'new') {
+    message += 'They have all been added to a new `greenkeeper.json` config file. They’ve been collected in a group called `default`, meaning that all of them will receive updates together. You can rename, add and remove groups and freely assign each `package.json` to whichever group you like. It’s common, for example, to have one `frontend` group and one `backend` group, each with a couple of `package.json` files. In any case, all files in a group will have their updates collected into single PRs and issues. '
+  }
+  if (info.action === 'updated') {
+    message += 'Since this repo already has a `greenkeeper.json` config file with defined groups, Greenkeeper has only checked whether they’re still valid. '
+    if (info.deletedPackageFiles.length > 0) {
+      message += 'The follwing `package.json` files could no longer be found in the repo and have been removed from your groups config: `' + info.deletedPackageFiles.join(', ') + '`. '
+    }
+    if (info.deletedGroups.length > 0) {
+      message += 'Also, groups which no longer have any entries have been removed: `' + info.deletedGroups.join(', ') + '`. '
+    }
+  }
+  if (info.action === 'added-groups-only') {
+    message += 'Since this repo already has a `greenkeeper.json` config file without any defined groups, Greenkeeper has  added all of the `package.json` files to a group called `default`, meaning that all of them will receive updates together. You can rename, add and remove groups and freely assign each `package.json` to whichever group you like. It’s common, for example, to have one `frontend` group and one `backend` group, each with a couple of `package.json` files. In any case, all files in a group will have their updates collected into single PRs and issues. '
+  }
+  return message
+}
+
+function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo}) {
   return md`
 ☝️ Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
 
@@ -149,6 +173,8 @@ ${mainMessage({enabled, depsUpdated})}
 ${!enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
 
 ${secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
+
+${greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
 
 ---
 ${

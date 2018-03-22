@@ -296,7 +296,6 @@ describe('create branch', async () => {
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
-        console.log('gkj')
         expect(JSON.parse(requestBody).tree[0].path).toEqual('greenkeeper.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"lol":"wat"}')
         return {sha: 'def456'}
