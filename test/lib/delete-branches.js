@@ -5,9 +5,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 const deleteBranches = require('../../lib/delete-branches')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 afterAll(async () => {
   const { installations, repositories } = await dbs()
   await Promise.all([

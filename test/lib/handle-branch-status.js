@@ -3,9 +3,6 @@ const nock = require('nock')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 describe('handle-branch-status', async () => {
   afterAll(async () => {
     const { repositories, installations, npm } = await dbs()

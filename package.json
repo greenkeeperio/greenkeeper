@@ -51,8 +51,8 @@
       "/test/helpers/.*\\.js$"
     ],
     "collectCoverage": true,
-    "unmockedModulePathPatterns": [
-      "<rootDir>/node_modules/nock"
+    "setupFiles": [
+      "<rootDir>/test/helpers/setup-nock.js"
     ],
     "testEnvironment": "node"
   },

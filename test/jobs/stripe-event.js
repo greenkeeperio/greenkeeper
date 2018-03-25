@@ -3,9 +3,6 @@ const nock = require('nock')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 test('enqueue email job when recieving stripe cancel event', async () => {
   const { payments } = await dbs()
   const stripeEvent = require('../../jobs/stripe-event')

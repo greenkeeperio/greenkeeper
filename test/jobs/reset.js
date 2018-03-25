@@ -10,9 +10,6 @@ const waitFor = (milliseconds) => {
   })
 }
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 const githubRepository = {
   id: 42,
   full_name: 'finnp/abc',

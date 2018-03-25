@@ -9,9 +9,6 @@ const waitFor = (milliseconds) => {
   })
 }
 
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
-
 describe('send-stale-initial-pr-reminder', async () => {
   const sendStaleInitialPrReminder = require('../../jobs/send-stale-initial-pr-reminder')
 

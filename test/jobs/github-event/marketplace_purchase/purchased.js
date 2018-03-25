@@ -1,11 +1,6 @@
-const nock = require('nock')
-
 const dbs = require('../../../../lib/dbs')
 const removeIfExists = require('../../../helpers/remove-if-exists.js')
 const purchasePurchase = require('../../../../jobs/github-event/marketplace_purchase/purchased')
-
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
 
 describe('marketplace purchased', async () => {
   test('create entry in payments database', async () => {
