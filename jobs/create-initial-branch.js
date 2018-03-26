@@ -238,7 +238,7 @@ module.exports = async function ({ repositoryId }) {
     // Generate a new greenkeeeper.json from scratch
     let greenkeeperJSONTransform = {
       path: 'greenkeeper.json',
-      message: getMessage(config.commitMessages, 'initialDependencies'),
+      message: getMessage(config.commitMessages, 'addConfigFile'),
       transform: () => {
         const greenkeeperJSON = {
           groups: defaultGroups
