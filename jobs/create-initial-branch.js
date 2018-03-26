@@ -40,8 +40,11 @@ module.exports = async function ({ repositoryId }) {
     log.warn('exited: Issues disabled on fork')
     return
   }
-  // find all package.json
-  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName)
+
+  const [owner, repo] = repoDoc.fullName.split('/')
+  const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
+  // find all package.json files on the default branch
+  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName, base)
 
   await updateRepoDoc(installationId, repoDoc, packageFilePaths)
 
@@ -61,8 +64,6 @@ module.exports = async function ({ repositoryId }) {
   }
   const pkg = _.get(repoDoc, ['packages', 'package.json']) // this is duplicated code (merge with L44)
   if (!pkg) return
-
-  const [owner, repo] = repoDoc.fullName.split('/')
 
   await createDefaultLabel({ installationId, owner, repo, name: config.label })
 

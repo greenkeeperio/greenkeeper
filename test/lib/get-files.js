@@ -269,9 +269,18 @@ test('discoverPackageFiles: regular repo', async () => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
-      items: [{path: 'package.json'}]
+      tree: [
+        {
+          'path': 'package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        }
+      ]
     })
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
@@ -281,7 +290,7 @@ test('discoverPackageFiles: regular repo', async () => {
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
 
-  const result = await discoverPackageFiles('123', 'owner/repo')
+  const result = await discoverPackageFiles('123', 'owner/repo', 'master')
   expect(result).toEqual([{'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'}])
 })
 
@@ -295,9 +304,34 @@ test('discoverPackageFiles: monorepo', async () => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
-      items: [{path: 'package.json'}, {path: 'frontend/package.json'}, {path: 'backend/package.json'}]
+      tree: [
+        {
+          'path': 'package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'frontend/package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'backend/package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        }
+      ]
     })
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
@@ -321,7 +355,7 @@ test('discoverPackageFiles: monorepo', async () => {
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
 
-  const result = await discoverPackageFiles('123', 'owner/repo')
+  const result = await discoverPackageFiles('123', 'owner/repo', 'master')
   expect(result).toEqual([
     {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'},
     {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'frontend/package.json', 'type': 'file'},
@@ -339,12 +373,21 @@ test('discoverPackageFilePaths: regular repo', async () => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
-      items: [{path: 'package.json'}]
+      tree: [
+        {
+          'path': 'package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        }
+      ]
     })
 
-  const result = await discoverPackageFilePaths('123', 'owner/repo')
+  const result = await discoverPackageFilePaths('123', 'owner/repo', 'master')
   expect(result).toEqual(['package.json'])
 })
 
@@ -358,11 +401,36 @@ test('discoverPackageFilePaths: monorepo', async () => {
     })
     .get('/rate_limit')
     .reply(200, {})
-    .get('/search/code?q=filename%3Apackage.json+repo%3Aowner%2Frepo&per_page=100')
+    .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
-      items: [{path: 'package.json'}, {path: 'frontend/package.json'}, {path: 'backend/package.json'}]
+      tree: [
+        {
+          'path': 'package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'frontend/package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'backend/package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        }
+      ]
     })
 
-  const result = await discoverPackageFilePaths('123', 'owner/repo')
+  const result = await discoverPackageFilePaths('123', 'owner/repo', 'master')
   expect(result).toEqual(['package.json', 'frontend/package.json', 'backend/package.json'])
 })
