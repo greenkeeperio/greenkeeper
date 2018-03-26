@@ -11,7 +11,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency } = require('../utils/registry-change-utils')
+const { createTransformFunction, getHighestPriorityDependency } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -167,16 +167,6 @@ module.exports = async function (
     return
   }
 
-  // TODO: previously we checked the default_branch's status
-  // this failed when users used [ci skip]
-  // or the repo was freshly set up
-  // the commit didn't have a status then
-  // https://github.com/greenkeeperio/greenkeeper/issues/59
-  // new strategy: we just don't do anything for now
-  // in the future we can check at this very moment
-  // how many unprocessed branches are lying around
-  // and create an issue telling the user to enable CI
-
   const highestPriorityDependency = getHighestPriorityDependency(types)
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
@@ -323,9 +313,3 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo, log })
     }
   }
 }
-
-// sort the dependency change per package.json per type
-// (prioritize 'dependency', filter out peerDependency.. ect see registry-change job)
-
-// create branch for each group, wait for status, create PR .. ect (see create-version-branch)
-// we need different commit messages for each dependency type

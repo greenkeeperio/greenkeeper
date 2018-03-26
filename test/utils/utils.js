@@ -4,7 +4,7 @@ const {
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved
-} = require('../../utils/registry-change-utils')
+} = require('../../utils/utils')
 
 test('seperateNormalAndMonorepos', () => {
   const input = [
