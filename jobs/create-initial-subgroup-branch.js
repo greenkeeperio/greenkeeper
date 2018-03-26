@@ -15,7 +15,7 @@ const upsert = require('../lib/upsert')
 
 const registryUrl = env.NPM_REGISTRY
 
-// if we update dependencies find open PRs for that dependency and close the PRs by commit message
+// If we update dependencies, find any open PRs for that dependency and close the PRs by commit message
 
 module.exports = async function ({ repositoryId, groupName }) {
   const { installations, repositories, logs } = await dbs()
@@ -162,7 +162,7 @@ module.exports = async function ({ repositoryId, groupName }) {
 
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
-    initial: false, // other flag?
+    initial: false, // Not _actually_ an inital branch :)
     sha,
     base: branch,
     head: newBranch,
