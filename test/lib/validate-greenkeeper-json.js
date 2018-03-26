@@ -43,6 +43,16 @@ test('valid with subgroup level ignore', () => {
   expect(result.error).toBeFalsy()
 })
 
+test('valid without groups', () => {
+  const file = {
+    ignore: [
+      'totally-terrible-dependency'
+    ]
+  }
+  const result = validate(file)
+  expect(result.error).toBeFalsy()
+})
+
 test('invalid: groupname has invalid characters', () => {
   const file = {
     groups: {
@@ -104,7 +114,7 @@ test('invalid: path is not ending on `package.json`', () => {
   expect(result.error.details[0].message).toMatch(/fails to match the required pattern/)
 })
 
-test('invalid: no group/s', () => {
+test('invalid: group/s not under group key', () => {
   const file = {
     frontend: {
       packages: [
@@ -121,8 +131,9 @@ test('invalid: no group/s', () => {
   const result = validate(file)
   expect(result.error).toBeTruthy()
   expect(result.error.name).toEqual('ValidationError')
-  expect(result.error.details.length).toEqual(1)
-  expect(result.error.details[0].message).toMatch(/"groups" is required/)
+  expect(result.error.details.length).toEqual(2)
+  expect(result.error.details[0].message).toMatch(/"frontend" is not allowed/)
+  expect(result.error.details[1].message).toMatch(/"backend" is not allowed/)
 })
 
 test('invalid: no packages', () => {
