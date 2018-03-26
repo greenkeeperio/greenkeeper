@@ -1,7 +1,7 @@
 const nock = require('nock')
 
 const createBranch = require('../../lib/create-branch')
-const { createTransformFunction } = require('../../utils/registry-change-utils')
+const { createTransformFunction } = require('../../utils/utils')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')

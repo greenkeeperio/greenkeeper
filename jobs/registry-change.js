@@ -11,7 +11,7 @@ const {
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved
-} = require('../utils/registry-change-utils')
+} = require('../utils/utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -52,7 +52,7 @@ module.exports = async function (
   if (distTag !== 'latest') return
 
   /*
-  Update: 'by_dependency' already handles multiple package.json files, but not in the same result.
+  Update: 'by_dependency' handles multiple package.json files, but not in the same result.
 
   You get one result per matching dependency per depencyType per file in `packageFilesForUpdatedDependency`. The `value`
   object for each result (used below, in `filteredSortedPackages` for example), looks like:
@@ -74,16 +74,6 @@ module.exports = async function (
     "type": "dependencies",
     "oldVersion": "^4.2.4"
   }
-
-  So we’d need to either completely change how that view works (boo), or maybe add a clever reduce (?),
-  or collect the results per repo in this file, so we only fire off 'create-version-branch' once per
-  repo, not once per file per repo.
-
-  Note that we also have these views that still need to be checked:
-  - pr_open_by_dependency
-  - branch_by_dependency
-  - issue_open_by_dependency
-
   */
 
   // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
