@@ -51,9 +51,22 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test')
       .reply(200, {
-        items: [{path: 'package.json'}]
+        default_branch: 'master'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
@@ -153,9 +166,22 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test')
       .reply(200, {
-        items: [{path: 'package.json'}]
+        default_branch: 'master'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
@@ -207,9 +233,22 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test')
       .reply(200, {
-        items: [{path: 'package.json'}]
+        default_branch: 'master'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
@@ -261,9 +300,22 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test')
       .reply(200, {
-        items: [{path: 'package.json'}]
+        default_branch: 'master'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
@@ -339,6 +391,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
       // first time from repository-docs.js -> updateRepoDoc
       .get('/repos/finnp/test/contents/greenkeeper.json')
       .reply(404, {
@@ -349,9 +405,26 @@ describe('create initial branch', () => {
       .reply(404, {
         message: 'Not Found'
       })
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
       .reply(200, {
-        items: [{path: 'package.json'}, {path: 'frontend/package.json'}]
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          },
+          {
+            'path': 'frontend/package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
@@ -493,6 +566,10 @@ describe('create initial branch', () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
       // first time from repository-docs.js -> updateRepoDoc
       .get('/repos/finnp/test/contents/greenkeeper.json')
       .reply(200, {
@@ -509,9 +586,34 @@ describe('create initial branch', () => {
         name: 'greenkeeper.json',
         content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
       })
-      .get('/search/code?q=filename%3Apackage.json+repo%3Afinnp%2Ftest&per_page=100')
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
       .reply(200, {
-        items: [{path: 'package.json'}, {path: 'frontend/package.json'}, {path: 'backend/package.json'}]
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          },
+          {
+            'path': 'frontend/package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          },
+          {
+            'path': 'backend/package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
       })
       .get('/repos/finnp/test/contents/package.json')
       .reply(200, {
