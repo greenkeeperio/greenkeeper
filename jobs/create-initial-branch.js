@@ -40,7 +40,10 @@ module.exports = async function ({ repositoryId }) {
     log.warn('exited: Issues disabled on fork')
     return
   }
-  await updateRepoDoc(installationId, repoDoc)
+  // find all package.json
+  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName)
+
+  await updateRepoDoc(installationId, repoDoc, packageFilePaths)
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
@@ -214,7 +217,6 @@ module.exports = async function ({ repositoryId }) {
     }
   ]
 
-  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName)
   const greenkeeperConfigInfo = {
     isMonorepo: false
   }
