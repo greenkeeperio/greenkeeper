@@ -36,13 +36,13 @@ module.exports = async function (data) {
 
   let repoDoc = await repositories.get(repositoryId)
   const config = getConfig(repoDoc)
-  const isMonorepo = !!_.get(config, ['groups'])
-  // if greenkeeper.json with at least one file in a group
-  // updated repoDoc with new .greenkeeper.json
-  //  if a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed
-  // close all open prs for that groupname
+  /*
+  1. Update repoDoc with new greenkeeper.json
+  2. If a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed close all open prs for that groupname
+  3. If greenkeeper.json is invalid, continue using the previous version and open an issue concerning the invalid file
+  */
 
-  // Already synced the sha
+  // Don’t handle this change twice
   if (after === repoDoc.headSha) return
   repoDoc.headSha = after
 
@@ -52,12 +52,7 @@ module.exports = async function (data) {
   const oldPkg = _.get(repoDoc, ['packages'])
   await updateRepoDoc(installation.id, repoDoc)
   const pkg = _.get(repoDoc, ['packages'])
-  if (!pkg || _.isEmpty(pkg)) return disableRepo({ repositories, repository, repoDoc })
-  if (!isMonorepo) { // does this make sense??
-    if (!Object.keys(pkg).length) {
-      return disableRepo({ repositories, repository, repoDoc })
-    }
-  }
+  if (_.isEmpty(pkg)) return disableRepo({ repositories, repository, repoDoc })
 
   if (hasRelevantConfigFileChanges(data.commits)) {
     const configValidation = validate(repoDoc.greenkeeper)
@@ -106,20 +101,20 @@ module.exports = async function (data) {
     }
   }
 
-  // needs to happen for all the package.jsons
-  // delete all branches for modified or deleted dependencies
-  // do diff + getBranchesToDelete per file for each group
-
-  // TODO: for Tuesday -> deleting a package.json needs to be detected!!
-  const branches = await getDependencyBranchesForAllGroups({pkg, oldPkg, config, repositories, repositoryId})
+  // Delete all branches for modified or deleted dependencies
+  // Do diff + getBranchesToDelete per file for each group
+  // Get all dependency branches, grouped or not
+  const dependencyBranches = await getDependencyBranchesForAllGroups({pkg, oldPkg, config, repositories, repositoryId})
   const configChanges = diffGreenkeeperJson(config, repoDoc.greenkeeper)
-
+  // If groups have been deleted or modified, find the branches we need to delete
   const groupBranchesToDelete = await getGroupBranchesToDelete({configChanges, repositories, repositoryId})
-  const allBranchesToDelete = branches.concat(groupBranchesToDelete)
-  const _branches = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
+  // Mash everything together
+  const allBranchesToDelete = dependencyBranches.concat(groupBranchesToDelete)
+  // De-dupe and flatten branches
+  const actualBranchesToDelete = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
 
   await Promise.mapSeries(
-    _branches,
+    actualBranchesToDelete,
     deleteBranches.bind(null, {
       installationId: installation.id,
       fullName: repository.full_name,
@@ -147,13 +142,6 @@ module.exports = async function (data) {
       }))
       .value()
   }
-
-  // do this per group, if groups, else once
-
-  // MONDAY CONTINUE HERE
-
-  // TODO: config includes no groups
-  // console.log('config', config)
 }
 
 function updateDoc (repositories, repository, repoDoc) {
@@ -201,6 +189,7 @@ async function disableRepo ({ repositories, repoDoc, repository }) {
 
 async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, repositories, repositoryId}) {
   return Promise.all(Object.keys(pkg).map(async (path) => {
+    // Find the group name for the current package json
     let groupName = null
     if (config.groups) {
       Object.keys(config.groups).map((group) => {
@@ -209,9 +198,9 @@ async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, reposito
         }
       })
     }
-   // this can only happen if a package.json was modified
     const dependencyDiff = diff(oldPkg[path], pkg[path], groupName)
     if (!_.isEmpty(dependencyDiff)) {
+      // If the package.json has changes, find the proper (group) branches to delete
       return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId, config})
     }
     return []
