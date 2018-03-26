@@ -16,6 +16,7 @@ test('get default config', () => {
     branchPrefix: 'greenkeeper/',
     ignore: [],
     commitMessages: {
+      addConfigFile: 'chore: add Greenkeeper config file',
       initialBadge: 'docs(readme): add Greenkeeper badge',
       initialDependencies: 'chore(package): update dependencies',
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
@@ -55,6 +56,7 @@ test('get config from  root greenkeeper section', () => {
     branchPrefix: 'greenkeeper/',
     ignore: [],
     commitMessages: {
+      addConfigFile: 'chore: add Greenkeeper config file',
       initialBadge: 'docs(readme): add Greenkeeper badge',
       initialDependencies: 'chore(package): update dependencies',
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
@@ -95,6 +97,7 @@ test('get custom commit message', () => {
     branchPrefix: 'greenkeeper/',
     ignore: [],
     commitMessages: {
+      addConfigFile: 'chore: add Greenkeeper config file',
       initialBadge: 'HELLO Greenkeeper badge',
       initialDependencies: 'chore(package): update dependencies',
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
