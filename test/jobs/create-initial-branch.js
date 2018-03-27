@@ -46,10 +46,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
@@ -161,10 +163,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
@@ -228,10 +232,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
@@ -295,10 +301,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
@@ -353,10 +361,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
 
     const newJob = await createInitialBranch({
@@ -386,10 +396,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
@@ -561,10 +573,12 @@ describe('create initial branch', () => {
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
