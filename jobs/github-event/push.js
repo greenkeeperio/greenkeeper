@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const Log = require('gk-log')
 
 const dbs = require('../../lib/dbs')
 const env = require('../../lib/env')
@@ -16,7 +17,7 @@ const getConfig = require('../../lib/get-config')
 const { validate } = require('../../lib/validate-greenkeeper-json')
 
 module.exports = async function (data) {
-  const { repositories } = await dbs()
+  const { repositories, logs } = await dbs()
   const { after, repository, installation } = data
 
   const branchRef = `refs/heads/${repository.default_branch}`
@@ -33,9 +34,11 @@ module.exports = async function (data) {
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
 
   const repositoryId = String(repository.id)
-
   let repoDoc = await repositories.get(repositoryId)
+
   const config = getConfig(repoDoc)
+  const log = Log({logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'push'})
+  log.info('started')
   /*
   1. Update repoDoc with new greenkeeper.json
   2. If a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed close all open prs for that groupname
@@ -43,20 +46,27 @@ module.exports = async function (data) {
   */
 
   // Don’t handle this change twice
-  if (after === repoDoc.headSha) return
+  if (after === repoDoc.headSha) {
+    log.info('exited: already handled this change')
+    return
+  }
   repoDoc.headSha = after
 
   // get path of changed package json
   // always put package.jsons in the repoDoc (new & old)
   // if remove event: delete key of package.json
   const oldPkg = _.get(repoDoc, ['packages'])
-  await updateRepoDoc(installation.id, repoDoc)
+  await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
   const pkg = _.get(repoDoc, ['packages'])
-  if (_.isEmpty(pkg)) return disableRepo({ repositories, repository, repoDoc })
+  if (_.isEmpty(pkg)) {
+    log.warn('disabling repository')
+    return disableRepo({ repositories, repository, repoDoc })
+  }
 
   if (hasRelevantConfigFileChanges(data.commits)) {
     const configValidation = validate(repoDoc.greenkeeper)
     if (configValidation.error) {
+      log.warn('validation of greenkeeper.json failed', {error: configValidation.error.details, greenkeeperJson: repoDoc.greenkeeper})
       // reset greenkeeper.json and add error-job
       _.set(repoDoc, ['greenkeeper'], config)
       await updateDoc(repositories, repository, repoDoc)
@@ -74,6 +84,7 @@ module.exports = async function (data) {
 
   // if there are no changes in packag.json files or the greenkeeper config
   if (_.isEqual(oldPkg, pkg) && _.isEqual(config, repoDoc.greenkeeper)) {
+    log.info('there are no changes in packag.json files or the greenkeeper config')
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
@@ -85,6 +96,7 @@ module.exports = async function (data) {
     Object.keys(pkg).length === 1 &&
     (!_.isEmpty(config) && _.isEmpty(repoDoc.greenkeeper))
   ) {
+    log.info('greenkeeper config was deleted but only contained the root package.json')
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
@@ -92,6 +104,7 @@ module.exports = async function (data) {
   await updateDoc(repositories, repository, repoDoc)
 
   if (!oldPkg) {
+    log.success('starting create-initial-branch')
     return {
       data: {
         name: 'create-initial-branch',
@@ -113,6 +126,7 @@ module.exports = async function (data) {
   // De-dupe and flatten branches
   const actualBranchesToDelete = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
 
+  log.info('starting to delete branches', {branches: actualBranchesToDelete.map(branch => branch.head)})
   await Promise.mapSeries(
     actualBranchesToDelete,
     deleteBranches.bind(null, {
@@ -129,6 +143,7 @@ module.exports = async function (data) {
       }
     })
     const groupsToReceiveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
+    log.success(`${groupsToReceiveInitialBranch.length} groups to receive initial subgroup branch`, {groupsToReceiveInitialBranch})
     if (_.isEmpty(groupsToReceiveInitialBranch)) return
     // create subgroup initial pr
     return _(groupsToReceiveInitialBranch)
@@ -142,6 +157,7 @@ module.exports = async function (data) {
       }))
       .value()
   }
+  log.success('success')
 }
 
 function updateDoc (repositories, repository, repoDoc) {

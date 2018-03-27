@@ -44,9 +44,9 @@ module.exports = async function ({ repositoryId }) {
   const [owner, repo] = repoDoc.fullName.split('/')
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
-  const packageFilePaths = await discoverPackageFilePaths(installationId, repoDoc.fullName, base)
+  const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
 
-  await updateRepoDoc(installationId, repoDoc, packageFilePaths)
+  await updateRepoDoc({installationId, doc: repoDoc, packageFilePaths, log})
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
