@@ -289,8 +289,15 @@ test('discoverPackageFiles: regular repo', async () => {
       name: 'package.json',
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
-
-  const result = await discoverPackageFiles('123', 'owner/repo', 'master')
+  const result = await discoverPackageFiles({
+    installationId: '123',
+    fullName: 'owner/repo',
+    defaultBranch: 'master',
+    log: {
+      info: () => {},
+      warn: () => {}
+    }
+  })
   expect(result).toEqual([{'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'}])
 })
 
@@ -355,7 +362,15 @@ test('discoverPackageFiles: monorepo', async () => {
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
 
-  const result = await discoverPackageFiles('123', 'owner/repo', 'master')
+  const result = await discoverPackageFiles({
+    installationId: '123',
+    fullName: 'owner/repo',
+    defaultBranch: 'master',
+    log: {
+      info: () => {},
+      warn: () => {}
+    }
+  })
   expect(result).toEqual([
     {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'},
     {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'frontend/package.json', 'type': 'file'},
@@ -387,7 +402,15 @@ test('discoverPackageFilePaths: regular repo', async () => {
       ]
     })
 
-  const result = await discoverPackageFilePaths('123', 'owner/repo', 'master')
+  const result = await discoverPackageFilePaths({
+    installationId: '123',
+    fullName: 'owner/repo',
+    defaultBranch: 'master',
+    log: {
+      info: () => {},
+      warn: () => {}
+    }
+  })
   expect(result).toEqual(['package.json'])
 })
 
@@ -431,6 +454,14 @@ test('discoverPackageFilePaths: monorepo', async () => {
       ]
     })
 
-  const result = await discoverPackageFilePaths('123', 'owner/repo', 'master')
+  const result = await discoverPackageFilePaths({
+    installationId: '123',
+    fullName: 'owner/repo',
+    defaultBranch: 'master',
+    log: {
+      info: () => {},
+      warn: () => {}
+    }
+  })
   expect(result).toEqual(['package.json', 'frontend/package.json', 'backend/package.json'])
 })

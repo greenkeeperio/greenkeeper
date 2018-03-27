@@ -27,7 +27,7 @@ module.exports = async function ({ repositoryId, groupName }) {
 
   log.info('started')
 
-  await updateRepoDoc(installationId, repoDoc)
+  await updateRepoDoc({installationId, doc: repoDoc, log})
   const config = getConfig(repoDoc)
   const pathsForGroup = config.groups[groupName].packages
   if (_.isEmpty(pathsForGroup)) {
