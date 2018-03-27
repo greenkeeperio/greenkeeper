@@ -287,7 +287,7 @@ module.exports = async function ({ repositoryId }) {
         } else {
           greenkeeperConfigFile.groups = newGroups
         }
-        return JSON.stringify(greenkeeperConfigFile)
+        return JSON.stringify(greenkeeperConfigFile, null, 2)
       }
       // Don’t create this file because it already exists
       delete greenkeeperJSONTransform.create
