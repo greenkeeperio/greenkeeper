@@ -73,7 +73,7 @@ module.exports = async function (data) {
       return {
         data: {
           name: 'invalid-config-file',
-          message: configValidation.error.details[0].message,
+          messages: _.map(configValidation.error.details, 'formattedMessage'),
           errors: configValidation.error.details,
           repositoryId,
           accountId: repoDoc.accountId

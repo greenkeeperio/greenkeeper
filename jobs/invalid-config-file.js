@@ -7,7 +7,7 @@ const updatedAt = require('../lib/updated-at')
 const invalidConfigBody = require('../content/invalid-config-issue')
 const getConfig = require('../lib/get-config')
 
-module.exports = async function ({ repositoryId, accountId, message }) {
+module.exports = async function ({ repositoryId, accountId, messages }) {
   const { installations, repositories } = await dbs()
   const installation = await installations.get(String(accountId))
   const installationId = installation.installation
@@ -22,16 +22,6 @@ module.exports = async function ({ repositoryId, accountId, message }) {
   // don't send too many issues!
   if (openIssues && openIssues.length) return
 
-  // TODO: bring errors messages in a format that can be used in the issue body
-  // error example:
-  // { message: '"#invalid#groupname#" is not allowed',
-  //     path: [ 'groups', '#invalid#groupname#' ],
-  //     type: 'object.allowUnknown',
-  //     context:
-  //      { child: '#invalid#groupname#',
-  //        key: '#invalid#groupname#',
-  //        label: '#invalid#groupname#' } }
-
   const repoDoc = await repositories.get(String(repositoryId))
   const { fullName } = repoDoc
   const [owner, repo] = fullName.split('/')
@@ -41,7 +31,7 @@ module.exports = async function ({ repositoryId, accountId, message }) {
     owner,
     repo,
     title: `Invalid Greenkeeper Configuration file`,
-    body: invalidConfigBody({ message }),
+    body: invalidConfigBody({ messages }),
     labels: [label]
   }))
 
