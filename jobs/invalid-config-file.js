@@ -30,8 +30,8 @@ module.exports = async function ({ repositoryId, accountId, messages }) {
   const { number } = await githubQueue(installationId).write(github => github.issues.create({
     owner,
     repo,
-    title: `Invalid Greenkeeper Configuration file`,
-    body: invalidConfigBody({ messages }),
+    title: `Invalid Greenkeeper configuration file`,
+    body: invalidConfigBody(messages),
     labels: [label]
   }))
 
