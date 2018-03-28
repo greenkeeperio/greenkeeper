@@ -15,7 +15,7 @@ const env = require('../lib/env')
 const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const { discoverPackageFilePaths, getGreenkeeperConfigFile } = require('../lib/get-files')
+const { discoverPackageFilePaths } = require('../lib/get-files')
 const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
@@ -45,8 +45,7 @@ module.exports = async function ({ repositoryId }) {
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
-
-  await updateRepoDoc({installationId, doc: repoDoc, packageFilePaths, log})
+  await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
@@ -221,15 +220,14 @@ module.exports = async function ({ repositoryId }) {
   const greenkeeperConfigInfo = {
     isMonorepo: false
   }
+
   if ((packageFilePaths.length === 1 && packageFilePaths[0] === 'package.json') || packageFilePaths.length === 0) {
     // TODO: this should probably update an existing greenkeeper.json too, though.
     log.info('Not generating or updating greenkeeper.json: No package files in repo, or no monorepo.')
   } else {
-    greenkeeperConfigInfo.isMonorepo = true
-    // The config var from above contains the combined config from greenkeeper.json, package.json and the defaults, and
-    // does NOT represent the original greenkeeper.json. Therefore we have to try and fetch the actual file again before we can
-    // transform it
-    const greenkeeperConfigFile = await getGreenkeeperConfigFile(installationId, repoDoc.fullName)
+    Object.assign(greenkeeperConfigInfo, {isMonorepo: true})
+    log.info('Monorepo detected, generating greenkeeper config', {packageFilePaths})
+    const greenkeeperConfigFile = repoDoc.greenkeeper || {}
     // Generate a default group with all the autodiscovered package.json files
     const defaultGroups = {
       default: {
@@ -244,53 +242,47 @@ module.exports = async function ({ repositoryId }) {
         const greenkeeperJSON = {
           groups: defaultGroups
         }
-        return JSON.stringify(greenkeeperJSON)
+        return JSON.stringify(greenkeeperJSON, null, 2)
       },
       create: true
     }
     greenkeeperConfigInfo.action = 'new'
+
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
-    greenkeeperConfigInfo.deletedGroups = []
-    greenkeeperConfigInfo.deletedPackageFiles = []
-    if (Object.keys(greenkeeperConfigFile).length !== 0) {
-      const oldGroups = _.get(greenkeeperConfigFile, 'groups')
-      // If no groups were defined in the old greenkeeper.json, add the default group we just generated
-      let newGroups = defaultGroups
-      // If there were groups defined, check every entry for whether the files referenced still exist
-      if (oldGroups) {
-        newGroups = {}
-        _.map(oldGroups, (group, groupName) => {
-          var result = {}
-          result.packages = group.packages.filter((packagePath) => {
-            if (packageFilePaths.indexOf(packagePath) === -1) {
-              greenkeeperConfigInfo.deletedPackageFiles.push(packagePath)
-              return false
-            } else {
-              return packagePath
-            }
-          })
-          if (result.packages.length !== 0) {
-            newGroups[groupName] = result
-          } else {
-            greenkeeperConfigInfo.deletedGroups.push(groupName)
-          }
-        })
-        greenkeeperConfigInfo.action = 'updated'
-      } else {
-        greenkeeperConfigInfo.action = 'added-groups-only'
-      }
+    if (!_.isEmpty(greenkeeperConfigFile.groups)) {
+      // mutates greenkeeperConfigFile & greenkeeperConfigInfo
+      generateUpdatedGreenkeeperConfig({
+        greenkeeperConfigFile,
+        defaultGroups,
+        packageFilePaths,
+        greenkeeperConfigInfo
+      })
+
+      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: greenkeeperConfigFile})
+
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.transform = () => {
-        if (Object.keys(newGroups).length === 0) {
-          // If there are no valid package files at all, remove the groups keys completely
-          delete greenkeeperConfigFile.groups
-        } else {
-          greenkeeperConfigFile.groups = newGroups
-        }
         return JSON.stringify(greenkeeperConfigFile, null, 2)
       }
       // Don’t create this file because it already exists
       delete greenkeeperJSONTransform.create
+
+      // set the updated greenkeeper config in the repoDoc
+      await upsert(repositories, repoDoc._id, Object.assign(
+        repoDoc,
+        {greenkeeper: greenkeeperConfigFile}
+      ))
+    } else {
+      // set the generated greenkeeper config in the repoDoc
+      await upsert(repositories, repoDoc._id, Object.assign(
+        repoDoc,
+        {
+          greenkeeper:
+          {
+            groups: defaultGroups
+          }
+        }
+      ))
     }
     // add greenkeeper.json to the _beginning_ of the transforms array
     transforms.unshift(greenkeeperJSONTransform)
@@ -324,7 +316,6 @@ module.exports = async function ({ repositoryId }) {
   const depsUpdated = transforms[0].created
   const travisModified = transforms[1].created
   const badgeAdded = transforms[2].created
-
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
     initial: true,
@@ -393,4 +384,42 @@ async function travisTransform (config, travisyml) {
     ['branches', 'only'],
     `/^${escapeRegex(config.branchPrefix)}.*$/`
   )
+}
+
+function generateUpdatedGreenkeeperConfig ({greenkeeperConfigFile, defaultGroups, packageFilePaths, greenkeeperConfigInfo}) {
+  greenkeeperConfigInfo.deletedGroups = []
+  greenkeeperConfigInfo.deletedPackageFiles = []
+  const oldGroups = _.get(greenkeeperConfigFile, 'groups')
+  // If no groups were defined in the old greenkeeper.json, add the default group we just generated
+  let newGroups = defaultGroups
+  // If there were groups defined, check every entry for whether the files referenced still exist
+  if (oldGroups) {
+    newGroups = {}
+    _.map(oldGroups, (group, groupName) => {
+      var result = {}
+      result.packages = group.packages.filter((packagePath) => {
+        if (packageFilePaths.indexOf(packagePath) === -1) {
+          greenkeeperConfigInfo.deletedPackageFiles.push(packagePath)
+          return false
+        } else {
+          return packagePath
+        }
+      })
+      if (result.packages.length !== 0) {
+        newGroups[groupName] = result
+      } else {
+        greenkeeperConfigInfo.deletedGroups.push(groupName)
+      }
+    })
+    greenkeeperConfigInfo.action = 'updated'
+  } else {
+    greenkeeperConfigInfo.action = 'added-groups-only'
+  }
+  if (Object.keys(newGroups).length === 0) {
+    // If there are no valid package files at all, remove the groups keys completely
+    delete greenkeeperConfigFile.groups
+  } else {
+    greenkeeperConfigFile.groups = newGroups
+  }
+  return {greenkeeperConfigFile, greenkeeperConfigInfo}
 }

@@ -392,7 +392,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(12)
+    expect.assertions(13)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -408,11 +408,6 @@ describe('create initial branch', () => {
         default_branch: 'master'
       })
       // first time from repository-docs.js -> updateRepoDoc
-      .get('/repos/finnp/test/contents/greenkeeper.json')
-      .reply(404, {
-        message: 'Not Found'
-      })
-      // second time from create-initial-branch.js, before we do the transform
       .get('/repos/finnp/test/contents/greenkeeper.json')
       .reply(404, {
         message: 'Not Found'
@@ -518,6 +513,7 @@ describe('create initial branch', () => {
 
     const newJob = await createInitialBranch({repositoryId: 47})
     const newBranch = await repositories.get('47:branch:1234abcd')
+    const repoDoc = await repositories.get('47')
 
     expect(newJob).toBeTruthy()
     expect(newJob.data.name).toEqual('initial-timeout-pr')
@@ -526,6 +522,13 @@ describe('create initial branch', () => {
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeTruthy()
     expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+    expect(repoDoc.greenkeeper).toEqual({
+      groups: {
+        default: {
+          packages: ['package.json', 'frontend/package.json']
+        }
+      }
+    })
   })
 
   test('create pull request for monorepo and update existing greenkeeper.json', async () => {
@@ -569,7 +572,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep2': '1.0.0'
     }
 
-    expect.assertions(12)
+    expect.assertions(15)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -585,14 +588,6 @@ describe('create initial branch', () => {
         default_branch: 'master'
       })
       // first time from repository-docs.js -> updateRepoDoc
-      .get('/repos/finnp/test/contents/greenkeeper.json')
-      .reply(200, {
-        type: 'file',
-        path: 'greenkeeper.json',
-        name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
-      })
-      // second time from create-initial-branch.js, before we do the transform
       .get('/repos/finnp/test/contents/greenkeeper.json')
       .reply(200, {
         type: 'file',
@@ -704,28 +699,25 @@ describe('create initial branch', () => {
       // The `empty` group should disappear completely, since it no longer contains any files
       // The `frontend` group should not contain `this-file-no-longer-exists/package.json`, since that file
       // is no longer in the repo
-      expect(JSON.parse(transforms[0].transform())).toEqual({
-        ignore: [
-          'eslint'
-        ],
-        groups: {
-          build: {
-            packages: [
-              'package.json'
-            ]
-          },
-          frontend: {
-            packages: [
-              'frontend/package.json'
-            ]
-          },
-          backend: {
-            packages: [
-              'backend/package.json'
-            ]
-          }
+      const transformedConfigFile = JSON.parse(transforms[0].transform())
+      expect(transformedConfigFile.groups).toMatchObject({
+        build: {
+          packages: [
+            'package.json'
+          ]
+        },
+        frontend: {
+          packages: [
+            'frontend/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'backend/package.json'
+          ]
         }
       })
+      expect(transformedConfigFile.ignore).toEqual(['eslint'])
 
       return '1234abcd'
     })
@@ -733,6 +725,7 @@ describe('create initial branch', () => {
 
     const newJob = await createInitialBranch({repositoryId: 48})
     const newBranch = await repositories.get('48:branch:1234abcd')
+    const repoDoc = await repositories.get('48')
 
     expect(newJob).toBeTruthy()
     expect(newJob.data.name).toEqual('initial-timeout-pr')
@@ -741,6 +734,24 @@ describe('create initial branch', () => {
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeTruthy()
     expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+    expect(repoDoc.greenkeeper.groups).toMatchObject({
+      build: {
+        packages: [
+          'package.json'
+        ]
+      },
+      frontend: {
+        packages: [
+          'frontend/package.json'
+        ]
+      },
+      backend: {
+        packages: [
+          'backend/package.json'
+        ]
+      }
+    })
+    expect(repoDoc.greenkeeper.ignore).toEqual(['eslint'])
   })
 
   afterAll(async () => {
