@@ -3522,7 +3522,6 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    console.log('job', job)
     expect(job.messages[0]).toEqual('The package path `@package.json` in the group `valid_groupname` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash or an `@`, and it must end in `package.json`.')
 
     const expectedFiles = {
