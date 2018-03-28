@@ -11,7 +11,7 @@ Greenkeeper currently can’t work with your \`greenkeeper.json\` config file be
 
 ${messageList}
 
-Please correct ${messages.length === 1 ? 'this' : 'these'} and commit the fix to your default branch (usually master). Greenkeeper will pick up your changes and try again. If in doubt, please consult the [config documentation](https://greenkeeper.io/docs).
+Please correct ${messages.length === 1 ? 'this' : 'these'} and commit the fix to your default branch (usually master). Greenkeeper will pick up your changes and try again. If in doubt, please consult the [config documentation](https://greenkeeper.io/docs.html#config).
 
 Here’s an example of a valid \`greenkeeper.json\`:
 
