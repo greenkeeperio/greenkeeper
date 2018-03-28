@@ -3415,7 +3415,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3522,7 +3522,8 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toMatch(/"0" with value "@package.json" fails to match the required pattern/)
+    console.log('job', job)
+    expect(job.messages[0]).toEqual('The package path `@package.json` in the group `valid_groupname` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash or an `@`, and it must end in `package.json`.')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3629,7 +3630,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3752,7 +3753,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3868,7 +3869,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toMatch(/"0" with value "@package.json" fails to match the required pattern/)
+    expect(job.messages[0]).toEqual('The package path `@package.json` in the group `valid_groupname` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash or an `@`, and it must end in `package.json`.')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3984,7 +3985,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.message).toEqual('"#invalid#groupname#" is not allowed')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
