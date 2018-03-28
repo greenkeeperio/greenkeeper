@@ -20,6 +20,7 @@ describe('invalid-config-file', async () => {
   })
 
   test('create new issue', async () => {
+    expect.assertions(12)
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
       .reply(200, {
@@ -30,6 +31,8 @@ describe('invalid-config-file', async () => {
       .post('/repos/lisa/monorepo/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()
         expect(body).toBeTruthy()
+        expect(body).toMatch(/We found the following issue:/)
+        expect(body).toMatch(/1. The group name `#invalid#groupname#` is invalid./)
         expect(labels).toContain('greenkeeper')
         return true
       })
@@ -44,7 +47,7 @@ describe('invalid-config-file', async () => {
     const newJobs = await invalidConfigFile({
       repositoryId: 'invalid-config1',
       accountId: '2020',
-      message: '"#invalid#groupname#" is not allowed'
+      messages: ['The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).']
     })
     expect(newJobs).toBeFalsy()
 
@@ -100,7 +103,7 @@ describe('invalid-config-file', async () => {
   })
 
   test('a closed issue already exists', async () => {
-    expect.assertions(7)
+    expect.assertions(10)
 
     const { installations, repositories } = await dbs()
     await installations.put({
@@ -131,6 +134,9 @@ describe('invalid-config-file', async () => {
       .post('/repos/lisa/monorepo/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()
         expect(body).toBeTruthy()
+        expect(body).toMatch(/We found the following issues:/)
+        expect(body).toMatch(/1. The root-level key `frontend` is invalid./)
+        expect(body).toMatch(/2. The root-level key `backend` is invalid./)
         expect(labels).toContain('greenkeeper')
         return true
       })
@@ -144,7 +150,8 @@ describe('invalid-config-file', async () => {
 
     const newJobs = await invalidConfigFile({
       repositoryId: 'invalid-config3',
-      accountId: 2222
+      accountId: 2222,
+      messages: ['The root-level key `frontend` is invalid. If you meant to add a group named `frontend`, please put it in a root-level `groups` object. Valid root-level keys are `groups` and `ignore`.', 'The root-level key `backend` is invalid. If you meant to add a group named `backend`, please put it in a root-level `groups` object. Valid root-level keys are `groups` and `ignore`.']
     })
 
     expect(newJobs).toBeFalsy()
