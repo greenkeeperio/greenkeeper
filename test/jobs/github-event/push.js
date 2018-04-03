@@ -3332,7 +3332,7 @@ describe('github-event push: monorepo', () => {
       - [x] invalid package-path
       - [x] invalid groupname and package-path
   */
-  test('monorepo: invalid groupname greenkeeper.json added by user (mga1)', async () => {
+  test('monorepo: invalid groupname added to greenkeeper.json by user (mga1)', async () => {
     const configFileContent = {
       groups: {
         '#invalid#groupname#': {
@@ -3415,7 +3415,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3444,7 +3444,7 @@ describe('github-event push: monorepo', () => {
       groups: {
         'valid_groupname': {
           packages: [
-            '@package.json'
+            '/package.json'
           ]
         }
       }
@@ -3522,7 +3522,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The package path `@package.json` in the group `valid_groupname` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash or an `@`, and it must end in `package.json`.')
+    expect(job.messages[0]).toEqual('The package path `/package.json` in the group `valid_groupname` must be relative and not start with a slash.')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3546,12 +3546,15 @@ describe('github-event push: monorepo', () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
+  /*
+    Joi only returns one message here, because the errors are nested
+  */
   test('monorepo: invalid groupName & package-path greenkeeper.json added by user (mga3)', async () => {
     const configFileContent = {
       groups: {
         '#invalid#groupname#': {
           packages: [
-            '@package.json'
+            '/package.json'
           ]
         }
       }
@@ -3629,7 +3632,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3752,7 +3755,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3833,7 +3836,7 @@ describe('github-event push: monorepo', () => {
           groups: {
             'valid_groupname': {
               packages: [
-                '@package.json'
+                '/package.json'
               ]
             }
           }
@@ -3868,7 +3871,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The package path `@package.json` in the group `valid_groupname` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash or an `@`, and it must end in `package.json`.')
+    expect(job.messages[0]).toEqual('The package path `/package.json` in the group `valid_groupname` must be relative and not start with a slash.')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3892,6 +3895,9 @@ describe('github-event push: monorepo', () => {
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
+  /*
+    Joi only returns one message here, because the errors are nested
+  */
   test('monorepo: greenkeeper.json modified by user and it now has invalid groupname & package-path (mgm3)', async () => {
     const configFileContent = {
       groups: {
@@ -3949,7 +3955,7 @@ describe('github-event push: monorepo', () => {
           groups: {
             '#invalid#groupname#': {
               packages: [
-                '@package.json'
+                '/package.json'
               ]
             }
           }
@@ -3984,7 +3990,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],

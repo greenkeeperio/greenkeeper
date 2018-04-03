@@ -7,6 +7,8 @@ const { cleanCache } = require('../helpers/module-cache-helpers')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+jest.setTimeout(10000)
+
 describe('create version brach', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
