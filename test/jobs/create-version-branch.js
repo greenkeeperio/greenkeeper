@@ -7,12 +7,15 @@ const { cleanCache } = require('../helpers/module-cache-helpers')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+jest.setTimeout(10000)
+
 describe('create version brach', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
     jest.resetModules()
     jest.clearAllMocks()
+    nock.cleanAll()
   })
   beforeAll(async () => {
     const { installations } = await dbs()
