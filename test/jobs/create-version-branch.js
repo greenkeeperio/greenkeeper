@@ -15,6 +15,7 @@ describe('create version brach', () => {
     cleanCache('../../lib/env')
     jest.resetModules()
     jest.clearAllMocks()
+    nock.cleanAll()
   })
   beforeAll(async () => {
     const { installations } = await dbs()
