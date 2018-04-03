@@ -251,3 +251,12 @@ test('invalid: no packages and invalid root level key', () => {
   expect(result.error.details[1].message).toMatch(/"badgers" is not allowed/)
   expect(result.error.details[1].formattedMessage).toMatch('The root-level key `badgers` is invalid. If you meant to add a group named `badgers`, please put it in a root-level `groups` object. Valid root-level keys are `groups` and `ignore`.')
 })
+
+test('invalid: malformed JSON', () => {
+  const file = '<huihkhio'
+  const result = validate(file)
+  expect(result.error).toBeTruthy()
+  expect(result.error.name).toEqual('ValidationError')
+  expect(result.error.details[0].message).toEqual('"value" must be an object')
+  expect(result.error.details[0].formattedMessage).toEqual('It seems as if your `greenkeeper.json` is not valid JSON. You can check the validity of JSON files with [JSONLint](https://jsonlint.com/), for example.')
+})
