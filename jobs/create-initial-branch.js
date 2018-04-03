@@ -47,6 +47,7 @@ module.exports = async function ({ repositoryId }) {
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
   await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
 
+  console.log('packageFilePaths', packageFilePaths)
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
     log.warn('exited: No packages or package.json files found')
@@ -61,20 +62,24 @@ module.exports = async function ({ repositoryId }) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
   }
-  const pkg = _.get(repoDoc, ['packages', 'package.json']) // this is duplicated code (merge with L44)
-  if (!pkg) return
+  const pkg = _.get(repoDoc, ['packages'])
+  console.log('repoDoc', repoDoc.packages)
+  console.log('pkg', pkg)
+  if (!_.get(repoDoc, ['packages']) || Object.keys(pkg).length === 0) return
 
   await createDefaultLabel({ installationId, owner, repo, name: config.label })
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
-  // get for all package.jsons
+
+  // !!! get for all package.jsons 🙀
   // every package should be updated to the newest version
   const dependencyMeta = _.flatten(
     ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
       return _.map(pkg[type], (version, name) => ({ name, version, type }))
     })
   )
+  console.log('dependencyMeta', dependencyMeta)
   log.info('dependencies found', {parsedDependencies: dependencyMeta, packageJson: pkg})
   let dependencies = await Promise.mapSeries(dependencyMeta, async dep => {
     try {
@@ -136,6 +141,8 @@ module.exports = async function ({ repositoryId }) {
     })
     .filter(Boolean)
     .value()
+
+  // Eek
 
   log.info('parsed dependency actions', {dependencyActionsLog})
 
@@ -226,6 +233,7 @@ module.exports = async function ({ repositoryId }) {
     log.info('Not generating or updating greenkeeper.json: No package files in repo, or no monorepo.')
   } else {
     Object.assign(greenkeeperConfigInfo, {isMonorepo: true})
+    console.log('1. Is monorepo')
     log.info('Monorepo detected, generating greenkeeper config', {packageFilePaths})
     const greenkeeperConfigFile = repoDoc.greenkeeper || {}
     // Generate a default group with all the autodiscovered package.json files
@@ -234,6 +242,7 @@ module.exports = async function ({ repositoryId }) {
         packages: packageFilePaths
       }
     }
+    console.log('defaultGroups', defaultGroups)
     // Generate a new greenkeeeper.json from scratch
     let greenkeeperJSONTransform = {
       path: 'greenkeeper.json',
@@ -248,6 +257,7 @@ module.exports = async function ({ repositoryId }) {
     }
     greenkeeperConfigInfo.action = 'new'
 
+    console.log('greenkeeperConfigFile.groups', greenkeeperConfigFile.groups)
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
