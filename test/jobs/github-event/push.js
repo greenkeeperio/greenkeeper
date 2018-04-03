@@ -3415,7 +3415,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3632,7 +3632,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3755,7 +3755,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],
@@ -3990,7 +3990,7 @@ describe('github-event push: monorepo', () => {
     expect(newJob).toBeTruthy()
     const job = newJob.data
     expect(job.name).toEqual('invalid-config-file')
-    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
+    expect(job.messages[0]).toEqual('The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
 
     const expectedFiles = {
       'package.json': ['package.json'],

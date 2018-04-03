@@ -1,6 +1,6 @@
 const {validate} = require('../../lib/validate-greenkeeper-json')
 
-test('valid', () => {
+test('valid package paths', () => {
   const file = {
     groups: {
       frontend: {
@@ -12,6 +12,20 @@ test('valid', () => {
       backend: {
         packages: [
           'packages/backend/package.json'
+        ]
+      },
+      'lots-of-others': {
+        packages: [
+          'lol/front-end/package.json',
+          'package.json',
+          'lol/frontend/package.json',
+          'lol/@frontend/package.json',
+          '@lol/front-end/package.json',
+          'lol_wat/frontend/package.json',
+          'lol/WAAAAH/package.json',
+          'apps/frontend/react/package.json',
+          'oh/no/apps/frontend/react/package.json',
+          'this/is/stupid/oh/no/apps/frontend/react/package.json'
         ]
       }
     }
@@ -53,6 +67,14 @@ test('valid without groups', () => {
   expect(result.error).toBeFalsy()
 })
 
+/*
+
+Invalid paths:
+
+lol_wat/#frontend/package.json
+
+*/
+
 test('invalid: groupname has invalid characters', () => {
   const file = {
     groups: {
@@ -65,7 +87,7 @@ test('invalid: groupname has invalid characters', () => {
           'packages/lalalalala/package.json'
         ]
       },
-      backend: {
+      '@backend': {
         packages: [
           'packages/backend/package.json'
         ]
@@ -75,7 +97,9 @@ test('invalid: groupname has invalid characters', () => {
   const result = validate(file)
   expect(result.error).toBeTruthy()
   expect(result.error.details[0].message).toMatch(/"front!end" is not allowed/)
-  expect(result.error.details[0].formattedMessage).toMatch('The group name `front!end` is invalid. Group names may only contain alphanumeric characters, underscores, dashes and the @ symbol (a-zA-Z_@-).')
+  expect(result.error.details[0].formattedMessage).toMatch('The group name `front!end` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
+  expect(result.error.details[1].message).toMatch(/"@backend" is not allowed/)
+  expect(result.error.details[1].formattedMessage).toMatch('The group name `@backend` is invalid. Group names may only contain alphanumeric characters, underscores and dashes (a-zA-Z_-).')
 })
 
 test('invalid: absolute paths are not allowed', () => {
@@ -134,6 +158,25 @@ test('invalid: path is not ending on `package.json`', () => {
   expect(result.error.details[0].context.value).toEqual('packages/frontend/')
   expect(result.error.details[0].message).toMatch(/fails to match the required pattern/)
   expect(result.error.details[0].formattedMessage).toMatch('The package path `packages/frontend/` in the group `frontend` must end with `package.json`.')
+})
+
+test('invalid: path includes invalid chars', () => {
+  const file = {
+    groups: {
+      frontend: {
+        packages: [
+          'packages/awesome!/package.json'
+        ]
+      }
+    }
+  }
+  const result = validate(file)
+  expect(result.error).toBeTruthy()
+  expect(result.error.name).toEqual('ValidationError')
+  expect(result.error.details[0].path).toEqual([ 'groups', 'frontend', 'packages', 0 ])
+  expect(result.error.details[0].context.value).toEqual('packages/awesome!/package.json')
+  expect(result.error.details[0].message).toMatch(/fails to match the required pattern/)
+  expect(result.error.details[0].formattedMessage).toMatch('The package path `packages/awesome!/package.json` in the group `frontend` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash, and it must end in `package.json`. Allowed characters for a path are alphanumeric, underscores, dashes and the @ symbol (a-zA-Z_-@).')
 })
 
 test('invalid: group/s not under group key', () => {
@@ -207,21 +250,4 @@ test('invalid: no packages and invalid root level key', () => {
   expect(result.error.details[0].formattedMessage).toMatch(/The group `frontend` must contain a `packages` key./)
   expect(result.error.details[1].message).toMatch(/"badgers" is not allowed/)
   expect(result.error.details[1].formattedMessage).toMatch('The root-level key `badgers` is invalid. If you meant to add a group named `badgers`, please put it in a root-level `groups` object. Valid root-level keys are `groups` and `ignore`.')
-})
-
-test('invalid: catches invalid chars in otherwise valid package path', () => {
-  const file = {
-    groups: {
-      backend: {
-        packages: [
-          'packages/#backend/package.json'
-        ]
-      }
-    }
-  }
-  const result = validate(file)
-  expect(result.error).toBeTruthy()
-  expect(result.error.name).toEqual('ValidationError')
-  expect(result.error.details[0].message).toMatch(/fails to match the required pattern/)
-  expect(result.error.details[0].formattedMessage).toEqual('The package path `packages/#backend/package.json` in the group `backend` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash, and it must end in `package.json`.')
 })
