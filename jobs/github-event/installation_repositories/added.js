@@ -1,11 +1,14 @@
 const _ = require('lodash')
 const Log = require('gk-log')
+const promiseRetry = require('promise-retry')
 
 const dbs = require('../../../lib/dbs')
 const GithubQueue = require('../../../lib/github-queue')
 const statsd = require('../../../lib/statsd')
 
 const { createDocs } = require('../../../lib/repository-docs')
+
+const max404Retries = 5
 
 module.exports = async function ({ installation, repositories_added }) {
   const { repositories: reposDb, logs } = await dbs()
@@ -23,8 +26,34 @@ module.exports = async function ({ installation, repositories_added }) {
 
   const repositories = await Promise.mapSeries(repositories_added, doc => {
     const [owner, repo] = doc.full_name.split('/')
-    return GithubQueue(installation.id).read(github =>
-      github.repos.get({ owner, repo }))
+    return GithubQueue(installation.id).read(github => {
+      return promiseRetry((retry, number) => {
+        /*
+          if we get a 404 here, log, and try again a few times.
+          we’re doing the retry here so we can job-specific logs
+          and to keep the retry logic in lib/github.js simple
+        */
+        return github.repos.get({ owner, repo })
+        .catch(error => {
+          if (error.code === 404) {
+            if (number === max404Retries) {
+              // ignore and log failure here
+              // console.log('repo not found ' + number + 'th try: giving up')
+              log.warn('repo not found ' + number + 'th try: giving up')
+            } else {
+              // console.log('repo not found ' + number + 'th try: retrying')
+              log.warn('repo not found ' + number + 'th try: retrying')
+              retry(error)
+            }
+          } else { // not a 404, throw normally
+            throw error
+          }
+        })
+      }, {
+        retries: max404Retries,
+        minTimeout: process.env.NODE_ENV === 'testing' ? 1 : 3000
+      })
+    })
   })
 
   log.info('added repositories', repositories)
