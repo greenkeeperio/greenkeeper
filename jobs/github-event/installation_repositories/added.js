@@ -38,11 +38,9 @@ module.exports = async function ({ installation, repositories_added }) {
           if (error.code === 404) {
             if (number === max404Retries) {
               // ignore and log failure here
-              // console.log('repo not found ' + number + 'th try: giving up')
-              log.warn('repo not found ' + number + 'th try: giving up')
+              log.warn(`repo not found on attempt #${number}: gving up`)
             } else {
-              // console.log('repo not found ' + number + 'th try: retrying')
-              log.warn('repo not found ' + number + 'th try: retrying')
+              log.warn(`repo not found on attempt #${number}: retrying`)
               retry(error)
             }
           } else { // not a 404, throw normally
