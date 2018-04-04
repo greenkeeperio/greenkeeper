@@ -754,7 +754,7 @@ describe('create initial branch', () => {
     expect(repoDoc.greenkeeper.ignore).toEqual(['eslint'])
   })
 
-  test.only('create pull request for monorepo with one non-root package.json', async () => {
+  test('create pull request for monorepo with one non-root package.json', async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '49',
