@@ -31,6 +31,15 @@ describe('create initial branch', () => {
     })
   })
 
+  afterAll(async () => {
+    const { installations, repositories, payments } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '123'),
+      removeIfExists(payments, '123'),
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd')
+    ])
+  })
+
   test('create pull request', async () => {
     const { repositories } = await dbs()
     await repositories.put({
@@ -381,6 +390,9 @@ describe('create initial branch', () => {
     }
   })
 
+  /*
+    Monorepo tests
+  */
   test('create pull request for monorepo and add greenkeeper.json', async () => {
     const { repositories } = await dbs()
     await repositories.put({
@@ -751,7 +763,7 @@ describe('create initial branch', () => {
         ]
       }
     })
-    expect(repoDoc.greenkeeper.ignore).toEqual(['eslint'])
+    expect(repoDoc.greenkeeper.ignore).toContain('eslint')
   })
 
   test('create pull request for monorepo with one non-root package.json', async () => {
@@ -888,15 +900,6 @@ describe('create initial branch', () => {
         }
       }
     })
-  })
-
-  afterAll(async () => {
-    const { installations, repositories, payments } = await dbs()
-    await Promise.all([
-      removeIfExists(installations, '123'),
-      removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd')
-    ])
   })
 
   function encodePkg (pkg) {
