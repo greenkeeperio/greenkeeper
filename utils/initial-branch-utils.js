@@ -14,6 +14,7 @@ const registryUrl = env.NPM_REGISTRY
   }]
 */
 function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
+  console.log('### packagePaths', packagePaths)
   return _.uniqWith(_.flatten(packagePaths.map(path => {
     return _.flatten(
       ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
@@ -68,6 +69,9 @@ async function addNPMPackageData (dependencyInfo, registryGet, log) {
   }]
 */
 async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonContents, registryGet, ignore, log }) {
+  console.log('### packagePaths', packagePaths)
+  console.log('### packageJsonContents', packageJsonContents)
+  console.log('### ignore', ignore)
   const dependencyInfo = getDependenciesFromPackageFiles(packagePaths, packageJsonContents, log)
   log.info('dependencies found', {parsedDependencies: dependencyInfo, packageJsonContents: packageJsonContents})
   let dependencies = await addNPMPackageData(dependencyInfo, registryGet, log)
@@ -132,5 +136,7 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
 }
 
 module.exports = {
-  getUpdatedDependenciesForFiles
+  getUpdatedDependenciesForFiles,
+  addNPMPackageData,
+  getDependenciesFromPackageFiles
 }
