@@ -114,19 +114,17 @@ module.exports = async function (
   const newBranch = `${config.branchPrefix}${groupName}/${dependency}-${version}`
   log.info('branch name created', {branchName: newBranch})
 
-  // TODO: happy path = no open PRs
-  // const openPR = _.get(
-  //   await repositories.query('pr_open_by_dependency', {
-  //     key: [repositoryId, dependency],
-  //     include_docs: true
-  //   }),
-  //   'rows[0].doc'
-  // )
-  // log.info('database: found open PR for this dependency', {openPR})
-  const openPR = null
+  const openPR = _.get(
+    await repositories.query('pr_open_by_dependency_and_group', {
+      key: [repositoryId, dependency, groupName],
+      include_docs: true
+    }),
+    'rows[0].doc'
+  )
+  log.info('database: found open PR for this dependency', {openPR})
 
-  function createTransformsArray (monorepo) {
-    return monorepo.map(pkg => {
+  async function createTransformsArray (monorepo) {
+    return monorepo.map(async pkg => {
       const type = types.find(t => t.filename === pkg.filename)
       if (!type) return
       const commitMessageScope = !satisfies && type.type === 'dependencies'
@@ -134,13 +132,12 @@ module.exports = async function (
         : 'chore'
       let commitMessage = `${commitMessageScope}(package): update ${dependency} to version ${version}`
 
-      // if (!satisfies && openPR) {
-      //   await upsert(repositories, openPR._id, {
-      //     comments: [...(openPR.comments || []), version]
-      //   })
-      //
-      //   commitMessage += `\n\nCloses #${openPR.number}`
-      // }
+      if (!satisfies && openPR) {
+        await upsert(repositories, openPR._id, {
+          comments: [...(openPR.comments || []), version]
+        })
+        commitMessage += `\n\nCloses #${openPR.number}`
+      }
       log.info('commit message created', {commitMessage})
       return {
         transform: createTransformFunction(type.type, dependency, version, log),
@@ -149,7 +146,7 @@ module.exports = async function (
       }
     })
   }
-  const transforms = createTransformsArray(monorepo)
+  const transforms = await createTransformsArray(monorepo)
   const sha = await createBranch({
     installationId,
     owner,
@@ -180,9 +177,9 @@ module.exports = async function (
     dependencyType: highestPriorityDependency,
     repositoryId,
     accountId,
-    processed: !satisfies
+    processed: !satisfies,
+    group: groupName
   })
-
   // nothing to do anymore
   // the next action will be triggered by the status event
   if (satisfies) {
@@ -204,20 +201,20 @@ module.exports = async function (
     versions
   })
 
-  // const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
+  const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
-  // if (openPR) {
-  //   await ghqueue.write(github => github.issues.createComment({
-  //     owner,
-  //     repo,
-  //     number: openPR.number,
-  //     body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${env.GITHUB_URL}/${owner}/${repo}/compare/${encodeURIComponent(newBranch)}?expand=1) ${bodyDetails}`
-  //   }))
-  //
-  //   statsd.increment('pullrequest_comments')
-  //   log.info('github: commented on already open PR for that dependency')
-  //   return
-  // }
+  if (openPR) {
+    await ghqueue.write(github => github.issues.createComment({
+      owner,
+      repo,
+      number: openPR.number,
+      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${env.GITHUB_URL}/${owner}/${repo}/compare/${encodeURIComponent(newBranch)}?expand=1) ${bodyDetails}`
+    }))
+
+    statsd.increment('pullrequest_comments')
+    log.info('github: commented on already open PR for that dependency and group')
+    return
+  }
 
   const title = `Update ${dependency} in group ${groupName} to the latest version 🚀`
 
@@ -275,7 +272,8 @@ module.exports = async function (
     initial: false,
     merged: false,
     number: createdPr.number,
-    state: createdPr.state
+    state: createdPr.state,
+    group: groupName
   })
 
   if (config.label !== false) {
