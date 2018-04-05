@@ -57,21 +57,9 @@ describe('create initial branch', () => {
       fullName: 'finnp/test'
     })
 
-    // jest.mock('path', () => {
-    //   const path = require.requireActual('path')
-    //   path.jobPath = (job) => {
-    //     throw new Error('not implemented')
-    //   }
-    //   return path
-    // })
-    // const path = require('path')
-
     // mock relative dependencies
-    jest.mock('../../utils/initial-branch-utils', () => ({ignore, log, packagePaths, packageJsonContents, registryGet}) => {
-      // const utils = require.requireActual('../../utils/initial-branch-utils')
-      const utils = {}
-      utils.getUpdatedDependenciesForFiles = require.requireActual('../../utils/initial-branch-utils').getUpdatedDependenciesForFiles
-      console.log('### utils', utils)
+    jest.mock('../../utils/initial-branch-utils', () => {
+      const utils = require.requireActual('../../utils/initial-branch-utils')
       utils.addNPMPackageData = async(dependencyInfo, registryGet, log) => {
         return [{
           name: '@finnpauls/dep',
@@ -100,9 +88,8 @@ describe('create initial branch', () => {
       }
       return utils
     })
-    const initialBranchUtils = require('../../utils/initial-branch-utils')
-    console.log('### initialBranchUtils', initialBranchUtils)
-    const updatedDependencies = initialBranchUtils.getUpdatedDependenciesForFiles({ignore, log, packagePaths, packageJsonContents, registryGet})
-    console.log('### updatedDependencies', updatedDependencies)
+    const initialBranchUtils = require.requireMock('../../utils/initial-branch-utils')
+    const updatedDependencies = await initialBranchUtils.getUpdatedDependenciesForFiles({ignore, log, packagePaths, packageJsonContents, registryGet})
+    expect(updatedDependencies[0].newVersion).toEqual('2.0.0')
   })
 })
