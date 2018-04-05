@@ -14,7 +14,6 @@ const registryUrl = env.NPM_REGISTRY
   }]
 */
 function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
-  console.log('### packagePaths', packagePaths)
   return _.uniqWith(_.flatten(packagePaths.map(path => {
     return _.flatten(
       ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
@@ -69,25 +68,16 @@ async function addNPMPackageData (dependencyInfo, registryGet, log) {
   }]
 */
 async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonContents, registryGet, ignore, log }) {
-  console.log('### packagePaths', packagePaths)
-  console.log('### packageJsonContents', packageJsonContents)
-  console.log('### ignore', ignore)
-  const dependencyInfo = getDependenciesFromPackageFiles(packagePaths, packageJsonContents, log)
-  log.info('dependencies found', {parsedDependencies: dependencyInfo, packageJsonContents: packageJsonContents})
-  let dependencies = await addNPMPackageData(dependencyInfo, registryGet, log)
+  const dependencyInfo = module.exports.getDependenciesFromPackageFiles(packagePaths, packageJsonContents, log)
+  // Filter out ignored dependencies
+  const unignoredDependencyInfo = dependencyInfo.filter((dep) => !ignore.includes(dep.name))
+  log.info('dependencies found', {parsedDependencies: unignoredDependencyInfo, ignoredDependencies: ignore, packageJsonContents: packageJsonContents})
+  let dependencies = await module.exports.addNPMPackageData(unignoredDependencyInfo, registryGet, log)
   let dependencyActionsLog = {}
-
   // add `newVersion` to each dependency object in the array
-  dependencies = _(dependencies)
+  const outputDependencies = _(dependencies)
   .filter(Boolean) // remove falsy values from input array
   .map(dependency => {
-    let latest = _.get(dependency, 'data.dist-tags.latest')
-    if (
-      _.includes(ignore, dependency.name)
-    ) {
-      dependencyActionsLog[dependency.name] = 'ignored in config'
-      return
-    }
     // neither version nor range, so it's something weird (git url)
     // better not touch it
     if (!semver.validRange(dependency.version)) {
@@ -99,6 +89,8 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
       semver.parse(dependency.version),
       'prerelease.length'
     ) > 0
+
+    let latest = _.get(dependency, 'data.dist-tags.latest')
     const prereleaseDiff = oldIsPrerelease &&
       semver.diff(dependency.version, latest) === 'prerelease'
     if (
@@ -132,7 +124,7 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
   .value() // run lodash chain
 
   log.info('parsed dependency actions', {dependencyActionsLog})
-  return dependencies
+  return outputDependencies
 }
 
 module.exports = {
