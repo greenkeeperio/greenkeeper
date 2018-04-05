@@ -54,6 +54,8 @@ module.exports = async function ({ repositoryId, groupName }) {
     log
   })
 
+  if (dependencies.length === 0) return
+
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
   log.info('github: repository info', {repositoryInfo: ghRepo})
 
