@@ -26,6 +26,10 @@ describe('send-stripe-cancel-survey', async () => {
     jest.clearAllMocks()
   })
 
+  beforeAll(() => {
+    jest.setTimeout(20000)
+  })
+
   afterEach(async () => {
     nock.cleanAll()
     const { payments } = await dbs()

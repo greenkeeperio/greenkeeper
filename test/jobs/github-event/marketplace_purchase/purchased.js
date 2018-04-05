@@ -8,6 +8,9 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 describe('marketplace purchased', async () => {
+  beforeAll(() => {
+    jest.setTimeout(20000)
+  })
   test('create entry in payments database', async () => {
     const { payments } = await dbs()
 
