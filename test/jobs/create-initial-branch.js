@@ -13,6 +13,7 @@ describe('create initial branch', () => {
     delete process.env.BADGES_HOST
     cleanCache('../../lib/env')
     jest.resetModules()
+    jest.setTimeout(20000)
   })
 
   beforeAll(async () => {
