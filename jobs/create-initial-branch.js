@@ -163,7 +163,6 @@ module.exports = async function ({ repositoryId }) {
     log.info('Not generating or updating greenkeeper.json: No package files in repo, or no monorepo.')
   } else {
     Object.assign(greenkeeperConfigInfo, {isMonorepo: true})
-    console.log('1. Is monorepo')
     log.info('Monorepo detected, generating greenkeeper config', {packageFilePaths})
     const greenkeeperConfigFile = repoDoc.greenkeeper || {}
     // Generate a default group with all the autodiscovered package.json files
@@ -172,7 +171,6 @@ module.exports = async function ({ repositoryId }) {
         packages: packageFilePaths
       }
     }
-    console.log('defaultGroups', defaultGroups)
     // Generate a new greenkeeeper.json from scratch
     let greenkeeperJSONTransform = {
       path: 'greenkeeper.json',
@@ -187,7 +185,6 @@ module.exports = async function ({ repositoryId }) {
     }
     greenkeeperConfigInfo.action = 'new'
 
-    console.log('greenkeeperConfigFile.groups', greenkeeperConfigFile.groups)
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
