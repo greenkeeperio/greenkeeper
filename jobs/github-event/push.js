@@ -41,7 +41,7 @@ module.exports = async function (data) {
   log.info('started')
   /*
   1. Update repoDoc with new greenkeeper.json
-  2. If a package.json is added/deleted(renamed/moved) in the .greenkeeperrc or the groupname is deleted/changed close all open prs for that groupname
+  2. If a package.json is added/deleted(renamed/moved) in the greenkeeper.json or the groupname is deleted/changed close all open PRs for that groupname
   3. If greenkeeper.json is invalid, continue using the previous version and open an issue concerning the invalid file
   */
 
@@ -58,6 +58,7 @@ module.exports = async function (data) {
   const oldPkg = _.get(repoDoc, ['packages'])
   await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
   const pkg = _.get(repoDoc, ['packages'])
+  // If there are no more packages in the repoDoc, disable the repo, which means it will also stop being counted for billing
   if (_.isEmpty(pkg)) {
     log.warn('disabling repository')
     return disableRepo({ repositories, repository, repoDoc })
@@ -67,9 +68,13 @@ module.exports = async function (data) {
     const configValidation = validate(repoDoc.greenkeeper)
     if (configValidation.error) {
       log.warn('validation of greenkeeper.json failed', {error: configValidation.error.details, greenkeeperJson: repoDoc.greenkeeper})
-      // reset greenkeeper.json and add error-job
+      // reset greenkeeper config in repoDoc to the previous working version and start an 'invalid-config-file' job
       _.set(repoDoc, ['greenkeeper'], config)
       await updateDoc(repositories, repository, repoDoc)
+      // If the config file is invalid, open an issue with validation errors and don’t do anything else in this file:
+      // - no initial branch should be created (?)
+      // - no initial subgroup branches should (or can be) be created
+      // - no branches need to be deleted (we can’t be sure the changes are valid)
       return {
         data: {
           name: 'invalid-config-file',
@@ -103,6 +108,7 @@ module.exports = async function (data) {
 
   await updateDoc(repositories, repository, repoDoc)
 
+  // If there was no package information in the repoDoc, create an initial branch and return
   if (!oldPkg) {
     log.success('starting create-initial-branch')
     return {
