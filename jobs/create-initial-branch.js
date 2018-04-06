@@ -97,24 +97,9 @@ module.exports = async function ({ repositoryId }) {
   const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
   let badgeAlreadyAdded = false
-  // create a transform loop for all the package.json paths and push into the transforms array below
+
   // add greenkeeper.json if needed
   let transforms = [
-    {
-      path: 'package.json',
-      message: getMessage(config.commitMessages, 'initialDependencies'),
-      transform: oldPkg => {
-        const oldPkgParsed = JSON.parse(oldPkg)
-        const inplace = jsonInPlace(oldPkg)
-
-        dependencies.forEach(({ type, name, newVersion }) => {
-          if (!_.get(oldPkgParsed, [type, name])) return
-
-          inplace.set([type, name], newVersion)
-        })
-        return inplace.toString()
-      }
-    },
     {
       path: '.travis.yml',
       message: getMessage(config.commitMessages, 'initialBranches'),
@@ -154,7 +139,26 @@ module.exports = async function ({ repositoryId }) {
     }
   ]
 
-  const greenkeeperConfigInfo = {
+  // create a transform loop for all the package.json paths and push into the transforms array below
+  packagePaths.map((packagePath) => {
+    transforms.unshift({
+      path: packagePath,
+      message: getMessage(config.commitMessages, 'initialDependencies'),
+      transform: oldPkg => {
+        const oldPkgParsed = JSON.parse(oldPkg)
+        const inplace = jsonInPlace(oldPkg)
+
+        dependencies.forEach(({ type, name, newVersion }) => {
+          if (!_.get(oldPkgParsed, [type, name])) return
+
+          inplace.set([type, name], newVersion)
+        })
+        return inplace.toString()
+      }
+    })
+  })
+
+  let greenkeeperConfigInfo = {
     isMonorepo: false
   }
 
@@ -179,7 +183,8 @@ module.exports = async function ({ repositoryId }) {
         const greenkeeperJSON = {
           groups: defaultGroups
         }
-        return JSON.stringify(greenkeeperJSON, null, 2)
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(greenkeeperJSON, null, 2) + '\n'
       },
       create: true
     }
@@ -188,18 +193,19 @@ module.exports = async function ({ repositoryId }) {
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
-      generateUpdatedGreenkeeperConfig({
+      const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
         greenkeeperConfigFile,
         defaultGroups,
         packageFilePaths,
         greenkeeperConfigInfo
       })
-
-      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: greenkeeperConfigFile})
-
+      greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
+      const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
+      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.transform = () => {
-        return JSON.stringify(greenkeeperConfigFile, null, 2)
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(updatedGreenkeeperConfigFile, null, 2) + '\n'
       }
       // Don’t create this file because it already exists
       delete greenkeeperJSONTransform.create
@@ -207,7 +213,7 @@ module.exports = async function ({ repositoryId }) {
       // set the updated greenkeeper config in the repoDoc
       await upsert(repositories, repoDoc._id, Object.assign(
         repoDoc,
-        {greenkeeper: greenkeeperConfigFile}
+        {greenkeeper: updatedGreenkeeperConfigFile}
       ))
     } else {
       // set the generated greenkeeper config in the repoDoc
