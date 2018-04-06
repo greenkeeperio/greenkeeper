@@ -200,8 +200,6 @@ ${
 
 ---
 
-☝️ Note: Greenkeeper’s [updated Terms of Service](https://mailchi.mp/ebfddc9880a9/were-updating-our-terms-of-service) will come into effect on April 6th, 2018.
-
 Good luck with your project and see you soon :sparkles:
 
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
