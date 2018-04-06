@@ -193,8 +193,8 @@ module.exports = async function ({ repositoryId }) {
 
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
     log.info('Checking greenkeeper.json config for groups', {
-      hasGroups: !_.isEmpty(greenkeeperConfigFile.groups,
-      greenkeeperConfigFile)
+      hasGroups: !_.isEmpty(greenkeeperConfigFile.groups),
+      greenkeeperConfigFile
     })
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
