@@ -158,7 +158,7 @@ module.exports = async function ({ repositoryId }) {
     })
   })
 
-  const greenkeeperConfigInfo = {
+  let greenkeeperConfigInfo = {
     isMonorepo: false
   }
 
@@ -193,19 +193,19 @@ module.exports = async function ({ repositoryId }) {
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
-      generateUpdatedGreenkeeperConfig({
+      const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
         greenkeeperConfigFile,
         defaultGroups,
         packageFilePaths,
         greenkeeperConfigInfo
       })
-
-      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: greenkeeperConfigFile})
-
+      greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
+      const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
+      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.transform = () => {
         // greenkeeper.json must end with a newline
-        return JSON.stringify(greenkeeperConfigFile, null, 2) + '\n'
+        return JSON.stringify(updatedGreenkeeperConfigFile, null, 2) + '\n'
       }
       // Don’t create this file because it already exists
       delete greenkeeperJSONTransform.create
@@ -213,7 +213,7 @@ module.exports = async function ({ repositoryId }) {
       // set the updated greenkeeper config in the repoDoc
       await upsert(repositories, repoDoc._id, Object.assign(
         repoDoc,
-        {greenkeeper: greenkeeperConfigFile}
+        {greenkeeper: updatedGreenkeeperConfigFile}
       ))
     } else {
       // set the generated greenkeeper config in the repoDoc

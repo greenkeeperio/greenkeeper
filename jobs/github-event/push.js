@@ -87,9 +87,9 @@ module.exports = async function (data) {
     }
   }
 
-  // if there are no changes in packag.json files or the greenkeeper config
+  // if there are no changes in package.json files or the greenkeeper config
   if (_.isEqual(oldPkg, pkg) && _.isEqual(config.groups, repoDoc.greenkeeper.groups)) {
-    log.info('there are no changes in packag.json files or the greenkeeper config')
+    log.info('there are no changes in package.json files or the greenkeeper config')
     await updateDoc(repositories, repository, repoDoc)
     return null
   }
