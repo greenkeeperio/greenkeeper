@@ -183,7 +183,8 @@ module.exports = async function ({ repositoryId }) {
         const greenkeeperJSON = {
           groups: defaultGroups
         }
-        return JSON.stringify(greenkeeperJSON, null, 2)
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(greenkeeperJSON, null, 2) + '\n'
       },
       create: true
     }
@@ -203,7 +204,8 @@ module.exports = async function ({ repositoryId }) {
 
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.transform = () => {
-        return JSON.stringify(greenkeeperConfigFile, null, 2)
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(greenkeeperConfigFile, null, 2) + '\n'
       }
       // Don’t create this file because it already exists
       delete greenkeeperJSONTransform.create

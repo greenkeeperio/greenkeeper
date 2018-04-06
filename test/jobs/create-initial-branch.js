@@ -405,7 +405,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(20)
+    expect.assertions(21)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -515,13 +515,16 @@ describe('create initial branch', () => {
       expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
       expect(transforms.length).toEqual(5)
       expect(transforms[0].path).toEqual('greenkeeper.json')
-      expect(JSON.parse(transforms[0].transform())).toEqual({
+      const greenkeeperConfigTransformResult = transforms[0].transform()
+      expect(JSON.parse(greenkeeperConfigTransformResult)).toEqual({
         groups: {
           default: {
             packages: ['package.json', 'frontend/package.json']
           }
         }
       })
+      // greenkeeper.json must end with a newline
+      expect(greenkeeperConfigTransformResult.substr(greenkeeperConfigTransformResult.length - 1, 1)).toEqual('\n')
       expect(transforms[1].path).toEqual('frontend/package.json')
       expect(JSON.parse(transforms[1].transform(JSON.stringify({ devDependencies })))).toEqual({
         'devDependencies': {
@@ -604,7 +607,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep2': '1.0.0'
     }
 
-    expect.assertions(18)
+    expect.assertions(19)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -733,8 +736,9 @@ describe('create initial branch', () => {
       // The `empty` group should disappear completely, since it no longer contains any files
       // The `frontend` group should not contain `this-file-no-longer-exists/package.json`, since that file
       // is no longer in the repo
-      const transformedConfigFile = JSON.parse(transforms[0].transform())
-      expect(transformedConfigFile.groups).toMatchObject({
+      const transformedConfigFile = transforms[0].transform()
+      const parsedConfigFile = JSON.parse(transformedConfigFile)
+      expect(parsedConfigFile.groups).toMatchObject({
         build: {
           packages: [
             'package.json'
@@ -751,7 +755,9 @@ describe('create initial branch', () => {
           ]
         }
       })
-      expect(transformedConfigFile.ignore).toEqual(['eslint'])
+      // greenkeeper.json must end with a newline
+      expect(transformedConfigFile.substr(transformedConfigFile.length - 1, 1)).toEqual('\n')
+      expect(parsedConfigFile.ignore).toEqual(['eslint'])
       expect(transforms.length).toEqual(6)
 
       return '1234abcd'
