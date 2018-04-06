@@ -125,9 +125,18 @@ There is a collection of [frequently asked questions](https://greenkeeper.io/faq
 
 // needs to handle files as an array of arrays!
 function hasLockFileText (files) {
-  const lockFiles = _.pick(files, ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'])
-  const lockFile = _.findKey(lockFiles)
-  if (!lockFile) return
+  if (!files) return
+  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'].filter((key) => {
+    if (_.isArray(files[key]) && files[key].length) {
+      return true
+    }
+    if (files[key] === true) {
+      return true
+    }
+    return false
+  })
+  if (lockFiles.length === 0) return
+  const lockFile = lockFiles[0]
   return md`⚠️ Greenkeeper has found a ${md.code(lockFile)} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
 }
 
