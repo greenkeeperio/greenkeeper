@@ -607,7 +607,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep2': '1.0.0'
     }
 
-    expect.assertions(19)
+    expect.assertions(20)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -738,6 +738,8 @@ describe('create initial branch', () => {
       // is no longer in the repo
       const transformedConfigFile = transforms[0].transform()
       const parsedConfigFile = JSON.parse(transformedConfigFile)
+      // Check that we don’t add Greenkeeper system defaults to the actual greenkeeper.json file
+      expect(parsedConfigFile.commitMessages).toBeFalsy()
       expect(parsedConfigFile.groups).toMatchObject({
         build: {
           packages: [
