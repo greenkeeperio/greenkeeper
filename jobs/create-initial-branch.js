@@ -97,24 +97,9 @@ module.exports = async function ({ repositoryId }) {
   const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
   let badgeAlreadyAdded = false
-  // create a transform loop for all the package.json paths and push into the transforms array below
+
   // add greenkeeper.json if needed
   let transforms = [
-    {
-      path: 'package.json',
-      message: getMessage(config.commitMessages, 'initialDependencies'),
-      transform: oldPkg => {
-        const oldPkgParsed = JSON.parse(oldPkg)
-        const inplace = jsonInPlace(oldPkg)
-
-        dependencies.forEach(({ type, name, newVersion }) => {
-          if (!_.get(oldPkgParsed, [type, name])) return
-
-          inplace.set([type, name], newVersion)
-        })
-        return inplace.toString()
-      }
-    },
     {
       path: '.travis.yml',
       message: getMessage(config.commitMessages, 'initialBranches'),
@@ -153,6 +138,25 @@ module.exports = async function ({ repositoryId }) {
       }
     }
   ]
+
+  // create a transform loop for all the package.json paths and push into the transforms array below
+  packagePaths.map((packagePath) => {
+    transforms.unshift({
+      path: packagePath,
+      message: getMessage(config.commitMessages, 'initialDependencies'),
+      transform: oldPkg => {
+        const oldPkgParsed = JSON.parse(oldPkg)
+        const inplace = jsonInPlace(oldPkg)
+
+        dependencies.forEach(({ type, name, newVersion }) => {
+          if (!_.get(oldPkgParsed, [type, name])) return
+
+          inplace.set([type, name], newVersion)
+        })
+        return inplace.toString()
+      }
+    })
+  })
 
   const greenkeeperConfigInfo = {
     isMonorepo: false

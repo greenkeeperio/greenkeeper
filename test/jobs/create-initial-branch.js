@@ -13,10 +13,10 @@ describe('create initial branch', () => {
     delete process.env.BADGES_HOST
     cleanCache('../../lib/env')
     jest.resetModules()
-    jest.setTimeout(20000)
   })
 
   beforeAll(async () => {
+    jest.setTimeout(20000)
     const { installations, payments } = await dbs()
 
     await installations.put({
@@ -405,7 +405,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(13)
+    expect.assertions(20)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -497,21 +497,24 @@ describe('create initial branch', () => {
         '@finnpauls/dep2': '1.0.0'
       }
 
-      const newPkg = JSON.parse(
-        transforms[1].transform(JSON.stringify({ devDependencies }))
-      )
-      transforms[1].created = true
-      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
-      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+      // Update all the dependencies in the package.json files
+      transforms.slice(1, 2).map((packageFile, index) => {
+        const newPkg = JSON.parse(
+          transforms[index + 1].transform(JSON.stringify({ devDependencies }))
+        )
+        transforms[index + 1].created = true
+        expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+        expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+      })
 
-      const newReadme = transforms[3].transform(
+      const newReadme = transforms[4].transform(
         'readme-badger\n=============\n',
         'README.md'
       )
       // 'includes badge'
       expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
-
-      expect(transforms[0].path).toBe('greenkeeper.json')
+      expect(transforms.length).toEqual(5)
+      expect(transforms[0].path).toEqual('greenkeeper.json')
       expect(JSON.parse(transforms[0].transform())).toEqual({
         groups: {
           default: {
@@ -519,6 +522,22 @@ describe('create initial branch', () => {
           }
         }
       })
+      expect(transforms[1].path).toEqual('frontend/package.json')
+      expect(JSON.parse(transforms[1].transform(JSON.stringify({ devDependencies })))).toEqual({
+        'devDependencies': {
+          '@finnpauls/dep': '2.0.0',
+          '@finnpauls/dep2': '2.0.0'
+        }
+      })
+      expect(transforms[2].path).toEqual('package.json')
+      expect(JSON.parse(transforms[2].transform(JSON.stringify({ devDependencies })))).toEqual({
+        'devDependencies': {
+          '@finnpauls/dep': '2.0.0',
+          '@finnpauls/dep2': '2.0.0'
+        }
+      })
+      expect(transforms[3].path).toEqual('.travis.yml')
+      expect(transforms[4].path).toEqual('README.md')
 
       return '1234abcd'
     })
@@ -585,7 +604,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep2': '1.0.0'
     }
 
-    expect.assertions(15)
+    expect.assertions(18)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -694,20 +713,22 @@ describe('create initial branch', () => {
         '@finnpauls/dep2': '1.0.0'
       }
 
-      const newPkg = JSON.parse(
-        transforms[1].transform(JSON.stringify({ devDependencies }))
-      )
-      transforms[1].created = true
-      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
-      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+      // Update all the dependencies in the package.json files
+      transforms.slice(1, 3).map((packageFile, index) => {
+        const newPkg = JSON.parse(
+          transforms[index + 1].transform(JSON.stringify({ devDependencies }))
+        )
+        transforms[index + 1].created = true
+        expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+        expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+      })
 
-      const newReadme = transforms[3].transform(
+      const newReadme = transforms[5].transform(
         'readme-badger\n=============\n',
         'README.md'
       )
       // 'includes badge'
       expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
-
       expect(transforms[0].path).toBe('greenkeeper.json')
       // The `empty` group should disappear completely, since it no longer contains any files
       // The `frontend` group should not contain `this-file-no-longer-exists/package.json`, since that file
@@ -731,6 +752,7 @@ describe('create initial branch', () => {
         }
       })
       expect(transformedConfigFile.ignore).toEqual(['eslint'])
+      expect(transforms.length).toEqual(6)
 
       return '1234abcd'
     })
