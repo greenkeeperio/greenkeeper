@@ -566,8 +566,10 @@ describe('create initial branch', () => {
     })
   })
 
-  test('create pull request for monorepo and update existing greenkeeper.json', async () => {
-    const configFileContent = {
+  test.only('create pull request for monorepo and update existing greenkeeper.json', async () => {
+    // We also simulate that the greenkeeper.json info in our repoDoc is out of date and
+    // should be overwritten with what is in the actual file on github.
+    const githubConfigFileContent = {
       ignore: [
         'eslint'
       ],
@@ -595,12 +597,34 @@ describe('create initial branch', () => {
         }
       }
     }
+    const repoDocConfigFileContent = {
+      ignore: [
+        'eslint'
+      ],
+      groups: {
+        build: {
+          packages: [
+            'package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'backend/package.json'
+          ]
+        },
+        empty: {
+          packages: [
+            'this-whole-group-should-disappear/package.json'
+          ]
+        }
+      }
+    }
     const { repositories } = await dbs()
     await repositories.put({
       _id: '48',
       accountId: '123',
       fullName: 'finnp/test',
-      greenkeeper: configFileContent
+      greenkeeper: repoDocConfigFileContent
     })
     const devDependencies = {
       '@finnpauls/dep': '1.0.0',
@@ -628,7 +652,7 @@ describe('create initial branch', () => {
         type: 'file',
         path: 'greenkeeper.json',
         name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+        content: Buffer.from(JSON.stringify(githubConfigFileContent)).toString('base64')
       })
       .get('/repos/finnp/test/git/trees/master?recursive=true')
       .reply(200, {

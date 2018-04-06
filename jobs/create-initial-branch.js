@@ -41,6 +41,7 @@ module.exports = async function ({ repositoryId }) {
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
+  // This mutates repoDoc
   await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
 
   // TODO: Test these two assertions
@@ -191,6 +192,10 @@ module.exports = async function ({ repositoryId }) {
     greenkeeperConfigInfo.action = 'new'
 
     // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
+    log.info('Checking greenkeeper.json config for groups', {
+      hasGroups: !_.isEmpty(greenkeeperConfigFile.groups,
+      greenkeeperConfigFile)
+    })
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
       const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
