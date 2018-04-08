@@ -43,7 +43,6 @@ module.exports = async function (
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info('started', {dependency, type, version, oldVersion})
-  const satisfies = semver.satisfies(version, oldVersion)
 
   // Shrinkwrap should behave differently from regular lockfiles:
   //
@@ -69,6 +68,7 @@ module.exports = async function (
     return x
   }
 
+  const satisfies = semver.satisfies(version, oldVersion)
   const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
   const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
   const usesGreenkeeperLockfile = repository.packages['package.json'] &&
