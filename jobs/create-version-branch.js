@@ -44,6 +44,18 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info('started', {dependency, type, version, oldVersion})
 
+  // if this dependency is part of a monorepo suite that usually gets released
+  // all at the same time, check if we have update info for all the other
+  // modules as well. If not, stop this update, the job started by the last
+  // monorepo module will then update the whole lot.
+  if (isPartOfMonorepo(dependency)
+    if(!await hasAllMonorepoUdates(dependency)) {
+      log.info('ended: is not last in list of monorepo packages')
+      return
+    }
+    log.info('last of a monorepo publish, starting the full update')
+  }
+
   // Shrinkwrap should behave differently from regular lockfiles:
   //
   // If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue
