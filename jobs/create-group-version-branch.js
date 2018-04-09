@@ -124,7 +124,8 @@ module.exports = async function (
   log.info('database: found open PR for this dependency', {openPR})
 
   async function createTransformsArray (monorepo) {
-    return monorepo.map(async pkg => {
+    return monorepo.map(async pkgRow => {
+      const pkg = pkgRow.value
       const type = types.find(t => t.filename === pkg.filename)
       if (!type) return
       const commitMessageScope = !satisfies && type.type === 'dependencies'
