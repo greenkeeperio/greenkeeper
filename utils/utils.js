@@ -100,6 +100,7 @@ function getJobsPerGroup ({
         plan,
         oldVersionResolved,
         installation: account.installation,
+        accountId: account.id || account._id,
         types,
         oldVersion: monorepo[0].value.oldVersion,
         monorepo: relevantMonorepoChangeFiles
