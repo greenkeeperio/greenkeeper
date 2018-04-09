@@ -295,7 +295,8 @@ test('discoverPackageFiles: regular repo', async () => {
     defaultBranch: 'master',
     log: {
       info: () => {},
-      warn: () => {}
+      warn: () => {},
+      error: () => {}
     }
   })
   expect(result).toEqual([{'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'}])
@@ -368,7 +369,8 @@ test('discoverPackageFiles: monorepo', async () => {
     defaultBranch: 'master',
     log: {
       info: () => {},
-      warn: () => {}
+      warn: () => {},
+      error: () => {}
     }
   })
   expect(result).toEqual([
@@ -408,7 +410,8 @@ test('discoverPackageFilePaths: regular repo', async () => {
     defaultBranch: 'master',
     log: {
       info: () => {},
-      warn: () => {}
+      warn: () => {},
+      error: () => {}
     }
   })
   expect(result).toEqual(['package.json'])
@@ -460,7 +463,8 @@ test('discoverPackageFilePaths: monorepo', async () => {
     defaultBranch: 'master',
     log: {
       info: () => {},
-      warn: () => {}
+      warn: () => {},
+      error: () => {}
     }
   })
   expect(result).toEqual(['package.json', 'frontend/package.json', 'backend/package.json'])
