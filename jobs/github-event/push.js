@@ -17,7 +17,8 @@ const getConfig = require('../../lib/get-config')
 const { validate } = require('../../lib/validate-greenkeeper-json')
 
 module.exports = async function (data) {
-  const { repositories, logs } = await dbs()
+  const { repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const { after, repository, installation } = data
 
   const branchRef = `refs/heads/${repository.default_branch}`

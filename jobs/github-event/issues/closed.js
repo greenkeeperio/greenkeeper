@@ -4,7 +4,8 @@ const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
 
 module.exports = async function ({ issue, repository }) {
-  const { repositories, logs } = await dbs()
+  const { repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const log = Log({logsDb: logs, accountId: repository.owner.id, repoSlug: repository.full_name, context: 'issues-closed'})
   log.info('started', {issue})
   const issueDocId = `${repository.id}:issue:${issue.number}`

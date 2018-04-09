@@ -7,7 +7,8 @@ const env = require('../../../lib/env')
 const { maybeUpdatePaymentsJob } = require('../../../lib/payments')
 
 module.exports = async function ({ installation, repositories_removed }) {
-  const { repositories: reposDb, logs } = await dbs()
+  const { repositories: reposDb } = await dbs()
+  const logs = dbs.getLogsDb()
   const accountId = String(installation.account.id)
   const repoIds = _.map(repositories_removed, repo => String(repo.id))
   const log = Log({

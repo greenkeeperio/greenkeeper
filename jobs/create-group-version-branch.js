@@ -37,7 +37,8 @@ module.exports = async function (
 
   const groupName = Object.keys(group)[0]
   const version = distTags[distTag]
-  const { installations, repositories, logs } = await dbs()
+  const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
@@ -124,7 +125,8 @@ module.exports = async function (
   log.info('database: found open PR for this dependency', {openPR})
 
   async function createTransformsArray (monorepo) {
-    return monorepo.map(async pkg => {
+    return monorepo.map(async pkgRow => {
+      const pkg = pkgRow.value
       const type = types.find(t => t.filename === pkg.filename)
       if (!type) return
       const commitMessageScope = !satisfies && type.type === 'dependencies'
