@@ -67,7 +67,7 @@ module.exports = async function (data) {
 
   if (hasRelevantConfigFileChanges(data.commits)) {
     const configValidation = validate(repoDoc.greenkeeper)
-    if (configValidation.error) {
+    if (repoDoc.greenkeeper === '__gk_parse_error' || configValidation.error) {
       log.warn('validation of greenkeeper.json failed', {error: configValidation.error.details, greenkeeperJson: repoDoc.greenkeeper})
       // reset greenkeeper config in repoDoc to the previous working version and start an 'invalid-config-file' job
       _.set(repoDoc, ['greenkeeper'], config)
