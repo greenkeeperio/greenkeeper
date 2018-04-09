@@ -29,9 +29,6 @@ module.exports = async function ({ repositoryFullName }) {
     inclusive_end: true
   })
 
-  const deletePrDocs = prdocs.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deletePrDocs)
-
   // delete all greenkeeper branches in the repository
   const branches = await repositories.allDocs({
     include_docs: true,
@@ -64,9 +61,6 @@ module.exports = async function ({ repositoryFullName }) {
     }
   }
 
-  const deleteBranchDocs = branches.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteBranchDocs)
-
   // close all greenkeeper issues in the repository and delete all issues in the database
   const issues = await repositories.allDocs({
     include_docs: true,
@@ -94,8 +88,11 @@ module.exports = async function ({ repositoryFullName }) {
     }
   }
 
-  const deleteIssueDocs = issues.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteIssueDocs)
+  const docsToDelete = prdocs.rows.concat(branches.rows, issues.rows).map(row => {
+    row.doc._deleted = true
+    return row.doc
+  })
+  await repositories.bulkDocs(docsToDelete)
 
   // get the current repository state from github
   // to get the newest repo settings (e.g. user enabled issues in the mean time)
