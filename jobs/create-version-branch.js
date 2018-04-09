@@ -13,6 +13,8 @@ const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
+const { isPartOfMonorepo, hasAllMonorepoUdates, getMonorepoGroup } = require('../lib/monorepo')
+
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { generateGitHubCompareURL } = require('../utils/utils')
 
@@ -36,6 +38,8 @@ module.exports = async function (
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
 
+  let isMonorepo = false
+  let monorepoGroup = []
   const version = distTags[distTag]
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
@@ -48,11 +52,13 @@ module.exports = async function (
   // all at the same time, check if we have update info for all the other
   // modules as well. If not, stop this update, the job started by the last
   // monorepo module will then update the whole lot.
-  if (isPartOfMonorepo(dependency)
-    if(!await hasAllMonorepoUdates(dependency)) {
-      log.info('ended: is not last in list of monorepo packages')
+  if (isPartOfMonorepo(dependency)) {
+    isMonorepo = true
+    if (!await hasAllMonorepoUdates(dependency)) {
+      log.info('exited: is not last in list of monorepo packages')
       return
     }
+    monorepoGroup = await getMonorepoGroup(dependency)
     log.info('last of a monorepo publish, starting the full update')
   }
 
@@ -132,21 +138,31 @@ module.exports = async function (
       var json = JSON.parse(pkg)
       var parsed = jsonInPlace(pkg)
     } catch (e) {
+      log.warn('exited: parse error in package.json')
       return // ignore parse errors
     }
 
-    const oldPkgVersion = _.get(json, [type, dependency])
-    if (!oldPkgVersion) {
-      log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
-      return
+    let group
+    if (isMonorepo) {
+      group = monorepoGroup
+    } else {
+      group = [dependency]
     }
 
-    if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-      log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
-      return
-    }
+    group.forEach(dep => {
+      const oldPkgVersion = _.get(json, [type, dep])
+      if (!oldPkgVersion) {
+        log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
+        return
+      }
 
-    parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
+      if (semver.ltr(version, oldPkgVersion)) { // no downgrades
+        log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+        return
+      }
+
+      parsed.set([type, dep], getRangedVersion(version, oldPkgVersion))
+    })
     return parsed.toString()
   }
 
