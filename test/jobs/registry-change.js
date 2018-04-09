@@ -84,6 +84,7 @@ describe('registry change create jobs', async () => {
     expect(job.repositoryId).toEqual('888')
     expect(job.distTag).toEqual('latest')
     expect(job.private).toBeFalsy()
+    expect(job.accountId).toEqual('999')
   })
 
   test('registry change skip already processed version', async () => {
@@ -265,6 +266,7 @@ describe('registry change create jobs', async () => {
 
     expect(newJobs).toHaveLength(1)
     expect(newJobs[0].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[0].data.accountId).toEqual('123-two-packages')
   })
 
   test('creates two monorepo jobs for two groups', async () => {
@@ -338,8 +340,10 @@ describe('registry change create jobs', async () => {
     expect(newJobs[0].data.name).toEqual('create-group-version-branch')
     expect(newJobs[0].data.monorepo).toHaveLength(1)
     expect(newJobs[0].data.monorepo[0].value.filename).toEqual('frontend/package.json')
+    expect(newJobs[0].data.accountId).toEqual('123-two-groups')
     expect(newJobs[1].data.name).toEqual('create-group-version-branch')
     expect(newJobs[1].data.monorepo).toHaveLength(1)
     expect(newJobs[1].data.monorepo[0].value.filename).toEqual('package.json')
+    expect(newJobs[1].data.accountId).toEqual('123-two-groups')
   })
 })
