@@ -209,6 +209,7 @@ module.exports = async function ({ repositoryId }) {
       const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
       log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
       // Replace the transform that generates the default group with one that updates existing groups
+      greenkeeperJSONTransform.message = getMessage(config.commitMessages, 'updateConfigFile')
       greenkeeperJSONTransform.transform = () => {
         // greenkeeper.json must end with a newline
         return JSON.stringify(updatedGreenkeeperConfigFile, null, 2) + '\n'

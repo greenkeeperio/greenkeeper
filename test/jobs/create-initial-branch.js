@@ -405,7 +405,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(21)
+    expect.assertions(22)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -515,6 +515,7 @@ describe('create initial branch', () => {
       expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
       expect(transforms.length).toEqual(5)
       expect(transforms[0].path).toEqual('greenkeeper.json')
+      expect(transforms[0].message).toEqual('chore: add Greenkeeper config file')
       const greenkeeperConfigTransformResult = transforms[0].transform()
       expect(JSON.parse(greenkeeperConfigTransformResult)).toEqual({
         groups: {
@@ -566,7 +567,7 @@ describe('create initial branch', () => {
     })
   })
 
-  test.only('create pull request for monorepo and update existing greenkeeper.json', async () => {
+  test('create pull request for monorepo and update existing greenkeeper.json', async () => {
     // We also simulate that the greenkeeper.json info in our repoDoc is out of date and
     // should be overwritten with what is in the actual file on github.
     const githubConfigFileContent = {
@@ -631,7 +632,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep2': '1.0.0'
     }
 
-    expect.assertions(20)
+    expect.assertions(21)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -783,6 +784,7 @@ describe('create initial branch', () => {
       })
       // greenkeeper.json must end with a newline
       expect(transformedConfigFile.substr(transformedConfigFile.length - 1, 1)).toEqual('\n')
+      expect(transforms[0].message).toEqual('chore: update Greenkeeper config file')
       expect(parsedConfigFile.ignore).toEqual(['eslint'])
       expect(transforms.length).toEqual(6)
 
