@@ -23,6 +23,16 @@ describe('invalid-config-file', async () => {
     })
   })
 
+  afterAll(async () => {
+    const { repositories, installations } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '2020', '2121'),
+      removeIfExists(repositories, 'invalid-config1', 'invalid-config1:issue:10',
+        'invalid-config2', 'invalid-config2:issue:10',
+        'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11', 'invalid-config4:issue:11')
+    ])
+  })
+
   test('create new issue', async () => {
     expect.assertions(12)
     const githubMock = nock('https://api.github.com')
@@ -218,14 +228,4 @@ describe('invalid-config-file', async () => {
     expect(issue.repositoryId).toBe('invalid-config4')
     githubMock.done()
   })
-})
-
-afterAll(async () => {
-  const { repositories, installations } = await dbs()
-  await Promise.all([
-    removeIfExists(installations, '2020', '2121'),
-    removeIfExists(repositories, 'invalid-config1', 'invalid-config1:issue:10',
-      'invalid-config2', 'invalid-config2:issue:10',
-      'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11', 'invalid-config4:issue:11')
-  ])
 })

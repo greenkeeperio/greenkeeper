@@ -8,6 +8,13 @@ const cancelStripeSubscription = require('../../jobs/cancel-stripe-subscription'
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+afterAll(async () => {
+  const { payments } = await dbs()
+  await Promise.all([
+    removeIfExists(payments, '123')
+  ])
+})
+
 test('Cancel Stripe Subscription', async () => {
   const { payments } = await dbs()
   expect.assertions(3)
@@ -38,11 +45,4 @@ test('Cancel Stripe Subscription', async () => {
   const payment = await payments.get('123')
   expect(payment.stripeItemId).toBeNull()
   expect(payment.stripeSubscriptionId).toBeNull()
-})
-
-afterAll(async () => {
-  const { payments } = await dbs()
-  await Promise.all([
-    removeIfExists(payments, '123')
-  ])
 })

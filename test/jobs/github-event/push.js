@@ -35,6 +35,14 @@ describe('github-event push', async () => {
     })
   })
 
+  afterAll(async () => {
+    const { repositories, payments } = await dbs()
+
+    await removeIfExists(repositories, '333', '444', '444A', '445', '445A', '446', '447', '448', '555',
+      '444:branch:1234abcd', '444:branch:1234abce', '444A:branch:1234abcd', '444A:branch:1234abce')
+    await removeIfExists(payments, '123')
+  })
+
   test('package.json added/modified for a not enabled repo (333)', async () => {
     const { repositories } = await dbs()
 
@@ -900,6 +908,25 @@ describe('github-event push: monorepo', () => {
   beforeEach(() => {
     jest.resetModules()
     nock.cleanAll()
+  })
+
+  afterAll(async () => {
+    const { repositories } = await dbs()
+
+    await removeIfExists(repositories, '666', '3462',
+      '777', '777:branch:1234abcd', '777:branch:1234abce', '777:branch:1234abcf', '777:branch:1234abcg',
+      '777A', '777A:branch:1234abca', '777A:branch:1234abcb', '777A:branch:1234abcc',
+      '888', '888:branch:1234abca', '888:branch:1234abcb',
+      '999', '999:branch:1234abca', '999:branch:1234abcb',
+      '1111',
+      '1112', '1112:branch:1234abca', '1112:branch:1234abcb',
+      '1113', '1113:branch:1234abca', '1113:branch:1234abcb',
+      '1114', '1114:branch:1234abca', '1114:branch:1234abcb',
+      '1115', '1115:branch:1234abca', '1115:branch:1234abcb',
+      '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
+      '1117', '1117:branch:1234abca',
+      '1118', '1118:branch:1234abca',
+      'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5', 'too-many-packages')
   })
 
   test('monorepo: create no pull request for too many package.jsons', async () => {
@@ -4453,26 +4480,6 @@ describe('github-event push: monorepo', () => {
     expect(repo.openInitialPRWhenConfigFileFixed).toBeFalsy()
     expect(repo.greenkeeper).toMatchObject(configFileContent)
   })
-})
-
-afterAll(async () => {
-  const { repositories, payments } = await dbs()
-
-  await removeIfExists(repositories, '444', '444A', '445', '445A', '446', '447', '448', '444:branch:1234abcd', '444:branch:1234abce', '444A:branch:1234abcd', '444A:branch:1234abce', '555', '666',
-    '777', '777:branch:1234abcd', '777:branch:1234abce', '777:branch:1234abcf', '777:branch:1234abcg',
-    '777A', '777A:branch:1234abca', '777A:branch:1234abcb', '777A:branch:1234abcc',
-    '888', '888:branch:1234abca', '888:branch:1234abcb',
-    '999', '999:branch:1234abca', '999:branch:1234abcb',
-    '1111',
-    '1112', '1112:branch:1234abca', '1112:branch:1234abcb',
-    '1113', '1113:branch:1234abca', '1113:branch:1234abcb',
-    '1114', '1114:branch:1234abca', '1114:branch:1234abcb',
-    '1115', '1115:branch:1234abca', '1115:branch:1234abcb',
-    '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
-    '1117', '1117:branch:1234abca',
-    '1118', '1118:branch:1234abca',
-    'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5', 'too-many-packages')
-  await removeIfExists(payments, '123')
 })
 
 function encodePkg (pkg) {

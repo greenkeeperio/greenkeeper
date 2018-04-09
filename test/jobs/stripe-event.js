@@ -6,6 +6,11 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+afterAll(async () => {
+  const { payments } = await dbs()
+  await removeIfExists(payments, '1')
+})
+
 test('enqueue email job when recieving stripe cancel event', async () => {
   const { payments } = await dbs()
   const stripeEvent = require('../../jobs/stripe-event')
@@ -35,9 +40,4 @@ test('enqueue email job when recieving stripe cancel event', async () => {
   expect(job.data.name).toEqual('send-stripe-cancel-survey')
   expect(job.data.stripeSubscriptionId).toEqual('stripe_test_SubscriptionId')
   expect(job.data.accountId).toEqual('1')
-})
-
-afterAll(async () => {
-  const { payments } = await dbs()
-  await removeIfExists(payments, '1')
 })

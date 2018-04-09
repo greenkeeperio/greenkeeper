@@ -2,6 +2,11 @@ const dbs = require('../../../../lib/dbs')
 const removeIfExists = require('../../../helpers/remove-if-exists')
 const closeIssue = require('../../../../jobs/github-event/issues/closed')
 
+afterAll(async () => {
+  const { repositories } = await dbs()
+  await removeIfExists(repositories, '42:issue:666')
+})
+
 test('github-event issues closed', async () => {
   const { repositories } = await dbs()
 
@@ -30,9 +35,4 @@ test('github-event issues closed', async () => {
 
   expect(issue.state).toEqual('closed')
   expect(issue.updatedAt).toBeTruthy()
-})
-
-afterAll(async () => {
-  const { repositories } = await dbs()
-  await removeIfExists(repositories, '42:issue:666')
 })

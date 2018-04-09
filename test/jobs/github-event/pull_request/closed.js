@@ -62,6 +62,14 @@ describe('github-event pull_request closed', async () => {
     ])
   })
 
+  afterAll(async () => {
+    const { repositories, payments } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '42:pr:666', '43:pr:777', '44:pr:888', '42', '43', '44'),
+      removeIfExists(payments, '1')
+    ])
+  })
+
   test('initial pr merged', async () => {
     const { repositories } = await dbs()
 
@@ -189,13 +197,5 @@ describe('github-event pull_request closed', async () => {
     })
     githubMock.done()
     expect(newJob).toBeFalsy()
-  })
-
-  afterAll(async () => {
-    const { repositories, payments } = await dbs()
-    await Promise.all([
-      removeIfExists(repositories, '42:pr:666', '43:pr:777', '44:pr:888', '42', '43', '44'),
-      removeIfExists(payments, '1')
-    ])
   })
 })

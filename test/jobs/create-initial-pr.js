@@ -116,6 +116,16 @@ describe('create-initial-pr', async () => {
     })
   })
 
+  afterAll(async () => {
+    const { repositories, payments } = await dbs()
+
+    await Promise.all([
+      removeIfExists(payments, '123free', '123opensource', '123stripe', '123team', '123business'),
+      removeIfExists(repositories, '42', ' 42b', '43', '44', '44b', '45', '46',
+      'repoId:branch:1234abcd', '47', '48', '49', 'repoId:branch:monorepo1', 'repoId:branch:monorepo2', 'repoId:branch:closes-issues')
+    ])
+  })
+
   test('create pr for account with `free` plan', async () => {
     const createInitial = requireFresh('../../jobs/create-initial-pr')
     const { repositories } = await dbs()
@@ -863,14 +873,5 @@ describe('create-initial-pr', async () => {
       installationId: 11,
       accountId: '123free'
     })
-  })
-
-  afterAll(async () => {
-    const { repositories, payments } = await dbs()
-
-    await Promise.all([
-      removeIfExists(payments, '123free', '123opensource', '123stripe', '123team', '123business'),
-      removeIfExists(repositories, '42', ' 42b', '43', '44', '44b', '45', '46', 'repoId:branch:1234abcd', '47', '48', '49', '50', 'repoId:branch:monorepo1', 'repoId:branch:monorepo2', 'repoId:branch:closes-issues')
-    ])
   })
 })
