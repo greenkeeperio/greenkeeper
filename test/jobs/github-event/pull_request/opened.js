@@ -55,6 +55,15 @@ describe('github-event pull_request opened', async () => {
     })
   })
 
+  afterAll(async () => {
+    const { repositories } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '40', '41'),
+      removeIfExists(repositories, '40:pr:666', '40:pr:667', '40:pr:668', '40:pr:669', '40:pr:670'),
+      removeIfExists(repositories, '41:pr:666', '41:pr:667', '41:pr:668', '41:pr:669', '41:pr:670')
+    ])
+  })
+
   test('initial pr opened by user', async () => {
     const { repositories } = await dbs()
     const prOpened = requireFresh(pathToWorker)
@@ -202,14 +211,5 @@ describe('github-event pull_request opened', async () => {
       // prdoc was not created
       expect(e.status).toBe(404)
     }
-  })
-
-  afterAll(async () => {
-    const { repositories } = await dbs()
-    await Promise.all([
-      removeIfExists(repositories, '40', '41'),
-      removeIfExists(repositories, '40:pr:666', '40:pr:667', '40:pr:668', '40:pr:669', '40:pr:670'),
-      removeIfExists(repositories, '41:pr:666', '41:pr:667', '41:pr:668', '41:pr:669', '41:pr:670')
-    ])
   })
 })

@@ -3,6 +3,11 @@ const removeIfExists = require('../../../helpers/remove-if-exists.js')
 const purchasePurchase = require('../../../../jobs/github-event/marketplace_purchase/purchased')
 
 describe('marketplace purchased', async () => {
+  afterAll(async () => {
+    const { payments } = await dbs()
+    await removeIfExists(payments, '444', '445', '446', '447', '448')
+  })
+
   test('create entry in payments database', async () => {
     const { payments } = await dbs()
 
@@ -195,10 +200,5 @@ describe('marketplace purchased', async () => {
 
     const payment = await payments.get('448')
     expect(payment.plan).toEqual('opensource')
-  })
-
-  afterAll(async () => {
-    const { payments } = await dbs()
-    await removeIfExists(payments, '444', '445', '446', '447', '448')
   })
 })

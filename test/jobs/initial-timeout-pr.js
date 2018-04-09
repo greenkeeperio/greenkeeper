@@ -18,6 +18,14 @@ describe('initial-timeout-pr', async () => {
     })
   })
 
+  afterAll(async () => {
+    const { repositories, installations } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '10101', '1338'),
+      removeIfExists(repositories, '666', '666:pr:11', '666:issue:10')
+    ])
+  })
+
   test('create', async () => {
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -85,12 +93,4 @@ describe('initial-timeout-pr', async () => {
       expect(true).toBeTruthy()
     }
   })
-})
-
-afterAll(async () => {
-  const { repositories, installations } = await dbs()
-  await Promise.all([
-    removeIfExists(installations, '10101', '1338'),
-    removeIfExists(repositories, '666', '666:pr:11', '666:issue:10')
-  ])
 })

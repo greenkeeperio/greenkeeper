@@ -3,6 +3,11 @@ const removeIfExists = require('../../../helpers/remove-if-exists.js')
 const cancelPurchase = require('../../../../jobs/github-event/marketplace_purchase/cancelled')
 
 describe('marketplace canceled', async () => {
+  afterAll(async () => {
+    const { payments } = await dbs()
+    await removeIfExists(payments, '444')
+  })
+
   test('change entry in payments database to `free`', async () => {
     const { payments } = await dbs()
     await payments.put({
@@ -37,10 +42,5 @@ describe('marketplace canceled', async () => {
 
     const payment = await payments.get('444')
     expect(payment.plan).toEqual('free')
-  })
-
-  afterAll(async () => {
-    const { payments } = await dbs()
-    await removeIfExists(payments, '444')
   })
 })
