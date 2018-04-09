@@ -1,15 +1,29 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire')
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
-test('open-issue', async t => {
-  t.plan(29)
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+beforeEach(() => {
+  jest.setTimeout(20000)
+})
+
+afterAll(async () => {
+  const { repositories } = await dbs()
+
+  await Promise.all([
+    removeIfExists(repositories, '42_oi', '42_oi:branch:deadbeef', '42_oi:issue:10')
+  ])
+})
+
+test('open-issue', async () => {
+  expect.assertions(30)
   const { repositories } = await dbs()
 
   await repositories.put({
-    _id: '42',
+    _id: '42_oi',
     packages: {
       'package.json': {
         greenkeeper: {
@@ -20,53 +34,53 @@ test('open-issue', async t => {
     }
   })
 
-  const openIssue = proxyquire('../../lib/open-issue', {
-    './create-branch': (
-      { installationId, owner, repo, branch, newBranch, path, message, transform }
-    ) => {
-      t.ok(installationId, 'create-branch installationId')
-      t.is(owner, 'finnp', 'create-branch owner')
-      t.is(repo, 'testrepo', 'create-branch repo')
-      t.is(branch, 'master', 'create-branch branch')
-      t.is(newBranch, 'prefix-standard-pin-1.4.0', 'create-branch newBranch')
-      t.is(path, 'package.json', 'create-branch path')
-      t.ok(message, 'create-branch message')
-      const change = transform(
-        JSON.stringify({
-          devDependencies: {
-            standard: '~2.0.0'
-          }
-        })
-      )
-      t.is(
-        change,
-        JSON.stringify({
-          devDependencies: {
-            standard: '1.4.0'
-          }
-        }),
-        'pinned standard to 1.4.0'
-      )
+  jest.mock('../../lib/create-branch', () => ({
+    installationId, owner, repo, branch, newBranch, path, message, transform
+  }) => {
+    expect(installationId).toBeTruthy()
+    expect(owner).toEqual('finnp')
+    expect(repo).toEqual('testrepo')
+    expect(branch).toEqual('master')
+    expect(newBranch).toEqual('prefix-standard-pin-1.4.0')
+    expect(path).toEqual('package.json')
+    expect(message).toBeTruthy()
 
-      return 'deadbeef'
-    }
+    const change = transform(
+      JSON.stringify({
+        devDependencies: {
+          standard: '~2.0.0'
+        }
+      })
+    )
+    expect(change).toEqual(JSON.stringify({
+      devDependencies: {
+        standard: '1.4.0'
+      }
+    }))
+    return 'deadbeef'
   })
+  const openIssue = require('../../lib/open-issue')
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .post('/repos/finnp/testrepo/issues', ({ title, body, labels }) => {
-      t.ok(title, 'github issue has title')
-      t.same(labels, ['customlabel'], 'github issue correct label')
-      t.ok(body, 'github issue has body')
+      expect(title).toBeTruthy()
+      expect(body).toBeTruthy()
+      expect(labels).toHaveLength(1)
+      expect(labels).toContain('customlabel')
+
       return true
     })
     .reply(201, () => {
-      t.pass('issue created')
+      // issue created
+      expect(true).toBeTruthy()
       return {
         number: 10
       }
@@ -74,7 +88,7 @@ test('open-issue', async t => {
 
   await openIssue({
     installationId: '123',
-    repositoryId: '42',
+    repositoryId: '42_oi',
     accountId: '1010',
     owner: 'finnp',
     repo: 'testrepo',
@@ -90,33 +104,24 @@ test('open-issue', async t => {
     statuses: []
   })
 
-  const branch = await repositories.get('42:branch:deadbeef')
-  t.is(branch.type, 'branch', 'branch type')
-  t.is(branch.purpose, 'pin', 'branch purpose pin')
-  t.is(branch.sha, 'deadbeef', 'branch sha')
-  t.is(branch.head, 'prefix-standard-pin-1.4.0', 'branch head')
-  t.is(branch.base, 'master', 'branch master')
-  t.is(branch.dependency, 'standard', 'branch dependency')
-  t.is(branch.dependencyType, 'devDependencies', 'branch dependencyType')
-  t.is(branch.version, '1.4.0', 'branch version')
-  t.is(branch.repositoryId, '42', 'branch repositoryId')
-  t.is(branch.accountId, '1010', 'branch accountId')
-  t.ok(branch.updatedAt, 'branch updatedAt')
-  const issue = await repositories.get('42:issue:10')
-  t.is(issue.type, 'issue', 'issue type')
-  t.is(issue.version, '2.0.0', 'issue version')
-  t.is(issue.number, 10, 'issue number')
-  t.is(issue.dependency, 'standard', 'issue dependency')
-  t.is(issue.state, 'open', 'issue state')
-  t.is(issue.repositoryId, '42', 'issue repositoryId')
-})
+  const branch = await repositories.get('42_oi:branch:deadbeef')
+  expect(branch.type).toEqual('branch')
+  expect(branch.purpose).toEqual('pin')
+  expect(branch.sha).toEqual('deadbeef')
+  expect(branch.head).toEqual('prefix-standard-pin-1.4.0')
+  expect(branch.base).toEqual('master')
+  expect(branch.dependency).toEqual('standard')
+  expect(branch.dependencyType).toEqual('devDependencies')
+  expect(branch.version).toEqual('1.4.0')
+  expect(branch.repositoryId).toEqual('42_oi')
+  expect(branch.accountId).toEqual('1010')
+  expect(branch.updatedAt).toBeTruthy()
 
-tearDown(async () => {
-  const { repositories } = await dbs()
-
-  await Promise.all([
-    repositories.remove(await repositories.get('42')),
-    repositories.remove(await repositories.get('42:branch:deadbeef')),
-    repositories.remove(await repositories.get('42:issue:10'))
-  ])
+  const issue = await repositories.get('42_oi:issue:10')
+  expect(issue.type).toEqual('issue')
+  expect(issue.version).toEqual('2.0.0')
+  expect(issue.number).toBe(10)
+  expect(issue.state).toEqual('open')
+  expect(issue.dependency).toEqual('standard')
+  expect(issue.repositoryId).toEqual('42_oi')
 })

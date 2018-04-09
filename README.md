@@ -1,19 +1,65 @@
-# Welcome to Greenkeeper!
-
-<img src="https://cloud.githubusercontent.com/assets/908178/21937778/d502b156-d9b8-11e6-9aa9-763a5a9b28e4.png" alt="Greenkeeper" align="center" />
-
-[![Greenkeeper badge](https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg)](https://greenkeeper.io/)
-[![Slack](https://greenkeeper-slack.herokuapp.com/badge.svg)](https://greenkeeper-slack.herokuapp.com/)
-[![Build Status](https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master)](https://travis-ci.org/greenkeeperio/greenkeeper)
-[![Dependency Status](https://david-dm.org/greenkeeperio/greenkeeper/master.svg)](https://david-dm.org/greenkeeperio/greenkeeper/master)
-[![devDependency Status](https://david-dm.org/greenkeeperio/greenkeeper/master/dev-status.svg)](https://david-dm.org/greenkeeperio/greenkeeper/master#info=devDependencies)
-[![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](https://github.com/feross/standard)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
-
-**Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.**
-
-Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
-
+<div align="center">
+  <img src="https://user-images.githubusercontent.com/391124/36849148-8a73f484-1d63-11e8-8f2b-d7ffa940cb31.jpg" alt="Greenkeeper" align="center" />
+</div>
+<div align="center">
+  <a href="https://greenkeeper.io/">
+    <img src="https://badges.greenkeeper.io/greenkeeperio/greenkeeper.svg"
+      alt="Greenkeeper badge" />
+  </a>
+  <a href="https://greenkeeper-slack.herokuapp.com/">
+    <img src="https://greenkeeper-slack.herokuapp.com/badge.svg"
+      alt="Slack" />
+  </a>
+  <a href="https://travis-ci.org/greenkeeperio/greenkeeper">
+    <img src="https://travis-ci.org/greenkeeperio/greenkeeper.svg?branch=master"
+      alt="Build Status" />
+  </a>
+  <a href="https://david-dm.org/greenkeeperio/greenkeeper/master">
+    <img src="https://david-dm.org/greenkeeperio/greenkeeper/master.svg"
+      alt="Dependency Status" />
+  </a>
+  <a href="https://david-dm.org/greenkeeperio/greenkeeper/master?type=dev">
+    <img src="https://david-dm.org/greenkeeperio/greenkeeper/master/dev-status.svg"
+      alt="devDependency Status" />
+  </a>
+  <a href="https://github.com/feross/standard">
+    <img src="https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat"
+      alt="js-standard-style" />
+  </a>
+  <a href="https://github.com/semantic-release/semantic-release">
+    <img src="https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg"
+      alt="semantic-release" />
+  </a>
+</div>
+<div align="center">
+  <h3>
+    <a href="https://greenkeeper.io/">
+      Website
+    </a>
+    <span> | </span>
+    <a href="https://blog.greenkeeper.io/">
+      Blog
+    </a>
+    <span> | </span>
+    <a href="https://github.com/greenkeeperio/greenkeeper/blob/master/CONTRIBUTING.md">
+      Contributing
+    </a>
+    <span> | </span>
+    <a href="https://greenkeeper.io/faq.html">
+      FAQ
+    </a>
+    <span> | </span>
+    <a href="https://greenkeeper.io/docs.html">
+      General Documentation
+    </a>
+  </h3>
+</div>
+<div align="center">
+  <strong>Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.</strong>
+</div>
+<div align="center">
+  Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
+</div>
 <details>
 <summary>Who else is using it? Anyone I know?</summary>
 
@@ -58,9 +104,9 @@ If you’ve discovered a security-related bug in Greenkeeper or related services
 If you find any, **don’t share security vulnerabilities publicly** (in a GitHub issue for example), always keep these conversations with us confidential so we have a chance to get things fixed before anyone exploits the bug.
 </details>
 
-## Getting started with the new Github Integration
+## Getting started with the new GitHub App
 
-1. Click on the green **Install** button at the top of the [integration page](https://github.com/integration/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
+1. Click on the green **Install** button at the top of the [app page](https://github.com/apps/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
 
 2. You can then choose the organization you want to install Greenkeeper on, and then either enable specific repositories (we strongly recommend this), or all of them.
 
@@ -76,7 +122,7 @@ If you find any, **don’t share security vulnerabilities publicly** (in a GitHu
     |---|
     | ![Inital pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
 
-    **Important:** If all dependencies are already up-to-date, we currently *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the integration on the repos you actually need it on, in step 1 above. Again, we highly recommend taking the time to whitelist repos individually.
+    **Important:** If all dependencies are already up-to-date, we currently *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the app on the repos you actually need it on, in step 1 above. Again, we highly recommend taking the time to whitelist repos individually.
 
 4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get more reliable software with a minimum amount of work.
 
@@ -268,5 +314,4 @@ Used to happen inside pull-request-close with our oAuth App.
   updated_at
 }
 ```
-
 </details>

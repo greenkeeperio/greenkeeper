@@ -1,79 +1,71 @@
-const { test, tearDown } = require('tap')
-
 const dbs = require('../../lib/dbs')
-const worker = require('../../jobs/registry-change.js')
+const removeIfExists = require('../helpers/remove-if-exists')
 
-test('registry change create jobs', async t => {
-  const { installations, repositories, npm } = await dbs()
+const registryChange = require('../../jobs/registry-change.js')
 
-  await Promise.all([
-    installations.put({
-      _id: '999',
-      installation: 37,
-      plan: 'free'
-    }),
-    repositories.put({
-      _id: '888',
-      enabled: true,
-      type: 'repository',
-      fullName: 'owner/repo',
-      accountId: '999',
-      packages: {
-        'package.json': {
-          dependencies: {
-            standard: '1.0.0'
+describe('registry change create jobs', async () => {
+  beforeAll(async() => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: '999',
+        installation: 37,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '888',
+        enabled: true,
+        type: 'repository',
+        fullName: 'owner/repo',
+        accountId: '999',
+        packages: {
+          'package.json': {
+            dependencies: {
+              standard: '1.0.0'
+            }
           }
         }
-      }
-    }),
-    repositories.put({
-      _id: '777',
-      type: 'repository',
-      fullName: 'owner/another',
-      accountId: '999',
-      packages: {
-        'package.json': {
-          dependencies: {
-            standard: '1.0.0'
+      }),
+      repositories.put({
+        _id: '777',
+        type: 'repository',
+        fullName: 'owner/another',
+        accountId: '999',
+        packages: {
+          'package.json': {
+            dependencies: {
+              standard: '1.0.0'
+            }
           }
         }
-      }
-    }),
-    npm.put({
-      _id: 'standard',
-      distTags: {
-        latest: '1.0.0'
-      }
-    }),
-    npm.put({
-      _id: 'eslint',
-      distTags: {
-        latest: '1.0.0'
-      }
-    })
-  ])
-
-  const newJobs = await worker({
-    name: 'registry-change',
-    dependency: 'standard',
-    distTags: {
-      latest: '8.0.0'
-    },
-    versions: {
-      '8.0.0': {
-        gitHead: 'deadbeef'
-      }
-    },
-    registry: 'https://skimdb.npmjs.com/registry'
+      }),
+      npm.put({
+        _id: 'standard',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'eslint',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
   })
 
-  t.is(newJobs.length, 1)
-  t.is(newJobs[0].data.repositoryId, '888')
-  t.is(newJobs[0].data.distTag, 'latest')
-  t.false(newJobs[0].data.private)
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '999', '123-two-packages', '123-two-groups'),
+      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups'),
+      removeIfExists(npm, 'standard', 'eslint', 'lodash')
+    ])
+  })
 
-  t.test('registry change skip already processed version', async tt => {
-    const newJobs = await worker({
+  test('registry change create job', async () => {
+    const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'standard',
       distTags: {
@@ -87,12 +79,34 @@ test('registry change create jobs', async t => {
       registry: 'https://skimdb.npmjs.com/registry'
     })
 
-    tt.false(newJobs)
-    tt.end()
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    expect(job.repositoryId).toEqual('888')
+    expect(job.distTag).toEqual('latest')
+    expect(job.private).toBeFalsy()
+    expect(job.accountId).toEqual('999')
   })
 
-  t.test('registry change skip distTags other than latest', async tt => {
-    const newJobs = await worker({
+  test('registry change skip already processed version', async () => {
+    const newJob = await registryChange({
+      name: 'registry-change',
+      dependency: 'standard',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'deadbeef'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJob).toBeFalsy()
+  })
+
+  test('registry change skip distTags other than latest', async () => {
+    const newJob = await registryChange({
       name: 'registry-change',
       dependency: 'standard',
       distTags: {
@@ -108,12 +122,13 @@ test('registry change create jobs', async t => {
       registry: 'https://skimdb.npmjs.com/registry'
     })
 
-    tt.false(newJobs)
-    tt.end()
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('registry change skip peerDependencies', async tt => {
-    tt.plan(1)
+  test('registry change skip peerDependencies', async () => {
+    const { repositories } = await dbs()
+
+    expect.assertions(1)
     await repositories.put({
       _id: '776',
       enabled: true,
@@ -129,7 +144,7 @@ test('registry change create jobs', async t => {
       }
     })
 
-    const newJobs = await worker({
+    const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'eslint',
       distTags: {
@@ -143,12 +158,13 @@ test('registry change create jobs', async t => {
       registry: 'https://skimdb.npmjs.com/registry'
     })
 
-    tt.is(newJobs.length, 0, 'no new jobs')
-    tt.end()
+    expect(newJobs).toHaveLength(0)
   })
 
-  t.test('registry change updates dependencies if duplicated as devDependencies', async tt => {
-    tt.plan(2)
+  test('registry change updates dependencies if duplicated as devDependencies', async () => {
+    const { repositories } = await dbs()
+
+    expect.assertions(2)
     await repositories.put({
       _id: '775',
       enabled: true,
@@ -167,7 +183,7 @@ test('registry change create jobs', async t => {
       }
     })
 
-    const newJobs = await worker({
+    const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'eslint',
       distTags: {
@@ -181,21 +197,153 @@ test('registry change create jobs', async t => {
       registry: 'https://skimdb.npmjs.com/registry'
     })
 
-    tt.is(newJobs.length, 1, 'one new jobs')
-    tt.is(newJobs[0].data.type, 'dependencies')
-    tt.end()
+    expect(newJobs).toHaveLength(1)
+    expect(newJobs[0].data.type).toEqual('dependencies')
   })
-  t.end()
-})
 
-tearDown(async () => {
-  const { installations, repositories, npm } = await dbs()
+  test('registry change creates one monorepo job for group', async () => {
+    const { installations, repositories, npm } = await dbs()
 
-  await installations.remove(await installations.get('999'))
-  await repositories.remove(await repositories.get('888'))
-  await repositories.remove(await repositories.get('777'))
-  await repositories.remove(await repositories.get('776'))
-  await repositories.remove(await repositories.get('775'))
-  await npm.remove(await npm.get('standard'))
-  await npm.remove(await npm.get('eslint'))
+    await Promise.all([
+      installations.put({
+        _id: '123-two-packages',
+        installation: 87,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '123-monorepo',
+        enabled: true,
+        type: 'repository',
+        fullName: 'hans/monorepo',
+        accountId: '123-two-packages',
+        packages: {
+          'package.json': {
+            dependencies: {
+              react: '1.0.0'
+            }
+          },
+          'backend/package.json': {
+            dependencies: {
+              react: '1.0.0'
+            }
+          }
+        },
+        greenkeeper: {
+          'groups': {
+            'default': {
+              'packages': [
+                'package.json',
+                'backend/package.json'
+              ]
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'react',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'react',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'deadbeef'
+        },
+        '1.0.0': {
+          gitHead: 'deadbeet'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJobs).toHaveLength(1)
+    expect(newJobs[0].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[0].data.accountId).toEqual('123-two-packages')
+  })
+
+  test('creates two monorepo jobs for two groups', async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: '123-two-groups',
+        installation: 14532,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '123-monorepo-two-groups',
+        enabled: true,
+        type: 'repository',
+        fullName: 'ilse/monorepo',
+        accountId: '123-two-groups',
+        packages: {
+          'package.json': {
+            dependencies: {
+              lodash: '1.0.0'
+            }
+          },
+          'frontend/package.json': {
+            dependencies: {
+              lodash: '1.0.0'
+            }
+          }
+        },
+        greenkeeper: {
+          'groups': {
+            'frontend': {
+              'packages': [
+                'frontend/package.json'
+              ]
+            },
+            'backend': {
+              'packages': [
+                'package.json'
+              ]
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'lodash',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'lodash',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'deadbeef'
+        },
+        '1.0.0': {
+          gitHead: 'deadbeet'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJobs).toHaveLength(2)
+    expect(newJobs[0].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[0].data.monorepo).toHaveLength(1)
+    expect(newJobs[0].data.monorepo[0].value.filename).toEqual('frontend/package.json')
+    expect(newJobs[0].data.accountId).toEqual('123-two-groups')
+    expect(newJobs[1].data.name).toEqual('create-group-version-branch')
+    expect(newJobs[1].data.monorepo).toHaveLength(1)
+    expect(newJobs[1].data.monorepo[0].value.filename).toEqual('package.json')
+    expect(newJobs[1].data.accountId).toEqual('123-two-groups')
+  })
 })

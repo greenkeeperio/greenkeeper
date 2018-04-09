@@ -3,6 +3,8 @@ const _ = require('lodash')
 const githubQueue = require('../../../lib/github-queue')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
+const env = require('../../../lib/env')
+const { maybeUpdatePaymentsJob } = require('../../../lib/payments')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -21,7 +23,6 @@ module.exports = async function (data) {
     prDocId,
     _.pick(pullRequest, ['state', 'merged'])
   )
-
   if (!prdoc.merged || !prdoc.initial) return
 
   let repodoc = await repositories.get(String(repository.id))
@@ -40,12 +41,7 @@ module.exports = async function (data) {
     }))
   } catch (e) {}
 
-  if (repodoc.private) {
-    return {
-      data: {
-        name: 'update-payments',
-        accountId
-      }
-    }
+  if (!env.IS_ENTERPRISE) {
+    return maybeUpdatePaymentsJob(accountId, repodoc.private)
   }
 }

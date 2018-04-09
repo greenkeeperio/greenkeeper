@@ -1,10 +1,8 @@
-const { test } = require('tap')
-
 const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event')
+const githubEvent = require('../../../../jobs/github-event')
 
-test('github-event integration_installation deleted', async t => {
-  t.plan(3)
+test('github-event installation deleted', async () => {
+  expect.assertions(3)
   const { installations, repositories } = await dbs()
 
   await Promise.all([
@@ -18,23 +16,25 @@ test('github-event integration_installation deleted', async t => {
     })
   ])
 
-  const newJobs = await worker({
-    type: 'integration_installation',
+  const newJobs = await githubEvent({
+    type: 'installation',
     action: 'deleted',
     installation: { account: { id: 2 } }
   })
 
-  t.notOk(newJobs)
+  expect(newJobs).toBeFalsy()
 
   try {
     await installations.get('2')
   } catch (e) {
-    t.is(e.status, 404, 'installation is deleted')
+    // installation is deleted
+    expect(e.status).toBe(404)
   }
 
   const repos = await repositories.query('by_account', {
     key: '2'
   })
 
-  t.is(repos.rows.length, 0, 'repositories are deleted')
+  // repositories are deleted
+  expect(repos.rows).toHaveLength(0)
 })

@@ -1,38 +1,47 @@
 const nock = require('nock')
-const { test } = require('tap')
 
 const { createDocs, updateRepoDoc } = require('../../lib/repository-docs')
 
-test('updateRepoDoc with package.json', async t => {
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+test('updateRepoDoc with package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
       type: 'file',
       path: 'package.json',
+      name: 'package.json',
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
     .get('/repos/owner/repo/contents/package-lock.json')
     .reply(200, {
       type: 'file',
       path: 'package-lock.json',
+      name: 'package-lock.json',
       content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
     })
 
-  const doc = await updateRepoDoc('123', { fullName: 'owner/repo' })
-  t.is(doc.packages['package.json'].name, 'test')
-  t.ok(doc.files['package-lock.json'], 'package-lock.json')
-  t.ok(doc.files['package.json'], 'package.json')
-  t.notOk(doc.files['yarn.lock'], 'yarn.lock')
-  t.end()
+  const doc = await updateRepoDoc({
+    installationId: '123',
+    doc: { fullName: 'owner/repo' },
+    log: {info: () => {}, warn: () => {}, error: () => {}}
+  })
+  expect(doc.packages['package.json'].name).toEqual('test')
+  expect(doc.files['package-lock.json']).toHaveLength(1)
+  expect(doc.files['package.json']).toHaveLength(1)
+  expect(doc.files['yarn.lock']).toHaveLength(0)
 })
 
-test('get invalid package.json', async t => {
+test('get invalid package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
     .reply(200, {
@@ -44,25 +53,95 @@ test('get invalid package.json', async t => {
     .reply(200, {
       type: 'file',
       path: 'package.json',
+      name: 'package.json',
       content: Buffer.from('test').toString('base64')
     })
 
-  const doc = await updateRepoDoc('123', {
-    fullName: 'owner/repo',
-    packages: {
-      'package.json': {
-        name: 'test'
+  const doc = await updateRepoDoc({
+    installationId: '123',
+    doc: {
+      fullName: 'owner/repo',
+      packages: {
+        'package.json': {
+          name: 'test'
+        }
       }
-    }
+    },
+    log: {info: () => {}, warn: () => {}, error: () => {}}
   })
-  t.notOk(doc.packages['package.json'])
-  t.ok(doc.files['package.json'])
-  t.notOk(doc.files['package-lock.json'])
-  t.notOk(doc.files['yarn.lock'])
-  t.end()
+
+  expect(doc.packages).not.toContain('package.json')
+  expect(doc.packages).toMatchObject({})
+  expect(doc.files['package.json']).toHaveLength(1)
+  expect(doc.files['package-lock.json']).toHaveLength(0)
+  expect(doc.files['yarn.lock']).toHaveLength(0)
 })
 
-test('create docs', async t => {
+test('updateRepoDoc with greenkeeper.json present', async () => {
+  const configFileContent = {
+    groups: {
+      backend: {
+        packages: [
+          'apps/backend/hapiserver/package.json',
+          'apps/backend/bla/package.json'
+        ]
+      },
+      frontend: {
+        packages: [
+          'apps/frontend/react/package.json'
+        ]
+      }
+    }
+  }
+
+  nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .reply(200, {})
+    .get('/repos/owner/repo/contents/greenkeeper.json')
+    .reply(200, {
+      type: 'file',
+      path: 'greenkeeper.json',
+      name: 'greenkeeper.json',
+      content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/backend/hapiserver/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/backend/hapiserver/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'one' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/backend/bla/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/backend/bla/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'two' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/apps/frontend/react/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'apps/frontend/react/package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'three' })).toString('base64')
+    })
+  const doc = await updateRepoDoc({
+    installationId: '123',
+    doc: { fullName: 'owner/repo' },
+    log: {info: () => {}, warn: () => {}, error: () => {}}
+  })
+  expect(Object.keys(doc.packages)).toHaveLength(3)
+  expect(doc.packages['apps/backend/hapiserver/package.json'].name).toEqual('one')
+  expect(doc.packages['apps/backend/bla/package.json'].name).toEqual('two')
+  expect(doc.packages['apps/frontend/react/package.json'].name).toEqual('three')
+  expect(doc.greenkeeper).toMatchObject(configFileContent)
+})
+
+test('create docs', async () => {
   const docs = await createDocs({
     repositories: [
       { id: 1, full_name: 'owner/repo1' },
@@ -70,9 +149,9 @@ test('create docs', async t => {
     ],
     accountId: '123'
   })
-  t.is(docs[0]._id, '1')
-  t.is(docs[0].type, 'repository')
-  t.is(docs[1]._id, '2')
-  t.is(docs[1].type, 'repository')
-  t.end()
+
+  expect(docs[0]._id).toEqual('1')
+  expect(docs[0].type).toEqual('repository')
+  expect(docs[1]._id).toEqual('2')
+  expect(docs[1].type).toEqual('repository')
 })

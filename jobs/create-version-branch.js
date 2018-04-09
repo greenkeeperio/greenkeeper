@@ -1,9 +1,11 @@
 const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const semver = require('semver')
+const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const getMessage = require('../lib/get-message')
 const getInfos = require('../lib/get-infos')
 const getRangedVersion = require('../lib/get-ranged-version')
 const createBranch = require('../lib/create-branch')
@@ -11,7 +13,7 @@ const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
-const { getActiveBilling } = require('../lib/payments')
+const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 
 const prContent = require('../content/update-pr')
 
@@ -35,26 +37,78 @@ module.exports = async function (
 
   const version = distTags[distTag]
   const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
-
+  const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
+  log.info('started', {dependency, type, version, oldVersion})
   const satisfies = semver.satisfies(version, oldVersion)
-  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock']
-  const hasLockFile = _.some(_.pick(repository.files, lockFiles))
-  if (satisfies && hasLockFile) return
 
-  const billing = await getActiveBilling(accountId)
+  // Shrinkwrap should behave differently from regular lockfiles:
+  //
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue
+  // if not. For the other two types of lockfiles (package-lock and yarn-lock),
+  // we will in future check if gk-lockfile is found in the repo’s dev-dependencies,
+  // if it is, Greenkeeper will continue (and the lockfiles will get updated),
+  // if not, we bail as before and nothing happens (because without gk-lockfile,
+  // the CI build wouldn‘t install anything new anyway).
+  //
+  // Variable name explanations:
+  // - moduleLogFile: Lockfiles that get published to npm and that influence what
+  //   gets installed on a user’s machine, such as `npm-shrinkwrap.json`.
+  // - projectLockFile: lockfiles that don’t get published to npm and have no
+  //   influence on the users’ dependency trees, like package-lock and yarn-lock
+  //
+  // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
-  if (repository.private && !billing) return
+  const moduleLockFiles = ['npm-shrinkwrap.json']
+  const projectLockFiles = ['package-lock.json', 'yarn.lock']
+  const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
+  const hasProjectLockFile = _.some(_.pick(repository.files, projectLockFiles))
+  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfies && hasModuleLockFile) {
+    log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
+    return
+  }
+
+  // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
+  // won’t get updated without it
+  if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
+    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile')
+    return
+  }
+
+  // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
+  const config = getConfig(repository)
+  log.info(`config for ${repository.fullName}`, {config})
+  const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
+  if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
+    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true')
+    return
+  }
+
+  if (repository.private && !env.IS_ENTERPRISE) {
+    const billing = await getActiveBilling(accountId)
+    if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
+      log.warn('exited: payment required')
+      return
+    }
+  }
 
   const [owner, repo] = repository.fullName.split('/')
-  const config = getConfig(repository)
-  if (_.includes(config.ignore, dependency)) return
+  if (_.includes(config.ignore, dependency)) {
+    log.warn('exited: dependency ignored by user config')
+    return
+  }
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: using default branch', {defaultBranch: base})
 
   const newBranch = `${config.branchPrefix}${dependency}-${version}`
+  log.info('branch name created', {branchName: newBranch})
 
   function transform (pkg) {
     try {
@@ -65,9 +119,15 @@ module.exports = async function (
     }
 
     const oldPkgVersion = _.get(json, [type, dependency])
-    if (!oldPkgVersion) return
+    if (!oldPkgVersion) {
+      log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
+      return
+    }
 
-    if (semver.ltr(version, oldPkgVersion)) return // no downgrades
+    if (semver.ltr(version, oldPkgVersion)) { // no downgrades
+      log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+      return
+    }
 
     parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
     return parsed.toString()
@@ -80,19 +140,21 @@ module.exports = async function (
     }),
     'rows[0].doc'
   )
+  log.info('database: found open PR for this dependency', {openPR})
 
-  const commitMessageScope = !satisfies && type === 'dependencies'
-    ? 'fix'
-    : 'chore'
-  let commitMessage = `${commitMessageScope}(package): update ${dependency} to version ${version}`
-
+  const commitMessageKey = !satisfies && type === 'dependencies'
+    ? 'dependencyUpdate'
+    : 'devDependencyUpdate'
+  const commitMessageValues = { dependency, version }
+  let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
   if (!satisfies && openPR) {
     await upsert(repositories, openPR._id, {
       comments: [...(openPR.comments || []), version]
     })
 
-    commitMessage += `\n\nCloses #${openPR.number}`
+    commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
   }
+  log.info('commit message created', {commitMessage})
 
   const sha = await createBranch({
     installationId,
@@ -104,8 +166,14 @@ module.exports = async function (
     transform,
     message: commitMessage
   })
+  if (sha) {
+    log.success('github: branch created', {sha})
+  }
 
-  if (!sha) return // no branch was created
+  if (!sha) { // no branch was created
+    log.error('github: no branch was created')
+    return
+  }
 
   // TODO: previously we checked the default_branch's status
   // this failed when users used [ci skip]
@@ -134,7 +202,10 @@ module.exports = async function (
 
   // nothing to do anymore
   // the next action will be triggered by the status event
-  if (satisfies) return
+  if (satisfies) {
+    log.info('dependency satisfies version range, no action required')
+    return
+  }
 
   const diffBase = openPR
     ? _.get(openPR, 'comments.length')
@@ -161,13 +232,11 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-
+    log.info('github: commented on already open PR for that dependency')
     return
   }
 
   const title = `Update ${dependency} to the latest version 🚀`
-
-  const plan = _.get(billing, 'plan', 'free')
 
   const body = prContent({
     dependencyLink,
@@ -176,9 +245,7 @@ module.exports = async function (
     dependency,
     type,
     release,
-    diffCommits,
-    plan,
-    isPrivate: repository.private
+    diffCommits
   })
 
   // verify pull requests commit
@@ -191,6 +258,7 @@ module.exports = async function (
     description: 'Greenkeeper verified pull request',
     target_url: 'https://greenkeeper.io/verify.html'
   }))
+  log.info('github: set greenkeeper/verify status')
 
   const createdPr = await createPr({
     ghqueue,
@@ -199,10 +267,17 @@ module.exports = async function (
     base,
     head: newBranch,
     owner,
-    repo
+    repo,
+    log
   })
 
-  if (!createdPr) return
+  if (createdPr) {
+    log.success('github: pull request created', {pullRequest: createdPr})
+  }
+  if (!createdPr) {
+    log.error('github: pull request was not created')
+    return
+  }
 
   statsd.increment('update_pullrequests')
 
@@ -229,7 +304,7 @@ module.exports = async function (
   }
 }
 
-async function createPr ({ ghqueue, title, body, base, head, owner, repo }) {
+async function createPr ({ ghqueue, title, body, base, head, owner, repo, log }) {
   try {
     return await ghqueue.write(github => github.pullRequests.create({
       title,
@@ -248,6 +323,9 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo }) {
       repo
     }))
 
-    if (allPrs.length > 0) return allPrs.shift()
+    if (allPrs.length > 0) {
+      log.warn('queue: retry sending pull request to github')
+      return allPrs.shift()
+    }
   }
 }

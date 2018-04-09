@@ -1,14 +1,22 @@
-const { test, tearDown } = require('tap')
-const dbs = require('../../../../lib/dbs')
-const worker = require('../../../../jobs/github-event/pull_request/opened')
+const nock = require('nock')
 
-const pullRequestPayLoad = (id, branchName, user) => {
+const dbs = require('../../../../lib/dbs')
+const { cleanCache, requireFresh } = require('../../../helpers/module-cache-helpers')
+const removeIfExists = require('../../../helpers/remove-if-exists')
+// requireFresh uses a path relative to THEIR path, that's why we use the resolved
+// path here, making it a bit clearer which file we're actually requiring
+const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request/opened')
+
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
+
+const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
   return {
     installation: {
       id: 37
     },
     pull_request: {
-      id,
+      id: prId,
       merged: false,
       state: 'open',
       head: {
@@ -18,7 +26,7 @@ const pullRequestPayLoad = (id, branchName, user) => {
     },
     repository: {
       full_name: 'finnp/test',
-      id: 42,
+      id: repositoryId,
       owner: {
         id: 10
       }
@@ -26,82 +34,182 @@ const pullRequestPayLoad = (id, branchName, user) => {
   }
 }
 
-test('github-event pull_request opened', async t => {
-  const { repositories } = await dbs()
-  await repositories.put({
-    _id: '42',
-    enabled: false,
-    repositoryId: '42'
+describe('github-event pull_request opened', async () => {
+  beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
   })
 
-  t.test('initial pr opened by user', async t => {
-    const newJob = await worker(
-      pullRequestPayLoad(666, 'greenkeeper/initial', {
-        type: 'User',
-        login: 'finnp'
+  beforeAll(async() => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '40',
+      enabled: false,
+      repositoryId: '40'
+    })
+    await repositories.put({
+      _id: '41',
+      enabled: false,
+      repositoryId: '41',
+      private: true
+    })
+  })
+
+  test('initial pr opened by user', async () => {
+    const { repositories } = await dbs()
+    const prOpened = requireFresh(pathToWorker)
+
+    const newJob = await prOpened(
+      pullRequestPayLoad({
+        prId: 666,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 40
       })
     )
+    expect(newJob).toBeFalsy()
 
-    t.notOk(newJob, 'no new job')
-    const pr = await repositories.get('42:pr:666')
-    t.is(pr.state, 'open', 'pr status is opened')
-    t.is(pr.merged, false, 'pr is not merged')
-    t.is(pr.initial, true, 'is initial pr')
-    t.ok(pr.createdAt, 'createdAt is set')
-    t.is(pr.createdByUser, true, 'pr is created by the user')
-    t.end()
+    const pr = await repositories.get('40:pr:666')
+
+    expect(pr.state).toEqual('open')
+    expect(pr.merged).toBeFalsy()
+    expect(pr.createdAt).toBeTruthy()
+    expect(pr.updatedAt).toBeFalsy()
+    expect(pr.initial).toBeTruthy()
+    expect(pr.createdByUser).toBeTruthy()
   })
 
-  t.test('initial pr opened by greenkeeper', async t => {
-    const newJob = await worker(
-      pullRequestPayLoad(667, 'greenkeeper/initial', {
-        type: 'Bot',
-        login: 'greenkeeper[bot]'
+  test('initial pr on private repo opened', async () => {
+    const prOpened = requireFresh(pathToWorker)
+
+    expect.assertions(2)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+      .post('/repos/finnp/test/statuses/')
+      .reply(201, () => {
+        // payment required status added
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    const newJob = await prOpened(
+      pullRequestPayLoad({
+        prId: 669,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 41
       })
     )
-
-    t.notOk(newJob, 'no new job')
-    try {
-      await repositories.get('42:pr:667')
-      t.fail('unexpected prdoc in database')
-    } catch (e) {
-      t.equals(e.status, 404, 'prdoc was not created')
-    }
-    t.end()
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('pr opened but is not our initial branch', async t => {
-    const newJob = await worker(
-      pullRequestPayLoad(668, 'some-random-branch', {
-        type: 'User',
-        login: 'finnp'
+  test('initial pr on private repo opened within GKE', async () => {
+    process.env.IS_ENTERPRISE = true
+    const prOpened = requireFresh(pathToWorker)
+
+    expect.assertions(1)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+      .post('/repos/finnp/test/statuses/')
+      .optionally()
+      .reply(201, () => {
+        // not add payment required status
+        return {}
+      })
+
+    const newJob = await prOpened(
+      pullRequestPayLoad({
+        prId: 670,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 41
       })
     )
-
-    t.notOk(newJob, 'no new job')
-    try {
-      await repositories.get('42:pr:668')
-      t.fail('unexpected prdoc in database')
-    } catch (e) {
-      t.equals(e.status, 404, 'prdoc was not created')
-    }
-    t.end()
+    expect(newJob).toBeFalsy()
   })
-})
 
-tearDown(async () => {
-  const { repositories } = await dbs()
-  await repositories.remove(await repositories.get('42:pr:666'))
-  await repositories.remove(await repositories.get('42'))
-  const docIds = [667, 668]
+  test('initial pr opened by greenkeeper', async () => {
+    const { repositories } = await dbs()
+    const prOpened = requireFresh(pathToWorker)
 
-  docIds.forEach(async (docId) => {
+    const newJob = await prOpened(
+      pullRequestPayLoad({
+        prId: 667,
+        branchName: 'greenkeeper/initial',
+        user: {
+          type: 'Bot',
+          login: 'greenkeeper[bot]'
+        },
+        repositoryId: 40
+      })
+    )
+    expect(newJob).toBeFalsy()
+
     try {
-      await repositories.remove(await repositories.get(`42:pr:${docId}`))
+      await repositories.get('40:pr:667')
     } catch (e) {
-      if (e.status !== 404) {
-        throw e
-      }
+      // prdoc was not created
+      expect(e.status).toBe(404)
     }
+  })
+
+  test('pr opened but is not our initial branch', async () => {
+    const { repositories } = await dbs()
+    const prOpened = requireFresh(pathToWorker)
+    expect.assertions(2)
+
+    const newJob = await prOpened(
+      pullRequestPayLoad({
+        prId: 668,
+        branchName: 'some-random-branch',
+        user: {
+          type: 'User',
+          login: 'finnp'
+        },
+        repositoryId: 40
+      })
+    )
+    expect(newJob).toBeFalsy()
+
+    try {
+      await repositories.get('40:pr:668')
+    } catch (e) {
+      // prdoc was not created
+      expect(e.status).toBe(404)
+    }
+  })
+
+  afterAll(async () => {
+    const { repositories } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '40', '41'),
+      removeIfExists(repositories, '40:pr:666', '40:pr:667', '40:pr:668', '40:pr:669', '40:pr:670'),
+      removeIfExists(repositories, '41:pr:666', '41:pr:667', '41:pr:668', '41:pr:669', '41:pr:670')
+    ])
   })
 })

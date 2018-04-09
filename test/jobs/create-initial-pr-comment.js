@@ -1,53 +1,27 @@
-const { test } = require('tap')
 const nock = require('nock')
-const worker = require('../../jobs/create-initial-pr-comment')
-const upsert = require('../../lib/upsert')
-
 const dbs = require('../../lib/dbs')
-const timeToWaitAfterTests = 500
+const upsert = require('../../lib/upsert')
+const removeIfExists = require('../helpers/remove-if-exists')
 
+const timeToWaitAfterTests = 500
 const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
   })
 }
 
-test('create-initial-pr-comment', async t => {
-  const { installations, repositories } = await dbs()
-  const runWorker = async () => {
-    const branchDoc = await repositories.get('42:branch:deadbeef')
-    const repository = await repositories.get('42')
-    return worker({
-      accountId: '123',
-      branchDoc,
-      prDocId: '42:pr:1234',
-      repository,
-      combined: {state: 'success'},
-      installationId: '123'
-    })
-  }
-  let githubNock
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-  t.beforeEach(async () => {
-    githubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .reply(200, {})
-      .get('/repos/finnp/test')
-      .reply(200, {
-        name: 'test',
-        html_url: 'https://github.com/finnp/test',
-        newBranch: 'greenkeeper/initial'
-      })
+const createInitialPrComment = require('../../jobs/create-initial-pr-comment')
+describe('create-initial-pr-comment', async () => {
+  beforeEach(async () => {
+    const { installations, repositories } = await dbs()
 
     await installations.put({
       _id: '123',
       installation: 37
     })
-
     await repositories.put({
       _id: '42',
       id: '42',
@@ -58,7 +32,6 @@ test('create-initial-pr-comment', async t => {
         id: 123
       }
     })
-
     await repositories.put({
       _id: '42:branch:deadbeef',
       type: 'branch',
@@ -72,7 +45,6 @@ test('create-initial-pr-comment', async t => {
       badgeAdded: true,
       badgeUrl: 'url'
     })
-
     await repositories.put({
       _id: '42:pr:1234',
       repositoryId: '42',
@@ -85,18 +57,33 @@ test('create-initial-pr-comment', async t => {
     })
   })
 
-  t.afterEach(async () => {
+  afterEach(async () => {
     nock.cleanAll()
-    await installations.remove(await installations.get('123'))
-    await repositories.remove(await repositories.get('42'))
-    await repositories.remove(await repositories.get('42:branch:deadbeef'))
-    await repositories.remove(await repositories.get('42:pr:1234'))
+    const { installations, repositories } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '123'),
+      removeIfExists(repositories, '42', '42:branch:deadbeef', '42:pr:1234')
+    ])
   })
 
-  t.test('create comment for initial pr created by user', async t => {
-    t.plan(2)
+  test('create comment for initial pr created by user', async () => {
+    expect.assertions(2)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        name: 'test',
+        html_url: 'https://github.com/finnp/test',
+        newBranch: 'greenkeeper/initial'
+      })
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
@@ -104,44 +91,97 @@ test('create-initial-pr-comment', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.pass('comment added')
+        // comment added
+        expect(true).toBeTruthy()
         return {}
       })
 
-    await runWorker()
+    const { repositories } = await dbs()
+    const branchDoc = await repositories.get('42:branch:deadbeef')
+    const repository = await repositories.get('42')
+
+    await createInitialPrComment({
+      accountId: '123',
+      branchDoc,
+      prDocId: '42:pr:1234',
+      repository,
+      combined: {state: 'success'},
+      installationId: '123'
+    })
 
     const prDoc = await repositories.get('42:pr:1234')
-    t.ok(prDoc.initialPrCommentSent, 'initialPrCommentSent set to true')
+    expect(prDoc.initialPrCommentSent).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('does nothing if the repo has already received the comment', async t => {
-    t.plan(1)
+  test('does nothing if the repo has already received the comment', async () => {
+    expect.assertions(1)
 
+    const { repositories } = await dbs()
     await upsert(repositories, '42:pr:1234', {initialPrCommentSent: true})
 
-    githubNock
+    nock('https://api.github.com') // eslint-disable-line
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        name: 'test',
+        html_url: 'https://github.com/finnp/test',
+        newBranch: 'greenkeeper/initial'
+      })
       .get('/repos/finnp/test/issues/1234')
       .reply(200, () => {
-        t.fail('Should not query issue status')
+        // Should not query issue status
+        expect(false).toBeFalsy()
         return {}
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await runWorker()
+    const branchDoc = await repositories.get('42:branch:deadbeef')
+    const repository = await repositories.get('42')
 
-    t.notOk(newJob, 'no new job')
+    const newJob = await createInitialPrComment({
+      accountId: '123',
+      branchDoc,
+      prDocId: '42:pr:1234',
+      repository,
+      combined: {state: 'success'},
+      installationId: '123'
+    })
+
+    expect(newJob).toBeFalsy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('does nothing if the issue was closed in the meanwhile', async t => {
-    t.plan(1)
+  test('does nothing if the issue was closed in the meanwhile', async () => {
+    expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com') // eslint-disable-line
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        name: 'test',
+        html_url: 'https://github.com/finnp/test',
+        newBranch: 'greenkeeper/initial'
+      })
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'closed',
@@ -149,20 +189,46 @@ test('create-initial-pr-comment', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await runWorker()
+    const { repositories } = await dbs()
+    const branchDoc = await repositories.get('42:branch:deadbeef')
+    const repository = await repositories.get('42')
 
-    t.notOk(newJob, 'no new job')
+    const newJob = await createInitialPrComment({
+      accountId: '123',
+      branchDoc,
+      prDocId: '42:pr:1234',
+      repository,
+      combined: {state: 'success'},
+      installationId: '123'
+    })
+
+    expect(newJob).toBeFalsy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('does nothing if the issue was locked in the meanwhile', async t => {
-    t.plan(1)
+  test('does nothing if the issue was locked in the meanwhile', async () => {
+    expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com') // eslint-disable-line
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        name: 'test',
+        html_url: 'https://github.com/finnp/test',
+        newBranch: 'greenkeeper/initial'
+      })
       .get('/repos/finnp/test/issues/1234')
       .reply(200, {
         state: 'open',
@@ -170,13 +236,25 @@ test('create-initial-pr-comment', async t => {
       })
       .post('/repos/finnp/test/issues/1234/comments')
       .reply(201, () => {
-        t.fail('Should not post comment')
+        // Should not post comment
+        expect(false).toBeFalsy()
         return {}
       })
 
-    const newJob = await runWorker()
+    const { repositories } = await dbs()
+    const branchDoc = await repositories.get('42:branch:deadbeef')
+    const repository = await repositories.get('42')
 
-    t.notOk(newJob, 'no new job')
+    const newJob = await createInitialPrComment({
+      accountId: '123',
+      branchDoc,
+      prDocId: '42:pr:1234',
+      repository,
+      combined: {state: 'success'},
+      installationId: '123'
+    })
+
+    expect(newJob).toBeFalsy()
     await waitFor(timeToWaitAfterTests)
   })
 })

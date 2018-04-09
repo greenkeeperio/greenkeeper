@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-
+const Log = require('gk-log')
 const _ = require('lodash')
 const statsd = require('../lib/statsd')
 const dbs = require('../lib/dbs')
@@ -14,12 +14,16 @@ module.exports = async function (
 ) {
   accountId = String(accountId)
   const { repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repositoryId = String(repository.id)
 
   const prDoc = await repositories.get(prDocId)
   if (prDoc.initialPrCommentSent) return
 
   const repodoc = await repositories.get(repositoryId)
+  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr-comment'})
+  log.info('started')
+
   const [owner, repo] = repodoc.fullName.split('/')
   const {
     head,
@@ -34,17 +38,28 @@ module.exports = async function (
     processed: true,
     state: combined.state
   })
+  log.info('branchDoc: updated to `processed: true`', {branchDoc})
 
   const ghqueue = githubQueue(installationId)
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: repository info', {repositoryInfo: ghRepo})
   const issue = await ghqueue.read(github => github.issues.get({
     owner,
     repo,
     number: prDoc.number
   }))
+  log.info('github: pull request info', {pullRequestInfo: issue})
 
-  if (issue.state !== 'open' || issue.locked) return
+  if (issue.state !== 'open') {
+    log.warn('exited: pr is closed')
+    return
+  }
+
+  if (issue.locked) {
+    log.warn('exited: pr is locked')
+    return
+  }
 
   const secret = repodoc.private &&
     crypto
@@ -75,6 +90,7 @@ module.exports = async function (
     number: prDoc.number
   }))
   statsd.increment('initial_pullrequest_comments')
+  log.success('success')
 
   await upsert(repositories, prDocId, {
     initialPrCommentSent: true

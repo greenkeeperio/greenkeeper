@@ -1,97 +1,118 @@
-const { test, tearDown } = require('tap')
-const proxyquire = require('proxyquire').noCallThru()
-
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
-test('update-payments', async t => {
-  t.test('update stripe', async t => {
-    const { repositories } = await dbs()
+describe('update-payments', async () => {
+  beforeAll(async() => {
+    const { repositories, installations } = await dbs()
+
+    await installations.put({
+      _id: '111',
+      installation: 11,
+      plan: 'free'
+    })
 
     await repositories.put({
-      _id: '1',
-      accountId: '123',
+      _id: '1_update-payments',
+      accountId: '111',
       fullName: 'finnp/private1',
       enabled: true,
       private: true
     })
     await repositories.put({
-      _id: '2',
-      accountId: '123',
+      _id: '2_update-payments',
+      accountId: '111',
       fullName: 'finnp/private2',
       enabled: true,
       private: true
     })
     await repositories.put({
-      _id: '3',
-      accountId: '123',
+      _id: '3_update-payments',
+      accountId: '111',
       fullName: 'finnp/public',
       enabled: true,
       private: false
     })
     await repositories.put({
       _id: '4',
-      accountId: '124',
+      accountId: '11',
       fullName: 'other/private',
       enabled: true,
       private: true
     })
-
-    t.plan(3)
-
-    const worker = proxyquire('../../jobs/update-payments', {
-      '../lib/payments': {
-        getActiveBilling: async () => {
-          return {
-            plan: 'personal',
-            stripeSubscriptionId: 'stripe123',
-            stripeItemId: 'si123'
-          }
-        }
-      },
-      stripe: key => ({
-        subscriptionItems: {
-          update: (stripeItemId, { quantity }) => {
-            t.equal(quantity, 2, 'personal: 2 repositories')
-            t.equal(stripeItemId, 'si123', 'stripe item key')
-          }
-        }
-      })
-    })
-
-    const newJobs = await worker({ accountId: '123' })
-    t.notOk(newJobs, 'no new jobs scheduled')
   })
 
-  t.test('ignore if stripeItemId is missing', async t => {
-    const worker = proxyquire('../../jobs/update-payments', {
-      '../lib/payments': {
-        getActiveBilling: async () => {
-          return {
-            plan: 'beta'
-          }
-        }
-      },
-      stripe: key => ({
-        subscriptionItems: {
-          update: (stripeItemId, { quantity }) => {
-            t.fail('stripe was called')
-          }
-        }
-      })
-    })
-    const newJobs = await worker({ accountId: '123' })
-    t.notOk(newJobs, 'no new jobs scheduled')
-    t.end()
+  beforeEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
   })
-})
 
-tearDown(async () => {
-  const { repositories } = await dbs()
+  afterAll(async () => {
+    const { repositories, installations } = await dbs()
+    await Promise.all([
+      removeIfExists(repositories, '1', '2', '3', '4'),
+      removeIfExists(installations, '111')
+    ])
+  })
 
-  await Promise.all([
-    repositories.remove(await repositories.get('1')),
-    repositories.remove(await repositories.get('2')),
-    repositories.remove(await repositories.get('3')),
-    repositories.remove(await repositories.get('4'))
-  ])
+  test('update stripe', async () => {
+    expect.assertions(3)
+
+    // To mock only specific modules, use require.requireActual to restore the original modules,
+    // then overwrite the one you want to mock
+    jest.mock('../../lib/payments', () => {
+      const payments = require.requireActual('../../lib/payments')
+      payments.getActiveBilling = async() => {
+        return {
+          plan: 'personal',
+          stripeSubscriptionId: 'stripe123',
+          stripeItemId: 'si123'
+        }
+      }
+      return payments
+    })
+
+    jest.mock('stripe', key => key => {
+      return {
+        subscriptionItems: {
+          update: (stripeItemId, {quantity}) => {
+            expect(quantity).toBe(2)
+            expect(stripeItemId).toEqual('si123')
+          }
+        }
+      }
+    })
+    const updatePayments = require('../../jobs/update-payments')
+
+    const newJob = await updatePayments({ accountId: '111' })
+    expect(newJob).toBeFalsy()
+  })
+
+  test('ignore if stripeSubscriptionId is missing', async () => {
+    expect.assertions(1)
+
+    jest.mock('../../lib/payments', () => {
+      const payments = require.requireActual('../../lib/payments')
+      payments.getActiveBilling = async() => {
+        return {
+          plan: 'org'
+        }
+      }
+      return payments
+    })
+
+    jest.mock('stripe', key => key => {
+      return {
+        subscriptionItems: {
+          update: (stripeItemId, {quantity}) => {
+            console.log('fail: stripe was called')
+            expect(false).toBeFalsy()
+          }
+        }
+      }
+    })
+    const updatePayments = require('../../jobs/update-payments')
+
+    const newJob = await updatePayments({ accountId: '111' })
+    expect(newJob).toBeFalsy()
+  })
 })

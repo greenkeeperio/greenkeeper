@@ -1,24 +1,58 @@
-const { test, tearDown } = require('tap')
 const nock = require('nock')
-const proxyquire = require('proxyquire').noCallThru()
 
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
+const { cleanCache } = require('../helpers/module-cache-helpers')
 
-test('create-version-branch', async t => {
-  const { installations, repositories, payments } = await dbs()
+nock.disableNetConnect()
+nock.enableNetConnect('localhost')
 
-  await installations.put({
-    _id: '123',
-    installation: 37
+jest.setTimeout(10000)
+
+describe('create version brach', () => {
+  beforeEach(() => {
+    delete process.env.IS_ENTERPRISE
+    cleanCache('../../lib/env')
+    jest.resetModules()
+    jest.clearAllMocks()
+    nock.cleanAll()
   })
-  await installations.put({
-    _id: '124',
-    installation: 38
+  beforeAll(async () => {
+    const { installations } = await dbs()
+    await installations.put({
+      _id: '123',
+      installation: 37
+    })
+    await installations.put({
+      _id: '124',
+      installation: 38
+    })
+    await installations.put({
+      _id: '124gke',
+      installation: 124
+    })
+    await installations.put({
+      _id: '125',
+      installation: 39
+    })
+    await installations.put({
+      _id: '126',
+      installation: 41
+    })
+    await installations.put({
+      _id: '127',
+      installation: 42
+    })
+    await installations.put({
+      _id: '2323',
+      installation: 40
+    })
   })
 
-  t.test('new pull request', async t => {
+  test('new pull request', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
-      _id: '42',
+      _id: '1',
       accountId: '123',
       fullName: 'finnp/test',
       packages: {
@@ -29,18 +63,21 @@ test('create-version-branch', async t => {
         }
       }
     })
-    t.plan(13)
+    expect.assertions(13)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, () => {
-        t.pass('pull request created')
+        // pull request created
+        expect(true).toBeTruthy()
         return {
           id: 321,
           number: 66,
@@ -56,7 +93,8 @@ test('create-version-branch', async t => {
         body => body[0] === 'customlabel'
       )
       .reply(201, () => {
-        t.pass('label created')
+        // label created
+        expect(true).toBeTruthy()
         return {}
       })
       .post(
@@ -64,62 +102,57 @@ test('create-version-branch', async t => {
         ({ state }) => state === 'success'
       )
       .reply(201, () => {
-        t.pass('status created')
+        // status created
+        expect(true).toBeTruthy()
         return {}
       })
 
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-infos': (
-        { installationId, dependency, version, diffBase, versions }
-      ) => {
-        t.pass('used get-infos')
-        t.same(
-          versions,
-          {
-            '1.0.0': {},
-            '2.0.0': {}
-          },
-          'passed the versions'
-        )
-        t.is(version, '2.0.0', 'passed correct version')
-        t.is(installationId, 37, 'passed the installationId object')
-        t.is(dependency, '@finnpauls/dep', 'passed correct dependency')
-        return {
-          dependencyLink: '[]()',
-          release: 'the release',
-          diffCommits: 'commits...'
-        }
-      },
-      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
-      '../lib/get-diff-commits': () => ({
-        html_url: 'https://github.com/lkjlsgfj/',
-        total_commits: 0,
-        behind_by: 0,
-        commits: []
-      }),
-      '../lib/create-branch': ({ transform }) => {
-        const newPkg = JSON.parse(
-          transform(
-            JSON.stringify({
-              devDependencies: {
-                '@finnpauls/dep': '^1.0.0'
-              }
-            })
-          )
-        )
-        t.is(
-          newPkg.devDependencies['@finnpauls/dep'],
-          '^2.0.0',
-          'changed to the right version'
-        )
-        return '1234abcd'
+    jest.mock('../../lib/get-infos', () => ({
+      installationId, dependency, version, diffBase, versions
+    }) => {
+      // used get-infos
+      expect(true).toBeTruthy()
+
+      expect(versions).toEqual({
+        '1.0.0': {},
+        '2.0.0': {}
+      })
+
+      expect(version).toEqual('2.0.0')
+      expect(installationId).toBe(37)
+      expect(dependency).toEqual('@finnpauls/dep')
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
       }
     })
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            devDependencies: {
+              '@finnpauls/dep': '^1.0.0'
+            }
+          })
+        )
+      )
+      const devDependency = newPkg.devDependencies['@finnpauls/dep']
+      expect(devDependency).toEqual('^2.0.0')
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
-    const newJob = await worker({
+    const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
       accountId: '123',
-      repositoryId: '42',
+      repositoryId: '1',
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
@@ -134,17 +167,19 @@ test('create-version-branch', async t => {
     })
 
     githubMock.done()
-    t.notOk(newJob, 'no new job scheduled')
-    const branch = await repositories.get('42:branch:1234abcd')
-    const pr = await repositories.get('42:pr:321')
-    t.ok(branch.processed, 'branch is processed')
-    t.is(pr.number, 66, 'correct pr number')
-    t.is(pr.state, 'open', 'pr status open')
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('1:branch:1234abcd')
+    const pr = await repositories.get('1:pr:321')
+    expect(branch.processed).toBeTruthy()
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
   })
 
-  t.test('new pull request private repo', async t => {
+  test('new pull request private repo', async () => {
+    const { repositories, payments } = await dbs()
     await repositories.put({
-      _id: '421',
+      _id: '42',
       accountId: '124',
       fullName: 'finnp/testtest',
       private: true,
@@ -160,18 +195,21 @@ test('create-version-branch', async t => {
       _id: '124',
       plan: 'personal'
     })
-    t.plan(13)
+    expect.assertions(12)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
       .reply(200, () => {
-        t.pass('pull request created')
+        // pull request created
+        expect(true).toBeTruthy()
         return {
           id: 321,
           number: 66,
@@ -187,7 +225,8 @@ test('create-version-branch', async t => {
         body => body[0] === 'customlabel'
       )
       .reply(201, () => {
-        t.pass('label created')
+        // label created
+        expect(true).toBeTruthy()
         return {}
       })
       .post(
@@ -195,62 +234,52 @@ test('create-version-branch', async t => {
         ({ state }) => state === 'success'
       )
       .reply(201, () => {
-        t.pass('status created')
+      //  status created
+        expect(true).toBeTruthy()
         return {}
       })
 
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-infos': (
-        { installationId, dependency, version, diffBase, versions }
-      ) => {
-        t.pass('used get-infos')
-        t.same(
-          versions,
-          {
-            '1.0.0': {},
-            '2.0.0': {}
-          },
-          'passed the versions'
-        )
-        t.is(version, '2.0.0', 'passed correct version')
-        t.is(installationId, 38, 'passed the installationId object')
-        t.is(dependency, '@finnpauls/dep', 'passed correct dependency')
-        return {
-          dependencyLink: '[]()',
-          release: 'the release',
-          diffCommits: 'commits...'
-        }
-      },
-      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
-      '../lib/get-diff-commits': () => ({
-        html_url: 'https://github.com/lkjlsgfj/',
-        total_commits: 0,
-        behind_by: 0,
-        commits: []
-      }),
-      '../lib/create-branch': ({ transform }) => {
-        const newPkg = JSON.parse(
-          transform(
-            JSON.stringify({
-              devDependencies: {
-                '@finnpauls/dep': '^1.0.0'
-              }
-            })
-          )
-        )
-        t.is(
-          newPkg.devDependencies['@finnpauls/dep'],
-          '^2.0.0',
-          'changed to the right version'
-        )
-        return '1234abcd'
+    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
+      expect(versions).toEqual({
+        '1.0.0': {},
+        '2.0.0': {}
+      })
+
+      expect(version).toEqual('2.0.0')
+      expect(installationId).toBe(38)
+      expect(dependency).toEqual('@finnpauls/dep')
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
       }
     })
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            devDependencies: {
+              '@finnpauls/dep': '^1.0.0'
+            }
+          })
+        )
+      )
+      const devDependency = newPkg.devDependencies['@finnpauls/dep']
+      expect(devDependency).toEqual('^2.0.0')
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
-    const newJob = await worker({
+    const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
       accountId: '124',
-      repositoryId: '421',
+      repositoryId: '42',
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
@@ -265,15 +294,215 @@ test('create-version-branch', async t => {
     })
 
     githubMock.done()
-    t.notOk(newJob, 'no new job scheduled')
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+
     const branch = await repositories.get('42:branch:1234abcd')
     const pr = await repositories.get('42:pr:321')
-    t.ok(branch.processed, 'branch is processed')
-    t.is(pr.number, 66, 'correct pr number')
-    t.is(pr.state, 'open', 'pr status open')
+    expect(branch.processed).toBeTruthy()
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
   })
 
-  t.test('comment pr', async t => {
+  test('new pull request private repo within GKE', async () => {
+    process.env.IS_ENTERPRISE = true
+    const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '41',
+      accountId: '124gke',
+      fullName: 'finnp/testtest',
+      private: true,
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    expect.assertions(13)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/124/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/testtest/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/testtest')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+      '/repos/finnp/testtest/issues/66/labels',
+      body => body[0] === 'customlabel'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+      '/repos/finnp/testtest/statuses/1234abcd',
+      ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
+      // used get-infos
+      expect(true).toBeTruthy()
+
+      expect(versions).toEqual({
+        '1.0.0': {},
+        '2.0.0': {}
+      })
+
+      expect(version).toEqual('2.0.0')
+      expect(installationId).toBe(124)
+      expect(dependency).toEqual('@finnpauls/dep')
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            devDependencies: {
+              '@finnpauls/dep': '^1.0.0'
+            }
+          })
+        )
+      )
+      const devDependency = newPkg.devDependencies['@finnpauls/dep']
+      expect(devDependency).toEqual('^2.0.0')
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '124gke',
+      repositoryId: '41',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('41:branch:1234abcd')
+    const pr = await repositories.get('41:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
+
+  test('no pull request private repo with free account', async () => {
+    const { repositories, payments } = await dbs()
+    await repositories.put({
+      _id: '46',
+      accountId: '125',
+      fullName: 'finnp/testtest',
+      private: true,
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    await payments.put({
+      _id: '125',
+      plan: 'free'
+    })
+    expect.assertions(1)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/38/access_tokens')
+      .optionally()
+      .reply(200, () => {
+        return { token: 'secret' }
+      })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '125',
+      repositoryId: '46',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('comment pr', async () => {
+    const { repositories } = await dbs()
     await Promise.all([
       repositories.put({
         _id: '43:pr:5',
@@ -286,7 +515,7 @@ test('create-version-branch', async t => {
       }),
       repositories.put({
         _id: '43',
-        accountId: '123',
+        accountId: '126',
         fullName: 'finnp/test2',
         packages: {
           'package.json': {
@@ -298,24 +527,16 @@ test('create-version-branch', async t => {
       })
     ])
 
-    t.plan(9)
+    expect.assertions(9)
 
-    nock('https://registry.npmjs.org')
-      .get('/@finnpauls%2Fdep2')
-      .reply(200, () => {
-        return {
-          repository: {
-            url: 'https://github.com/finnp/dep2'
-          }
-        }
-      })
-
-    nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/41/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finnp/test2')
       .reply(200, {
@@ -323,61 +544,56 @@ test('create-version-branch', async t => {
       })
       .post('/repos/finnp/test2/issues/5/comments')
       .reply(201, () => {
-        t.pass('comment created')
+        // comment created
+        expect(true).toBeTruthy()
         return {}
       })
 
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/get-infos': (
-        { installationId, dependency, version, diffBase, versions }
-      ) => {
-        t.pass('used get-infos')
-        t.same(
-          versions,
-          {
-            '1.0.0': {},
-            '2.0.0': {}
-          },
-          'passed the versions'
-        )
-        t.is(version, '2.0.0', 'passed correct version')
-        t.is(installationId, 37, 'passed the installationId object')
-        t.is(dependency, '@finnpauls/dep2', 'passed correct dependency')
-        return {
-          dependencyLink: '[]()',
-          release: 'the release',
-          diffCommits: 'commits...'
-        }
-      },
-      '../lib/get-changelog': ({ token, slug, version }) => '[changelog]',
-      '../lib/get-diff-commits': () => ({
-        html_url: 'https://github.com/lkjlsgfj/',
-        total_commits: 0,
-        behind_by: 0,
-        commits: []
-      }),
-      '../lib/create-branch': ({ transform }) => {
-        const newPkg = JSON.parse(
-          transform(
-            JSON.stringify({
-              devDependencies: {
-                '@finnpauls/dep2': '^1.0.0'
-              }
-            })
-          )
-        )
-        t.is(
-          newPkg.devDependencies['@finnpauls/dep2'],
-          '^2.0.0',
-          'changed to the right version'
-        )
-        return '1234abcd'
+    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
+      // used get-infos
+      expect(true).toBeTruthy()
+
+      expect(versions).toEqual({
+        '1.0.0': {},
+        '2.0.0': {}
+      })
+
+      expect(version).toEqual('2.0.0')
+      expect(installationId).toBe(41)
+      expect(dependency).toEqual('@finnpauls/dep2')
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
       }
     })
 
-    const newJob = await worker({
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            devDependencies: {
+              '@finnpauls/dep2': '^1.0.0'
+            }
+          })
+        )
+      )
+      const devDependency = newPkg.devDependencies['@finnpauls/dep2']
+      expect(devDependency).toEqual('^2.0.0')
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep2',
-      accountId: '123',
+      accountId: '126',
       repositoryId: '43',
       type: 'devDependencies',
       distTag: 'latest',
@@ -392,15 +608,18 @@ test('create-version-branch', async t => {
       }
     })
 
-    t.notOk(newJob, 'no new job scheduled')
+    githubMock.done()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
     const branch = await repositories.get('43:branch:1234abcd')
-    t.ok(branch.processed, 'branch is processed')
+    expect(branch.processed).toBeTruthy()
   })
 
-  t.test('no downgrades', async t => {
+  test('no downgrades', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '44',
-      accountId: '123',
+      accountId: '127',
       fullName: 'finnp/test',
       packages: {
         'package.json': {
@@ -410,32 +629,39 @@ test('create-version-branch', async t => {
         }
       }
     })
-
-    t.plan(2)
-
-    const worker = proxyquire('../../jobs/create-version-branch', {
-      '../lib/create-branch': ({ transform }) => {
-        const newPkg = transform(
-          JSON.stringify({
-            devDependencies: {
-              '@finnpauls/dep': '^2.0.1'
-            }
-          })
-        )
-        t.notOk(newPkg, 'abort on downgrade')
-      }
-    })
+    expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
+      .post('/installations/42/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .get('/repos/finnp/test')
       .reply(200, {
         default_branch: 'master'
       })
 
-    const newJob = await worker({
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = transform(
+        JSON.stringify({
+          devDependencies: {
+            '@finnpauls/dep': '^2.0.1'
+          }
+        })
+      )
+      // abort on downgrade
+      expect(newPkg).toBeFalsy()
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
-      accountId: '123',
-      repositoryId: '42',
+      accountId: '127',
+      repositoryId: '44',
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
@@ -450,22 +676,27 @@ test('create-version-branch', async t => {
     })
 
     githubMock.done()
-    t.notOk(newJob, 'no new job scheduled')
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('ignore invalid oldVersion', async t => {
-    const worker = require('../../jobs/create-version-branch')
+  test('ignore invalid oldVersion', async () => {
+    expect.assertions(1)
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
-    const newJob = await worker({
+    const newJob = await createVersionBranch({
       distTag: 'latest',
       oldVersion: 'invalid/version'
     })
 
-    t.notOk(newJob, 'no new job scheduled')
-    t.end()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
   })
 
-  t.test('ignore ignored dependencies', async t => {
+  test('ignore ignored dependencies', async () => {
+    expect.assertions(1)
+
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '45',
       accountId: '123',
@@ -479,9 +710,9 @@ test('create-version-branch', async t => {
       }
     })
 
-    const worker = require('../../jobs/create-version-branch')
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
-    const newJob = await worker({
+    const newJob = await createVersionBranch({
       dependency: 'b',
       distTag: 'latest',
       accountId: '123',
@@ -492,26 +723,241 @@ test('create-version-branch', async t => {
       oldVersion: '1.0.0'
     })
 
-    t.notOk(newJob, 'no new job scheduled')
-    t.end()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('bails if in range and shrinkwrap', async () => {
+    expect.assertions(1)
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '47',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': false,
+        'npm-shrinkwrap.json': true,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {}
+      }
+    })
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '47',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('bails if in range and project lockfile and no gk-lockfile', async () => {
+    expect.assertions(1)
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '48',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {}
+      }
+    })
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '48',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('bails if in range and project lockfile, has gk-lockfile, but onlyUpdateLockfilesIfOutOfRange is true', async () => {
+    expect.assertions(1)
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '49',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          },
+          greenkeeper: {
+            lockfiles: {
+              outOfRangeUpdatesOnly: true
+            }
+          }
+        }
+      }
+    })
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'b',
+      distTag: 'latest',
+      accountId: '2323',
+      repositoryId: '49',
+      distTags: {
+        latest: '1.0.1'
+      },
+      oldVersion: '^1.0.0'
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('runs if in range, has project lockfile, has gk-lockfile', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '50',
+      accountId: '2323',
+      fullName: 'espy/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          }
+        }
+      }
+    })
+    expect.assertions(5)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/espy/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/espy/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+        '/repos/espy/test/issues/66/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/espy/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        return {}
+      })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '2323',
+      repositoryId: '50',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('50:branch:1234abcd')
+    const pr = await repositories.get('50:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
   })
 })
 
-tearDown(async () => {
+afterAll(async () => {
   const { installations, repositories, payments } = await dbs()
 
   await Promise.all([
-    installations.remove(await installations.get('123')),
-    installations.remove(await installations.get('124')),
-    repositories.remove(await repositories.get('42:branch:1234abcd')),
-    repositories.remove(await repositories.get('43:branch:1234abcd')),
-    repositories.remove(await repositories.get('42:pr:321')),
-    repositories.remove(await repositories.get('43:pr:5')),
-    repositories.remove(await repositories.get('42')),
-    repositories.remove(await repositories.get('43')),
-    repositories.remove(await repositories.get('44')),
-    repositories.remove(await repositories.get('421')),
-    repositories.remove(await repositories.get('45')),
-    payments.remove(await payments.get('124'))
+    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
+    removeIfExists(payments, '124', '125'),
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'),
+    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321')
   ])
 })

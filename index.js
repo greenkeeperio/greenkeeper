@@ -27,6 +27,9 @@ require('./lib/rollbar')
   const conn = await amqp.connect(env.AMQP_URL)
   const channel = await conn.createChannel()
 
+  // only allow 128 items to pile up
+  channel.prefetch(128)
+
   // 5 different prios because order matters
   // e.g. always sync before everything else
   // or always uninstall integrations before installing
@@ -80,8 +83,8 @@ require('./lib/rollbar')
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
-    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset']
-    if (jobsWithoutOwners.includes(data.name)) {
+    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription']
+    if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
       return queueJob(data.name, job)
     }
 

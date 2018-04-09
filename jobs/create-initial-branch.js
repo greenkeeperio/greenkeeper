@@ -1,105 +1,85 @@
 const crypto = require('crypto')
 const { extname } = require('path')
-
+const Log = require('gk-log')
 const _ = require('lodash')
 const jsonInPlace = require('json-in-place')
 const { promisify } = require('bluebird')
-const semver = require('semver')
 const badger = require('readme-badger')
 const yaml = require('js-yaml')
 const yamlInPlace = require('yml-in-place')
 const escapeRegex = require('escape-string-regexp')
-
 const RegClient = require('../lib/npm-registry-client')
 const env = require('../lib/env')
-const getRangedVersion = require('../lib/get-ranged-version')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const { discoverPackageFilePaths } = require('../lib/get-files')
+const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
-
-const registryUrl = env.NPM_REGISTRY
+const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
 
 module.exports = async function ({ repositoryId }) {
   const { installations, repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repoDoc = await repositories.get(repositoryId)
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
 
-  if (repoDoc.fork && !repoDoc.hasIssues) return
+  log.info('started')
 
-  await updateRepoDoc(installationId, repoDoc)
-  if (!_.get(repoDoc, ['packages', 'package.json'])) return
+  if (repoDoc.fork && !repoDoc.hasIssues) { // we should allways check if issues are disabled and exit
+    log.warn('exited: Issues disabled on fork')
+    return
+  }
+
+  const [owner, repo] = repoDoc.fullName.split('/')
+  const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
+  // find all package.json files on the default branch
+  const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
+  // This mutates repoDoc
+  await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+
+  // TODO: Test these two assertions
+  if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
+    log.warn('exited: No packages or package.json files found')
+    return
+  }
+
   await upsert(repositories, repoDoc._id, repoDoc)
 
   const config = getConfig(repoDoc)
-  if (config.disabled) return
-  const pkg = _.get(repoDoc, ['packages', 'package.json'])
-  if (!pkg) return
+  log.info(`config for ${repoDoc.fullName}`, {config})
+  if (config.disabled) {
+    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
+    return
+  }
 
-  const [owner, repo] = repoDoc.fullName.split('/')
+  const packageJsonContents = _.get(repoDoc, ['packages'])
+  const packagePaths = _.keys(packageJsonContents)
+  if (!_.get(repoDoc, ['packages']) || Object.keys(packageJsonContents).length === 0) return
 
   await createDefaultLabel({ installationId, owner, repo, name: config.label })
 
   const registry = RegClient()
   const registryGet = promisify(registry.get.bind(registry))
-  const dependencyMeta = _.flatten(
-    ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
-      return _.map(pkg[type], (version, name) => ({ name, version, type }))
-    })
-  )
-  let dependencies = await Promise.mapSeries(dependencyMeta, async dep => {
-    try {
-      dep.data = await registryGet(registryUrl + dep.name.replace('/', '%2F'), {
-      })
-      return dep
-    } catch (err) {}
+
+  // Get all package.jsons in this group and update every package the newest version
+  const dependencies = await getUpdatedDependenciesForFiles({
+    packagePaths,
+    packageJsonContents,
+    registryGet,
+    ignore: _.get(config, 'ignore', []),
+    log
   })
 
-  dependencies = _(dependencies)
-    .filter(Boolean)
-    .map(dependency => {
-      let latest = _.get(dependency, 'data.dist-tags.latest')
-      if (_.includes(config.ignore, dependency.name)) return
-      // neither version nor range, so it's something weird (git url)
-      // better not touch it
-      if (!semver.validRange(dependency.version)) return
-      // new version is prerelease
-      const oldIsPrerelease = _.get(
-        semver.parse(dependency.version),
-        'prerelease.length'
-      ) > 0
-      const prereleaseDiff = oldIsPrerelease &&
-        semver.diff(dependency.version, latest) === 'prerelease'
-      if (
-        !prereleaseDiff &&
-        _.get(semver.parse(latest), 'prerelease.length', 0) > 0
-      ) {
-        const versions = _.keys(_.get(dependency, 'data.versions'))
-        latest = _.reduce(versions, function (current, next) {
-          const parsed = semver.parse(next)
-          if (!parsed) return current
-          if (_.get(parsed, 'prerelease.length', 0) > 0) return current
-          if (semver.gtr(next, current)) return next
-          return current
-        })
-      }
-      // no to need change anything :)
-      if (semver.satisfies(latest, dependency.version)) return
-      // no downgrades
-      if (semver.ltr(latest, dependency.version)) return
-      dependency.newVersion = getRangedVersion(latest, dependency.version)
-      return dependency
-    })
-    .filter(Boolean)
-    .value()
-
-  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
+  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
+  log.info('github: repository info', {repositoryInfo: ghRepo})
 
   const branch = ghRepo.default_branch
 
@@ -113,36 +93,24 @@ module.exports = async function ({ repositoryId }) {
   const badgesTokenMaybe = repoDoc.private
     ? `?token=${tokenHash}&ts=${Date.now()}`
     : ''
-  const badgeUrl = `https://badges.greenkeeper.io/${slug}.svg${badgesTokenMaybe}`
+  const badgeUrl = `https://${env.BADGES_HOST}/${slug}.svg${badgesTokenMaybe}`
+  log.info('badge: url', {badgeUrl})
 
-  const privateBadgeRegex = /https:\/\/badges\.(staging\.)?greenkeeper\.io\/.+?\.svg\?token=\w+(&ts=\d+)?/
+  const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
   let badgeAlreadyAdded = false
-  const transforms = [
-    {
-      path: 'package.json',
-      message: 'chore(package): update dependencies',
-      transform: oldPkg => {
-        const oldPkgParsed = JSON.parse(oldPkg)
-        const inplace = jsonInPlace(oldPkg)
 
-        dependencies.forEach(({ type, name, newVersion }) => {
-          if (!_.get(oldPkgParsed, [type, name])) return
-
-          inplace.set([type, name], newVersion)
-        })
-        return inplace.toString()
-      }
-    },
+  // add greenkeeper.json if needed
+  let transforms = [
     {
       path: '.travis.yml',
-      message: 'chore(travis): whitelist greenkeeper branches',
+      message: getMessage(config.commitMessages, 'initialBranches'),
       transform: raw => travisTransform(config, raw)
     },
     {
       path: 'README.md',
       create: true,
-      message: 'docs(readme): add Greenkeeper badge',
+      message: getMessage(config.commitMessages, 'initialBadge'),
       transform: (readme, path) => {
         // TODO: empty readme, no image support
         const ext = extname(path).slice(1)
@@ -155,9 +123,12 @@ module.exports = async function ({ repositoryId }) {
 
         badgeAlreadyAdded = _.includes(
           readme,
-          'https://badges.greenkeeper.io/'
+          `https://${env.BADGES_HOST}/`
         )
-        if (!repoDoc.private && badgeAlreadyAdded) return
+        if (!repoDoc.private && badgeAlreadyAdded) {
+          log.info('badge: Repository already has badge')
+          return
+        }
 
         return badger.addBadge(
           readme,
@@ -170,7 +141,104 @@ module.exports = async function ({ repositoryId }) {
     }
   ]
 
-  const sha = await createBranch({
+  // create a transform loop for all the package.json paths and push into the transforms array below
+  packagePaths.map((packagePath) => {
+    transforms.unshift({
+      path: packagePath,
+      message: getMessage(config.commitMessages, 'initialDependencies'),
+      transform: oldPkg => {
+        const oldPkgParsed = JSON.parse(oldPkg)
+        const inplace = jsonInPlace(oldPkg)
+
+        dependencies.forEach(({ type, name, newVersion }) => {
+          if (!_.get(oldPkgParsed, [type, name])) return
+
+          inplace.set([type, name], newVersion)
+        })
+        return inplace.toString()
+      }
+    })
+  })
+
+  let greenkeeperConfigInfo = {
+    isMonorepo: false
+  }
+
+  if ((packageFilePaths.length === 1 && packageFilePaths[0] === 'package.json') || packageFilePaths.length === 0) {
+    // TODO: this should probably update an existing greenkeeper.json too, though.
+    log.info('Not generating or updating greenkeeper.json: No package files in repo, or no monorepo.')
+  } else {
+    Object.assign(greenkeeperConfigInfo, {isMonorepo: true})
+    log.info('Monorepo detected, generating greenkeeper config', {packageFilePaths})
+    const greenkeeperConfigFile = repoDoc.greenkeeper || {}
+    // Generate a default group with all the autodiscovered package.json files
+    const defaultGroups = {
+      default: {
+        packages: packageFilePaths
+      }
+    }
+    // Generate a new greenkeeeper.json from scratch
+    let greenkeeperJSONTransform = {
+      path: 'greenkeeper.json',
+      message: getMessage(config.commitMessages, 'addConfigFile'),
+      transform: () => {
+        const greenkeeperJSON = {
+          groups: defaultGroups
+        }
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(greenkeeperJSON, null, 2) + '\n'
+      },
+      create: true
+    }
+    greenkeeperConfigInfo.action = 'new'
+
+    // if there already is a greenkeeper.json with some content, use that and update the groups object in the transform instead of generating a new one
+    log.info('Checking greenkeeper.json config for groups', {
+      hasGroups: !_.isEmpty(greenkeeperConfigFile.groups),
+      greenkeeperConfigFile
+    })
+    if (!_.isEmpty(greenkeeperConfigFile.groups)) {
+      // mutates greenkeeperConfigFile & greenkeeperConfigInfo
+      const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
+        greenkeeperConfigFile,
+        defaultGroups,
+        packageFilePaths,
+        greenkeeperConfigInfo
+      })
+      greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
+      const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
+      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
+      // Replace the transform that generates the default group with one that updates existing groups
+      greenkeeperJSONTransform.message = getMessage(config.commitMessages, 'updateConfigFile')
+      greenkeeperJSONTransform.transform = () => {
+        // greenkeeper.json must end with a newline
+        return JSON.stringify(updatedGreenkeeperConfigFile, null, 2) + '\n'
+      }
+      // Don’t create this file because it already exists
+      delete greenkeeperJSONTransform.create
+
+      // set the updated greenkeeper config in the repoDoc
+      await upsert(repositories, repoDoc._id, Object.assign(
+        repoDoc,
+        {greenkeeper: updatedGreenkeeperConfigFile}
+      ))
+    } else {
+      // set the generated greenkeeper config in the repoDoc
+      await upsert(repositories, repoDoc._id, Object.assign(
+        repoDoc,
+        {
+          greenkeeper:
+          {
+            groups: defaultGroups
+          }
+        }
+      ))
+    }
+    // add greenkeeper.json to the _beginning_ of the transforms array
+    transforms.unshift(greenkeeperJSONTransform)
+  }
+
+  const sha = await createBranch({ // try/catch
     installationId,
     owner,
     repo,
@@ -183,8 +251,14 @@ module.exports = async function ({ repositoryId }) {
     // When there are no changes and the badge already exists we can enable right away
     if (badgeAlreadyAdded) {
       await upsert(repositories, repoDoc._id, { enabled: true })
-      return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      log.info('Repository silently enabled')
+      if (env.IS_ENTERPRISE) {
+        return
+      } else {
+        return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+      }
     } else {
+      log.error('Could not create initial branch')
       throw new Error('Could not create initial branch')
     }
   }
@@ -192,7 +266,6 @@ module.exports = async function ({ repositoryId }) {
   const depsUpdated = transforms[0].created
   const travisModified = transforms[1].created
   const badgeAdded = transforms[2].created
-
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
     initial: true,
@@ -203,10 +276,12 @@ module.exports = async function ({ repositoryId }) {
     depsUpdated,
     travisModified,
     badgeAdded,
-    badgeUrl
+    badgeUrl,
+    greenkeeperConfigInfo
   })
 
   statsd.increment('initial_branch')
+  log.success('success')
 
   return {
     delay: 30 * 60 * 1000,
@@ -259,4 +334,42 @@ async function travisTransform (config, travisyml) {
     ['branches', 'only'],
     `/^${escapeRegex(config.branchPrefix)}.*$/`
   )
+}
+
+function generateUpdatedGreenkeeperConfig ({greenkeeperConfigFile, defaultGroups, packageFilePaths, greenkeeperConfigInfo}) {
+  greenkeeperConfigInfo.deletedGroups = []
+  greenkeeperConfigInfo.deletedPackageFiles = []
+  const oldGroups = _.get(greenkeeperConfigFile, 'groups')
+  // If no groups were defined in the old greenkeeper.json, add the default group we just generated
+  let newGroups = defaultGroups
+  // If there were groups defined, check every entry for whether the files referenced still exist
+  if (oldGroups) {
+    newGroups = {}
+    _.map(oldGroups, (group, groupName) => {
+      var result = {}
+      result.packages = group.packages.filter((packagePath) => {
+        if (packageFilePaths.indexOf(packagePath) === -1) {
+          greenkeeperConfigInfo.deletedPackageFiles.push(packagePath)
+          return false
+        } else {
+          return packagePath
+        }
+      })
+      if (result.packages.length !== 0) {
+        newGroups[groupName] = result
+      } else {
+        greenkeeperConfigInfo.deletedGroups.push(groupName)
+      }
+    })
+    greenkeeperConfigInfo.action = 'updated'
+  } else {
+    greenkeeperConfigInfo.action = 'added-groups-only'
+  }
+  if (Object.keys(newGroups).length === 0) {
+    // If there are no valid package files at all, remove the groups keys completely
+    delete greenkeeperConfigFile.groups
+  } else {
+    greenkeeperConfigFile.groups = newGroups
+  }
+  return {greenkeeperConfigFile, greenkeeperConfigInfo}
 }

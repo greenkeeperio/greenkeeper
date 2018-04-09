@@ -1,30 +1,17 @@
-const { test } = require('tap')
 const nock = require('nock')
-const worker = require('../../jobs/reset')
 
 const dbs = require('../../lib/dbs')
-const timeToWaitAfterTests = 500
+const removeIfExists = require('../helpers/remove-if-exists.js')
 
+const timeToWaitAfterTests = 500
 const waitFor = (milliseconds) => {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds)
   })
 }
 
-const removeIfExists = async (db, id) => {
-  try {
-    return await db.remove(await db.get(id))
-  } catch (e) {
-    if (e.status !== 404) {
-      throw e
-    }
-  }
-}
-
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
-
-let githubNock
 
 const githubRepository = {
   id: 42,
@@ -34,17 +21,10 @@ const githubRepository = {
   has_issues: true
 }
 
-test('reset repo', async t => {
-  const { repositories, installations } = await dbs()
-
-  t.beforeEach(async () => {
-    githubNock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .reply(200, {})
+describe('reset repo', async () => {
+  const resetJob = require('../../jobs/reset')
+  beforeEach(async () => {
+    const { repositories, installations } = await dbs()
 
     await installations.put({
       _id: '123',
@@ -73,126 +53,178 @@ test('reset repo', async t => {
     })
   })
 
-  t.afterEach(async () => {
+  afterEach(async () => {
     nock.cleanAll()
-    await removeIfExists(repositories, '42')
-    await installations.remove(await installations.get('123'))
-    await removeIfExists(repositories, '42:pr:123')
-    await removeIfExists(repositories, '42:branch:deadbeef')
-    await removeIfExists(repositories, '42:branch:deadbeef0')
-    await removeIfExists(repositories, '42:issue:67')
-    await removeIfExists(repositories, '42:issue:65')
+    const { repositories, installations } = await dbs()
+    await removeIfExists(
+      repositories,
+      [
+        '42', '42:pr:123', '42:branch:deadbeef', '42:branch:deadbeef0',
+        '42:issue:67', '42:issue:65'
+      ]
+    )
+    await removeIfExists(installations, '123')
   })
 
-  t.test('response with error if repo cound not be found', async t => {
-    t.plan(1)
-    nock.cleanAll()
+  test('response with error if repo cound not be found', async () => {
+    expect.assertions(1)
     try {
-      await worker({
+      await resetJob({
         repositoryFullName: 'finnp/hello'
       })
     } catch (e) {
       if (e.status !== 404) {
         throw e
       }
-      t.equal(e.message, 'The repository finnp/hello does not exist in the database', 'correct error thrown')
+      const message = 'The repository finnp/hello does not exist in the database'
+      expect(e.message).toEqual(message)
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
   })
 
-  t.test('delete all prdocs of the repo', async t => {
-    t.plan(1)
-    githubNock
+  test('delete all prdocs of the repo', async () => {
+    expect.assertions(1)
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
-    await worker({
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
+
+    const { repositories } = await dbs()
     try {
       await repositories.get('42:pr:123')
     } catch (e) {
       if (e.status !== 404) {
         throw e
       }
-      t.ok(true, 'PrDocs successfully deleted')
+      // PrDocs successfully deleted
+      expect(true).toBeTruthy()
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
   })
 
-  t.test('delete all greenkeeper branches', async t => {
-    t.plan(2)
+  test('delete all greenkeeper branches', async () => {
+    expect.assertions(2)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, () => {
-        t.ok(true, 'deleted gk branch')
+        // deleted gk branch
+        expect(true).toBeTruthy()
       })
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
 
-    await worker({
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
-    t.ok(true, 'Worker ran successfully')
+    // Worker ran successfully
+    expect(true).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('do not mind if some dependency branch could not be deleted', async t => {
-    t.plan(1)
+  test('do not mind if some dependency branch could not be deleted', async () => {
+    expect.assertions(1)
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(409)
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
 
-    await worker({
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
-    t.ok(true, 'Worker ran successfully')
+    // Worker ran successfully
+    expect(true).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('fail if initial branch could not be deleted', async t => {
-    t.plan(1)
+  test('fail if initial branch could not be deleted', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '42:branch:deadbeef0',
       type: 'branch',
       repositoryId: '42',
       head: 'greenkeeper/initial'
     })
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200)
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper/initial')
       .reply(409)
 
     try {
-      await worker({
+      await resetJob({
         repositoryFullName: 'finnp/abc'
       })
     } catch (e) {
       if (e.code !== 409) {
         throw e
       }
-      t.equal(e.code, 409, 'error thrown')
+      // error thrown
+      expect(e.code).toBe(409)
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
   })
 
-  t.test('do not mind if a branch does not exist', async t => {
+  test('do not mind if a branch does not exist', async () => {
+    const { repositories } = await dbs()
+
     await repositories.put({
       _id: '42:branch:deadbeef0',
       type: 'branch',
       repositoryId: '42',
       head: 'greenkeeper/initial'
     })
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200)
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper/initial')
@@ -201,71 +233,108 @@ test('reset repo', async t => {
       .reply(200, githubRepository)
 
     try {
-      await worker({
+      await resetJob({
         repositoryFullName: 'finnp/abc'
       })
     } catch (e) {
-      t.fail('error thrown')
+      // error thrown
+      expect(true).toBeTruthy()
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
   })
 
-  t.test('delete all branchdocs of the repo', async t => {
-    t.plan(1)
-    githubNock
+  test('delete all branchdocs of the repo', async () => {
+    expect.assertions(1)
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
-    await worker({
+
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
+
+    const { repositories } = await dbs()
     try {
       await repositories.get('42:branch:deadbeef')
     } catch (e) {
       if (e.status !== 404) {
         throw e
       }
-      t.ok(true, 'BranchDocs successfully deleted')
+      // BranchDocs successfully deleted
+      expect(true).toBeTruthy()
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
   })
 
-  t.test('delete the repodoc and create a fresh one', async t => {
-    t.plan(1)
-    githubNock
+  test('delete the repodoc and create a fresh one', async () => {
+    expect.assertions(1)
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
-    await worker({
+
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
+
+    const { repositories } = await dbs()
     const freshRepoDoc = await repositories.get('42')
-    t.false(freshRepoDoc.enabled, 'New RepoDoc saved in database')
+    expect(freshRepoDoc.enabled).toBeFalsy()
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('schedule create inital branch job', async t => {
-    t.plan(2)
-    githubNock
+  test('schedule create inital branch job', async () => {
+    expect.assertions(2)
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
-    const newJob = await worker({
+
+    const newJob = await resetJob({
       repositoryFullName: 'finnp/abc'
     })
+
+    const { repositories } = await dbs()
     const freshRepoDoc = await repositories.get('42')
-    t.equal(newJob.data.name, 'create-initial-branch', 'create-initial-branch Job enqueued')
-    t.equal(newJob.data.repositoryId, freshRepoDoc._id, 'Job has the correct repository id')
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-branch')
+    expect(job.repositoryId).toEqual(freshRepoDoc._id)
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('Close open issues and delete them from the database', async t => {
-    t.plan(3)
+  test('Close open issues and delete them from the database', async () => {
+    expect.assertions(3)
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '42:issue:67',
       type: 'issue',
@@ -281,30 +350,41 @@ test('reset repo', async t => {
       state: 'open'
     })
 
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
       .patch('/repos/finnp/abc/issues/65')
       .reply(200, () => {
-        t.ok(true, 'Issue closed')
+        // Issue closed
+        expect(true).toBeTruthy()
         return {}
       })
       .patch('/repos/finnp/abc/issues/67')
       .optionally()
       .reply(200, () => {
-        t.fail('should not close closed Issues')
+        // should not close closed Issues
+        expect(false).toBeFalsy()
         return {}
       })
-    await worker({
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
     try {
       await repositories.get('42:issue:67')
     } catch (e) {
       if (e.status === 404) {
-        t.ok(true, 'Issue doc deleted')
+        // Issue doc deleted
+        expect(true).toBeTruthy()
       } else {
         throw e
       }
@@ -313,7 +393,8 @@ test('reset repo', async t => {
       await repositories.get('42:issue:65')
     } catch (e) {
       if (e.status === 404) {
-        t.ok(true, 'Issue doc deleted')
+        // Issue doc deleted
+        expect(true).toBeTruthy()
       } else {
         throw e
       }
@@ -321,8 +402,9 @@ test('reset repo', async t => {
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('Do not mind issues that do not exist', async t => {
-    t.plan(1)
+  test('Do not mind issues that do not exist', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
 
     await repositories.put({
       _id: '42:issue:65',
@@ -331,7 +413,15 @@ test('reset repo', async t => {
       number: 65,
       state: 'open'
     })
-    githubNock
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
@@ -339,27 +429,41 @@ test('reset repo', async t => {
       .patch('/repos/finnp/abc/issues/65')
       .reply(404)
 
-    await worker({
+    await resetJob({
       repositoryFullName: 'finnp/abc'
     })
 
-    t.ok(true, 'no errors were thrown')
+    // no errors were thrown
+    expect(true).toBeTruthy()
+
     await waitFor(timeToWaitAfterTests)
   })
 
-  t.test('Do not mind about case sensivity in the repository name', async t => {
-    t.plan(2)
-    githubNock
+  test('Do not mind about case sensivity in the repository name', async () => {
+    expect.assertions(2)
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
       .delete('/repos/finnp/abc/git/refs/heads/greenkeeper-standard-10.0.0')
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
-    const newJob = await worker({
+
+    const newJob = await resetJob({
       repositoryFullName: 'Finnp/aBc'
     })
+
+    const { repositories } = await dbs()
     const freshRepoDoc = await repositories.get('42')
-    t.equal(newJob.data.name, 'create-initial-branch', 'create-initial-branch Job enqueued')
-    t.equal(newJob.data.repositoryId, freshRepoDoc._id, 'Job has the correct repository id')
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-branch')
+    expect(job.repositoryId).toEqual(freshRepoDoc._id)
     await waitFor(timeToWaitAfterTests)
   })
 })

@@ -76,7 +76,6 @@ ${_.compact([release, diffCommits])}
 There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
 </details>
 
-
 ---
 
 

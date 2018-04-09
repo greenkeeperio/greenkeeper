@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const md = require('./template')
+const env = require('../lib/env')
 
 module.exports = prBody
 
@@ -21,13 +22,13 @@ Public scoped packages (\`@scope/name\`) work out of the box, but private scoped
 npm install --global wombat
 
 # Adding a single private scoped package
-wombat hook add @scope/name https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add @scope/name https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Adding all packages of a scope
-wombat hook add @scope https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add @scope https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Adding all packages by a specific owner
-wombat hook add --type owner substack https://hooks.greenkeeper.io/npm/${installationId} ${secret}
+wombat hook add --type owner substack https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 \`\`\`
 `
@@ -122,10 +123,20 @@ const faqText = () => md`
 There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
 `
 
+// needs to handle files as an array of arrays!
 function hasLockFileText (files) {
-  const lockFiles = _.pick(files, ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'])
-  const lockFile = _.findKey(lockFiles)
-  if (!lockFile) return
+  if (!files) return
+  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'].filter((key) => {
+    if (_.isArray(files[key]) && files[key].length) {
+      return true
+    }
+    if (files[key] === true) {
+      return true
+    }
+    return false
+  })
+  if (lockFiles.length === 0) return
+  const lockFile = lockFiles[0]
   return md`⚠️ Greenkeeper has found a ${md.code(lockFile)} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
 }
 
@@ -135,7 +146,31 @@ const mainMessage = ({enabled, depsUpdated}) => {
   return '' // no updates, but private repository
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files}) {
+const greenkeeperConfigInfoMessage = (info) => {
+  if (!info) return ''
+  let message = ''
+  if (info.isMonorepo) {
+    message += '📦 📦  Greenkeeper has detected multiple `package.json` files. '
+  }
+  if (info.action === 'new') {
+    message += 'They have all been added to a new `greenkeeper.json` config file. They’ve been collected in a group called `default`, meaning that all of them will receive updates together. You can rename, add and remove groups and freely assign each `package.json` to whichever group you like. It’s common, for example, to have one `frontend` group and one `backend` group, each with a couple of `package.json` files. In any case, all files in a group will have their updates collected into single PRs and issues. '
+  }
+  if (info.action === 'updated') {
+    message += 'Since this repo already has a `greenkeeper.json` config file with defined groups, Greenkeeper has only checked whether they’re still valid. '
+    if (info.deletedPackageFiles.length > 0) {
+      message += 'The follwing `package.json` files could no longer be found in the repo and have been removed from your groups config: `' + info.deletedPackageFiles.join(', ') + '`. '
+    }
+    if (info.deletedGroups.length > 0) {
+      message += 'Also, groups which no longer have any entries have been removed: `' + info.deletedGroups.join(', ') + '`. '
+    }
+  }
+  if (info.action === 'added-groups-only') {
+    message += 'Since this repo already has a `greenkeeper.json` config file without any defined groups, Greenkeeper has  added all of the `package.json` files to a group called `default`, meaning that all of them will receive updates together. You can rename, add and remove groups and freely assign each `package.json` to whichever group you like. It’s common, for example, to have one `frontend` group and one `backend` group, each with a couple of `package.json` files. In any case, all files in a group will have their updates collected into single PRs and issues. '
+  }
+  return message
+}
+
+function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo}) {
   return md`
 Let’s get started with automated dependency management for ${ghRepo.name} :muscle:
 
@@ -146,6 +181,8 @@ ${mainMessage({enabled, depsUpdated})}
 ${!enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
 
 ${secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
+
+${greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
 
 ---
 ${
@@ -162,7 +199,6 @@ ${
 }
 
 ---
-
 
 Good luck with your project and see you soon :sparkles:
 

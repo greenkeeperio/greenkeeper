@@ -4,6 +4,14 @@ const semver = require('semver')
 const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
 const statsd = require('../lib/statsd')
+const getConfig = require('../lib/get-config')
+const {
+  seperateNormalAndMonorepos,
+  getJobsPerGroup,
+  filterAndSortPackages,
+  getSatisfyingVersions,
+  getOldVersionResolved
+} = require('../utils/utils')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -17,7 +25,7 @@ module.exports = async function (
     versions
   }
 
-  // use prefix for packages sent via webhook
+  // use prefix for packageFilesForUpdatedDependency sent via webhook
   if (isFromHook) npmDoc._id = `${installation}:${npmDoc._id}`
 
   try {
@@ -43,18 +51,53 @@ module.exports = async function (
   // we want to handle different distTags in the future
   if (distTag !== 'latest') return
 
-  const packages = (await repositories.query('by_dependency', {
+  /*
+  Update: 'by_dependency' handles multiple package.json files, but not in the same result.
+
+  You get one result per matching dependency per depencyType per file in `packageFilesForUpdatedDependency`. The `value`
+  object for each result (used below, in `filteredSortedPackages` for example), looks like:
+
+  "value": {
+    "fullName": "aveferrum/angular-material-demo",
+    "accountId": "462667",
+    "filename": "frontend/package.json", // <- yay, works
+    "type": "dependencies",
+    "oldVersion": "^4.2.4"
+  }
+
+  Then in a separate result, you’d get
+
+  "value": {
+    "fullName": "aveferrum/angular-material-demo",
+    "accountId": "462667",
+    "filename": "backend/package.json",
+    "type": "dependencies",
+    "oldVersion": "^4.2.4"
+  }
+  */
+
+  // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
+  const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     key: dependency
   })).rows
 
-  if (!packages.length) return
+  if (!packageFilesForUpdatedDependency.length) return
 
-  if (packages.length > 100) statsd.event('popular_package')
+  if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
+
+  // check if package has a greenkeeperrc / more then 1 package json or package.json is in subdirectory
+  // continue with the rest but send all otheres to a 'new' version branch job
+
+  let jobs = []
+  const seperatedResults = seperateNormalAndMonorepos(packageFilesForUpdatedDependency)
+
+  const withOnlyRootPackageJSON = _.flatten(seperatedResults[1])
+  const withMultiplePackageJSON = seperatedResults[0]
 
   const accounts = _.keyBy(
     _.map(
       (await installations.allDocs({
-        keys: _.compact(_.map(packages, 'value.accountId')),
+        keys: _.compact(_.map(_.flattenDeep(seperatedResults), 'value.accountId')),
         include_docs: true
       })).rows,
       'doc'
@@ -62,35 +105,47 @@ module.exports = async function (
     '_id'
   )
 
+  // ******** Monorepos begin
+  // get config
+  const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
+  if (keysToFindMonorepoDocs.length) {
+    const monorepoDocs = (await repositories.query('by_full_name', {
+      keys: keysToFindMonorepoDocs,
+      include_docs: true
+    })).rows
+
+    _.forEach(withMultiplePackageJSON, monorepo => {
+      const account = accounts[monorepo[0].value.accountId]
+      const plan = account.plan
+      const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
+      if (!repoDoc) return
+      const config = getConfig(repoDoc.doc)
+      jobs = jobs.concat(getJobsPerGroup({
+        config,
+        monorepo,
+        distTags,
+        distTag,
+        dependency,
+        versions,
+        account,
+        repositoryId: repoDoc.id,
+        plan}))
+    })
+  }
+  // ******** Monorepos end
+
   // Prioritize `dependencies` over all other dependency types
   // https://github.com/greenkeeperio/greenkeeper/issues/409
 
-  const order = {
-    'dependencies': 1,
-    'devDependencies': 2,
-    'optionalDependencies': 3
-  }
+  const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
 
-  const sortByDependency = (packageA, packageB) => {
-    return order[packageA.value.type] - order[packageB.value.type]
-  }
-
-  const filteredSortedPackages = packages
-    .filter(pkg => pkg.value.type !== 'peerDependencies')
-    .sort(sortByDependency)
-
-  return _.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
+  jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
 
-      const satisfyingVersions = Object.keys(versions)
-        .filter(version => semver.satisfies(version, pkg.value.oldVersion))
-        .sort(semver.rcompare)
-
-      const oldVersionResolved = satisfyingVersions[0] === distTags[distTag]
-        ? satisfyingVersions[1]
-        : satisfyingVersions[0]
+      const satisfyingVersions = getSatisfyingVersions(versions, pkg)
+      const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
 
@@ -111,5 +166,7 @@ module.exports = async function (
         ),
         plan
       }
-    })
+    }))
+  ]
+  return jobs
 }

@@ -1,12 +1,13 @@
 const crypto = require('crypto')
-
+const Log = require('gk-log')
 const _ = require('lodash')
+
 const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
 const dbs = require('../lib/dbs')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
-const { hasBilling } = require('../lib/payments')
+const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 
 const prContent = require('../content/initial-pr')
@@ -16,9 +17,14 @@ module.exports = async function (
 ) {
   accountId = String(accountId)
   const { repositories } = await dbs()
+  const logs = dbs.getLogsDb()
   const repositoryId = String(repository.id)
   let repodoc = await repositories.get(repositoryId)
   const config = getConfig(repodoc)
+  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr'})
+
+  log.info('started')
+  log.info(`config for ${repodoc.fullName}`, {config})
 
   const [owner, repo] = repodoc.fullName.split('/')
   const {
@@ -28,7 +34,8 @@ module.exports = async function (
     travisModified,
     depsUpdated,
     badgeAdded,
-    badgeUrl
+    badgeUrl,
+    greenkeeperConfigInfo
   } = branchDoc
 
   let enabled = false
@@ -37,6 +44,7 @@ module.exports = async function (
       enabled: true
     })
     enabled = true
+    log.info('repository: set to `enabled` as no dependencies where updated')
   }
 
   branchDoc = await upsert(repositories, branchDoc._id, {
@@ -44,6 +52,7 @@ module.exports = async function (
     processed: true,
     state: combined.state
   })
+  log.info('branchDoc: updated to `processed: true`', {branchDoc})
 
   const ghqueue = githubQueue(installationId)
 
@@ -56,21 +65,32 @@ module.exports = async function (
     description: 'Greenkeeper verified pull request',
     target_url: 'https://greenkeeper.io/verify.html'
   }))
+  log.info('github: set greenkeeper/verify status')
 
-  const accountHasBilling = await hasBilling(accountId)
-  if (repodoc.private && !accountHasBilling) {
-    await ghqueue.write(github => github.repos.createStatus({
-      owner,
-      repo,
-      sha,
-      state: 'pending',
-      context: 'greenkeeper/payment',
-      description: 'Payment required, merging will have no effect',
-      target_url: 'https://account.greenkeeper.io/'
-    }))
+  if (repodoc.private && !env.IS_ENTERPRISE) {
+    const billingAccount = await getActiveBilling(accountId)
+    const hasBillingAccount = !!billingAccount
+    const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
+
+    if (!hasBillingAccount || accountNeedsMarketplaceUpgrade) {
+      log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
+      const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
+
+      await ghqueue.write(github => github.repos.createStatus({
+        owner,
+        repo,
+        sha,
+        state: 'pending',
+        context: 'greenkeeper/payment',
+        description: 'Payment required, merging will have no effect',
+        target_url: targetUrl
+      }))
+      log.info('github: set greenkeeper/payment status')
+    }
   }
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: repository info', {repositoryInfo: ghRepo})
 
   const secret = repodoc.private &&
     crypto
@@ -105,12 +125,14 @@ module.exports = async function (
         success: combined.state === 'success',
         enabled,
         accountTokenUrl,
-        files
+        files,
+        greenkeeperConfigInfo
       }),
       base,
       head
     }))
     statsd.increment('initial_pullrequests')
+    log.success('success')
 
     if (config.label !== false) {
       await ghqueue.write(github => github.issues.addLabels({
@@ -121,7 +143,10 @@ module.exports = async function (
       }))
     }
   } catch (err) {
-    if (err.code !== 422) throw err
+    if (err.code !== 422) {
+      log.error('Could not create initial pr')
+      throw err
+    }
 
     // in case the pull request was already created
     // we just store that PRs info
@@ -131,7 +156,7 @@ module.exports = async function (
       base,
       head: `${owner}:${head}`
     })))[0]
-
+    log.warn('pr was already created', {pullRequestInfo: pr})
     id = pr.id
     number = pr.number
   }
