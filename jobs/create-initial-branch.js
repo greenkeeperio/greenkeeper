@@ -140,7 +140,7 @@ module.exports = async function ({ repositoryId }) {
       }
     }
   ]
-
+  let depsUpdated = false // this is ugly but works ¯\_(ツ)_/¯
   // create a transform loop for all the package.json paths and push into the transforms array below
   packagePaths.map((packagePath) => {
     transforms.unshift({
@@ -152,7 +152,7 @@ module.exports = async function ({ repositoryId }) {
 
         dependencies.forEach(({ type, name, newVersion }) => {
           if (!_.get(oldPkgParsed, [type, name])) return
-
+          depsUpdated = true
           inplace.set([type, name], newVersion)
         })
         return inplace.toString()
@@ -263,7 +263,6 @@ module.exports = async function ({ repositoryId }) {
     }
   }
 
-  const depsUpdated = transforms[0].created
   const travisModified = transforms[1].created
   const badgeAdded = transforms[2].created
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {

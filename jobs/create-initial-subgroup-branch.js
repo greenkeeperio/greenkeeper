@@ -64,6 +64,7 @@ module.exports = async function ({ repositoryId, groupName }) {
 
   const newBranch = config.branchPrefix + 'initial' + `-${groupName}`
 
+  let depsUpdated = false // this is ugly but works ¯\_(ツ)_/¯
   // create a transform loop for all the package.json paths and push into the transforms array below
   const transforms = pathsForGroup.map(path => {
     return {
@@ -75,7 +76,7 @@ module.exports = async function ({ repositoryId, groupName }) {
 
         dependencies.forEach(({ type, name, newVersion }) => {
           if (!_.get(oldPkgParsed, [type, name])) return
-
+          depsUpdated = true
           inplace.set([type, name], newVersion)
         })
         return inplace.toString()
@@ -92,9 +93,10 @@ module.exports = async function ({ repositoryId, groupName }) {
     transforms
   })
 
-  const depsUpdated = _.some(transforms, 'created')
-  if (!depsUpdated) return
-
+  if (!depsUpdated) {
+    log.info('exited: no dependencies updated', { transforms })
+    return
+  }
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
     initial: false, // Not _actually_ an inital branch :)
