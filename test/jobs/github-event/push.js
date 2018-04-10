@@ -9,6 +9,16 @@ const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers
 const pathToWorker = require.resolve('../../../jobs/github-event/push')
 jest.setTimeout(10000)
 
+const configFileContent = {
+  groups: {
+    default: {
+      packages: [
+        'package.json'
+      ]
+    }
+  }
+}
+
 describe('github-event push', async () => {
   beforeEach(() => {
     jest.resetModules()
@@ -45,6 +55,13 @@ describe('github-event push', async () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/repos/finn/disabled/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/disabled/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -116,6 +133,16 @@ describe('github-event push', async () => {
   test('monorepo: subdirectory package.json was modified (555)', async () => {
     const { repositories } = await dbs()
 
+    const myConfigFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        }
+      }
+    }
+
     await repositories.put({
       _id: '555',
       fullName: 'hans/monorepo',
@@ -142,15 +169,6 @@ describe('github-event push', async () => {
     })
 
     const githubPush = requireFresh(pathToWorker)
-    const configFileContent = {
-      groups: {
-        frontend: {
-          packages: [
-            'packages/frontend/package.json'
-          ]
-        }
-      }
-    }
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -164,7 +182,7 @@ describe('github-event push', async () => {
         type: 'file',
         path: 'greenkeeper.json',
         name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+        content: Buffer.from(JSON.stringify(myConfigFileContent)).toString('base64')
       })
       .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
       .reply(200, {
@@ -239,7 +257,7 @@ describe('github-event push', async () => {
   test('monorepo: subdirectory package.json, which is not listed in the config, was modified (555)', async () => {
     const { repositories } = await dbs()
     const githubPush = requireFresh(pathToWorker)
-    const configFileContent = {
+    const myConfigFileContent = {
       groups: {
         frontend: {
           packages: [
@@ -248,7 +266,6 @@ describe('github-event push', async () => {
         }
       }
     }
-
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
       .reply(200, {
@@ -261,7 +278,7 @@ describe('github-event push', async () => {
         type: 'file',
         path: 'greenkeeper.json',
         name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+        content: Buffer.from(JSON.stringify(myConfigFileContent)).toString('base64')
       })
       .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
       .reply(200, {
@@ -375,6 +392,8 @@ describe('github-event push', async () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(404, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -487,6 +506,8 @@ describe('github-event push', async () => {
       })
       .get('/rate_limit')
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(404, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -627,6 +648,14 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+
       .get('/repos/finn/test/contents/package.json')
       .reply(200, () => {
         // should not request package.json
@@ -679,6 +708,13 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/enabled/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/test/contents/package.json')
       .reply(404, {})
 
@@ -736,6 +772,13 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/private/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
@@ -796,6 +839,14 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/private/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
@@ -3079,7 +3130,7 @@ describe('github-event push: monorepo', () => {
   })
 
   test('monorepo: greenkeeper.json deleted with existing branches (1117)', async () => {
-    const configFileContent = {
+    const configFileContentLocal = {
       groups: {
         frontend: {
           packages: [
@@ -3114,7 +3165,7 @@ describe('github-event push: monorepo', () => {
               }
             }
           },
-          greenkeeper: configFileContent
+          greenkeeper: configFileContentLocal
         },
         {
           _id: '1117:branch:1234abca',
