@@ -7,10 +7,12 @@ test('get-diff-commits', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/finnp/test/compare/dead...beef')
     .reply(200, () => {

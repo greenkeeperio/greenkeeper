@@ -10,10 +10,12 @@ test('github-event installation created', async () => {
 
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/installation/repositories?per_page=100')
     .reply('200', {
