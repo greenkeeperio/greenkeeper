@@ -10,10 +10,12 @@ test('getFiles: with no fileList provided', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
 
   const files = await getFiles('123', 'owner/repo')
@@ -27,10 +29,12 @@ test('getFiles: 2 package.json files', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
@@ -76,10 +80,12 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/backend/package.json')
     .reply(200, {
@@ -185,10 +191,12 @@ test('getGreenkeeperConfigFile', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/greenkeeper.json')
     .reply(200, {
@@ -209,10 +217,12 @@ test('getGreenkeeperConfigFile: when no config file is present', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/greenkeeper.json')
     .reply(404)
@@ -264,10 +274,12 @@ test('discoverPackageFiles: regular repo', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
@@ -307,10 +319,12 @@ test('discoverPackageFiles: monorepo', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
@@ -385,10 +399,12 @@ test('discoverPackageFilePaths: regular repo', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
@@ -422,10 +438,12 @@ test('discoverPackageFilePaths: monorepo', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/git/trees/master?recursive=true')
     .reply(200, {
