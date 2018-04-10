@@ -172,7 +172,7 @@ const greenkeeperConfigInfoMessage = (info) => {
 
 function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo}) {
   return md`
-Let’s get started with automated dependency management for ${ghRepo.name} :muscle:
+Let’s get started with automated dependency management for \`${ghRepo.name}\` :muscle:
 
 ${hasLockFileText(files)}
 
