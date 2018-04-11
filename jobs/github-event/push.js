@@ -60,16 +60,20 @@ module.exports = async function (data) {
   try {
     await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
   } catch (e) {
-    console.log(e)
-    return invalidConfigFile({
-      repoDoc,
-      config,
-      repositories,
-      repository,
-      repositoryId,
-      details: [{ formattedMessage: e.message }],
-      log
-    })
+    if (e.name && e.name === 'GKConfigFileParseError') {
+      log.warn('updateRepoDoc failed because of an invalid config file')
+      return invalidConfigFile({
+        repoDoc,
+        config,
+        repositories,
+        repository,
+        repositoryId,
+        details: [{ formattedMessage: e.message }],
+        log
+      })
+    }
+    log.warn('updateRepoDoc failed, we do not know why', {exception: e})
+    throw e
   }
   const pkg = _.get(repoDoc, ['packages'])
   // If there are no more packages in the repoDoc, disable the repo, which means it will also stop being counted for billing
