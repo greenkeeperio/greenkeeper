@@ -99,7 +99,8 @@ module.exports = async function ({ repositoryId, groupName }) {
   }
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
-    initial: false, // Not _actually_ an inital branch :)
+    initial: false,
+    subgroupInitial: true,
     sha,
     base: branch,
     head: newBranch,
