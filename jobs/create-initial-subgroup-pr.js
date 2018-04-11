@@ -8,7 +8,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 
-const prContent = require('../content/initial-subgroup-pr')
+const prContent = require('../content/initial-pr')
 
 module.exports = async function (
   { repository, branchDoc, combined, installationId, accountId, groupName }

@@ -34,7 +34,7 @@ describe('create-initial-subgroup-pr', async () => {
       updatedAt: '2017-01-13T17:33:56.698Z'
     })
 
-    expect.assertions(4)
+    expect.assertions(8)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -62,7 +62,12 @@ describe('create-initial-subgroup-pr', async () => {
       .reply(201, (uri, requestBody) => {
         // pull request created
         expect(true).toBeTruthy()
-        expect(JSON.parse(requestBody).body).toMatch('This pull request **updates all your dependencies in the group `frontend` to their latest version**')
+        const body = JSON.parse(requestBody).body
+        expect(body).toMatch('This pull request **updates all your dependencies in the group `frontend` to their latest version**')
+        expect(body).toMatch('How to ignore certain dependencies for this group')
+        expect(body).not.toMatch('**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.')
+        expect(body).not.toMatch('greenkeeper.ignore')
+        expect(body).not.toMatch('but only after **you merge this pull request**.')
         return {
           id: 333,
           number: 3
