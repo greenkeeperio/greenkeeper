@@ -1,10 +1,5 @@
-const nock = require('nock')
-
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
-
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
 
 describe('create initial branch', () => {
   beforeEach(() => {

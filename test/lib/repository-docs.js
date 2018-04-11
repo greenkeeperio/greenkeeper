@@ -44,10 +44,12 @@ test('updateRepoDoc with package.json', async () => {
 test('get invalid package.json', async () => {
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/package.json')
     .reply(200, {
@@ -96,10 +98,12 @@ test('updateRepoDoc with greenkeeper.json present', async () => {
 
   nock('https://api.github.com')
     .post('/installations/123/access_tokens')
+    .optionally()
     .reply(200, {
       token: 'secret'
     })
     .get('/rate_limit')
+    .optionally()
     .reply(200, {})
     .get('/repos/owner/repo/contents/greenkeeper.json')
     .reply(200, {

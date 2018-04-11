@@ -50,10 +50,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/disabled/contents/greenkeeper.json')
       .reply(200, {
@@ -172,10 +174,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -268,10 +272,12 @@ describe('github-event push', async () => {
     }
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -387,10 +393,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/38/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/greenkeeper.json')
       .reply(404, {})
@@ -501,10 +509,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/39/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/greenkeeper.json')
       .reply(404, {})
@@ -582,10 +592,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/40/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
@@ -937,10 +949,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1087,10 +1101,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1274,10 +1290,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1474,10 +1492,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1698,10 +1718,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1893,10 +1915,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2056,10 +2080,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2252,10 +2278,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2444,10 +2472,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2635,10 +2665,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2825,10 +2857,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -3023,10 +3057,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -3198,10 +3234,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(404)
@@ -3318,10 +3356,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(404)
@@ -3429,10 +3469,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3536,10 +3578,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3646,10 +3690,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3761,10 +3807,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3877,10 +3925,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3996,10 +4046,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {

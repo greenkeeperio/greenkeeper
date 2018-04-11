@@ -164,10 +164,12 @@ describe('handle-branch-status', async () => {
 
     nock('https://api.github.com')
       .post('/installations/123/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/club/mate/issues/5/comments')
       .reply(201, () => {
