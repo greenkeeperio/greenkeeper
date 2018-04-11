@@ -37,7 +37,7 @@ describe('create initial branch', () => {
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd')
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd')
     ])
   })
 
@@ -405,7 +405,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(22)
+    expect.assertions(24)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -498,11 +498,12 @@ describe('create initial branch', () => {
       }
 
       // Update all the dependencies in the package.json files
+      expect(transforms[0].create).toBeTruthy()
+      expect(transforms[4].create).toBeTruthy()
       transforms.slice(1, 2).map((packageFile, index) => {
         const newPkg = JSON.parse(
           transforms[index + 1].transform(JSON.stringify({ devDependencies }))
         )
-        transforms[index + 1].created = true
         expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
         expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
       })
@@ -558,6 +559,181 @@ describe('create initial branch', () => {
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeTruthy()
     expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+    expect(repoDoc.greenkeeper).toEqual({
+      groups: {
+        default: {
+          packages: ['package.json', 'frontend/package.json']
+        }
+      }
+    })
+  })
+
+  test('#677 PR message with no root package.json update', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '50',
+      accountId: '123',
+      fullName: 'finnp/test'
+    })
+    const devDependencies = {
+      '@finnpauls/dep': '1.0.0',
+      '@finnpauls/dep2': '1.0.0'
+    }
+    const rootDevDependencies = {
+      '@finnpauls/dep': '2.0.0'
+    }
+    expect.assertions(23)
+
+    nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      // first time from repository-docs.js -> updateRepoDoc
+      .get('/repos/finnp/test/contents/greenkeeper.json')
+      .reply(404, {
+        message: 'Not Found'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          },
+          {
+            'path': 'frontend/package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
+      })
+      .get('/repos/finnp/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({ rootDevDependencies })
+      })
+      .get('/repos/finnp/test/contents/frontend/package.json')
+      .reply(200, {
+        path: 'frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({ devDependencies })
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/labels', {
+        name: 'greenkeeper',
+        color: '00c775'
+      })
+      .reply(201)
+
+    nock('https://registry.npmjs.org')
+      .get('/@finnpauls%2Fdep')
+      .reply(200, {
+        'dist-tags': {
+          latest: '2.0.0'
+        }
+      })
+      .get('/@finnpauls%2Fdep2')
+      .reply(200, {
+        'dist-tags': {
+          latest: '3.0.0-rc1'
+        },
+        versions: {
+          '2.0.0-rc1': true,
+          '2.0.0-rc2': true,
+          '2.0.0': true,
+          '3.0.0-rc1': true,
+          '1.0.0': true
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
+      const devDependencies = {
+        '@finnpauls/dep': '1.0.0',
+        '@finnpauls/dep2': '1.0.0'
+      }
+
+      // Update all the dependencies in the package.json files
+      const newPkg = JSON.parse(
+        transforms[2].transform(JSON.stringify({ devDependencies }))
+      )
+
+      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+
+      const newReadme = transforms[4].transform(
+        'readme-badger\n=============\n',
+        'README.md'
+      )
+      // 'includes badge'
+      expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
+      expect(transforms.length).toEqual(5)
+      expect(transforms[0].path).toEqual('greenkeeper.json')
+      expect(transforms[0].message).toEqual('chore: add Greenkeeper config file')
+      const greenkeeperConfigTransformResult = transforms[0].transform()
+      expect(JSON.parse(greenkeeperConfigTransformResult)).toEqual({
+        groups: {
+          default: {
+            packages: ['package.json', 'frontend/package.json']
+          }
+        }
+      })
+      // greenkeeper.json must end with a newline
+      expect(greenkeeperConfigTransformResult.substr(greenkeeperConfigTransformResult.length - 1, 1)).toEqual('\n')
+      expect(transforms[1].path).toEqual('frontend/package.json')
+      expect(JSON.parse(transforms[1].transform(JSON.stringify({ devDependencies })))).toEqual({
+        'devDependencies': {
+          '@finnpauls/dep': '2.0.0',
+          '@finnpauls/dep2': '2.0.0'
+        }
+      })
+      expect(transforms[2].path).toEqual('package.json')
+      expect(JSON.parse(transforms[2].transform(JSON.stringify({ devDependencies })))).toEqual({
+        'devDependencies': {
+          '@finnpauls/dep': '2.0.0',
+          '@finnpauls/dep2': '2.0.0'
+        }
+      })
+      expect(transforms[3].path).toEqual('.travis.yml')
+      expect(transforms[4].path).toEqual('README.md')
+
+      return '1234abcd'
+    })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+
+    const newJob = await createInitialBranch({repositoryId: 50})
+    const newBranch = await repositories.get('50:branch:1234abcd')
+    const repoDoc = await repositories.get('50')
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('initial-timeout-pr')
+    expect(newJob.data.repositoryId).toBe(50)
+    expect(newJob.delay).toBeGreaterThan(10000)
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeTruthy()
+    expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+    expect(newBranch.depsUpdated).toBeTruthy()
     expect(repoDoc.greenkeeper).toEqual({
       groups: {
         default: {

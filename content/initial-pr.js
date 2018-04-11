@@ -85,6 +85,31 @@ To make sure Greenkeeper doesn’t nag you again on the next update, add a \`gre
 \`\`\`
 `
 
+const howToIgnoreDependenciesInGroup = ({ghRepo, newBranch}) => md`
+<summary>🙈 How to ignore certain dependencies for this group</summary>
+
+You may have good reasons for not wanting to update to a certain dependency right now. In this case, you can [change the dependency’s version string in the \`package.json\` file back to whatever you prefer](${ghRepo.html_url}/edit/${newBranch}/package.json).
+
+To make sure Greenkeeper doesn’t nag you again on the next update of this group, you can add the dependency to this group’s \`ignore\` field in the \`greenkeeper.json\`, for example:
+\`\`\`js
+// greenkeeper.json
+{
+  "groups": {
+    "frontend": {
+      "packages": [
+        "frontend/package.json",
+        "admin-dashboard/package.json"
+      ],
+      "ignore": [
+        "eslint",
+        "standard"
+      ]
+    }
+  }
+}
+\`\`\`
+`
+
 const howTheUpdatesWillLookLike = () => md`
 <summary>✨ How do dependency updates work with Greenkeeper?</summary>
 
@@ -140,7 +165,8 @@ function hasLockFileText (files) {
   return md`⚠️ Greenkeeper has found a ${md.code(lockFile)} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
 }
 
-const mainMessage = ({enabled, depsUpdated}) => {
+const mainMessage = ({enabled, depsUpdated, groupName}) => {
+  if (groupName && depsUpdated) return md`This pull request **updates all your dependencies in the group \`${groupName}\` to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. As long as you have the group defined in your \`greenkeeper.json\`, Greenkeeper will look out for further dependency updates relevant to this group and make sure to always handle them together and in real-time.`
   if (enabled) return 'All of your dependencies are already up-to-date, so this repository was enabled right away. Good job :thumbsup:'
   if (depsUpdated) return 'This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.'
   return '' // no updates, but private repository
@@ -170,19 +196,19 @@ const greenkeeperConfigInfoMessage = (info) => {
   return message
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo}) {
+function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName}) {
   return md`
-Let’s get started with automated dependency management for ${ghRepo.name} :muscle:
+${!groupName && `Let’s get started with automated dependency management for ${ghRepo.name} :muscle:`}
 
-${hasLockFileText(files)}
+${!groupName && hasLockFileText(files)}
 
-${mainMessage({enabled, depsUpdated})}
+${mainMessage({enabled, depsUpdated, groupName})}
 
-${!enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
+${!groupName && !enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
 
-${secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
+${!groupName && secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
 
-${greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
+${!groupName && greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
 
 ---
 ${
@@ -191,7 +217,7 @@ ${
     secret && enablePrivatePackage({secret, installationId}),
     badgeUrl && badgeAddedText({badgeUrl}),
     travisModified && travisModifiedText(),
-    howToIgnoreDependencies({ghRepo, newBranch}),
+    groupName ? howToIgnoreDependenciesInGroup({ghRepo, newBranch}) : howToIgnoreDependencies({ghRepo, newBranch}),
     updatePullRequestText({ghRepo, newBranch}),
     howTheUpdatesWillLookLike(),
     faqText()

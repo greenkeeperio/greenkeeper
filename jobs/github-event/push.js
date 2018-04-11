@@ -57,7 +57,24 @@ module.exports = async function (data) {
   // always put package.jsons in the repoDoc (new & old)
   // if remove event: delete key of package.json
   const oldPkg = _.get(repoDoc, ['packages'])
-  await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
+  try {
+    await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
+  } catch (e) {
+    if (e.name && e.name === 'GKConfigFileParseError') {
+      log.warn('updateRepoDoc failed because of an invalid config file')
+      return invalidConfigFile({
+        repoDoc,
+        config,
+        repositories,
+        repository,
+        repositoryId,
+        details: [{ formattedMessage: e.message }],
+        log
+      })
+    }
+    log.warn('updateRepoDoc failed, we do not know why', {exception: e})
+    throw e
+  }
   const pkg = _.get(repoDoc, ['packages'])
   // If there are no more packages in the repoDoc, disable the repo, which means it will also stop being counted for billing
   if (_.isEmpty(pkg)) {
@@ -68,23 +85,15 @@ module.exports = async function (data) {
   if (hasRelevantConfigFileChanges(data.commits)) {
     const configValidation = validate(repoDoc.greenkeeper)
     if (configValidation.error) {
-      log.warn('validation of greenkeeper.json failed', {error: configValidation.error.details, greenkeeperJson: repoDoc.greenkeeper})
-      // reset greenkeeper config in repoDoc to the previous working version and start an 'invalid-config-file' job
-      _.set(repoDoc, ['greenkeeper'], config)
-      await updateDoc(repositories, repository, repoDoc)
-      // If the config file is invalid, open an issue with validation errors and don’t do anything else in this file:
-      // - no initial branch should be created (?)
-      // - no initial subgroup branches should (or can be) be created
-      // - no branches need to be deleted (we can’t be sure the changes are valid)
-      return {
-        data: {
-          name: 'invalid-config-file',
-          messages: _.map(configValidation.error.details, 'formattedMessage'),
-          errors: configValidation.error.details,
-          repositoryId,
-          accountId: repoDoc.accountId
-        }
-      }
+      return invalidConfigFile({
+        repoDoc,
+        config,
+        repositories,
+        repository,
+        repositoryId,
+        details: configValidation.error.details,
+        log
+      })
     }
   }
 
@@ -165,6 +174,27 @@ module.exports = async function (data) {
       .value()
   }
   log.success('success')
+}
+
+async function invalidConfigFile ({repoDoc, config, repositories, repository, repositoryId, details, log}) {
+  log.warn('validation of greenkeeper.json failed', {error: details, greenkeeperJson: repoDoc.greenkeeper})
+  // reset greenkeeper config in repoDoc to the previous working version and start an 'invalid-config-file' job
+  _.set(repoDoc, ['greenkeeper'], config)
+  await updateDoc(repositories, repository, repoDoc)
+  // If the config file is invalid, open an issue with validation errors and don’t do anything else in this file:
+  // - no initial branch should be created (?)
+  // - no initial subgroup branches should (or can be) be created
+  // - no branches need to be deleted (we can’t be sure the changes are valid)
+
+  return {
+    data: {
+      name: 'invalid-config-file',
+      messages: _.map(details, 'formattedMessage'),
+      errors: details,
+      repositoryId,
+      accountId: repoDoc.accountId
+    }
+  }
 }
 
 function updateDoc (repositories, repository, repoDoc) {
