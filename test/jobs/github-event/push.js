@@ -105,11 +105,11 @@ describe('github-event push', async () => {
       }
     })
 
-    expect(newJob).toBeTruthy()
-    const job = newJob.data
-    expect(job.name).toEqual('create-initial-branch')
-    expect(job.accountId).toEqual('123')
-    expect(job.repositoryId).toEqual('333')
+    expect(newJob).toBeFalsy()
+    // const job = newJob.data
+    // expect(job.name).toEqual('create-initial-branch')
+    // expect(job.accountId).toEqual('123')
+    // expect(job.repositoryId).toEqual('333')
 
     const repo = await repositories.get('333')
 
