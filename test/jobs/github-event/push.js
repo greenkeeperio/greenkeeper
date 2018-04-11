@@ -4064,6 +4064,109 @@ describe('github-event push: monorepo', () => {
     expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
+
+  test('monorepo: greenkeeper.json broken by user on a disabled repo receives validation issue (mgm4)', async () => {
+    const configFileContent = {
+      groups: {
+        'valid_groupname': {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    // Invalid JSON for the `greenkeeper.json` on GitHub, missing colon after `groups`
+    // JSON.parse will throw `Unexpected token g in JSON at position 8`
+    const invalidJSONString = `{
+      groups {
+        '#invalid#groupname#': {
+          packages: [
+            '/package.json'
+          ]
+        }
+      }
+    }`
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mgm4',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: false,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(invalidJSONString).toString('base64')
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: 'mgm4',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('invalid-config-file')
+    expect(job.messages[0]).toEqual('Could not parse `greenkeeper.json`, it appears to not be a valid JSON file.')
+
+    const repo = await repositories.get('mgm4')
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
 })
 
 afterAll(async () => {
@@ -4082,7 +4185,7 @@ afterAll(async () => {
   '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
   '1117', '1117:branch:1234abca',
   '1118', '1118:branch:1234abca',
-  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3')
+  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4')
   await removeIfExists(payments, '123')
 })
 
