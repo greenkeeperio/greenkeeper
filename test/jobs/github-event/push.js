@@ -1680,6 +1680,16 @@ describe('github-event push: monorepo', () => {
           dependency: 'lodash',
           dependencyType: 'dependencies',
           head: 'greenkeeper/backend/lodash-2.0.0'
+        },
+        {
+          _id: '888:branch:initialGroup',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '888',
+          head: 'greenkeeper/initial-frontend',
+          initial: false,
+          subgroupInitial: true,
+          group: 'frontend'
         }
       ])
     ])
@@ -1732,6 +1742,8 @@ describe('github-event push: monorepo', () => {
         expect(true).toBeFalsy()
         return {}
       })
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/initial-frontend')
+      .reply(200, {})
 
     const newJob = await githubPush({
       installation: {
@@ -1789,6 +1801,8 @@ describe('github-event push: monorepo', () => {
     expect(frontend.referenceDeleted).toBeTruthy()
     const backend = await repositories.get('888:branch:1234abcb')
     expect(backend.referenceDeleted).toBeFalsy()
+    const subgroupInitial = await repositories.get('888:branch:initialGroup')
+    expect(subgroupInitial.referenceDeleted).toBeTruthy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 

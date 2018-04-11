@@ -10,6 +10,8 @@ const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
+const { getGroupBranchesToDelete } = require('../lib/branches-to-delete')
+const deleteBranches = require('../lib/delete-branches')
 
 // If we update dependencies, find any open PRs for that dependency and close the PRs by commit message
 
@@ -23,6 +25,20 @@ module.exports = async function ({ repositoryId, groupName }) {
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch'})
 
   log.info('started')
+
+  // delete existing initial subgroup branches
+  const configChanges = { added: [], removed: [], modified: [groupName] }
+  const groupBranchesToDelete = _.flatten(await getGroupBranchesToDelete({configChanges, repositories, repositoryId}))
+  if (groupBranchesToDelete && groupBranchesToDelete.length) {
+    await Promise.mapSeries(
+      groupBranchesToDelete,
+      deleteBranches.bind(null, {
+        installationId,
+        fullName: repoDoc.fullName,
+        repositoryId
+      })
+    )
+  }
 
   await updateRepoDoc({installationId, doc: repoDoc, log})
   const config = getConfig(repoDoc)

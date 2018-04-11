@@ -160,6 +160,148 @@ describe('create initial subgroup branch', () => {
     expect(newBranch.initial).toBeFalsy()
   })
 
+  test('create a subgroup branch, with existing initial subgroub branch', async () => {
+    const { repositories } = await dbs()
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json',
+            'packages/lalalalala/package.json'
+          ]
+        },
+        backend: {
+          packages: [
+            'packages/backend/package.json'
+          ]
+        }
+      }
+    }
+    await repositories.put({
+      _id: '11112',
+      fullName: 'hans/monorepo',
+      accountId: '123',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'packages/frontend/package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        },
+        'packages/backend/package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        },
+        'packages/lalalalala/package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent
+    })
+    await repositories.put({
+      _id: '11112:branch:initialGroup',
+      type: 'branch',
+      sha: '1234abcd',
+      repositoryId: '11112',
+      head: 'greenkeeper/initial-frontend',
+      initial: false,
+      subgroupInitial: true,
+      group: 'frontend'
+    })
+
+    expect.assertions(8)
+
+    const httpRequests = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/lalalalala/package.json')
+      .reply(200, {
+        path: 'packages/lalalalala/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/initial-frontend')
+      .reply(200, {})
+
+    const npmHttpRequests = nock('https://registry.npmjs.org')
+      .get('/lodash')
+      .reply(200, {
+        'dist-tags': {
+          latest: '3.0.0-rc1'
+        },
+        versions: {
+          '2.0.0-rc1': true,
+          '2.0.0-rc2': true,
+          '2.0.0': true,
+          '3.0.0-rc1': true,
+          '1.0.0': true
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      transforms.forEach(t => {
+        const newPkg = JSON.parse(
+          t.transform(JSON.stringify({ dependencies: { lodash: '^1.0.0' } }))
+        )
+        expect(newPkg.dependencies['lodash']).toEqual('^2.0.0')
+      })
+
+      return '1234abcd'
+    })
+    const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
+    const newJob = await createInitialSubgroupBranch({repositoryId: '11112', groupName: 'frontend'})
+    const oldBranch = await repositories.get('11112:branch:initialGroup')
+    expect(oldBranch.referenceDeleted).toBeTruthy()
+    const newBranch = await repositories.get('11112:branch:1234abcd')
+
+    expect(httpRequests.isDone()).toBeTruthy()
+    expect(npmHttpRequests.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy() // This only creates branches
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeFalsy()
+  })
+
   test('create a subgroup branch with all dependencies ignored from multiple sources', async () => {
     const { repositories } = await dbs()
     const configFileContent = {
