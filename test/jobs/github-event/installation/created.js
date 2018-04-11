@@ -5,9 +5,10 @@ const dbs = require('../../../../lib/dbs')
 const removeIfExists = require('../../../helpers/remove-if-exists')
 const createInstallation = require('../../../../jobs/github-event/installation/created')
 
+jest.setTimeout(10000)
+
 test('github-event installation created', async () => {
   const { installations, repositories } = await dbs()
-
   nock('https://api.github.com')
     .post('/installations/1/access_tokens')
     .reply(200, {
