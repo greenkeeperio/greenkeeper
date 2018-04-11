@@ -14,13 +14,15 @@ const registryUrl = env.NPM_REGISTRY
   }]
 */
 function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
-  return _.uniqWith(_.flatten(packagePaths.map(path => {
+  return _.compact(_.uniqWith(_.flatten(packagePaths.map(path => {
     return _.flatten(
       ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
-        return _.map(packageJsonContents[path][type], (version, name) => ({ name, version, type }))
+        if (packageJsonContents[path]) {
+          return _.map(packageJsonContents[path][type], (version, name) => ({ name, version, type }))
+        }
       })
     )
-  })), _.isEqual)
+  })), _.isEqual))
 }
 
 // add npm package data to dependency info from previous function
