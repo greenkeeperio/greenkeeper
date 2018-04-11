@@ -73,6 +73,49 @@ module.exports = async function ({ state, sha, repository, installation }) {
     }
   }
 
+  if (branchDoc.subgroupInitial) {
+    const result = await repositories.allDocs({
+      include_docs: true,
+      descending: true,
+      startkey: `${repository.id}:pr:\uffff`,
+      endkey: `${repository.id}:pr:`
+    })
+    const initialRow = result.rows.find((row) => {
+      return row.doc.subgroupInitial && row.doc.createdByUser
+    })
+
+    // the branch head looks like this: 'greenkeeper/initial-frontend'
+    // we need the group name
+    const groupName = branchDoc.head.split('initial-')[1]
+
+    if (initialRow) {
+      return {
+        data: {
+          name: 'create-initial-subgroup-pr-comment',
+          accountId,
+          branchDoc,
+          prDocId: initialRow.doc._id,
+          repository,
+          combined,
+          installationId: installation.id,
+          groupName
+        }
+      }
+    }
+
+    return {
+      data: {
+        name: 'create-initial-subgroup-pr',
+        accountId,
+        branchDoc,
+        repository,
+        combined,
+        installationId: installation.id,
+        groupName
+      }
+    }
+  }
+
   await handleBranchStatus({
     installationId,
     branchDoc,
