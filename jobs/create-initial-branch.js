@@ -198,6 +198,7 @@ module.exports = async function ({ repositoryId }) {
       greenkeeperConfigFile
     })
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
+      const oldGreenkeeperConfigFile = _.cloneDeep(greenkeeperConfigFile)
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
       const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
         greenkeeperConfigFile,
@@ -207,7 +208,7 @@ module.exports = async function ({ repositoryId }) {
       })
       greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
       const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
-      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
+      log.info('updating existing greenkeeper config', {oldGreekeeperJson: oldGreenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.message = getMessage(config.commitMessages, 'updateConfigFile')
       greenkeeperJSONTransform.transform = () => {
