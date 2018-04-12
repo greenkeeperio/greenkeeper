@@ -5,6 +5,7 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
+const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -138,7 +139,7 @@ module.exports = async function (
         await upsert(repositories, openPR._id, {
           comments: [...(openPR.comments || []), version]
         })
-        commitMessage += `\n\nCloses #${openPR.number}`
+        commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
       log.info('commit message created', {commitMessage})
       return {
