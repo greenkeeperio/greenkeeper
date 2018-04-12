@@ -38,6 +38,8 @@ module.exports = async function (
     greenkeeperConfigInfo
   } = branchDoc
 
+  const closes = branchDoc.closes || []
+
   let enabled = false
   if (!depsUpdated && !repodoc.private) {
     repodoc = await upsert(repositories, repodoc._id, {
@@ -126,7 +128,8 @@ module.exports = async function (
         enabled,
         accountTokenUrl,
         files,
-        greenkeeperConfigInfo
+        greenkeeperConfigInfo,
+        closes
       }),
       base,
       head
