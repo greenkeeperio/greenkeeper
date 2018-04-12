@@ -15,7 +15,7 @@ const {
 } = require('../../lib/branches-to-delete')
 const getConfig = require('../../lib/get-config')
 const { validate } = require('../../lib/validate-greenkeeper-json')
-const { invalidConfigFile } = require('../../lib/invalid-config-file')
+const { invalidConfigFile, getInvalidConfigIssueNumber } = require('../../lib/invalid-config-file')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -96,6 +96,8 @@ module.exports = async function (data) {
         log
       })
     }
+    // Config file is valid, so we try to close an open `invalid-config-file` issue
+    const issueToClose = await getInvalidConfigIssueNumber(repositories, repositoryId)
     // If the config is valid and we had previously bailed on an initial branch because it wasn’t,
     // create that now.
     if (repoDoc.openInitialPRWhenConfigFileFixed) {
@@ -106,7 +108,8 @@ module.exports = async function (data) {
         data: {
           name: 'create-initial-branch',
           repositoryId,
-          accountId: repoDoc.accountId
+          accountId: repoDoc.accountId,
+          closes: [issueToClose]
         }
       }
     }

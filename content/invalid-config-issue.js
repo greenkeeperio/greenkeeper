@@ -1,17 +1,17 @@
 const md = require('./template')
 
-module.exports = (messages) => {
+module.exports = (messages, isBlockingInitialPR) => {
   let messageList = messages.map((message, index) => {
     return `${index + 1}. ${message}`
   }).join('\n')
 
-  return md`We have detected a problem with your Greenkeeper config file 🚨
+  return md`We have detected a problem with your Greenkeeper config file ${isBlockingInitialPR ? 'which is preventing Greenkeeper from opening its initial pull request' : ''} 🚨
 
 Greenkeeper currently can’t work with your \`greenkeeper.json\` config file because it is invalid. We found the following issue${messages.length === 1 ? '' : 's'}:
 
 ${messageList}
 
-Please correct ${messages.length === 1 ? 'this' : 'these'} and commit the fix to your default branch (usually master). Greenkeeper will pick up your changes and try again. If in doubt, please consult the [config documentation](https://greenkeeper.io/docs.html#config).
+Please correct ${messages.length === 1 ? 'this' : 'these'} and commit the fix to your default branch (usually master)${isBlockingInitialPR ? ' so Greenkeeper can run on this repository' : ''}. Greenkeeper will pick up your changes and try again. If in doubt, please consult the [config documentation](https://greenkeeper.io/docs.html#config).
 
 Here’s an example of a valid \`greenkeeper.json\`:
 

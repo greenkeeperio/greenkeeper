@@ -196,7 +196,12 @@ const greenkeeperConfigInfoMessage = (info) => {
   return message
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName}) {
+const closeMessages = (issueNumbers) => {
+  if (issueNumbers && issueNumbers.length === 0) { return }
+  return '\nCloses: #' + issueNumbers.join(', #')
+}
+
+function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName, closes}) {
   return md`
 ${!groupName && `Let’s get started with automated dependency management for ${ghRepo.name} :muscle:`}
 
@@ -223,6 +228,7 @@ ${
     faqText()
   ]).map(text => `<details>${text}</details>`)
 }
+${closeMessages(closes)}
 
 ---
 

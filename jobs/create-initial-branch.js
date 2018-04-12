@@ -23,7 +23,7 @@ const upsert = require('../lib/upsert')
 const { invalidConfigFile } = require('../lib/invalid-config-file')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
 
-module.exports = async function ({ repositoryId }) {
+module.exports = async function ({ repositoryId, closes = [] }) {
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const repoDoc = await repositories.get(repositoryId)
@@ -69,7 +69,8 @@ module.exports = async function ({ repositoryId }) {
         repository: repoDoc,
         repositoryId,
         details: [{ formattedMessage: e.message }],
-        log
+        log,
+        isBlockingInitialPR: true
       })
     }
   }
@@ -299,7 +300,10 @@ module.exports = async function ({ repositoryId }) {
     travisModified,
     badgeAdded,
     badgeUrl,
-    greenkeeperConfigInfo
+    greenkeeperConfigInfo,
+    // If there are issues that should be closed by the initial PR message,
+    // put them in the branch doc so we can find them later
+    closes
   })
 
   statsd.increment('initial_branch')

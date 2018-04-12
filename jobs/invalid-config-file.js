@@ -7,7 +7,7 @@ const updatedAt = require('../lib/updated-at')
 const invalidConfigBody = require('../content/invalid-config-issue')
 const getConfig = require('../lib/get-config')
 
-module.exports = async function ({ repositoryId, accountId, messages }) {
+module.exports = async function ({ repositoryId, accountId, messages, isBlockingInitialPR }) {
   const { installations, repositories } = await dbs()
   const installation = await installations.get(String(accountId))
   const installationId = installation.installation
@@ -31,7 +31,7 @@ module.exports = async function ({ repositoryId, accountId, messages }) {
     owner,
     repo,
     title: `Invalid Greenkeeper configuration file`,
-    body: invalidConfigBody(messages),
+    body: invalidConfigBody(messages, isBlockingInitialPR),
     labels: [label]
   }))
 
