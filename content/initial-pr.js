@@ -197,7 +197,7 @@ const greenkeeperConfigInfoMessage = (info) => {
 }
 
 const closeMessages = (issueNumbers) => {
-  if (issueNumbers && issueNumbers.length === 0) { return }
+  if (!issueNumbers || issueNumbers.length === 0) { return }
   return '\nCloses: #' + issueNumbers.join(', #')
 }
 
