@@ -142,7 +142,12 @@ module.exports = async function (data) {
   // De-dupe and flatten branches
   const actualBranchesToDelete = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
 
-  log.info('starting to delete branches', {branches: actualBranchesToDelete.map(branch => branch.head)})
+  if (actualBranchesToDelete.length > 0) {
+    log.info('starting to delete branches', {branches: actualBranchesToDelete.map(branch => branch.head)})
+  } else {
+    log.info('no branches to delete')
+  }
+
   await Promise.mapSeries(
     actualBranchesToDelete,
     deleteBranches.bind(null, {
