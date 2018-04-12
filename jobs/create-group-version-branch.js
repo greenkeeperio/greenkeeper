@@ -123,7 +123,11 @@ module.exports = async function (
     }),
     'rows[0].doc'
   )
-  log.info('database: found open PR for this dependency', {openPR})
+  if (openPR) {
+    log.info('database: found open PR for this dependency', {openPR})
+  } else {
+    log.info('database: no open PR for this dependency')
+  }
 
   async function createTransformsArray (monorepo) {
     return monorepo.map(async pkgRow => {
