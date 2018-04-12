@@ -4233,6 +4233,99 @@ describe('github-event push: monorepo', () => {
     expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
+
+  test('monorepo: invalid greenkeeper.json fixed by user, starts create-initial-branch (mgm5)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mgm5',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent,
+      openInitialPRWhenConfigFileFixed: true
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: encodePkg(configFileContent)
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: 'mgm5',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('create-initial-branch')
+
+    const repo = await repositories.get('mgm5')
+    expect(repo.openInitialPRWhenConfigFileFixed).toBeFalsy()
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
+  })
 })
 
 afterAll(async () => {
@@ -4251,7 +4344,7 @@ afterAll(async () => {
   '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
   '1117', '1117:branch:1234abca',
   '1118', '1118:branch:1234abca',
-  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4')
+  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5')
   await removeIfExists(payments, '123')
 })
 

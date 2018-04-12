@@ -37,7 +37,7 @@ describe('create initial branch', () => {
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd')
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
     ])
   })
 
@@ -1133,6 +1133,57 @@ describe('create initial branch', () => {
         }
       }
     })
+  })
+
+  test('create invalid config issue on monorepo', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '51',
+      accountId: '123',
+      fullName: 'finnp/test'
+    })
+
+    const invalidJSONString = `{
+      groups {
+        '#invalid#groupname#': {
+          packages: [
+            '/package.json'
+          ]
+        }
+      }
+    }`
+    expect.assertions(4)
+
+    nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      // first time from repository-docs.js -> updateRepoDoc
+      .get('/repos/finnp/test/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(invalidJSONString).toString('base64')
+      })
+
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+
+    const newJob = await createInitialBranch({repositoryId: 51})
+    const repoDoc = await repositories.get('51')
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('invalid-config-file')
+    expect(newJob.data.repositoryId).toBe(51)
+    expect(repoDoc.openInitialPRWhenConfigFileFixed).toBeTruthy()
   })
 
   function encodePkg (pkg) {

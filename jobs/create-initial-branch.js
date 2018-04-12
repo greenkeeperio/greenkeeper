@@ -20,6 +20,7 @@ const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
+const { invalidConfigFile } = require('../lib/invalid-config-file')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
 
 module.exports = async function ({ repositoryId }) {
@@ -38,12 +39,40 @@ module.exports = async function ({ repositoryId }) {
     return
   }
 
+  const config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
+  if (config.disabled) {
+    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
+    return
+  }
+
   const [owner, repo] = repoDoc.fullName.split('/')
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
   // This mutates repoDoc
-  await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+  // Also, this might fail, for example because of a `greenkeeper.json` validation issue
+  // That will throw and end this process!
+  try {
+    await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+  } catch (e) {
+    // If the config file is invalid, we open an issue instead of the initial PR
+    if (e.name && e.name === 'GKConfigFileParseError') {
+      log.warn('create initial branch failed because of an invalid config file')
+      // We set a flag that the config was borked. When the next push for the greenkeeper.json comes and it is valid
+      // we can tell by the flag whether we still need to open the initial PR that we didn’t do here.
+      repoDoc.openInitialPRWhenConfigFileFixed = true
+      return invalidConfigFile({
+        repoDoc,
+        config,
+        repositories,
+        repository: repoDoc,
+        repositoryId,
+        details: [{ formattedMessage: e.message }],
+        log
+      })
+    }
+  }
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
@@ -52,13 +81,6 @@ module.exports = async function ({ repositoryId }) {
   }
 
   await upsert(repositories, repoDoc._id, repoDoc)
-
-  const config = getConfig(repoDoc)
-  log.info(`config for ${repoDoc.fullName}`, {config})
-  if (config.disabled) {
-    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
-    return
-  }
 
   const packageJsonContents = _.get(repoDoc, ['packages'])
   const packagePaths = _.keys(packageJsonContents)
