@@ -15,6 +15,7 @@ const {
 } = require('../../lib/branches-to-delete')
 const getConfig = require('../../lib/get-config')
 const { validate } = require('../../lib/validate-greenkeeper-json')
+const { invalidConfigFile } = require('../../lib/invalid-config-file')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -196,27 +197,6 @@ module.exports = async function (data) {
       .value()
   }
   log.success('success')
-}
-
-async function invalidConfigFile ({repoDoc, config, repositories, repository, repositoryId, details, log}) {
-  log.warn('validation of greenkeeper.json failed', {error: details, greenkeeperJson: repoDoc.greenkeeper})
-  // reset greenkeeper config in repoDoc to the previous working version and start an 'invalid-config-file' job
-  _.set(repoDoc, ['greenkeeper'], config)
-  await updateDoc(repositories, repository, repoDoc)
-  // If the config file is invalid, open an issue with validation errors and don’t do anything else in this file:
-  // - no initial branch should be created (?)
-  // - no initial subgroup branches should (or can be) be created
-  // - no branches need to be deleted (we can’t be sure the changes are valid)
-
-  return {
-    data: {
-      name: 'invalid-config-file',
-      messages: _.map(details, 'formattedMessage'),
-      errors: details,
-      repositoryId,
-      accountId: repoDoc.accountId
-    }
-  }
 }
 
 function updateDoc (repositories, repository, repoDoc) {
