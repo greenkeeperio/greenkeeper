@@ -95,6 +95,20 @@ module.exports = async function (data) {
         log
       })
     }
+    // If the config is valid and we had previously bailed on an initial branch because it wasn’t,
+    // create that now.
+    if (repoDoc.openInitialPRWhenConfigFileFixed) {
+      // reset the flag
+      delete repoDoc.openInitialPRWhenConfigFileFixed
+      await updateDoc(repositories, repository, repoDoc)
+      return {
+        data: {
+          name: 'create-initial-branch',
+          repositoryId,
+          accountId: repoDoc.accountId
+        }
+      }
+    }
   }
 
   // if there are no changes in package.json files or the greenkeeper config
