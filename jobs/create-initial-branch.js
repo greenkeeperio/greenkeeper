@@ -50,10 +50,10 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
-  // This mutates repoDoc
-  // Also, this might fail, for example because of a `greenkeeper.json` validation issue
-  // That will throw and end this process!
   try {
+    // This mutates repoDoc!
+    // Also, this might fail, for example because of a `greenkeeper.json` validation issue, but all errors are handled
+    // and the rest of this file will run anyway.
     await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
   } catch (e) {
     // If the config file is invalid, we open an issue instead of the initial PR
