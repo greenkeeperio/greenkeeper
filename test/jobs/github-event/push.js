@@ -4264,6 +4264,20 @@ describe('github-event push: monorepo', () => {
       openInitialPRWhenConfigFileFixed: true
     })
 
+    // This is the invalid config file-issue
+    await repositories.put({
+      _id: 'mgm5:issue:12',
+      _rev: '1-a33c3fda82f864c0a9b8ddc351f25048',
+      type: 'issue',
+      initial: false,
+      invalidConfig: true,
+      repositoryId: 'mgm5',
+      number: 12,
+      state: 'open',
+      createdAt: '2018-04-13T10:12:10.591Z',
+      updatedAt: '2018-04-13T10:12:10.591Z'
+    })
+
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
@@ -4320,8 +4334,12 @@ describe('github-event push: monorepo', () => {
 
     expect(newJob).toBeTruthy()
     const job = newJob.data
-    expect(job.name).toEqual('create-initial-branch')
-
+    expect(job).toEqual({
+      name: 'create-initial-branch',
+      repositoryId: 'mgm5',
+      accountId: '321',
+      closes: [12]
+    })
     const repo = await repositories.get('mgm5')
     expect(repo.openInitialPRWhenConfigFileFixed).toBeFalsy()
     expect(repo.greenkeeper).toMatchObject(configFileContent)

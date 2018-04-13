@@ -4,6 +4,7 @@ const dbs = require('../../lib/dbs')
 const GithubQueue = require('../../lib/github-queue')
 const handleBranchStatus = require('../../lib/handle-branch-status')
 
+jest.setTimeout(10000)
 module.exports = async function ({ state, sha, repository, installation }) {
   // not a success or failure state
   if (!_.includes(['success', 'failure', 'error'], state)) return
