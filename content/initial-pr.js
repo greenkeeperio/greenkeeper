@@ -197,8 +197,9 @@ const greenkeeperConfigInfoMessage = (info) => {
 }
 
 const closeMessages = (issueNumbers) => {
-  if (!issueNumbers || issueNumbers.length === 0) { return }
-  return '\nCloses: #' + issueNumbers.join(', #')
+  if (issueNumbers && issueNumbers.length > 0) {
+    return '\n\nCloses: #' + issueNumbers.join(', #')
+  }
 }
 
 function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName, closes}) {
