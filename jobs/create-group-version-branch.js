@@ -12,7 +12,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency } = require('../utils/utils')
+const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -210,12 +210,14 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
+  const compareURL = generateGitHubCompareURL(env.GITHUB_URL, repository.fullName, base, newBranch)
+
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
-      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${env.GITHUB_URL}/${owner}/${repo}/compare/${encodeURIComponent(newBranch)}?expand=1) ${bodyDetails}`
+      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
     }))
 
     statsd.increment('pullrequest_comments')

@@ -134,6 +134,12 @@ function createTransformFunction (type, dependency, version, log) {
   }
 }
 
+const generateGitHubCompareURL = function (githubURL = '', fullName, branch, compareWith) {
+  // Discussion: https://github.com/greenkeeperio/greenkeeper/issues/682
+  // https://github.com/$USER/$REPO/compare/$REV_A...$REV_B
+  return `${githubURL}/${fullName}/compare/${encodeURIComponent(branch)}...${encodeURIComponent(fullName.split('/')[0])}:${encodeURIComponent(compareWith)}`
+}
+
 module.exports = {
   seperateNormalAndMonorepos,
   getJobsPerGroup,
@@ -141,5 +147,6 @@ module.exports = {
   getSatisfyingVersions,
   getOldVersionResolved,
   getHighestPriorityDependency,
-  createTransformFunction
+  createTransformFunction,
+  generateGitHubCompareURL
 }

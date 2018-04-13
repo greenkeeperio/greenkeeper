@@ -3,7 +3,8 @@ const {
   getJobsPerGroup,
   filterAndSortPackages,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  generateGitHubCompareURL
 } = require('../../utils/utils')
 
 test('seperateNormalAndMonorepos', () => {
@@ -236,4 +237,22 @@ test('getOldVersionResolved', () => {
   const output = getOldVersionResolved(satisfyingVersions, distTags, distTag)
   // returns the last satisfying version
   expect(output).toEqual('9.3.1')
+})
+
+test('generate relative github compare URL', () => {
+  const githubURL = undefined
+  const fullName = 'hanshansen/mopeds'
+  const branch = 'master'
+  const compareWith = 'greenkeeper/frontend/standard-10.0.0'
+  const url = generateGitHubCompareURL(githubURL, fullName, branch, compareWith)
+  expect(url).toEqual('/hanshansen/mopeds/compare/master...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
+})
+
+test('generate absolute github compare URL', () => {
+  const githubURL = 'https://superprivategit.megacorp.com'
+  const fullName = 'hanshansen/mopeds'
+  const branch = 'dev'
+  const compareWith = 'greenkeeper/frontend/standard-10.0.0'
+  const url = generateGitHubCompareURL(githubURL, fullName, branch, compareWith)
+  expect(url).toEqual('https://superprivategit.megacorp.com/hanshansen/mopeds/compare/dev...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
 })
