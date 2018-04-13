@@ -78,7 +78,7 @@ describe('create initial subgroup branch', () => {
       greenkeeper: configFileContent
     })
 
-    expect.assertions(7)
+    expect.assertions(9)
 
     const httpRequests = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -150,7 +150,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: 1111, groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({repositoryId: '1111', groupName: 'frontend'})
     const newBranch = await repositories.get('1111:branch:1234abcd')
 
     expect(httpRequests.isDone()).toBeTruthy()
@@ -158,6 +158,8 @@ describe('create initial subgroup branch', () => {
     expect(newJob).toBeFalsy() // This only creates branches
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeFalsy()
+    expect(newBranch.subgroupInitial).toBeTruthy()
+    expect(newBranch.repositoryId).toEqual('1111')
   })
 
   test('create a subgroup branch, with existing initial subgroub branch', async () => {
@@ -216,7 +218,7 @@ describe('create initial subgroup branch', () => {
       group: 'frontend'
     })
 
-    expect.assertions(8)
+    expect.assertions(10)
 
     const httpRequests = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -300,6 +302,8 @@ describe('create initial subgroup branch', () => {
     expect(newJob).toBeFalsy() // This only creates branches
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeFalsy()
+    expect(newBranch.subgroupInitial).toBeTruthy()
+    expect(newBranch.repositoryId).toEqual('11112')
   })
 
   test('create a subgroup branch with all dependencies ignored from multiple sources', async () => {
