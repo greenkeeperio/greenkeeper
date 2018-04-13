@@ -60,7 +60,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     if (e.name && e.name === 'GKConfigFileParseError') {
       log.warn('create initial branch failed because of an invalid config file')
       // We set a flag that the config was borked. When the next push for the greenkeeper.json comes and it is valid
-      // we can tell by the flag whether we still nee2d to open the initial PR that we didn’t do here.
+      // we can tell by the flag whether we still need to open the initial PR that we didn’t do here.
       repoDoc.openInitialPRWhenConfigFileFixed = true
       return invalidConfigFile({
         repoDoc,
