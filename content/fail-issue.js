@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const md = require('./template')
+const { generateGitHubCompareURL } = require('../utils/utils')
 
 const notDevDependency = ({dependency}) => md`
 ${dependency} is a direct dependency of this project, and **it is very likely causing it to break**. If other packages depend on yours, this update is probably also breaking those in turn.
@@ -17,7 +18,9 @@ ${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${st
 </details>
 `
 
-module.exports = ({version, dependencyLink, owner, repo, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => md`
+module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => {
+  const compareURL = generateGitHubCompareURL('', `${owner}/${repo}`, base, head)
+  return md`
 ## Version **${version}** of ${dependencyLink} was just published.
 
 <table>
@@ -26,7 +29,7 @@ module.exports = ({version, dependencyLink, owner, repo, head, dependency, oldVe
       Branch
     </th>
     <td>
-      <a href="/${owner}/${repo}/compare/${encodeURIComponent(head)}">Build failing 🚨</a>
+      <a href="${compareURL}">Build failing 🚨</a>
     </td>
   </tr>
   <tr>
@@ -81,3 +84,4 @@ There is a collection of [frequently asked questions](https://greenkeeper.io/faq
 
 Your [Greenkeeper](https://greenkeeper.io) Bot :palm_tree:
 `
+}

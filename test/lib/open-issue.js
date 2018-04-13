@@ -19,7 +19,7 @@ afterAll(async () => {
 })
 
 test('open-issue', async () => {
-  expect.assertions(30)
+  expect.assertions(31)
   const { repositories } = await dbs()
 
   await repositories.put({
@@ -73,9 +73,9 @@ test('open-issue', async () => {
     .post('/repos/finnp/testrepo/issues', ({ title, body, labels }) => {
       expect(title).toBeTruthy()
       expect(body).toBeTruthy()
+      expect(body).toMatch(/\/finnp\/testrepo\/compare\/master...finnp:greenkeeper-standard-2.0.0/)
       expect(labels).toHaveLength(1)
       expect(labels).toContain('customlabel')
-
       return true
     })
     .reply(201, () => {

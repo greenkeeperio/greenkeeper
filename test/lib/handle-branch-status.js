@@ -139,7 +139,7 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
 
-    expect.assertions(5)
+    expect.assertions(6)
     await Promise.all([
       repositories.put({
         _id: '43:issue:5',
@@ -159,7 +159,8 @@ describe('handle-branch-status', async () => {
         sha: 'deadbeef3',
         head: 'branchname3',
         dependency: 'test3',
-        version: '1.0.1'
+        version: '1.0.1',
+        base: 'master'
       })
     ])
 
@@ -172,7 +173,10 @@ describe('handle-branch-status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .post('/repos/club/mate/issues/5/comments')
+      .post('/repos/club/mate/issues/5/comments', ({ body }) => {
+        expect(body).toMatch(/\/club\/mate\/compare\/master...club:branchname3/)
+        return true
+      })
       .reply(201, () => {
         // commented on right issue
         expect(true).toBeTruthy()
