@@ -30,11 +30,13 @@ test('updateRepoDoc with package.json', async () => {
       content: Buffer.from(JSON.stringify({ name: 'test2' })).toString('base64')
     })
 
-  const doc = await updateRepoDoc({
+  let doc = { fullName: 'owner/repo' }
+  const args = {
     installationId: '123',
-    doc: { fullName: 'owner/repo' },
+    doc,
     log: {info: () => {}, warn: () => {}, error: () => {}}
-  })
+  }
+  await updateRepoDoc(args)
   expect(doc.packages['package.json'].name).toEqual('test')
   expect(doc.files['package-lock.json']).toHaveLength(1)
   expect(doc.files['package.json']).toHaveLength(1)
@@ -59,18 +61,20 @@ test('get invalid package.json', async () => {
       content: Buffer.from('test').toString('base64')
     })
 
-  const doc = await updateRepoDoc({
-    installationId: '123',
-    doc: {
-      fullName: 'owner/repo',
-      packages: {
-        'package.json': {
-          name: 'test'
-        }
+  let doc = {
+    fullName: 'owner/repo',
+    packages: {
+      'package.json': {
+        name: 'test'
       }
-    },
+    }
+  }
+  const args = {
+    installationId: '123',
+    doc,
     log: {info: () => {}, warn: () => {}, error: () => {}}
-  })
+  }
+  await updateRepoDoc(args)
 
   expect(doc.packages).not.toContain('package.json')
   expect(doc.packages).toMatchObject({})
@@ -133,11 +137,14 @@ test('updateRepoDoc with greenkeeper.json present', async () => {
       name: 'package.json',
       content: Buffer.from(JSON.stringify({ name: 'three' })).toString('base64')
     })
-  const doc = await updateRepoDoc({
+
+  let doc = { fullName: 'owner/repo' }
+  const args = {
     installationId: '123',
-    doc: { fullName: 'owner/repo' },
+    doc,
     log: {info: () => {}, warn: () => {}, error: () => {}}
-  })
+  }
+  await updateRepoDoc(args)
   expect(Object.keys(doc.packages)).toHaveLength(3)
   expect(doc.packages['apps/backend/hapiserver/package.json'].name).toEqual('one')
   expect(doc.packages['apps/backend/bla/package.json'].name).toEqual('two')
