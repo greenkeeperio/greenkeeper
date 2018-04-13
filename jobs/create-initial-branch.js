@@ -66,6 +66,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
         repoDoc,
         config,
         repositories,
+        // Danger: repository keys are snake_case, repoDoc are camelCase!
+        // Handled in lib/invalid-config-file.js -> updateDoc()
         repository: repoDoc,
         repositoryId,
         details: [{ formattedMessage: e.message }],
