@@ -11,9 +11,10 @@ describe('handle-branch-status', async () => {
     const { repositories, installations, npm } = await dbs()
     await Promise.all([
       removeIfExists(repositories, '42:branch:deadbeef', '42:branch:deadbeef2', '43:branch:deadbeef3', '43:issue:5',
-     'monorepo:branch:deadbeef', 'monorepo:issue:9'),
+     'monorepo:branch:deadbeef3', 'monorepo:issue:9',
+     'monorepo:branch:deadbeef4', 'monorepo:issue:10'),
       removeIfExists(installations, '10'),
-      removeIfExists(npm, 'test', 'test2', 'test3', 'test4')
+      removeIfExists(npm, 'test', 'test2', 'test3', 'test4', 'test5')
     ])
   })
 
@@ -202,7 +203,7 @@ describe('handle-branch-status', async () => {
     expect(branch.state).toEqual('success')
   })
 
-  test('Monorepo: with issue', async () => {
+  test('Monorepo: with issue, do not comment for the same version', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
 
@@ -263,5 +264,77 @@ describe('handle-branch-status', async () => {
     expect(branch.referenceDeleted).toBeFalsy()
     expect(branch.state).toEqual('failure')
     expect(issue.comments).toBeFalsy()
+  })
+
+  test('Monorepo: with issue getting a comment', async () => {
+    const handleBranchStatus = require('../../lib/handle-branch-status')
+    const { repositories, npm } = await dbs()
+
+    expect.assertions(8)
+    await Promise.all([
+      repositories.put({
+        _id: 'monorepo:issue:10',
+        type: 'issue',
+        state: 'open',
+        dependency: 'test5',
+        version: '1.0.1',
+        repositoryId: 'monorepo',
+        number: 9
+      }),
+      npm.put({
+        _id: 'test5',
+        versions: {}
+      }),
+      repositories.put({
+        _id: 'monorepo:branch:deadbeef4',
+        type: 'branch',
+        sha: 'deadbeef4',
+        head: 'branchname4',
+        base: 'master',
+        dependency: 'test5',
+        version: '1.0.2',
+        group: 'one'
+      })
+    ])
+
+    const github = nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/ilse/monorepo/issues/9/comments', ({ body }) => {
+        expect(body).toMatch(/\/ilse\/monorepo\/compare\/master...ilse:branchname4/)
+        return true
+      })
+      .reply(201, () => {
+        // commented on right issue
+        expect(true).toBeTruthy()
+      })
+
+    const newJob = await handleBranchStatus({
+      installationId: '123',
+      accountId: 10,
+      combined: { state: 'failure', statuses: [] },
+      branchDoc: await repositories.get('monorepo:branch:deadbeef4'),
+      repository: {
+        id: 'monorepo',
+        full_name: 'ilse/monorepo',
+        owner: {
+          id: 10
+        }
+      }
+    })
+    expect(github.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('monorepo:branch:deadbeef4')
+    const issue = await repositories.get('monorepo:issue:10')
+    expect(branch.processed).toBeTruthy()
+    expect(branch.referenceDeleted).toBeFalsy()
+    expect(branch.state).toEqual('failure')
+    expect(issue.comments).toEqual(['1.0.2'])
   })
 })
