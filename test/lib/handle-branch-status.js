@@ -215,8 +215,7 @@ describe('handle-branch-status', async () => {
         dependency: 'test4',
         version: '1.0.1',
         repositoryId: 'monorepo',
-        number: 9,
-        comments: []
+        number: 9
       }),
       npm.put({
         _id: 'test4',
@@ -263,6 +262,6 @@ describe('handle-branch-status', async () => {
     expect(branch.processed).toBeTruthy()
     expect(branch.referenceDeleted).toBeFalsy()
     expect(branch.state).toEqual('failure')
-    expect(issue.comments).toHaveLength(0)
+    expect(issue.comments).toBeFalsy()
   })
 })
