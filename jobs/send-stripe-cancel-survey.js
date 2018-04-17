@@ -24,7 +24,8 @@ module.exports = async function ({ accountId, stripeSubscriptionId }) {
   if (!customer.email) return
   // send email
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: env.EMAIL_HOST,
+    port: env.EMAIL_PORT,
     auth: {
       user: env.EMAIL_USER,
       pass: env.EMAIL_PASSWORD
@@ -33,8 +34,8 @@ module.exports = async function ({ accountId, stripeSubscriptionId }) {
 
   const message = {
     to: customer.email,
-    from: env.EMAIL_USER,
-    subject: 'Thank you for trying greenkeeper',
+    from: env.EMAIL_FROM,
+    subject: 'Thank you for trying Greenkeeper',
     text: content()
   }
 
