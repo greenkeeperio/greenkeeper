@@ -3,10 +3,12 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const yaml = require('js-yaml')
-const yamlInPlace = require('yml-in-place')
+// const yamlInPlace = require('yml-in-place')
 // const escapeRegex = require('escape-string-regexp')
 const createBranch = require('../lib/create-branch')
 const getConfig = require('../lib/get-config')
+const {getNodeVersionsFromTravisYML} = require('../utils/utils')
+
 module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) {
   console.log('repositoryFullName, nodeVersion, codeName ', repositoryFullName, nodeVersion, codeName)
   // nodeversion = 10
@@ -54,7 +56,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       // ignore .travis.yml if it can not be parsed
       return
     }
-
+    const nodeVersionFromYaml = getNodeVersionsFromTravisYML(travisyml)
+    console.log('nodeVersionFromYaml', nodeVersionFromYaml)
     const alreadyHasTargetVersion = false
     if (alreadyHasTargetVersion) return
 

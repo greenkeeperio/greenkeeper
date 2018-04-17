@@ -145,12 +145,18 @@ const getNodeVersionsFromTravisYML = function (yml) {
   const nodeJSIndex = lines.findIndex((line) => {
     return line.replace(/\s/g, '').includes('node_js:')
   })
+  let results = {
+    startIndex: nodeJSIndex,
+    endIndex: nodeJSIndex,
+    versions: null
+  }
   // Check whether there’s a single node version on the same line: `node_js: 8` instead of an array
   if (lines[nodeJSIndex].replace(/\s/g, '') === 'node_js:') {
     // this is our multi node config
     const lastNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
       return line.match(/:/)
     })
+    results.endIndex = nodeJSIndex + lastNodeVersionIndex
     /*
       This returns an array of node version lines (with dashes and whitespace!):
       [
@@ -161,11 +167,13 @@ const getNodeVersionsFromTravisYML = function (yml) {
       ]
 
     */
-    return lines.slice(nodeJSIndex + 1, nodeJSIndex + lastNodeVersionIndex + 1)
+    results.versions = lines.slice(nodeJSIndex + 1, nodeJSIndex + lastNodeVersionIndex + 1)
   } else {
     // this is our single node version from inline format: `node_js: 8`
-    return lines[nodeJSIndex].replace(/node_js:/g, '').replace(/\s/g, '')
+    results.versions = new Array(lines[nodeJSIndex].replace(/node_js:/g, '').replace(/\s/g, ''))
   }
+
+  return results
 }
 
 module.exports = {

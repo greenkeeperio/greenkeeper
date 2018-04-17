@@ -6,9 +6,9 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-function encodePkg (pkg) {
-  return Buffer.from(JSON.stringify(pkg)).toString('base64')
-}
+// function encodePkg (pkg) {
+//   return Buffer.from(JSON.stringify(pkg)).toString('base64')
+// }
 
 describe('update nodejs version', () => {
   beforeAll(() => {
@@ -88,28 +88,6 @@ branches:
 
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
-      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
-      const travisYML = `language: node_js
-services:
-- docker
-cache:
-  directories:
-  - $HOME/.npm
-notifications:
-  email: false
-node_js:
-- 7
-before_install:
-- npm install -g npm@5.2.0
-install: npm install
-after_success: npm run deploy
-
-# Trigger a push build on master and greenkeeper branches + PRs build on every branches
-# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
-branches:
-  only:
-    - master
-    - /^greenkeeper.*$/`
       console.log('transforms in test', transforms)
       const updatedTravisYML = transforms[0].transform(travisYML)
       console.log('updatedTravisYML', updatedTravisYML)
