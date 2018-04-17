@@ -1,9 +1,16 @@
 const _ = require('lodash')
+const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
-const { createDocs } = require('../lib/repository-docs')
-
-module.exports = async function ({ repositoryFullName }) {
+const yaml = require('js-yaml')
+const yamlInPlace = require('yml-in-place')
+// const escapeRegex = require('escape-string-regexp')
+const createBranch = require('../lib/create-branch')
+const getConfig = require('../lib/get-config')
+module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) {
+  console.log('repositoryFullName, nodeVersion, codeName ', repositoryFullName, nodeVersion, codeName)
+  // nodeversion = 10
+  // codeName = 'whateveron'
   repositoryFullName = repositoryFullName.toLowerCase()
   // find the repository in the database
   const { repositories, installations } = await dbs()
@@ -21,99 +28,73 @@ module.exports = async function ({ repositoryFullName }) {
     throw error
   }
 
-  // delete all prdocs
-  const prdocs = await repositories.allDocs({
-    include_docs: true,
-    startkey: `${repoDoc._id}:pr:`,
-    endkey: `${repoDoc._id}:pr:\ufff0`,
-    inclusive_end: true
-  })
+  const accountId = repoDoc.accountId
+  const installation = await installations.get(accountId)
+  const installationId = installation.installation
+  const logs = dbs.getLogsDb()
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'update-nodejs-version'})
 
-  const deletePrDocs = prdocs.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deletePrDocs)
+  const config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
+  if (config.disabled) {
+    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
+    return
+  }
 
-  // delete all greenkeeper branches in the repository
-  const branches = await repositories.allDocs({
-    include_docs: true,
-    startkey: `${repoDoc._id}:branch:`,
-    endkey: `${repoDoc._id}:branch:\ufff0`,
-    inclusive_end: true
-  })
-  const [owner, repo] = repositoryFullName.split('/')
-  const accountId = String(repoDoc.accountId)
-  const accountDoc = await installations.get(accountId)
-  const installationId = accountDoc.installation
-  const ghqueue = githubQueue(installationId)
-  for (let row of branches.rows) {
-    const branch = row.doc
+  // 1. fetch .travis.yml
+  async function travisTransform (travisyml) {
+    console.log('travisTransform', travisyml)
     try {
-      await ghqueue.write(github => github.gitdata.deleteReference({
-        owner,
-        repo,
-        ref: `heads/${branch.head}`
-      }))
+      var travis = yaml.safeLoad(travisyml, {
+        schema: yaml.FAILSAFE_SCHEMA
+      })
+      console.log('travis in code', travis)
+      console.log('travis in code get', _.get(travis, 'node_js'))
     } catch (e) {
-      // branch was deleted already and since we wanted to delete it anyway, we're cool
-      // with this error
-      if (e.code === 422) {
-        continue
-      }
-      if (branch.head === 'greenkeeper/initial' || branch.head === 'greenkeeper-initial') {
-        throw e
-      }
+      // ignore .travis.yml if it can not be parsed
+      return
     }
+
+    const alreadyHasTargetVersion = false
+    if (alreadyHasTargetVersion) return
+
+    travis['node_js'] = nodeVersion
+    return yaml.safeDump(travis)
   }
 
-  const deleteBranchDocs = branches.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteBranchDocs)
+  let transforms = [
+    {
+      path: '.travis.yml',
+      message: `Update to node ${nodeVersion} in .travis.yml`,
+      transform: raw => travisTransform(raw)
+    }
+  ]
 
-  // close all greenkeeper issues in the repository and delete all issues in the database
-  const issues = await repositories.allDocs({
-    include_docs: true,
-    startkey: `${repoDoc._id}:issue:`,
-    endkey: `${repoDoc._id}:issue:\ufff0`,
-    inclusive_end: true
+  const [owner, repo] = repoDoc.fullName.split('/')
+
+  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
+  log.info('github: repository info', {repositoryInfo: ghRepo})
+
+  const branch = ghRepo.default_branch
+  const newBranch = config.branchPrefix + 'update-to-node-' + nodeVersion
+
+  console.log('installationId', installationId)
+  console.log('owner', owner)
+  console.log('repo', repo)
+  console.log('branch', branch)
+  console.log('newBranch', newBranch)
+  console.log('transforms', transforms)
+
+  return createBranch({
+    installationId,
+    owner,
+    repo,
+    branch,
+    newBranch,
+    transforms
   })
 
-  for (let row of issues.rows) {
-    const issue = row.doc
-    if (issue.state === 'closed') {
-      continue
-    }
-    try {
-      await ghqueue.write(github => github.issues.edit({
-        owner,
-        repo,
-        number: issue.number,
-        state: 'closed'
-      }))
-    } catch (e) {
-      if (e.code !== 404) {
-        throw e
-      }
-    }
-  }
-
-  const deleteIssueDocs = issues.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteIssueDocs)
-
-  // get the current repository state from github
-  // to get the newest repo settings (e.g. user enabled issues in the mean time)
-  const githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
-
-  await repositories.remove(repoDoc)
-  await repositories.bulkDocs(createDocs({
-    repositories: [githubRepository],
-    accountId
-  }))
-
-  // enqueue create initial branch job
-  const newRepoDoc = await repositories.get(githubRepository.id)
-  return {
-    data: {
-      name: 'create-initial-branch',
-      repositoryId: newRepoDoc._id,
-      accountId
-    }
-  }
+  // 2. fetch .nvmrc
+  // 3. update all package.jsons
+  // Turn all these into commits (via transforms?)
 }

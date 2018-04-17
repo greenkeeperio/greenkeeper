@@ -140,6 +140,34 @@ const generateGitHubCompareURL = function (githubURL = '', fullName, branch, com
   return `${githubURL}/${fullName}/compare/${encodeURIComponent(branch)}...${encodeURIComponent(fullName.split('/')[0])}:${encodeURIComponent(compareWith)}`
 }
 
+const getNodeVersionsFromTravisYML = function (yml) {
+  let lines = yml.split('\n')
+  const nodeJSIndex = lines.findIndex((line) => {
+    return line.replace(/\s/g, '').includes('node_js:')
+  })
+  // Check whether there’s a single node version on the same line: `node_js: 8` instead of an array
+  if (lines[nodeJSIndex].replace(/\s/g, '') === 'node_js:') {
+    // this is our multi node config
+    const lastNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
+      return line.match(/:/)
+    })
+    /*
+      This returns an array of node version lines (with dashes and whitespace!):
+      [
+        "- '4'",
+        "- '6'",
+        "- '8'",
+        "- 'node'"
+      ]
+
+    */
+    return lines.slice(nodeJSIndex + 1, nodeJSIndex + lastNodeVersionIndex + 1)
+  } else {
+    // this is our single node version from inline format: `node_js: 8`
+    return lines[nodeJSIndex].replace(/node_js:/g, '').replace(/\s/g, '')
+  }
+}
+
 module.exports = {
   seperateNormalAndMonorepos,
   getJobsPerGroup,
@@ -148,5 +176,6 @@ module.exports = {
   getOldVersionResolved,
   getHighestPriorityDependency,
   createTransformFunction,
-  generateGitHubCompareURL
+  generateGitHubCompareURL,
+  getNodeVersionsFromTravisYML
 }
