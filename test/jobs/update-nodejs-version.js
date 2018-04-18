@@ -6,10 +6,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-// function encodePkg (pkg) {
-//   return Buffer.from(JSON.stringify(pkg)).toString('base64')
-// }
-
 describe('update nodejs version', () => {
   beforeAll(() => {
     jest.setTimeout(10000)
@@ -41,7 +37,7 @@ describe('update nodejs version', () => {
       enabled: true,
       type: 'repository'
     })
-    // expect.assertions(10)
+    expect.assertions(7)
 
     const travisYML = `language: node_js
 services:
@@ -84,13 +80,56 @@ branches:
         name: '.travis.yml',
         content: Buffer.from(travisYML).toString('base64')
       })
-      .log(console.log)
 
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
-      console.log('transforms in test', transforms)
-      const updatedTravisYML = transforms[0].transform(travisYML)
-      console.log('updatedTravisYML', updatedTravisYML)
+      const inputTravisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+node_js:
+- 7
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+
+      const targetTravisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+node_js:
+- 7
+- 10
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+      const updatedTravisYML = transforms[0].transform(inputTravisYML)
+      transforms[0].created = true
+      expect(updatedTravisYML).toEqual(targetTravisYML)
       return '1234abcd'
     })
 
@@ -101,16 +140,14 @@ branches:
       nodeVersion: 10,
       codeName: 'Dubnium'
     })
-    // const newBranch = await repositories.get('42:branch:1234abcd')
+    expect(newJob).toBeFalsy()
 
-    console.log('newJob', newJob)
+    const newBranch = await repositories.get('42:branch:1234abcd')
 
-    expect(newJob).toBeTruthy()
-    // expect(newJob.data.name).toEqual('update-nodejs-version')
-    // expect(newJob.data.repositoryId).toBe(42)
-    // expect(newJob.delay).toBeGreaterThan(10000)
-    // expect(newBranch.type).toEqual('branch')
-    // expect(newBranch.initial).toBeTruthy()
-    // expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeFalsy()
+    expect(newBranch.base).toEqual('master')
+    expect(newBranch.head).toEqual('greenkeeper/update-to-node-10')
+    expect(newBranch.travisModified).toBeTruthy()
   })
 })

@@ -4,7 +4,9 @@ const {
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved,
-  generateGitHubCompareURL
+  generateGitHubCompareURL,
+  getNodeVersionsFromTravisYML,
+  addNodeVersionToTravisYML
 } = require('../../utils/utils')
 
 test('seperateNormalAndMonorepos', () => {
@@ -255,4 +257,797 @@ test('generate absolute github compare URL', () => {
   const compareWith = 'greenkeeper/frontend/standard-10.0.0'
   const url = generateGitHubCompareURL(githubURL, fullName, branch, compareWith)
   expect(url).toEqual('https://superprivategit.megacorp.com/hanshansen/mopeds/compare/dev...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
+})
+
+test('get single inline node version from travis', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+node_js: 7
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  expect(versions).toEqual({ startIndex: 8, endIndex: 8, versions: [ '7' ] })
+})
+
+test('get single array node version from travis', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+node_js:
+- 7
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  expect(versions).toEqual({ startIndex: 8, endIndex: 9, versions: [ '- 7' ] })
+})
+
+test('get multiple node versions from travis', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8
+- 9
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  expect(versions).toEqual({startIndex: 3, endIndex: 6, versions: ['- 7', '- 8', '- 9']})
+})
+
+test('update travisYML when new version not present', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8
+- 9
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8
+- 9
+- 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('update travisYML when new version (10) is not present, but 8.10.0 is', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8.10.0
+- 9
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8.10.0
+- 9
+- 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('update travisYML when the old version is in inline syntax (7)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: "7"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- "7"
+- 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('update travisYML when the old version is in inline syntax ("7")', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: 7
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('doesn’t break when travisYML defines no node versions', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present ("node")', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- "node"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present ('node')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '9'
+- 'node'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present ('lts/*')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '9'
+- 'lts/*'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present ('lts/Dubnium')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '9'
+- 'lts/Dubnium'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present (v10)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- v7
+- v8
+- v9
+- v10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present ('v10')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 'v7'
+- 'v8'
+- 'v9'
+- 'v10'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present in inline format ('v10')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: 'v10'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present in inline format (v10)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: v10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present (10)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8
+- 9
+- 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present ("10")', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- "7"
+- "8"
+- "9"
+- "10"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test("doesn’t update travisYML when new version is present ('10')", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '9'
+- '10'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present (Dubnium)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '9'
+- Dubnium
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present ("Dubnium")', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- "7"
+- "8"
+- "9"
+- "Dubnium"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present (10.0.0)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 7
+- 8
+- 9
+- 10.0.0
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present in inline format (10)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: 10
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present in inline format ("10")', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: "10"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
+})
+
+test('doesn’t update travisYML when new version is present in inline format (Dubnium)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: Dubnium
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(travisYML)
 })

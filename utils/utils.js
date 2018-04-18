@@ -148,15 +148,16 @@ const getNodeVersionsFromTravisYML = function (yml) {
   let results = {
     startIndex: nodeJSIndex,
     endIndex: nodeJSIndex,
-    versions: null
+    versions: []
   }
+  if (nodeJSIndex === -1) return results
   // Check whether there’s a single node version on the same line: `node_js: 8` instead of an array
   if (lines[nodeJSIndex].replace(/\s/g, '') === 'node_js:') {
     // this is our multi node config
-    const lastNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
+    const lastgetNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
       return line.match(/:/)
     })
-    results.endIndex = nodeJSIndex + lastNodeVersionIndex
+    results.endIndex = nodeJSIndex + lastgetNodeVersionIndex
     /*
       This returns an array of node version lines (with dashes and whitespace!):
       [
@@ -167,13 +168,57 @@ const getNodeVersionsFromTravisYML = function (yml) {
       ]
 
     */
-    results.versions = lines.slice(nodeJSIndex + 1, nodeJSIndex + lastNodeVersionIndex + 1)
+    results.versions = lines.slice(nodeJSIndex + 1, nodeJSIndex + lastgetNodeVersionIndex + 1)
   } else {
     // this is our single node version from inline format: `node_js: 8`
     results.versions = new Array(lines[nodeJSIndex].replace(/node_js:/g, '').replace(/\s/g, ''))
   }
 
   return results
+}
+
+// version is a string: 'v8.10', '- "10"', 'Dubnium', "- 'lts/*'" etc
+// returns a boolean
+const hasNodeVersion = function (version, newVersion, newCodeName) {
+  const matches = ['node', 'stable', 'lts/*', `lts/${newCodeName}`, newCodeName, newVersion]
+  return !!matches.find((match) => {
+    // first regex matches in array form ('- 10'), second regex matches the inline form ('10')
+    return !!(version.match(RegExp(`([^.])(${match})`, 'i')) || version.match(RegExp(`^${match}$`, 'i')))
+  })
+}
+
+// existingVersionStrings is just an array of strings: ['- 7', '- 8'] or ['9']  or ['v8.10']
+// returns an index
+const getNodeVersionIndex = function (existingVersionStrings, newVersion, newCodeName) {
+  if (!existingVersionStrings || existingVersionStrings.length === 0) return -1
+  return existingVersionStrings.findIndex((version) => {
+    return hasNodeVersion(version, newVersion, newCodeName)
+  })
+}
+
+// Stop! YAMLtime!
+// existingVersions is the output of getNodeVersionsFromTravisYML
+const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, existingVersions) {
+  if (existingVersions.versions.length === 0) return travisYML
+  // Should only add the new version if it is not present in any form
+  const nodeVersionIndex = getNodeVersionIndex(existingVersions.versions, newVersion, newCodeName)
+  const travisYMLLines = travisYML.split('\n')
+  // We only need to do something if the new version isn’t present
+  if (nodeVersionIndex === -1) {
+    // TODO: get string delimiters from the previous version, if they exist, and wrap our new version in them
+    // splice the new version back onto the end of the node version list in the original travisYMLLines array,
+    // unless it wasn’t an array but an inline definition of a single version, eg: `node_js: 9`
+    if (existingVersions.versions.length === 1 && existingVersions.startIndex === existingVersions.endIndex) {
+      // A single node version was defined in inline format, now we want to define two versions in array format
+      travisYMLLines.splice(existingVersions.startIndex, 1, 'node_js:')
+      travisYMLLines.splice(existingVersions.startIndex + 1, 0, `- ${existingVersions.versions[0]}`)
+      travisYMLLines.splice(existingVersions.startIndex + 2, 0, `- ${newVersion}`)
+    } else {
+      // Multiple node versions were defined in array format
+      travisYMLLines.splice(existingVersions.endIndex + 1, 0, `- ${newVersion}`)
+    }
+  }
+  return travisYMLLines.join('\n')
 }
 
 module.exports = {
@@ -185,5 +230,8 @@ module.exports = {
   getHighestPriorityDependency,
   createTransformFunction,
   generateGitHubCompareURL,
-  getNodeVersionsFromTravisYML
+  getNodeVersionsFromTravisYML,
+  hasNodeVersion,
+  getNodeVersionIndex,
+  addNodeVersionToTravisYML
 }

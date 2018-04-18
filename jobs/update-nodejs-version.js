@@ -3,14 +3,12 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const yaml = require('js-yaml')
-// const yamlInPlace = require('yml-in-place')
-// const escapeRegex = require('escape-string-regexp')
 const createBranch = require('../lib/create-branch')
 const getConfig = require('../lib/get-config')
-const {getNodeVersionsFromTravisYML} = require('../utils/utils')
+const { getNodeVersionIndex, getNodeVersionsFromTravisYML, addNodeVersionToTravisYML } = require('../utils/utils')
+const upsert = require('../lib/upsert')
 
 module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) {
-  console.log('repositoryFullName, nodeVersion, codeName ', repositoryFullName, nodeVersion, codeName)
   // nodeversion = 10
   // codeName = 'whateveron'
   repositoryFullName = repositoryFullName.toLowerCase()
@@ -30,6 +28,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     throw error
   }
 
+  const repositoryId = _.get(repoDoc, '_id')
+
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
@@ -44,25 +44,24 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   }
 
   // 1. fetch .travis.yml
-  async function travisTransform (travisyml) {
-    console.log('travisTransform', travisyml)
+  function travisTransform (travisYML) {
     try {
-      var travis = yaml.safeLoad(travisyml, {
+      var travisJSON = yaml.safeLoad(travisYML, {
         schema: yaml.FAILSAFE_SCHEMA
       })
-      console.log('travis in code', travis)
-      console.log('travis in code get', _.get(travis, 'node_js'))
     } catch (e) {
       // ignore .travis.yml if it can not be parsed
       return
     }
-    const nodeVersionFromYaml = getNodeVersionsFromTravisYML(travisyml)
-    console.log('nodeVersionFromYaml', nodeVersionFromYaml)
-    const alreadyHasTargetVersion = false
-    if (alreadyHasTargetVersion) return
+    // No versions specified in travis YML
+    if (!_.get(travisJSON, 'node_js')) return
 
-    travis['node_js'] = nodeVersion
-    return yaml.safeDump(travis)
+    const nodeVersionFromYaml = getNodeVersionsFromTravisYML(travisYML)
+    const hasNodeVersion = getNodeVersionIndex(nodeVersionFromYaml.versions, nodeVersion, codeName) !== -1
+    if (hasNodeVersion) return
+
+    const updatedTravisYaml = addNodeVersionToTravisYML(travisYML, nodeVersion, codeName, nodeVersionFromYaml)
+    return updatedTravisYaml
   }
 
   let transforms = [
@@ -81,14 +80,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   const branch = ghRepo.default_branch
   const newBranch = config.branchPrefix + 'update-to-node-' + nodeVersion
 
-  console.log('installationId', installationId)
-  console.log('owner', owner)
-  console.log('repo', repo)
-  console.log('branch', branch)
-  console.log('newBranch', newBranch)
-  console.log('transforms', transforms)
-
-  return createBranch({
+  const sha = await createBranch({ // try/catch
     installationId,
     owner,
     repo,
@@ -96,6 +88,19 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     newBranch,
     transforms
   })
+
+  if (sha) {
+    const travisModified = transforms[0].created
+    await upsert(repositories, `${repositoryId}:branch:${sha}`, {
+      type: 'branch',
+      initial: false,
+      sha,
+      base: branch,
+      head: newBranch,
+      processed: false,
+      travisModified
+    })
+  }
 
   // 2. fetch .nvmrc
   // 3. update all package.jsons
