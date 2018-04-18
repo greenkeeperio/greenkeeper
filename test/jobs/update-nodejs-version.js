@@ -19,11 +19,11 @@ describe('update nodejs version in .travis.yml only', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '1234', '12345', '321'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '555', '333')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333')
     ])
   })
 
-  test('update version in travis.yml', async () => {
+  test('update version in travis.yml and engines', async () => {
     const { installations, repositories } = await dbs()
     await installations.put({
       _id: '123',
@@ -54,7 +54,7 @@ describe('update nodejs version in .travis.yml only', () => {
         }
       }
     })
-    expect.assertions(25)
+    expect.assertions(26)
 
     const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -156,9 +156,9 @@ branches:
       const updatedTravisYML = transforms[0].transform(inputTravisYML)
       transforms[0].created = true
       expect(updatedTravisYML).toEqual(targetTravisYML)
-      const updatedEngines = transforms[1].transform(packageJSON)
-      const updatedFrontendEngines = transforms[2].transform(frontendPackageJSON)
-      const updatedBackendEngines = transforms[3].transform(backendPackageJSON)
+      const updatedEngines = transforms[2].transform(packageJSON)
+      const updatedFrontendEngines = transforms[3].transform(frontendPackageJSON)
+      const updatedBackendEngines = transforms[4].transform(backendPackageJSON)
       expect(JSON.parse(updatedEngines)).toEqual({engines: {node: '10'}})
       expect(updatedFrontendEngines).toBeFalsy()
       expect(updatedBackendEngines).toBeFalsy()
@@ -231,7 +231,7 @@ branches:
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       const inputNvmrc = '8.13'
-      const targetNvmrc = 10
+      const targetNvmrc = '10'
       const updatedNvmrc = transforms[1].transform(inputNvmrc)
       transforms[1].created = true
       expect(updatedNvmrc).toEqual(targetNvmrc)
@@ -266,7 +266,7 @@ branches:
       plan: 'free'
     })
     await repositories.put({
-      _id: '555',
+      _id: 'node-update-555',
       accountId: '12345',
       fullName: 'birne/test',
       enabled: true,
@@ -316,7 +316,7 @@ branches:
       plan: 'free'
     })
     await repositories.put({
-      _id: '333',
+      _id: 'node-update-333',
       accountId: '321',
       fullName: 'apfel/test',
       enabled: true,
