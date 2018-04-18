@@ -18,8 +18,8 @@ describe('update nodejs version in .travis.yml only', () => {
   afterAll(async () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '123', '1234', '12345'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '555')
+      removeIfExists(installations, '123', '1234', '12345', '321'),
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '555', '333')
     ])
   })
 
@@ -56,29 +56,7 @@ describe('update nodejs version in .travis.yml only', () => {
     })
     expect.assertions(25)
 
-    const travisYML = `language: node_js
-services:
-- docker
-cache:
-  directories:
-  - $HOME/.npm
-notifications:
-  email: false
-node_js:
-- 7
-before_install:
-- npm install -g npm@5.2.0
-install: npm install
-after_success: npm run deploy
-
-# Trigger a push build on master and greenkeeper branches + PRs build on every branches
-# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
-branches:
-  only:
-    - master
-    - /^greenkeeper.*$/`
-
-    nock('https://api.github.com')
+    const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
       .optionally()
       .reply(200, {
@@ -90,12 +68,6 @@ branches:
       .get('/repos/finnp/test')
       .reply(200, {
         default_branch: 'master'
-      })
-      .get('/repos/finnp/test/contents/.travis.yml?ref=master')
-      .reply(200, {
-        path: '.travis.yml',
-        name: '.travis.yml',
-        content: Buffer.from(travisYML).toString('base64')
       })
       .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()
@@ -200,6 +172,7 @@ branches:
       nodeVersion: '10',
       codeName: 'Dubnium'
     })
+    ghNock.done()
     expect(newJob).toBeFalsy()
 
     const newBranch = await repositories.get('42:branch:1234abcd')
@@ -210,6 +183,7 @@ branches:
     expect(newBranch.base).toEqual('master')
     expect(newBranch.head).toEqual('greenkeeper/update-to-node-10')
     expect(newBranch.travisModified).toBeTruthy()
+    expect(newBranch.nvmrcModified).toBeFalsy()
     expect(newIssue.type).toEqual('issue')
     expect(newIssue.repositoryId).toEqual('42')
     expect(newIssue.number).toEqual(10)
@@ -230,31 +204,9 @@ branches:
       enabled: true,
       type: 'repository'
     })
-    expect.assertions(8)
+    expect.assertions(9)
 
-    const travisYML = `language: node_js
-services:
-- docker
-cache:
-  directories:
-  - $HOME/.npm
-notifications:
-  email: false
-before_install:
-- npm install -g npm@5.2.0
-install: npm install
-after_success: npm run deploy
-
-# Trigger a push build on master and greenkeeper branches + PRs build on every branches
-# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
-branches:
-  only:
-    - master
-    - /^greenkeeper.*$/`
-
-    const nvmrc = '8.13'
-
-    nock('https://api.github.com')
+    const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
       .optionally()
       .reply(200, {
@@ -267,17 +219,13 @@ branches:
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/anna/test/contents/.travis.yml?ref=master')
-      .reply(200, {
-        path: '.travis.yml',
-        name: '.travis.yml',
-        content: Buffer.from(travisYML).toString('base64')
-      })
-      .get('/repos/anna/test/contents/.nvmrc?ref=master')
-      .reply(200, {
-        path: '.nvmrc',
-        name: '.nvmrc',
-        content: Buffer.from(nvmrc).toString('base64')
+      .post('/repos/anna/test/issues')
+      .reply(201, () => {
+        // issue created
+        expect(true).toBeTruthy()
+        return {
+          number: 10
+        }
       })
 
     // mock relative dependencies
@@ -297,6 +245,7 @@ branches:
       nodeVersion: 10,
       codeName: 'Dubnium'
     })
+    ghNock.done()
     expect(newJob).toBeFalsy()
 
     const newBranch = await repositories.get('55:branch:1234abcd')
@@ -325,29 +274,7 @@ branches:
     })
     expect.assertions(3)
 
-    const travisYML = `language: node_js
-services:
-- docker
-cache:
-  directories:
-  - $HOME/.npm
-notifications:
-  email: false
-before_install:
-- npm install -g npm@5.2.0
-install: npm install
-after_success: npm run deploy
-
-# Trigger a push build on master and greenkeeper branches + PRs build on every branches
-# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
-branches:
-  only:
-    - master
-    - /^greenkeeper.*$/`
-
-    const nvmrc = 'lts/*'
-
-    nock('https://api.github.com')
+    const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
       .optionally()
       .reply(200, {
@@ -359,18 +286,6 @@ branches:
       .get('/repos/birne/test')
       .reply(200, {
         default_branch: 'master'
-      })
-      .get('/repos/birne/test/contents/.travis.yml?ref=master')
-      .reply(200, {
-        path: '.travis.yml',
-        name: '.travis.yml',
-        content: Buffer.from(travisYML).toString('base64')
-      })
-      .get('/repos/birne/test/contents/.nvmrc?ref=master')
-      .reply(200, {
-        path: '.nvmrc',
-        name: '.nvmrc',
-        content: Buffer.from(nvmrc).toString('base64')
       })
 
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
@@ -388,6 +303,78 @@ branches:
       nodeVersion: 10,
       codeName: 'Dubnium'
     })
+
+    ghNock.done()
+    expect(newJob).toBeFalsy()
+  })
+
+  test('do nothing if there is nothing to change', async () => {
+    const { repositories, installations } = await dbs()
+    await installations.put({
+      _id: '321',
+      installation: 137,
+      plan: 'free'
+    })
+    await repositories.put({
+      _id: '333',
+      accountId: '321',
+      fullName: 'apfel/test',
+      enabled: true,
+      type: 'repository'
+    })
+    expect.assertions(1)
+
+    const travisYML = `language: node_js
+services:
+- docker
+cache:
+  directories:
+  - $HOME/.npm
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+
+    const ghNock = nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/apfel/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .get('/repos/apfel/test/contents/.travis.yml?ref=master')
+      .reply(200, {
+        path: '.travis.yml',
+        name: '.travis.yml',
+        content: Buffer.from(travisYML).toString('base64')
+      })
+      .get('/repos/apfel/test/contents/.nvmrc?ref=master')
+      .reply(404)
+
+    // don't mock createBranch ... not sure how else to do it. jest.dontMock() didn't work
+    jest.mock('../../lib/create-branch', () => {
+      const createBranch = require.requireActual('../../lib/create-branch')
+      return createBranch
+    })
+    const updateNodeJSVersion = require('../../jobs/update-nodejs-version')
+
+    const newJob = await updateNodeJSVersion({
+      repositoryFullName: 'apfel/test',
+      nodeVersion: 10,
+      codeName: 'Dubnium'
+    })
+
+    ghNock.done()
     expect(newJob).toBeFalsy()
   })
 })

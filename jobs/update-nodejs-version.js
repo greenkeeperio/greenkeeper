@@ -74,7 +74,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   }
 
   function nvmrcTransform (nvmrc) {
-    if (!nvmrc) return
+    if (!nvmrc) return nvmrc
     if (hasNodeVersion(nvmrc, nodeVersion, codeName)) return nvmrc
 
     const updatedNvmrc = updateNodeVersionToNvmrc(nodeVersion)
