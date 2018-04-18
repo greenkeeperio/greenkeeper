@@ -3,6 +3,8 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const yaml = require('js-yaml')
+const jsonInPlace = require('json-in-place')
+const semver = require('semver')
 const createBranch = require('../lib/create-branch')
 const getConfig = require('../lib/get-config')
 const { getNodeVersionIndex, getNodeVersionsFromTravisYML, addNodeVersionToTravisYML } = require('../utils/utils')
@@ -10,8 +12,7 @@ const upsert = require('../lib/upsert')
 const issueContent = require('../content/nodejs-release-issue')
 
 module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) {
-  // nodeversion = 10
-  // codeName = 'whateveron'
+  nodeVersion = nodeVersion.toString()
   repositoryFullName = repositoryFullName.toLowerCase()
   // find the repository in the database
   const { repositories, installations } = await dbs()
@@ -74,6 +75,39 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     }
   ]
 
+  const packageJsonContents = _.get(repoDoc, ['packages'])
+  const packagePaths = _.keys(packageJsonContents)
+
+  let engineTransformMessages = {
+    tooComplicated: 0,
+    inRange: 0,
+    updated: 0
+  }
+
+  // Check and possibly update all package.jsons
+  packagePaths.map((packagePath) => {
+    transforms.push({
+      path: packagePath,
+      message: `Update engines to node ${nodeVersion} in ${packagePath}`,
+      transform: oldPkg => {
+        const oldPkgParsed = JSON.parse(oldPkg)
+        const inplace = jsonInPlace(oldPkg)
+        const currentEngines = _.get(oldPkgParsed, 'engines.node')
+        if (semver.satisfies(semver.coerce(nodeVersion), currentEngines)) {
+          engineTransformMessages.inRange++
+        } else {
+          if (currentEngines.match(/[=> <~]+/g)) {
+            engineTransformMessages.tooComplicated++
+            return
+          }
+          engineTransformMessages.updated++
+          inplace.set('engines.node', nodeVersion)
+          return inplace.toString()
+        }
+      }
+    })
+  })
+
   const [owner, repo] = repoDoc.fullName.split('/')
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
@@ -94,7 +128,6 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   if (sha) {
     const travisModified = transforms[0].created
     const nvmrcModified = false
-    const packageJsonModified = false
     await upsert(repositories, `${repositoryId}:branch:${sha}`, {
       type: 'branch',
       initial: false,
@@ -115,7 +148,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       codeName,
       travisModified,
       nvmrcModified,
-      packageJsonModified
+      engineTransformMessages
     })
     const { number } = await githubQueue(installationId).write(github => github.issues.create({
       owner,
@@ -132,7 +165,4 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       state: 'open'
     })
   }
-
-  // 2. fetch .nvmrc
-  // 3. update all package.jsons
 }

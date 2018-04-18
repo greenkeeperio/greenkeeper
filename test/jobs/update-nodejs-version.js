@@ -35,9 +35,26 @@ describe('update nodejs version in .travis.yml only', () => {
       accountId: '123',
       fullName: 'finnp/test',
       enabled: true,
-      type: 'repository'
+      type: 'repository',
+      packages: {
+        'package.json': {
+          engines: {
+            node: 'v8.10'
+          }
+        },
+        'frontend/package.json': {
+          engines: {
+            node: '>9'
+          }
+        },
+        'backend/package.json': {
+          engines: {
+            node: '>=7 <9.1'
+          }
+        }
+      }
     })
-    expect.assertions(19)
+    expect.assertions(25)
 
     const travisYML = `language: node_js
 services:
@@ -86,6 +103,9 @@ branches:
         expect(body).toMatch('Version 10 of node.js (code name Dubnium) has been released!')
         expect(body).toMatch('- Added the new version to your `.travis.yml`')
         expect(body).toMatch('"/finnp/test/compare/master...finnp:greenkeeper%2Fupdate-to-node-10"')
+        expect(body).toMatch('- The engines config in 1 of your `package.json` files was updated to the new node version')
+        expect(body).toMatch('- The new node version is in-range for the engines in 1 of your `package.json` files, so that was left alone')
+        expect(body).toMatch('- The engines config in 1 of your `package.json` files was too ambiguous to be updated automatically')
         expect(labels).toHaveLength(1)
         expect(labels).toContain('greenkeeper')
         return true
@@ -144,9 +164,32 @@ branches:
   only:
     - master
     - /^greenkeeper.*$/`
+
+      const packageJSON = JSON.stringify({
+        engines: {
+          node: 'v8.10'
+        }
+      })
+      const frontendPackageJSON = JSON.stringify({
+        engines: {
+          node: '>9'
+        }
+      })
+      const backendPackageJSON = JSON.stringify({
+        engines: {
+          node: '>=7 <9.1'
+        }
+      })
+
       const updatedTravisYML = transforms[0].transform(inputTravisYML)
       transforms[0].created = true
       expect(updatedTravisYML).toEqual(targetTravisYML)
+      const updatedEngines = transforms[1].transform(packageJSON)
+      const updatedFrontendEngines = transforms[2].transform(frontendPackageJSON)
+      const updatedBackendEngines = transforms[3].transform(backendPackageJSON)
+      expect(JSON.parse(updatedEngines)).toEqual({engines: {node: '10'}})
+      expect(updatedFrontendEngines).toBeFalsy()
+      expect(updatedBackendEngines).toBeFalsy()
       return '1234abcd'
     })
 
@@ -154,7 +197,7 @@ branches:
 
     const newJob = await updateNodeJSVersion({
       repositoryFullName: 'finnp/test',
-      nodeVersion: 10,
+      nodeVersion: '10',
       codeName: 'Dubnium'
     })
     expect(newJob).toBeFalsy()
