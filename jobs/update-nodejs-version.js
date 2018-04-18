@@ -12,7 +12,7 @@ const {
   getNodeVersionIndex,
   getNodeVersionsFromTravisYML,
   addNodeVersionToTravisYML,
-  addNodeVersionToNvmrc
+  updateNodeVersionToNvmrc
 } = require('../utils/utils')
 const upsert = require('../lib/upsert')
 const issueContent = require('../content/nodejs-release-issue')
@@ -77,7 +77,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     if (!nvmrc) return
     if (hasNodeVersion(nvmrc, nodeVersion, codeName)) return nvmrc
 
-    const updatedNvmrc = addNodeVersionToNvmrc(nodeVersion)
+    const updatedNvmrc = updateNodeVersionToNvmrc(nodeVersion)
     return updatedNvmrc
   }
 

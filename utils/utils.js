@@ -220,7 +220,7 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
   }
   return travisYMLLines.join('\n')
 }
-const addNodeVersionToNvmrc = function (newVersion) {
+const updateNodeVersionToNvmrc = function (newVersion) {
   return newVersion
 }
 
@@ -237,5 +237,5 @@ module.exports = {
   hasNodeVersion,
   getNodeVersionIndex,
   addNodeVersionToTravisYML,
-  addNodeVersionToNvmrc
+  updateNodeVersionToNvmrc
 }
