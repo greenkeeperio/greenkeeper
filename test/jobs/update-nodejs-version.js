@@ -6,7 +6,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-describe('update nodejs version', () => {
+describe('update nodejs version in .travis.yml only', () => {
   beforeAll(() => {
     jest.setTimeout(10000)
   })
@@ -19,7 +19,7 @@ describe('update nodejs version', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10')
     ])
   })
 
@@ -37,7 +37,7 @@ describe('update nodejs version', () => {
       enabled: true,
       type: 'repository'
     })
-    expect.assertions(7)
+    expect.assertions(19)
 
     const travisYML = `language: node_js
 services:
@@ -79,6 +79,23 @@ branches:
         path: '.travis.yml',
         name: '.travis.yml',
         content: Buffer.from(travisYML).toString('base64')
+      })
+      .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
+        expect(title).toBeTruthy()
+        expect(body).toBeTruthy()
+        expect(body).toMatch('Version 10 of node.js (code name Dubnium) has been released!')
+        expect(body).toMatch('- Added the new version to your `.travis.yml`')
+        expect(body).toMatch('"/finnp/test/compare/master...finnp:greenkeeper%2Fupdate-to-node-10"')
+        expect(labels).toHaveLength(1)
+        expect(labels).toContain('greenkeeper')
+        return true
+      })
+      .reply(201, () => {
+        // issue created
+        expect(true).toBeTruthy()
+        return {
+          number: 10
+        }
       })
 
     // mock relative dependencies
@@ -143,11 +160,16 @@ branches:
     expect(newJob).toBeFalsy()
 
     const newBranch = await repositories.get('42:branch:1234abcd')
+    const newIssue = await repositories.get('42:issue:10')
 
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeFalsy()
     expect(newBranch.base).toEqual('master')
     expect(newBranch.head).toEqual('greenkeeper/update-to-node-10')
     expect(newBranch.travisModified).toBeTruthy()
+    expect(newIssue.type).toEqual('issue')
+    expect(newIssue.repositoryId).toEqual('42')
+    expect(newIssue.number).toEqual(10)
+    expect(newIssue.state).toEqual('open')
   })
 })

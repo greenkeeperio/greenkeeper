@@ -7,6 +7,7 @@ const createBranch = require('../lib/create-branch')
 const getConfig = require('../lib/get-config')
 const { getNodeVersionIndex, getNodeVersionsFromTravisYML, addNodeVersionToTravisYML } = require('../utils/utils')
 const upsert = require('../lib/upsert')
+const issueContent = require('../content/nodejs-release-issue')
 
 module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) {
   // nodeversion = 10
@@ -37,6 +38,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'update-nodejs-version'})
 
   const config = getConfig(repoDoc)
+  const { branchPrefix, label } = config
   log.info(`config for ${repoDoc.fullName}`, {config})
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
@@ -78,7 +80,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   log.info('github: repository info', {repositoryInfo: ghRepo})
 
   const branch = ghRepo.default_branch
-  const newBranch = config.branchPrefix + 'update-to-node-' + nodeVersion
+  const newBranch = branchPrefix + 'update-to-node-' + nodeVersion
 
   const sha = await createBranch({ // try/catch
     installationId,
@@ -91,6 +93,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
 
   if (sha) {
     const travisModified = transforms[0].created
+    const nvmrcModified = false
+    const packageJsonModified = false
     await upsert(repositories, `${repositoryId}:branch:${sha}`, {
       type: 'branch',
       initial: false,
@@ -100,9 +104,35 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       processed: false,
       travisModified
     })
+
+    // 4. Write issue and save issue doc
+    const body = issueContent({
+      owner,
+      repo,
+      base: branch,
+      head: newBranch,
+      nodeVersion,
+      codeName,
+      travisModified,
+      nvmrcModified,
+      packageJsonModified
+    })
+    const { number } = await githubQueue(installationId).write(github => github.issues.create({
+      owner,
+      repo,
+      title: `Version ${nodeVersion} of node.js has been released`,
+      body,
+      labels: [label]
+    }))
+
+    await upsert(repositories, `${repositoryId}:issue:${number}`, {
+      type: 'issue',
+      repositoryId,
+      number,
+      state: 'open'
+    })
   }
 
   // 2. fetch .nvmrc
   // 3. update all package.jsons
-  // Turn all these into commits (via transforms?)
 }
