@@ -180,7 +180,7 @@ const getNodeVersionsFromTravisYML = function (yml) {
 // version is a string: 'v8.10', '- "10"', 'Dubnium', "- 'lts/*'" etc
 // returns a boolean
 const hasNodeVersion = function (version, newVersion, newCodeName) {
-  const matches = ['node', 'stable', 'lts/*', `lts/${newCodeName}`, newCodeName, newVersion]
+  const matches = ['node', 'stable', 'lts/\\*', `lts/${newCodeName}`, newCodeName, newVersion] // eslint-disable-line
   return !!matches.find((match) => {
     // first regex matches in array form ('- 10'), second regex matches the inline form ('10')
     return !!(version.match(RegExp(`([^.])(${match})`, 'i')) || version.match(RegExp(`^${match}$`, 'i')))
@@ -220,6 +220,9 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
   }
   return travisYMLLines.join('\n')
 }
+const addNodeVersionToNvmrc = function (newVersion) {
+  return newVersion
+}
 
 module.exports = {
   seperateNormalAndMonorepos,
@@ -233,5 +236,6 @@ module.exports = {
   getNodeVersionsFromTravisYML,
   hasNodeVersion,
   getNodeVersionIndex,
-  addNodeVersionToTravisYML
+  addNodeVersionToTravisYML,
+  addNodeVersionToNvmrc
 }

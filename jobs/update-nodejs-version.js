@@ -7,7 +7,13 @@ const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const createBranch = require('../lib/create-branch')
 const getConfig = require('../lib/get-config')
-const { getNodeVersionIndex, getNodeVersionsFromTravisYML, addNodeVersionToTravisYML } = require('../utils/utils')
+const {
+  hasNodeVersion,
+  getNodeVersionIndex,
+  getNodeVersionsFromTravisYML,
+  addNodeVersionToTravisYML,
+  addNodeVersionToNvmrc
+} = require('../utils/utils')
 const upsert = require('../lib/upsert')
 const issueContent = require('../content/nodejs-release-issue')
 
@@ -67,11 +73,24 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     return updatedTravisYaml
   }
 
+  function nvmrcTransform (nvmrc) {
+    if (!nvmrc) return
+    if (hasNodeVersion(nvmrc, nodeVersion, codeName)) return nvmrc
+
+    const updatedNvmrc = addNodeVersionToNvmrc(nodeVersion)
+    return updatedNvmrc
+  }
+
   let transforms = [
     {
       path: '.travis.yml',
       message: `Update to node ${nodeVersion} in .travis.yml`,
       transform: raw => travisTransform(raw)
+    },
+    {
+      path: '.nvmrc',
+      message: `Update to node ${nodeVersion} in .nvmrc`,
+      transform: raw => nvmrcTransform(raw)
     }
   ]
 
@@ -127,7 +146,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
 
   if (sha) {
     const travisModified = transforms[0].created
-    const nvmrcModified = false
+    const nvmrcModified = transforms[1].created
+
     await upsert(repositories, `${repositoryId}:branch:${sha}`, {
       type: 'branch',
       initial: false,
@@ -135,7 +155,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       base: branch,
       head: newBranch,
       processed: false,
-      travisModified
+      travisModified,
+      nvmrcModified
     })
 
     // 4. Write issue and save issue doc
