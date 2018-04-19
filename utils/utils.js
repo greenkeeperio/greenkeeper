@@ -199,8 +199,8 @@ const getNodeVersionIndex = function (existingVersionStrings, newVersion, newCod
 // Stop! YAMLtime!
 // existingVersions is the output of getNodeVersionsFromTravisYML
 const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, existingVersions) {
-  if (existingVersions.versions.length === 0) return travisYML
   // Should only add the new version if it is not present in any form
+  if (existingVersions.versions.length === 0) return travisYML
   const nodeVersionIndex = getNodeVersionIndex(existingVersions.versions, newVersion, newCodeName)
   const travisYMLLines = travisYML.split('\n')
   // We only need to do something if the new version isn’t present
@@ -224,6 +224,43 @@ const updateNodeVersionToNvmrc = function (newVersion) {
   return newVersion
 }
 
+// existingVersions is the output of getNodeVersionsFromTravisYML
+const removeNodeVersionFromTravisYML = function (travisYML, newVersion, newCodeName, existingVersions) {
+  // Should only remove the old version if it is actually present in any form
+  if (existingVersions.versions.length === 0) return travisYML
+  const nodeVersionIndex = getNodeVersionIndex(existingVersions.versions, newVersion, newCodeName)
+  let travisYMLLines = travisYML.split('\n')
+  // We only need to do something if the old version is present
+  if (nodeVersionIndex !== -1) {
+    // If it’s the only version we don’t want to remove it
+    if (existingVersions.versions.length !== 1) {
+      // Multiple node versions were defined in array format
+      // set lines we want to remove to undefined in existingVersion.versions and filter them out afterwards
+      const updatedVersionsArray = _.filter(existingVersions.versions.map((version) => {
+        return hasNodeVersion(version, newVersion, newCodeName) ? undefined : version
+      }), Boolean)
+      // splice the updated existingversions into travisymllines
+      travisYMLLines.splice(existingVersions.startIndex + 1, existingVersions.endIndex - existingVersions.startIndex, updatedVersionsArray)
+      // has an array in an array, needs to be flattened
+      travisYMLLines = _.flatten(travisYMLLines)
+    }
+  }
+  return travisYMLLines.join('\n')
+}
+
+const addNewLowestAndDeprecate = function ({
+  travisYML,
+  nodeVersion,
+  codeName,
+  newLowestVersion,
+  newLowestCodeName
+}) {
+  let versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedTravisYaml = addNodeVersionToTravisYML(travisYML, newLowestVersion, newLowestCodeName, versions)
+  versions = getNodeVersionsFromTravisYML(updatedTravisYaml)
+  return removeNodeVersionFromTravisYML(updatedTravisYaml, nodeVersion, codeName, versions)
+}
+
 module.exports = {
   seperateNormalAndMonorepos,
   getJobsPerGroup,
@@ -237,5 +274,7 @@ module.exports = {
   hasNodeVersion,
   getNodeVersionIndex,
   addNodeVersionToTravisYML,
-  updateNodeVersionToNvmrc
+  removeNodeVersionFromTravisYML,
+  updateNodeVersionToNvmrc,
+  addNewLowestAndDeprecate
 }

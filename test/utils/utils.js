@@ -6,7 +6,9 @@ const {
   getOldVersionResolved,
   generateGitHubCompareURL,
   getNodeVersionsFromTravisYML,
-  addNodeVersionToTravisYML
+  addNodeVersionToTravisYML,
+  removeNodeVersionFromTravisYML,
+  addNewLowestAndDeprecate
 } = require('../../utils/utils')
 
 test('seperateNormalAndMonorepos', () => {
@@ -1050,4 +1052,328 @@ branches:
   const versions = getNodeVersionsFromTravisYML(travisYML)
   const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
   expect(updatedYML).toEqual(travisYML)
+})
+
+test('removes old version from travisYML (4), 6 is already there', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 4
+- 6
+- 8
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- 6
+- 8
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('removes old version from travisYML (Argon), Carbon is already there', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- Argon
+- Boron
+- Carbon
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- Boron
+- Carbon
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test('removes old version from travisYML ("4"), "6" is already there', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- "4"
+- "5"
+- "6"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetYML = `language: node_js
+services:
+- docker
+node_js:
+- "5"
+- "6"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetYML)
+})
+
+test('updates 4 -> 6 in travisYML when it’s inline version (node_js: 4)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: 4
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const targetYML = `language: node_js
+services:
+- docker
+node_js:
+- 6
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetYML)
+})
+
+test('updates 4 -> 6 in travisYML when it’s the only array version (4)', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 4
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const targetYML = `language: node_js
+services:
+- docker
+node_js:
+- 6
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetYML)
+})
+
+test('replace 4 with 6 in an array of several node versions in travisYML', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- 4
+- 5
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const targetYML = `language: node_js
+services:
+- docker
+node_js:
+- 5
+- 6
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetYML)
+})
+
+test('replace Argon with 6 in the inline node versions in travisYML', () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js: Argon
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const targetYML = `language: node_js
+services:
+- docker
+node_js:
+- 6
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy`
+  const updatedYML = addNewLowestAndDeprecate({
+    travisYML,
+    nodeVersion: 4,
+    codeName: 'Argon',
+    newLowestVersion: 6,
+    newLowestCodeName: 'Boron'
+  })
+  expect(updatedYML).toEqual(targetYML)
 })
