@@ -7,7 +7,6 @@ const {
   generateGitHubCompareURL,
   getNodeVersionsFromTravisYML,
   addNodeVersionToTravisYML,
-  removeNodeVersionFromTravisYML,
   addNewLowestAndDeprecate
 } = require('../../utils/utils')
 
