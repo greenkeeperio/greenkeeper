@@ -5,9 +5,9 @@ const { generateGitHubCompareURL } = require('../utils/utils')
 const showEngineTransformMessages = function (messages) {
   if (!messages) return
   let output = ''
-  output += messages.updated > 0 ? `- The engines config in ${messages.inRange} of your \`package.json\` files was updated to the new node version\n` : ''
+  output += messages.updated > 0 ? `- The engines config in ${messages.updated} of your \`package.json\` files was updated to the new node version\n` : ''
   output += messages.inRange > 0 ? `- The new node version is in-range for the engines in ${messages.inRange} of your \`package.json\` files, so that was left alone\n` : ''
-  output += messages.tooComplicated > 0 ? `- The engines config in ${messages.inRange} of your \`package.json\` files was too ambiguous to be updated automatically\n` : ''
+  output += messages.tooComplicated > 0 ? `- The engines config in ${messages.tooComplicated} of your \`package.json\` files was too ambiguous to be updated automatically\n` : ''
   if (output === '') return
   return output
 }
