@@ -18,7 +18,7 @@ describe('update nodejs version in .travis.yml only', () => {
   afterAll(async () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '123', '1234', '12345', '321'),
+      removeIfExists(installations, '123', '1234', '12345', '321', '323'),
       removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333')
     ])
   })
@@ -370,6 +370,94 @@ branches:
 
     const newJob = await updateNodeJSVersion({
       repositoryFullName: 'apfel/test',
+      nodeVersion: 10,
+      codeName: 'Dubnium'
+    })
+
+    ghNock.done()
+    expect(newJob).toBeFalsy()
+  })
+
+  // matrix and jobs configs can become too complex to handle for us, so we skip those
+  // and only handle node versions defined on root level
+  test('do nothing if travis.yml config is too complex (node version not defined on root level)', async () => {
+    const { repositories, installations } = await dbs()
+    await installations.put({
+      _id: '323',
+      installation: 137,
+      plan: 'free'
+    })
+    await repositories.put({
+      _id: 'node-update-323',
+      accountId: '323',
+      fullName: 'banane/test',
+      enabled: true,
+      type: 'repository'
+    })
+    expect.assertions(1)
+
+    const travisYML = `language: node_js
+cache:
+  directories:
+  - ~/.npm
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/
+
+jobs:
+  include:
+    - node_js: 4
+    - node_js: 6
+    - node_js: 8
+    - node_js: 9
+      script:
+        - npm run test
+        - npm run test:coverage
+        - npm run test:coverage:upload
+    - stage: release
+      node_js: lts/*
+      script:
+        - npm run semantic-release
+    - node_js: lts/*
+      script:
+        - npm run docs
+        - npm run deploydocs
+
+stages:
+  - test
+  - name: release
+    if: branch = master AND type IN (push)`
+
+    const ghNock = nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/banane/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .get('/repos/banane/test/contents/.travis.yml?ref=master')
+      .reply(200, {
+        path: '.travis.yml',
+        name: '.travis.yml',
+        content: Buffer.from(travisYML).toString('base64')
+      })
+      .get('/repos/banane/test/contents/.nvmrc?ref=master')
+      .reply(404)
+
+    const updateNodeJSVersion = require('../../jobs/update-nodejs-version')
+
+    const newJob = await updateNodeJSVersion({
+      repositoryFullName: 'banane/test',
       nodeVersion: 10,
       codeName: 'Dubnium'
     })

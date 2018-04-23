@@ -62,7 +62,9 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       // ignore .travis.yml if it can not be parsed
       return
     }
-    // No versions specified in travis YML
+    // No node versions specified in root level of travis YML
+    // There may be node versions defined in the matrix or jobs keys, but those can become
+    // far too complex for us to handle, so we don’t
     if (!_.get(travisJSON, 'node_js')) return
 
     const nodeVersionFromYaml = getNodeVersionsFromTravisYML(travisYML)
