@@ -30,6 +30,7 @@ module.exports = async function ({ installation, repositories_added }) {
     (repositories_added[0] && repositories_added[0].fullName &&
       (repositories_added[0].fullName.includes('dalavanmanphonsy') ||
       repositories_added[0].fullName.includes('CNXTEoEorg')))) {
+    log.warn('exited: spam')
     return
   }
 

@@ -110,7 +110,7 @@ require('./lib/rollbar')
       }
     }
     const spamQueueIds = ['23046691', '1623538', 'dalavanmanphonsy', 'CNXTEoEorg']
-    if (spamQueueIds.includes(queueId)) {
+    if (spamQueueIds.includes(String(queueId))) {
       // spam
       channel.ack(job)
       return
