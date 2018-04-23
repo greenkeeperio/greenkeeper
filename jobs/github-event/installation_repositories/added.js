@@ -25,6 +25,13 @@ module.exports = async function ({ installation, repositories_added }) {
     log.warn('exited: no repositories selected')
     return
   }
+  // spam :(
+  if (['23046691', '1623538'].includes(installation.account.id) ||
+    (repositories_added[0] && repositories_added[0].fullName &&
+      (repositories_added[0].fullName.includes('dalavanmanphonsy') ||
+      repositories_added[0].fullName.includes('CNXTEoEorg')))) {
+    return
+  }
 
   const repositories = await Promise.mapSeries(repositories_added, doc => {
     const [owner, repo] = doc.full_name.split('/')
