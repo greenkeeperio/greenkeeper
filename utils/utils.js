@@ -205,6 +205,15 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
   const travisYMLLines = travisYML.split('\n')
   // We only need to do something if the new version isn’t present
   if (nodeVersionIndex === -1) {
+    let delimiter = ''
+    if (existingVersions.versions && existingVersions.versions.length > 0) {
+      if (existingVersions.versions[0].match(/"/)) {
+        delimiter = '"'
+      }
+      if (existingVersions.versions[0].match(/'/)) {
+        delimiter = "'"
+      }
+    }
     // TODO: get string delimiters from the previous version, if they exist, and wrap our new version in them
     // splice the new version back onto the end of the node version list in the original travisYMLLines array,
     // unless it wasn’t an array but an inline definition of a single version, eg: `node_js: 9`
@@ -212,10 +221,10 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
       // A single node version was defined in inline format, now we want to define two versions in array format
       travisYMLLines.splice(existingVersions.startIndex, 1, 'node_js:')
       travisYMLLines.splice(existingVersions.startIndex + 1, 0, `- ${existingVersions.versions[0]}`)
-      travisYMLLines.splice(existingVersions.startIndex + 2, 0, `- ${newVersion}`)
+      travisYMLLines.splice(existingVersions.startIndex + 2, 0, `- ${delimiter}${newVersion}${delimiter}`)
     } else {
       // Multiple node versions were defined in array format
-      travisYMLLines.splice(existingVersions.endIndex + 1, 0, `- ${newVersion}`)
+      travisYMLLines.splice(existingVersions.endIndex + 1, 0, `- ${delimiter}${newVersion}${delimiter}`)
     }
   }
   return travisYMLLines.join('\n')

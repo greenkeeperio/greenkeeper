@@ -445,7 +445,7 @@ branches:
   expect(updatedYML).toEqual(targetTravisYML)
 })
 
-test('update travisYML when the old version is in inline syntax (7)', () => {
+test('update travisYML when the old version is in inline syntax ("7") and maintain delimiters', () => {
   const travisYML = `language: node_js
 services:
 - docker
@@ -471,7 +471,58 @@ services:
 - docker
 node_js:
 - "7"
-- 10
+- "10"
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
+test("update travisYML when the old version is in array syntax ('7') and maintain delimiters", () => {
+  const travisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+cache:
+  directories:
+  - $HOME/.npm
+notifications:
+  email: false
+before_install:
+- npm install -g npm@5.2.0
+install: npm install
+after_success: npm run deploy
+
+# Trigger a push build on master and greenkeeper branches + PRs build on every branches
+# Avoid double build on PRs (See https://github.com/travis-ci/travis-ci/issues/1147)
+branches:
+  only:
+    - master
+    - /^greenkeeper.*$/`
+  const targetTravisYML = `language: node_js
+services:
+- docker
+node_js:
+- '7'
+- '8'
+- '10'
 cache:
   directories:
   - $HOME/.npm
