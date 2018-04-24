@@ -89,12 +89,16 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
   let transforms = [
     {
       path: '.travis.yml',
-      message: `Deprecate node ${nodeVersion} in .travis.yml`,
+      message: `Deprecate Node.js ${nodeVersion} in .travis.yml
+
+BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       transform: raw => travisTransform(raw)
     },
     {
       path: '.nvmrc',
-      message: `Deprecate node ${nodeVersion} in .nvmrc`,
+      message: `Deprecate Node.js ${nodeVersion} in .nvmrc
+
+BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       transform: raw => nvmrcTransform(raw)
     }
   ]
@@ -110,7 +114,9 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
   packagePaths.map((packagePath) => {
     transforms.push({
       path: packagePath,
-      message: `Deprecate node ${nodeVersion} in engines in ${packagePath}`,
+      message: `Deprecate Node.js ${nodeVersion} in engines in ${packagePath}
+
+BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       transform: oldPkg => {
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
