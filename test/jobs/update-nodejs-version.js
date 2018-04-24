@@ -245,7 +245,7 @@ branches:
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       const inputNvmrc = '8.13'
-      const targetNvmrc = '10'
+      const targetNvmrc = '10\n'
       const updatedNvmrc = transforms[1].transform(inputNvmrc)
       transforms[1].created = true
       expect(updatedNvmrc).toEqual(targetNvmrc)
