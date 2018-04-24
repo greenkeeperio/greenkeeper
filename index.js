@@ -83,7 +83,7 @@ require('./lib/rollbar')
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
-    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription']
+    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription', 'update-nodejs-version', 'deprecate-nodejs-version']
     if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
       return queueJob(data.name, job)
     }
