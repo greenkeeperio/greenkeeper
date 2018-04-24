@@ -154,9 +154,12 @@ const getNodeVersionsFromTravisYML = function (yml) {
   // Check whether there’s a single node version on the same line: `node_js: 8` instead of an array
   if (lines[nodeJSIndex].replace(/\s/g, '') === 'node_js:') {
     // this is our multi node config
-    const lastgetNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
+    let lastgetNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
       return line.match(/:/)
     })
+    if (lastgetNodeVersionIndex === -1) {
+      lastgetNodeVersionIndex = lines.length
+    }
     results.endIndex = nodeJSIndex + lastgetNodeVersionIndex
     /*
       This returns an array of node version lines (with dashes and whitespace!):
@@ -206,6 +209,7 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
   // We only need to do something if the new version isn’t present
   if (nodeVersionIndex === -1) {
     let delimiter = ''
+    let leadingSpaces = ''
     if (existingVersions.versions && existingVersions.versions.length > 0) {
       if (existingVersions.versions[0].match(/"/)) {
         delimiter = '"'
@@ -213,18 +217,18 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
       if (existingVersions.versions[0].match(/'/)) {
         delimiter = "'"
       }
+      leadingSpaces = existingVersions.versions[0].match(/^([ ]*)/)[1]
     }
-    // TODO: get string delimiters from the previous version, if they exist, and wrap our new version in them
     // splice the new version back onto the end of the node version list in the original travisYMLLines array,
     // unless it wasn’t an array but an inline definition of a single version, eg: `node_js: 9`
     if (existingVersions.versions.length === 1 && existingVersions.startIndex === existingVersions.endIndex) {
       // A single node version was defined in inline format, now we want to define two versions in array format
       travisYMLLines.splice(existingVersions.startIndex, 1, 'node_js:')
-      travisYMLLines.splice(existingVersions.startIndex + 1, 0, `- ${existingVersions.versions[0]}`)
-      travisYMLLines.splice(existingVersions.startIndex + 2, 0, `- ${delimiter}${newVersion}${delimiter}`)
+      travisYMLLines.splice(existingVersions.startIndex + 1, 0, `${leadingSpaces}- ${existingVersions.versions[0]}`)
+      travisYMLLines.splice(existingVersions.startIndex + 2, 0, `${leadingSpaces}- ${delimiter}${newVersion}${delimiter}`)
     } else {
       // Multiple node versions were defined in array format
-      travisYMLLines.splice(existingVersions.endIndex + 1, 0, `- ${delimiter}${newVersion}${delimiter}`)
+      travisYMLLines.splice(existingVersions.endIndex + 1, 0, `${leadingSpaces}- ${delimiter}${newVersion}${delimiter}`)
     }
   }
   return travisYMLLines.join('\n')
