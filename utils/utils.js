@@ -155,7 +155,8 @@ const getNodeVersionsFromTravisYML = function (yml) {
   if (lines[nodeJSIndex].replace(/\s/g, '') === 'node_js:') {
     // this is our multi node config
     let lastgetNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
-      return line.match(/:/)
+      // node_js block ends either in an empty line or a new key, which must include a `:`
+      return line.match(/:/) || line.length === 0
     })
     if (lastgetNodeVersionIndex === -1) {
       lastgetNodeVersionIndex = lines.length
@@ -234,7 +235,7 @@ const addNodeVersionToTravisYML = function (travisYML, newVersion, newCodeName, 
   return travisYMLLines.join('\n')
 }
 const updateNodeVersionToNvmrc = function (newVersion) {
-  return newVersion
+  return `${newVersion}\n`
 }
 
 // existingVersions is the output of getNodeVersionsFromTravisYML
