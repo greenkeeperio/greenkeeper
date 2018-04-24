@@ -54,7 +54,7 @@ describe('update nodejs version in .travis.yml only', () => {
         }
       }
     })
-    expect.assertions(26)
+    expect.assertions(27)
 
     const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -178,12 +178,19 @@ branches:
     const newBranch = await repositories.get('42:branch:1234abcd')
     const newIssue = await repositories.get('42:issue:10')
 
+    const targetEngineMessages = {
+      tooComplicated: 1,
+      inRange: 1,
+      updated: 1
+    }
+
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeFalsy()
     expect(newBranch.base).toEqual('master')
     expect(newBranch.head).toEqual('greenkeeper/update-to-node-10')
     expect(newBranch.travisModified).toBeTruthy()
     expect(newBranch.nvmrcModified).toBeFalsy()
+    expect(newBranch.engineTransformMessages).toEqual(targetEngineMessages)
     expect(newIssue.type).toEqual('issue')
     expect(newIssue.repositoryId).toEqual('42')
     expect(newIssue.number).toEqual(10)
@@ -202,9 +209,16 @@ branches:
       accountId: '1234',
       fullName: 'anna/test',
       enabled: true,
-      type: 'repository'
+      type: 'repository',
+      packages: {
+        'package.json': {
+          dependencies: {
+            badgers: '10.0.0'
+          }
+        }
+      }
     })
-    expect.assertions(9)
+    expect.assertions(11)
 
     const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -235,6 +249,13 @@ branches:
       const updatedNvmrc = transforms[1].transform(inputNvmrc)
       transforms[1].created = true
       expect(updatedNvmrc).toEqual(targetNvmrc)
+      const packageJSONWithoutEngines = JSON.stringify({
+        dependencies: {
+          badgers: '10.0.0'
+        }
+      })
+      const updatedPackageJSON = transforms[2].transform(packageJSONWithoutEngines)
+      expect(updatedPackageJSON).toBeFalsy()
       return '1234abcd'
     })
 
@@ -248,6 +269,12 @@ branches:
     ghNock.done()
     expect(newJob).toBeFalsy()
 
+    const targetEngineMessages = {
+      tooComplicated: 0,
+      inRange: 0,
+      updated: 0
+    }
+
     const newBranch = await repositories.get('55:branch:1234abcd')
 
     expect(newBranch.type).toEqual('branch')
@@ -256,6 +283,7 @@ branches:
     expect(newBranch.head).toEqual('greenkeeper/update-to-node-10')
     expect(newBranch.travisModified).toBeFalsy()
     expect(newBranch.nvmrcModified).toBeTruthy()
+    expect(newBranch.engineTransformMessages).toEqual(targetEngineMessages)
   })
 
   test('do not update version in nvmrc when it is already the latest', async () => {

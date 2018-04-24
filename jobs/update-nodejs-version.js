@@ -114,16 +114,18 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
         const currentEngines = _.get(oldPkgParsed, 'engines.node')
-        if (semver.satisfies(semver.coerce(nodeVersion), currentEngines)) {
-          engineTransformMessages.inRange++
-        } else {
-          if (currentEngines.match(/[=> <~]+/g)) {
-            engineTransformMessages.tooComplicated++
-            return
+        if (currentEngines) {
+          if (semver.satisfies(semver.coerce(nodeVersion), currentEngines)) {
+            engineTransformMessages.inRange++
+          } else {
+            if (currentEngines.match(/[=> <~]+/g)) {
+              engineTransformMessages.tooComplicated++
+              return
+            }
+            engineTransformMessages.updated++
+            inplace.set('engines.node', nodeVersion)
+            return inplace.toString()
           }
-          engineTransformMessages.updated++
-          inplace.set('engines.node', nodeVersion)
-          return inplace.toString()
         }
       }
     })
@@ -158,7 +160,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       head: newBranch,
       processed: false,
       travisModified,
-      nvmrcModified
+      nvmrcModified,
+      engineTransformMessages
     })
 
     // 4. Write issue and save issue doc
