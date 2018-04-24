@@ -544,6 +544,29 @@ branches:
   expect(updatedYML).toEqual(targetTravisYML)
 })
 
+test('update travisYML when node definition is at end of file', () => {
+  const travisYML = `language: node_js
+cache:
+  directories:
+  - node_modules
+notifications:
+  email: false
+node_js:
+  - '7'`
+  const targetTravisYML = `language: node_js
+cache:
+  directories:
+  - node_modules
+notifications:
+  email: false
+node_js:
+  - '7'
+  - '10'`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
 test('update travisYML when the old version is in inline syntax ("7")', () => {
   const travisYML = `language: node_js
 services:
