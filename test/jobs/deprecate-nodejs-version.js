@@ -72,10 +72,10 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
       .post('/repos/finnp/test/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()
         expect(body).toBeTruthy()
-        expect(body).toMatch('Version 4 of node.js (code name Argon) has been deprecated!')
-        expect(body).toMatch('Version 6 (Boron) is now the lowest actively maintained node.js version.')
+        expect(body).toMatch('Version 4 of Node.js (code name Argon) has been deprecated!')
+        expect(body).toMatch('Version 6 (Boron) is now the lowest actively maintained Node.js version.')
         expect(body).toMatch('- Upgraded away from the old version in your `.travis.yml`')
-        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new node version')
+        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new Node.js version')
         expect(body).toMatch('"/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
         expect(labels).toHaveLength(1)
         expect(labels).toContain('greenkeeper')
