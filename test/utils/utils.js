@@ -594,6 +594,33 @@ cache:
   expect(updatedYML).toEqual(targetTravisYML)
 })
 
+test('update travisYML when node definition is followed by a line with only whitespace', () => {
+  const travisYML = `---
+language: node_js
+node_js:
+  - "4"
+
+sudo: false
+
+cache:
+  directories:
+    - node_modules`
+  const targetTravisYML = `---
+language: node_js
+node_js:
+  - "4"
+  - "10"
+
+sudo: false
+
+cache:
+  directories:
+    - node_modules`
+  const versions = getNodeVersionsFromTravisYML(travisYML)
+  const updatedYML = addNodeVersionToTravisYML(travisYML, '10', 'Dubnium', versions)
+  expect(updatedYML).toEqual(targetTravisYML)
+})
+
 test('update travisYML when the old version is in inline syntax ("7")', () => {
   const travisYML = `language: node_js
 services:

@@ -156,7 +156,7 @@ const getNodeVersionsFromTravisYML = function (yml) {
     // this is our multi node config
     let lastgetNodeVersionIndex = lines.slice(nodeJSIndex + 1).findIndex((line) => {
       // node_js block ends either in an empty line or a new key, which must include a `:`
-      return line.match(/:/) || line.length === 0
+      return line.match(/:/) || line.trim().length === 0
     })
     if (lastgetNodeVersionIndex === -1) {
       lastgetNodeVersionIndex = lines.length
