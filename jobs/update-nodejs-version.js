@@ -161,6 +161,18 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     const travisModified = transforms[0].created
     const nvmrcModified = transforms[1].created
 
+    log.info('Creating branch doc', {
+      type: 'branch',
+      initial: false,
+      sha,
+      base: branch,
+      head: newBranch,
+      processed: false,
+      travisModified,
+      nvmrcModified,
+      engineTransformMessages
+    })
+
     await upsert(repositories, `${repositoryId}:branch:${sha}`, {
       type: 'branch',
       initial: false,
