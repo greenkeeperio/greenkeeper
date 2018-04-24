@@ -134,10 +134,18 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   const [owner, repo] = repoDoc.fullName.split('/')
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
-  log.info('github: repository info', {repositoryInfo: ghRepo})
-
   const branch = ghRepo.default_branch
   const newBranch = branchPrefix + 'update-to-node-' + nodeVersion
+
+  log.info('github: repository info', {
+    repositoryInfo: ghRepo,
+    installationId,
+    owner,
+    repo,
+    branch,
+    newBranch,
+    transforms
+  })
 
   const sha = await createBranch({ // try/catch
     installationId,
@@ -149,6 +157,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   })
 
   if (sha) {
+    log.info('Created branch for node update')
     const travisModified = transforms[0].created
     const nvmrcModified = transforms[1].created
 
