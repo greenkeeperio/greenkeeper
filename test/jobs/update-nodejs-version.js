@@ -19,7 +19,7 @@ describe('update nodejs version in .travis.yml only', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '1234', '12345', '321', '323'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-update-777', 'node-update-777:branch:1234abcd')
     ])
   })
 
@@ -491,6 +491,42 @@ stages:
     })
 
     ghNock.done()
+    expect(newJob).toBeFalsy()
+  })
+
+  test('do nothing if there is already a branch for this update', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'node-update-777',
+      accountId: '321',
+      fullName: 'garnix/test',
+      enabled: true,
+      type: 'repository'
+    })
+    await repositories.put({
+      _id: 'node-update-777:branch:1234abcd',
+      type: 'branch',
+      initial: false,
+      sha: '1234abcd',
+      base: 'master',
+      head: 'greenkeeper/update-to-node-10',
+      processed: false,
+      travisModified: true,
+      engineTransformMessages: { tooComplicated: 1, inRange: 1, updated: 1 },
+      repositoryId: 'node-update-777',
+      dependency: 'node-10',
+      dependencyType: 'node-update'
+    })
+    expect.assertions(1)
+
+    const updateNodeJSVersion = require('../../jobs/update-nodejs-version')
+
+    const newJob = await updateNodeJSVersion({
+      repositoryFullName: 'garnix/test',
+      nodeVersion: 10,
+      codeName: 'Dubnium'
+    })
+
     expect(newJob).toBeFalsy()
   })
 })

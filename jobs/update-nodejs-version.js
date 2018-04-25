@@ -37,12 +37,22 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
   }
 
   const repositoryId = _.get(repoDoc, '_id')
-
   const accountId = repoDoc.accountId
-  const installation = await installations.get(accountId)
-  const installationId = installation.installation
   const logs = dbs.getLogsDb()
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'update-nodejs-version'})
+
+  const existingBranches = await repositories.query('branch_by_dependency', {
+    key: [repositoryId, `node-${nodeVersion}`, 'node-update'],
+    include_docs: false
+  })
+
+  if (existingBranches && existingBranches.rows.length !== 0) {
+    log.warn(`exited: branchDoc for update to ${nodeVersion} already exists`, existingBranches.rows[0])
+    return
+  }
+
+  const installation = await installations.get(accountId)
+  const installationId = installation.installation
 
   const config = getConfig(repoDoc)
   const { branchPrefix, label } = config
@@ -161,7 +171,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     const travisModified = transforms[0].created
     const nvmrcModified = transforms[1].created
 
-    log.info('Creating branch doc', {
+    const branchData = {
       type: 'branch',
       initial: false,
       sha,
@@ -170,20 +180,14 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       processed: false,
       travisModified,
       nvmrcModified,
-      engineTransformMessages
-    })
+      engineTransformMessages,
+      repositoryId,
+      dependency: `node-${nodeVersion}`,
+      dependencyType: 'node-update'
+    }
 
-    await upsert(repositories, `${repositoryId}:branch:${sha}`, {
-      type: 'branch',
-      initial: false,
-      sha,
-      base: branch,
-      head: newBranch,
-      processed: false,
-      travisModified,
-      nvmrcModified,
-      engineTransformMessages
-    })
+    log.info('Creating branch doc', branchData)
+    await upsert(repositories, `${repositoryId}:branch:${sha}`, branchData)
 
     // 4. Write issue and save issue doc
     const body = issueContent({
