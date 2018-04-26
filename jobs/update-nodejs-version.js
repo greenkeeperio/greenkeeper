@@ -213,7 +213,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       type: 'issue',
       repositoryId,
       number,
-      state: 'open'
+      state: 'open',
+      dependency: `node-${nodeVersion}`
     })
   }
 }
