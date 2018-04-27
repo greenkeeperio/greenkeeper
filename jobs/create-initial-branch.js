@@ -39,7 +39,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     return
   }
 
-  const config = getConfig(repoDoc)
+  let config = getConfig(repoDoc)
   log.info(`config for ${repoDoc.fullName}`, {config})
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
@@ -76,6 +76,9 @@ module.exports = async function ({ repositoryId, closes = [] }) {
       })
     }
   }
+
+  // Get config again after updateRepoDoc, because it now has the package.json entries
+  config = getConfig(repoDoc)
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
