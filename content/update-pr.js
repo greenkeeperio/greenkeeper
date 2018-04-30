@@ -8,15 +8,15 @@ module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type
   <tr>
     <th align=left>
       Dependency
-    </td>
+    </th>
     <td>
-      ${dependency}
+      <code>${dependency}</code>
     </td>
   </tr>
   <tr>
     <th align=left>
       Current Version
-    </td>
+    </th>
     <td>
       ${oldVersionResolved}
     </td>
@@ -24,7 +24,7 @@ module.exports = ({version, dependencyLink, dependency, oldVersionResolved, type
   <tr>
     <th align=left>
       Type
-    </td>
+    </th>
     <td>
       ${type.replace(/ies$/, 'y')}
     </td>

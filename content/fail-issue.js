@@ -37,7 +37,7 @@ module.exports = ({version, dependencyLink, owner, repo, base, head, dependency,
       Dependency
     </td>
     <td>
-      ${dependency}
+      <code>${dependency}</code>
     </td>
   </tr>
   <tr>
