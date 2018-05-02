@@ -36,7 +36,7 @@ module.exports = async function (
     var npmDbDoc = await npm.get(npmDoc._id)
   } catch (err) {
     if (err.status !== 404) throw err
-    log.warn('error: failed to load npmDoc for dependency', {dependency})
+    log.warn(`Warning: failed to load npmDoc for ${dependency} (Is probably new).`)
     npmDbDoc = {}
   }
 
@@ -44,7 +44,7 @@ module.exports = async function (
   const distTag = _.findKey(distTags, (version, tag) => {
     const oldVersion = oldDistTags[tag]
     if (!oldVersion) {
-      log.info('first installation of dependency')
+      log.info(`exited: nothing to update, is first release of ${dependency}`)
       return true
     }
 
@@ -96,7 +96,7 @@ module.exports = async function (
   })).rows
 
   if (!packageFilesForUpdatedDependency.length) {
-    log.info('exited: no repoDocs that have that dependency found')
+    log.info(`exited: no repoDocs found that depend on ${dependency}`)
     return
   }
   log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that have that dependency`, { packageFilesForUpdatedDependency })
