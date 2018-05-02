@@ -21,7 +21,7 @@ const showTravisMessage = function (travisModified) {
 }
 
 module.exports = ({owner, repo, base, head, nodeVersion, codeName, travisModified, nvmrcModified, engineTransformMessages}) => {
-  const compareURL = generateGitHubCompareURL('', `${owner}/${repo}`, base, head)
+  const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ## Version ${nodeVersion} of Node.js (code name ${codeName}) has been released! 🎊
 

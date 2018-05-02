@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const env = require('../lib/env')
 const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
@@ -134,10 +135,10 @@ function createTransformFunction (type, dependency, version, log) {
   }
 }
 
-const generateGitHubCompareURL = function (githubURL = '', fullName, branch, compareWith) {
+const generateGitHubCompareURL = function (fullName, branch, compareWith) {
   // Discussion: https://github.com/greenkeeperio/greenkeeper/issues/682
   // https://github.com/$USER/$REPO/compare/$REV_A...$REV_B
-  return `${githubURL}/${fullName}/compare/${encodeURIComponent(branch)}...${encodeURIComponent(fullName.split('/')[0])}:${encodeURIComponent(compareWith)}`
+  return `${env.GITHUB_URL}/${fullName}/compare/${encodeURIComponent(branch)}...${encodeURIComponent(fullName.split('/')[0])}:${encodeURIComponent(compareWith)}`
 }
 
 const getNodeVersionsFromTravisYML = function (yml) {
