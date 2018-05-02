@@ -74,7 +74,7 @@ describe('update nodejs version in .travis.yml only', () => {
         expect(body).toBeTruthy()
         expect(body).toMatch('Version 10 of Node.js (code name Dubnium) has been released!')
         expect(body).toMatch('- Added the new Node.js version to your `.travis.yml`')
-        expect(body).toMatch('"/finnp/test/compare/master...finnp:greenkeeper%2Fupdate-to-node-10"')
+        expect(body).toMatch('"https://github.com/finnp/test/compare/master...finnp:greenkeeper%2Fupdate-to-node-10"')
         expect(body).toMatch('- The engines config in 1 of your `package.json` files was updated to the new Node.js version')
         expect(body).toMatch('- The new Node.js version is in-range for the engines in 1 of your `package.json` files, so that was left alone')
         expect(body).toMatch('- The engines config in 1 of your `package.json` files was too ambiguous to be updated automatically')
