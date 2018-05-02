@@ -19,7 +19,7 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '1234', '12345', '321'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd')
     ])
   })
 
@@ -76,7 +76,7 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
         expect(body).toMatch('Version 6 (Boron) is now the lowest actively maintained Node.js version.')
         expect(body).toMatch('- Upgraded away from the old version in your `.travis.yml`')
         expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new Node.js version')
-        expect(body).toMatch('"/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
+        expect(body).toMatch('"https://github.com/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
         expect(labels).toHaveLength(1)
         expect(labels).toContain('greenkeeper')
         return true
@@ -368,6 +368,44 @@ branches:
     })
 
     ghNock.done()
+    expect(newJob).toBeFalsy()
+  })
+
+  test('do nothing if there is already a branch for this update', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'node-deprecation-777',
+      accountId: '321',
+      fullName: 'garnix/test',
+      enabled: true,
+      type: 'repository'
+    })
+    await repositories.put({
+      _id: 'node-deprecation-777:branch:1234abcd',
+      type: 'branch',
+      initial: false,
+      sha: '1234abcd',
+      base: 'master',
+      head: 'greenkeeper/deprecation-of-node-4',
+      processed: false,
+      travisModified: true,
+      engineTransformMessages: { updated: 1 },
+      repositoryId: 'node-deprecation-777',
+      dependency: 'node-4',
+      dependencyType: 'node-deprecation'
+    })
+    expect.assertions(1)
+
+    const deprecateNodeJSVersion = require('../../jobs/deprecate-nodejs-version')
+
+    const newJob = await deprecateNodeJSVersion({
+      repositoryFullName: 'garnix/test',
+      nodeVersion: '4',
+      codeName: 'Argon',
+      newLowestVersion: 6,
+      newLowestCodeName: 'Boron'
+    })
+
     expect(newJob).toBeFalsy()
   })
 })

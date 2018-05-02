@@ -44,6 +44,16 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
   const logs = dbs.getLogsDb()
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'deprecate-nodejs-version'})
 
+  const existingBranches = await repositories.query('branch_by_dependency', {
+    key: [repositoryId, `node-${nodeVersion}`, 'node-deprecation'],
+    include_docs: false
+  })
+
+  if (existingBranches && existingBranches.rows.length !== 0) {
+    log.warn(`exited: branchDoc for deprecation of ${nodeVersion} already exists`, existingBranches.rows[0])
+    return
+  }
+
   const config = getConfig(repoDoc)
   const { branchPrefix, label } = config
   log.info(`config for ${repoDoc.fullName}`, {config})
@@ -157,10 +167,11 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
   })
 
   if (sha) {
+    log.info('Created branch for node deprecation')
     const travisModified = transforms[0].created
     const nvmrcModified = transforms[1].created
 
-    await upsert(repositories, `${repositoryId}:branch:${sha}`, {
+    const branchData = {
       type: 'branch',
       initial: false,
       sha,
@@ -169,9 +180,14 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       processed: false,
       travisModified,
       nvmrcModified,
+      engineTransformMessages,
+      repositoryId,
       dependency: `node-${nodeVersion}`,
       dependencyType: 'node-deprecation'
-    })
+    }
+
+    log.info('Creating branch doc', branchData)
+    await upsert(repositories, `${repositoryId}:branch:${sha}`, branchData)
 
     // 4. Write issue and save issue doc
     const body = issueContent({
