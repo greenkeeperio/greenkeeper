@@ -214,7 +214,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
       repositoryId,
       number,
       state: 'open',
-      dependency: `node-${nodeVersion}`
+      dependency: `node-${nodeVersion}`,
+      dependencyType: 'node-update'
     })
   }
 }

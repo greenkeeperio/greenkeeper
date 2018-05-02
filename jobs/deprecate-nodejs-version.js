@@ -168,7 +168,9 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       head: newBranch,
       processed: false,
       travisModified,
-      nvmrcModified
+      nvmrcModified,
+      dependency: `node-${nodeVersion}`,
+      dependencyType: 'node-deprecation'
     })
 
     // 4. Write issue and save issue doc
@@ -197,7 +199,9 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       type: 'issue',
       repositoryId,
       number,
-      state: 'open'
+      state: 'open',
+      dependency: `node-${nodeVersion}`,
+      dependencyType: 'node-deprecation'
     })
   }
 }
