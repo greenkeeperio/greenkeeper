@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const semver = require('semver')
+const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const updatedAt = require('../lib/updated-at')
@@ -17,6 +18,9 @@ module.exports = async function (
   { dependency, distTags, versions, installation }
 ) {
   const { installations, repositories, npm } = await dbs()
+  const logs = dbs.getLogsDb()
+  const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change'})
+  log.info(`started registry-change for dependency ${dependency}`, {dependency, versions})
 
   const isFromHook = _.isString(installation)
   let npmDoc = {
@@ -32,24 +36,34 @@ module.exports = async function (
     var npmDbDoc = await npm.get(npmDoc._id)
   } catch (err) {
     if (err.status !== 404) throw err
+    log.warn(`Warning: failed to load npmDoc for ${dependency} (Is probably new).`)
     npmDbDoc = {}
   }
 
   const oldDistTags = npmDbDoc.distTags || {}
   const distTag = _.findKey(distTags, (version, tag) => {
     const oldVersion = oldDistTags[tag]
-    if (!oldVersion) return true
+    if (!oldVersion) {
+      log.info(`exited: nothing to update, is first release of ${dependency}`)
+      return true
+    }
 
     return semver.lt(oldVersion, version)
   })
 
-  if (!distTag) return
+  if (!distTag) {
+    log.info('exited: dependency has no distTag')
+    return
+  }
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
   // currently we only handle latest versions
   // so we can heavily optimise by exiting here
   // we want to handle different distTags in the future
-  if (distTag !== 'latest') return
+  if (distTag !== 'latest') {
+    log.info('exited: dependency distTag is not latest')
+    return
+  }
 
   /*
   Update: 'by_dependency' handles multiple package.json files, but not in the same result.
@@ -81,11 +95,15 @@ module.exports = async function (
     key: dependency
   })).rows
 
-  if (!packageFilesForUpdatedDependency.length) return
+  if (!packageFilesForUpdatedDependency.length) {
+    log.info(`exited: no repoDocs found that depend on ${dependency}`)
+    return
+  }
+  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that have that dependency`, { packageFilesForUpdatedDependency })
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
 
-  // check if package has a greenkeeperrc / more then 1 package json or package.json is in subdirectory
+  // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
 
   let jobs = []
@@ -168,5 +186,6 @@ module.exports = async function (
       }
     }))
   ]
+  log.success(`registry-change jobs for dependency ${dependency} created`, { jobs })
   return jobs
 }
