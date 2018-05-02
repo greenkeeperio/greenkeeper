@@ -4,11 +4,18 @@ const {
   filterAndSortPackages,
   getSatisfyingVersions,
   getOldVersionResolved,
-  generateGitHubCompareURL,
   getNodeVersionsFromTravisYML,
   addNodeVersionToTravisYML,
   addNewLowestAndDeprecate
 } = require('../../utils/utils')
+
+const { cleanCache } = require('../helpers/module-cache-helpers')
+
+beforeEach(() => {
+  delete process.env.GITHUB_URL
+  cleanCache('../../lib/env')
+  jest.resetModules()
+})
 
 test('seperateNormalAndMonorepos', () => {
   const input = [
@@ -242,21 +249,22 @@ test('getOldVersionResolved', () => {
   expect(output).toEqual('9.3.1')
 })
 
-test('generate relative github compare URL', () => {
-  const githubURL = undefined
+test('Use default env.GITHUB_URL in github compare URL', () => {
   const fullName = 'hanshansen/mopeds'
   const branch = 'master'
   const compareWith = 'greenkeeper/frontend/standard-10.0.0'
-  const url = generateGitHubCompareURL(githubURL, fullName, branch, compareWith)
-  expect(url).toEqual('/hanshansen/mopeds/compare/master...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
+  const { generateGitHubCompareURL } = require('../../utils/utils')
+  const url = generateGitHubCompareURL(fullName, branch, compareWith)
+  expect(url).toEqual('https://github.com/hanshansen/mopeds/compare/master...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
 })
 
-test('generate absolute github compare URL', () => {
-  const githubURL = 'https://superprivategit.megacorp.com'
+test('respect env.GITHUB_URL in github compare URL', () => {
+  process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const fullName = 'hanshansen/mopeds'
   const branch = 'dev'
   const compareWith = 'greenkeeper/frontend/standard-10.0.0'
-  const url = generateGitHubCompareURL(githubURL, fullName, branch, compareWith)
+  const { generateGitHubCompareURL } = require('../../utils/utils')
+  const url = generateGitHubCompareURL(fullName, branch, compareWith)
   expect(url).toEqual('https://superprivategit.megacorp.com/hanshansen/mopeds/compare/dev...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
 })
 

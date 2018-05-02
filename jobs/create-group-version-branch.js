@@ -210,7 +210,7 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
-  const compareURL = generateGitHubCompareURL(env.GITHUB_URL, repository.fullName, base, newBranch)
+  const compareURL = generateGitHubCompareURL(repository.fullName, base, newBranch)
 
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
