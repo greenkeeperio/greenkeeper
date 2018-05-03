@@ -99,7 +99,7 @@ module.exports = async function (
     log.info(`exited: no repoDocs found that depend on ${dependency}`)
     return
   }
-  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that have that dependency`, { packageFilesForUpdatedDependency })
+  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that have that dependency`)
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
 
@@ -186,6 +186,6 @@ module.exports = async function (
       }
     }))
   ]
-  log.success(`registry-change jobs for dependency ${dependency} created`, { jobs })
+  log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
 }
