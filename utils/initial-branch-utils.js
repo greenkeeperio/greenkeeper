@@ -44,7 +44,7 @@ async function addNPMPackageData (dependencyInfo, registryGet, log) {
       })
       return dep
     } catch (err) {
-      log.error('npm: Could not get package data', {dependency: dep})
+      log.error('npm: Could not get package data', {dependency: dep, error: err})
     }
   })
 }
