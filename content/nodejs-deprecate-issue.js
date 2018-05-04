@@ -18,15 +18,20 @@ const showTravisMessage = function (travisModified) {
   if (travisModified) return '- Upgraded away from the old version in your `.travis.yml`\n'
 }
 
-module.exports = ({owner, repo, base, head, nodeVersion, codeName, newLowestVersion, newLowestCodeName, travisModified, nvmrcModified, engineTransformMessages}) => {
+const showBlogpost = function (announcementURL) {
+  if (announcementURL) return `\nYou can find out more about the deprecation and possible update strategies [in this Node.js foundation announcement](${announcementURL}).`
+}
+
+module.exports = ({owner, repo, base, head, nodeVersion, codeName, newLowestVersion, newLowestCodeName, travisModified, nvmrcModified, engineTransformMessages, announcementURL}) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ## Version ${nodeVersion} of Node.js (code name ${codeName}) has been deprecated! 🚑
 
-Version ${newLowestVersion} (${newLowestCodeName}) is now the lowest actively maintained Node.js version.
-Greenkeeper has already created a branch with the following changes:
+It is no longer maintained and will not receive any more security updates. Version ${newLowestVersion} (${newLowestCodeName}) is now the lowest actively maintained Node.js version.
+To see what effect this update would have on your code, Greenkeeper has already created a branch with the following changes:
 ${showTravisMessage(travisModified)}${showNVMRCMessage(nvmrcModified)}${showEngineTransformMessages(engineTransformMessages)}
-If you’re interested in deprecating Node.js ${nodeVersion} in this repo, you can <a href="${compareURL}">open a PR with these changes</a>.
+If you’re interested in removing support for Node.js ${nodeVersion} from this repo, you can <a href="${compareURL}">open a PR with these changes</a>.
+${showBlogpost(announcementURL)}
 
 ---
 

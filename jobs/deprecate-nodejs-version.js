@@ -16,7 +16,7 @@ const {
 const upsert = require('../lib/upsert')
 const issueContent = require('../content/nodejs-deprecate-issue')
 
-module.exports = async function ({ repositoryFullName, nodeVersion, codeName, newLowestVersion, newLowestCodeName }) {
+module.exports = async function ({ repositoryFullName, nodeVersion, codeName, newLowestVersion, newLowestCodeName, announcementURL }) {
   nodeVersion = nodeVersion.toString()
   newLowestVersion = newLowestVersion.toString()
   repositoryFullName = repositoryFullName.toLowerCase()
@@ -201,7 +201,8 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
       newLowestCodeName,
       travisModified,
       nvmrcModified,
-      engineTransformMessages
+      engineTransformMessages,
+      announcementURL
     })
     const { number } = await githubQueue(installationId).write(github => github.issues.create({
       owner,
