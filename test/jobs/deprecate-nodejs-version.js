@@ -7,8 +7,14 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 describe('deprecate and update nodejs version in .travis.yml only', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     jest.setTimeout(10000)
+    const { installations } = await dbs()
+    await installations.put({
+      _id: '1234',
+      installation: 137,
+      plan: 'free'
+    })
   })
 
   beforeEach(() => {
@@ -19,7 +25,7 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '1234', '12345', '321'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '56', '56:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd')
     ])
   })
 
@@ -54,7 +60,7 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
         }
       }
     })
-    expect.assertions(25)
+    expect.assertions(26)
 
     const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -77,6 +83,8 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
         expect(body).toMatch('- Upgraded away from the old version in your `.travis.yml`')
         expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new Node.js version')
         expect(body).toMatch('"https://github.com/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
+        // We didn’t pass in an announcementURL, so that shouldn’t be there
+        expect(body).not.toMatch('You can find out more about the deprecation and possible update strategies')
         expect(labels).toHaveLength(1)
         expect(labels).toContain('greenkeeper')
         return true
@@ -178,12 +186,7 @@ after_success: npm run deploy`
   })
 
   test('update version in nvmrc', async () => {
-    const { installations, repositories } = await dbs()
-    await installations.put({
-      _id: '1234',
-      installation: 137,
-      plan: 'free'
-    })
+    const { repositories } = await dbs()
     await repositories.put({
       _id: '55',
       accountId: '1234',
@@ -238,6 +241,76 @@ after_success: npm run deploy`
     expect(newJob).toBeFalsy()
 
     const newBranch = await repositories.get('55:branch:1234abcd')
+
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeFalsy()
+    expect(newBranch.base).toEqual('master')
+    expect(newBranch.head).toEqual('greenkeeper/deprecate-node-4')
+    expect(newBranch.travisModified).toBeFalsy()
+    expect(newBranch.nvmrcModified).toBeTruthy()
+  })
+
+  test('show announcementURL if passed in', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '56',
+      accountId: '1234',
+      fullName: 'horst/test',
+      enabled: true,
+      type: 'repository'
+    })
+    expect.assertions(11)
+
+    const ghNock = nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/horst/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/horst/test/issues', ({ title, body, labels }) => {
+        expect(body).toBeTruthy()
+        expect(body).toMatch('You can find out more about the deprecation and possible update strategies [in this Node.js foundation announcement](https://medium.com/the-node-js-collection/april-2018-release-updates-from-the-node-js-project-71687e1f7742)')
+        return true
+      })
+      .reply(201, () => {
+        // issue created
+        expect(true).toBeTruthy()
+        return {
+          number: 10
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      const inputNvmrc = '4.12.1'
+      const targetNvmrc = '6\n'
+      const updatedNvmrc = transforms[1].transform(inputNvmrc)
+      transforms[1].created = true
+      expect(updatedNvmrc).toEqual(targetNvmrc)
+      return '1234abcd'
+    })
+
+    const deprecateNodeJSVersion = require('../../jobs/deprecate-nodejs-version')
+
+    const newJob = await deprecateNodeJSVersion({
+      repositoryFullName: 'horst/test',
+      nodeVersion: '4',
+      codeName: 'Argon',
+      newLowestVersion: 6,
+      newLowestCodeName: 'Boron',
+      announcementURL: 'https://medium.com/the-node-js-collection/april-2018-release-updates-from-the-node-js-project-71687e1f7742'
+    })
+    ghNock.done()
+    expect(newJob).toBeFalsy()
+
+    const newBranch = await repositories.get('56:branch:1234abcd')
 
     expect(newBranch.type).toEqual('branch')
     expect(newBranch.initial).toBeFalsy()
