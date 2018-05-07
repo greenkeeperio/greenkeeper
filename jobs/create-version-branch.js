@@ -151,6 +151,7 @@ module.exports = async function (
       group = [dependency]
     }
 
+    let shouldCreateVersionBranch = false
     group.forEach(dep => {
       const oldPkgVersion = _.get(json, [type, dep])
       if (!oldPkgVersion) {
@@ -163,8 +164,11 @@ module.exports = async function (
         return
       }
 
+      shouldCreateVersionBranch = true
       parsed.set([type, dep], getRangedVersion(version, oldPkgVersion))
     })
+
+    if (!shouldCreateVersionBranch) return
     return parsed.toString()
   }
 
