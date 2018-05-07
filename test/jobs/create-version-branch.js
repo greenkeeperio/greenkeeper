@@ -1127,13 +1127,167 @@ describe('create version brach', () => {
   })
 })
 
+/*
+  Monorepo section
+*/
+describe.only('create version branch for dependencies from monorepos', () => {
+  beforeEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
+    nock.cleanAll()
+  })
+  beforeAll(async () => {
+    const { installations } = await dbs()
+    await installations.put({
+      _id: 'mono-123',
+      installation: 1
+    })
+  })
+
+  test('new pull request', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '1',
+      accountId: '123',
+      fullName: 'finnp/test',
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    // expect.assertions(13)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+        '/repos/finnp/test/issues/66/labels',
+        body => body[0] === 'customlabel'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/get-infos', () => ({
+      installationId, dependency, version, diffBase, versions
+    }) => {
+      // used get-infos
+      expect(true).toBeTruthy()
+
+      expect(versions).toEqual({
+        '1.0.0': {},
+        '2.0.0': {}
+      })
+
+      expect(version).toEqual('2.0.0')
+      expect(installationId).toBe(1)
+      expect(dependency).toEqual('@finnpauls/dep')
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            devDependencies: {
+              '@finnpauls/dep': '^1.0.0'
+            }
+          })
+        )
+      )
+      const devDependency = newPkg.devDependencies['@finnpauls/dep']
+      expect(devDependency).toEqual('^2.0.0')
+      return '1234abcd'
+    })
+    // { isPartOfMonorepo, hasAllMonorepoUdates, getMonorepoGroup } = require('../lib/monorepo')
+    jest.mock('../../lib/monorepo', () => {
+      return {
+        isPartOfMonorepo: () => true,
+        hasAllMonorepoUdates: () => true,
+        getMonorepoGroup: () => '@finnpausl/dep'
+      }
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '123-mono',
+      repositoryId: '1',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('1:branch:1234abcd')
+    const pr = await repositories.get('1:pr:321')
+    expect(branch.processed).toBeTruthy()
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
+})
 afterAll(async () => {
   const { installations, repositories, payments } = await dbs()
 
   await Promise.all([
-    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
+    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
+    'mono-123'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', '1'),
     removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
   ])
 })
