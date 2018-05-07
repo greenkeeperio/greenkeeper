@@ -1130,7 +1130,7 @@ describe('create version brach', () => {
 /*
   Monorepo section
 */
-describe.only('create version branch for dependencies from monorepos', () => {
+describe('create version branch for dependencies from monorepos', () => {
   beforeEach(() => {
     jest.resetModules()
     jest.clearAllMocks()
@@ -1147,8 +1147,8 @@ describe.only('create version branch for dependencies from monorepos', () => {
   test('new pull request', async () => {
     const { repositories } = await dbs()
     await repositories.put({
-      _id: '1',
-      accountId: '123',
+      _id: 'mono-1',
+      accountId: 'mono-123',
       fullName: 'finnp/test',
       packages: {
         'package.json': {
@@ -1158,7 +1158,7 @@ describe.only('create version branch for dependencies from monorepos', () => {
         }
       }
     })
-    // expect.assertions(13)
+    expect.assertions(15)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/1/access_tokens')
@@ -1207,15 +1207,8 @@ describe.only('create version branch for dependencies from monorepos', () => {
     }) => {
       // used get-infos
       expect(true).toBeTruthy()
-
-      expect(versions).toEqual({
-        '1.0.0': {},
-        '2.0.0': {}
-      })
-
       expect(version).toEqual('2.0.0')
-      expect(installationId).toBe(1)
-      expect(dependency).toEqual('@finnpauls/dep')
+
       return {
         dependencyLink: '[]()',
         release: 'the release',
@@ -1242,20 +1235,28 @@ describe.only('create version branch for dependencies from monorepos', () => {
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
     })
-    // { isPartOfMonorepo, hasAllMonorepoUdates, getMonorepoGroup } = require('../lib/monorepo')
     jest.mock('../../lib/monorepo', () => {
       return {
-        isPartOfMonorepo: () => true,
-        hasAllMonorepoUdates: () => true,
-        getMonorepoGroup: () => '@finnpausl/dep'
+        isPartOfMonorepo: (devDependency) => {
+          expect(devDependency).toEqual('@finnpauls/dep')
+          return true
+        },
+        hasAllMonorepoUdates: (devDependency) => {
+          expect(devDependency).toEqual('@finnpauls/dep')
+          return true
+        },
+        getMonorepoGroup: (devDependency) => {
+          expect(devDependency).toEqual('@finnpauls/dep')
+          return ['@finnpauls/dep']
+        }
       }
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
       dependency: '@finnpauls/dep',
-      accountId: '123-mono',
-      repositoryId: '1',
+      accountId: 'mono-123',
+      repositoryId: 'mono-1',
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
@@ -1275,9 +1276,71 @@ describe.only('create version branch for dependencies from monorepos', () => {
 
     const branch = await repositories.get('1:branch:1234abcd')
     const pr = await repositories.get('1:pr:321')
+
     expect(branch.processed).toBeTruthy()
+    // TODO we have to rename the branch
+    expect(branch.head).toEqual('greenkeeper/@finnpauls/dep-2.0.0')
+
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
+  })
+
+  test('no new pull request or branch if repo does not have all monorepo updates', async () => {
+    expect.assertions(4)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/monorepo', () => {
+      return {
+        isPartOfMonorepo: (devDependency) => {
+          expect(devDependency).toEqual('@avocado/dep1')
+          return true
+        },
+        hasAllMonorepoUdates: (devDependency) => {
+          expect(devDependency).toEqual('@avocado/dep1')
+          return false
+        },
+        getMonorepoGroup: (devDependency) => {
+          return ['@avocado/dep1', '@avocado/dep2']
+        }
+      }
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@avocado/dep1',
+      accountId: 'mono-123',
+      repositoryId: 'mono-1',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
   })
 })
 afterAll(async () => {
@@ -1287,7 +1350,7 @@ afterAll(async () => {
     removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
     'mono-123'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', '1'),
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1'),
     removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
   ])
 })
