@@ -51,8 +51,9 @@ describe('create version branch', () => {
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
       removeIfExists(payments, '124', '125'),
-      removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages'),
-      removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
+      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages'),
+      removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd',
+        '41:pr:321', '50:pr:321', '1:pr:3210')
     ])
   })
 
