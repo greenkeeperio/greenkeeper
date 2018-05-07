@@ -8,7 +8,7 @@ const statsd = require('../../../lib/statsd')
 
 const { createDocs } = require('../../../lib/repository-docs')
 
-const max404Retries = 2
+const max404Retries = 5
 
 module.exports = async function ({ installation, repositories_added }) {
   const { repositories: reposDb } = await dbs()
