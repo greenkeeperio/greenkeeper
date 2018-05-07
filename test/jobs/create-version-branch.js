@@ -727,6 +727,90 @@ describe('create version brach', () => {
     expect(newJob).toBeFalsy()
   })
 
+  test('ignore ignored devDependency + empty gk config in repodoc', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '51',
+      accountId: '123',
+      fullName: 'treasure-data/td-js-sdk',
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            ignore: ['domready', 'karma', 'mocha']
+          },
+          'devDependencies': {
+            'expect.js': '^0.3.1',
+            'express': '^4.14.0',
+            'glob': '^7.0.5',
+            'js-polyfills': '^0.1.34',
+            'karma': '1.3.0',
+            'karma-browserstack-launcher': '^1.3.0',
+            'karma-chrome-launcher': '^2.2.0',
+            'karma-firefox-launcher': '^1.0.1',
+            'karma-min-reporter': '^0.1.0',
+            'karma-mocha': '^1.3.0',
+            'karma-safari-launcher': '^1.0.0',
+            'karma-webpack': '^2.0.4',
+            'mocha': '^2.5.3',
+            'parse-domain': '^2.0.0',
+            'phantomjs-prebuilt': '^2.1.7',
+            'requirejs': '^2.2.0',
+            'selenium-standalone': '^5.4.0',
+            'simple-mock': '^0.8.0',
+            'standard': '^11.0.0',
+            'tape': '^4.6.0',
+            'uglifyjs': '^2.4.10',
+            'uglifyjs-webpack-plugin': '^0.4.6',
+            'wd': '^1.5.0',
+            'webpack': '^1.13.1'
+          },
+          'dependencies': {
+            'domready': '^0.3.0',
+            'global': '^4.3.0',
+            'json3': '^3.3.2',
+            'jsonp': '0.2.1',
+            'lodash-compat': '^3.10.1'
+          }
+        }
+      },
+      greenkeeper: {}
+    })
+
+    const githubMock = nock('https://api.github.com')
+    .post('/installations/37/access_tokens')
+    .optionally()
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .optionally()
+    .reply(200, {})
+    .get('/repos/treasure-data/td-js-sdk')
+    .reply(200, {
+      default_branch: 'master'
+    })
+    .log(console.log)
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'karma',
+      distTag: 'latest',
+      accountId: '123',
+      repositoryId: '51',
+      type: 'devDependencies',
+      distTags: {
+        latest: '2.0.2'
+      },
+      oldVersion: '1.3.0'
+    })
+
+    console.log(githubMock.isDone())
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
   test('bails if in range and shrinkwrap', async () => {
     expect.assertions(1)
 

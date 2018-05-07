@@ -58,9 +58,9 @@ describe('registry change create jobs', async () => {
   afterAll(async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '999', '123-two-packages', '123-two-groups'),
-      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups'),
-      removeIfExists(npm, 'standard', 'eslint', 'lodash')
+      removeIfExists(installations, '999', '123-two-packages', '123-two-groups', '123-two-repos'),
+      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups', 'rg-no-monorepo', 'rg-monorepo'),
+      removeIfExists(npm, 'standard', 'eslint', 'lodash', 'redux')
     ])
   })
 
@@ -345,5 +345,110 @@ describe('registry change create jobs', async () => {
     expect(newJobs[1].data.monorepo).toHaveLength(1)
     expect(newJobs[1].data.monorepo[0].value.filename).toEqual('package.json')
     expect(newJobs[1].data.accountId).toEqual('123-two-groups')
+  })
+
+  test('creates one monorepo and one non-monorepo-job', async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: '123-two-repos',
+        installation: 10409,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: 'rg-no-monorepo',
+        enabled: true,
+        type: 'repository',
+        fullName: 'amy/no-monorepo',
+        accountId: '123-two-repos',
+        packages: {
+          'package.json': {
+            dependencies: {
+              redux: '1.0.0'
+            }
+          }
+        }
+      }),
+      repositories.put({
+        _id: 'rg-monorepo',
+        enabled: true,
+        type: 'repository',
+        fullName: 'ilse/monorepo',
+        accountId: '123-two-repos',
+        packages: {
+          'package.json': {
+            dependencies: {
+              redux: '1.0.0'
+            }
+          },
+          'frontend/package.json': {
+            dependencies: {
+              redux: '1.0.0'
+            }
+          }
+        },
+        greenkeeper: {
+          'groups': {
+            'frontend': {
+              'packages': [
+                'frontend/package.json'
+              ]
+            },
+            'backend': {
+              'packages': [
+                'package.json'
+              ]
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'redux',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'redux',
+      distTags: {
+        latest: '8.0.0'
+      },
+      versions: {
+        '8.0.0': {
+          gitHead: 'tomato'
+        },
+        '1.0.0': {
+          gitHead: 'tomato'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJobs).toHaveLength(3)
+    const noMonorepoJob = newJobs[2].data
+    const firstMonorepoJob = newJobs[0].data
+    const scndMonorepoJob = newJobs[1].data
+
+    // no monorepo job
+    expect(noMonorepoJob.name).toEqual('create-version-branch')
+    expect(noMonorepoJob.monorepo).toBeFalsy()
+    expect(noMonorepoJob.accountId).toEqual('123-two-repos')
+
+    // monorepo jobs
+    expect(firstMonorepoJob.name).toEqual('create-group-version-branch')
+    expect(noMonorepoJob.accountId).toEqual('123-two-repos')
+    expect(firstMonorepoJob.monorepo).toHaveLength(1)
+    expect(firstMonorepoJob.monorepo[0].key).toEqual('redux')
+    expect(firstMonorepoJob.monorepo[0].value.filename).toEqual('frontend/package.json')
+
+    expect(scndMonorepoJob.name).toEqual('create-group-version-branch')
+    expect(scndMonorepoJob.monorepo).toHaveLength(1)
+    expect(scndMonorepoJob.monorepo[0].key).toEqual('redux')
+    expect(scndMonorepoJob.monorepo[0].value.filename).toEqual('package.json')
+    expect(scndMonorepoJob.accountId).toEqual('123-two-repos')
   })
 })

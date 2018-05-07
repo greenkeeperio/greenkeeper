@@ -8,7 +8,7 @@ const statsd = require('../../../lib/statsd')
 
 const { createDocs } = require('../../../lib/repository-docs')
 
-const max404Retries = 5
+const max404Retries = 2
 
 module.exports = async function ({ installation, repositories_added }) {
   const { repositories: reposDb } = await dbs()
@@ -23,6 +23,14 @@ module.exports = async function ({ installation, repositories_added }) {
   log.info('started', { repositories_added })
   if (!repositories_added.length) {
     log.warn('exited: no repositories selected')
+    return
+  }
+  // spam :(
+  if (['23046691', '1623538'].includes(installation.account.id) ||
+    (repositories_added[0] && repositories_added[0].fullName &&
+      (repositories_added[0].fullName.includes('dalavanmanphonsy') ||
+      repositories_added[0].fullName.includes('CNXTEoEorg')))) {
+    log.warn('exited: spam')
     return
   }
 

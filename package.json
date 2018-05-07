@@ -18,6 +18,7 @@
     "json-in-place": "^1.0.1",
     "jsonwebtoken": "^8.1.1",
     "lodash": "^4.16.1",
+    "mergejson": "^1.0.30",
     "nodemailer": "^4.0.1",
     "npm-registry-client": "^8.3.0",
     "pouchdb-http": "^6.0.2",
@@ -30,7 +31,7 @@
     "request-promise": "^4.1.1",
     "retry-promise": "^1.0.0",
     "rollbar": "^2.0.3",
-    "semver": "^5.3.0",
+    "semver": "^5.5.0",
     "stripe": "^5.3.0",
     "yml-in-place": "^1.0.2"
   },

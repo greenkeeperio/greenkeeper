@@ -19,7 +19,7 @@ ${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${st
 `
 
 module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => {
-  const compareURL = generateGitHubCompareURL('', `${owner}/${repo}`, base, head)
+  const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ## Version **${version}** of ${dependencyLink} was just published.
 
@@ -37,7 +37,7 @@ module.exports = ({version, dependencyLink, owner, repo, base, head, dependency,
       Dependency
     </td>
     <td>
-      ${dependency}
+      <code>${dependency}</code>
     </td>
   </tr>
   <tr>

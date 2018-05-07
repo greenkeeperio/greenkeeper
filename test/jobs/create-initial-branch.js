@@ -1186,6 +1186,132 @@ describe('create initial branch', () => {
     expect(repoDoc.openInitialPRWhenConfigFileFixed).toBeTruthy()
   })
 
+  // From https://github.com/greenkeeperio/greenkeeper/issues/733
+  test('correctly ignore scoped package in initial PR', async () => {
+    const { repositories } = await dbs()
+    const packageJSON = {
+      'name': 'firebase-configuration-schema',
+      'devDependencies': {
+        '@semantic-release/git': '2.0.0'
+      },
+      'greenkeeper': {
+        'ignore': [
+          '@semantic-release/git'
+        ]
+      }
+    }
+    await repositories.put({
+      _id: '52',
+      accountId: '123',
+      fullName: 'espy/test'
+    })
+
+    expect.assertions(10)
+
+    nock('https://api.github.com')
+    .post('/installations/137/access_tokens')
+    .optionally()
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .optionally()
+    .reply(200, {})
+    .get('/repos/espy/test')
+    .reply(200, {
+      default_branch: 'master'
+    })
+    .get('/repos/espy/test/git/trees/master?recursive=true')
+    .reply(200, {
+      tree: [
+        {
+          'path': 'package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        }
+      ]
+    })
+    .get('/repos/espy/test/contents/package.json')
+    .reply(200, {
+      path: 'package.json',
+      name: 'package.json',
+      content: encodePkg(packageJSON)
+    })
+    .get('/repos/espy/test')
+    .reply(200, {
+      default_branch: 'custom'
+    })
+    .post('/repos/espy/test/labels', {
+      name: 'greenkeeper',
+      color: '00c775'
+    })
+    .reply(201)
+
+    nock('https://registry.npmjs.org')
+      .get('/@semanticrelease%2Fgit')
+      .reply(200, {
+        'dist-tags': {
+          'latest': '4.0.2',
+          'next': '4.0.2'
+        },
+        versions: {
+          '1.0.0': true,
+          '1.0.1': true,
+          '2.0.0': true,
+          '2.0.1': true,
+          '2.0.2': true,
+          '2.0.3': true,
+          '2.1.0': true,
+          '2.2.0': true,
+          '3.0.0': true,
+          '3.0.1': true,
+          '3.1.0': true,
+          '3.1.1': true,
+          '4.0.0': true,
+          '4.0.1': true,
+          '4.0.2': true
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
+      const devDependencies = {
+        '@semantic-release/git': '2.0.0'
+      }
+      const newPkg = JSON.parse(
+        transforms[0].transform(JSON.stringify({ devDependencies }))
+      )
+      transforms[0].created = true
+      expect(newPkg.devDependencies['@semantic-release/git']).toEqual('2.0.0')
+
+      const newReadme = transforms[2].transform(
+        'readme-badger\n=============\n',
+        'README.md'
+      )
+      // 'includes badge'
+      expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/espy\/test.svg/)
+
+      return '1234abcd'
+    })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+
+    const newJob = await createInitialBranch({repositoryId: 52})
+    const newBranch = await repositories.get('52:branch:1234abcd')
+    const repoDoc = await repositories.get('52')
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('initial-timeout-pr')
+    expect(newJob.data.repositoryId).toBe(52)
+    expect(newJob.delay).toBeGreaterThan(10000)
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeTruthy()
+    expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/espy/test.svg')
+    expect(repoDoc.packages['package.json'].greenkeeper.ignore).toContain('@semantic-release/git')
+  })
   function encodePkg (pkg) {
     return Buffer.from(JSON.stringify(pkg)).toString('base64')
   }

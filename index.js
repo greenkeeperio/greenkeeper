@@ -83,7 +83,7 @@ require('./lib/rollbar')
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
-    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription']
+    const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription', 'update-nodejs-version', 'deprecate-nodejs-version']
     if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
       return queueJob(data.name, job)
     }
@@ -104,15 +104,16 @@ require('./lib/rollbar')
         }), 'rows[0].id')
 
         if (!queueId) throw new Error('totally can not identify job owner')
-        if (queueId === '23046691' || queueId === 'dalavanmanphonsy') {
-          // spam
-          channel.ack(job)
-          return
-        }
       } catch (e) {
         channel.nack(job, false, false)
         throw e
       }
+    }
+    const spamQueueIds = ['23046691', '1623538', 'dalavanmanphonsy', 'CNXTEoEorg']
+    if (spamQueueIds.includes(String(queueId))) {
+      // spam
+      channel.ack(job)
+      return
     }
     queueJob(queueId, job)
   }

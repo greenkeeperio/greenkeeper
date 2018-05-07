@@ -183,14 +183,14 @@ test('github-event installation_repositories added with too many 404s', async ()
     .get('/repos/bar/repo1')
     .reply(404, 'not found')
 
-    .get('/repos/bar/repo1')
-    .reply(404, 'not found')
-
-    .get('/repos/bar/repo1')
-    .reply(404, 'not found')
-
-    .get('/repos/bar/repo1')
-    .reply(404, 'not found')
+    // .get('/repos/bar/repo1')
+    // .reply(404, 'not found')
+    //
+    // .get('/repos/bar/repo1')
+    // .reply(404, 'not found')
+    //
+    // .get('/repos/bar/repo1')
+    // .reply(404, 'not found')
 
   try {
     await repoAdded({

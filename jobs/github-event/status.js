@@ -35,6 +35,14 @@ module.exports = async function ({ state, sha, repository, installation }) {
   if (branchDoc.processed) return
   // state did not change
   if (branchDoc.state === combined.state) return
+  // branch is for a node update or deprecation (we just open an issue, no PR)
+  if (branchDoc.head) {
+    const skippableBranches = ['update-to-node-', 'deprecate-node-']
+    const skipBranch = !!skippableBranches.find((skippable) => {
+      return branchDoc.head.match(RegExp(skippable, 'i'))
+    })
+    if (skipBranch) return
+  }
 
   if (branchDoc.initial) {
     const result = await repositories.allDocs({
