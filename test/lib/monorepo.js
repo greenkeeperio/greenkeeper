@@ -79,6 +79,13 @@ describe('lib monorepo', async () => {
     })
 
     await npm.put({
+      _id: 'koeln',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
       _id: 'hamburg',
       distTags: {
         latest: '1.0.0'
@@ -90,7 +97,7 @@ describe('lib monorepo', async () => {
       lib.getMonorepoGroup = (dep) => {
         return 'cities'
       }
-      lib.monorepoDefinitions = { 'cities': ['berlin', 'hamburg'] }
+      lib.monorepoDefinitions = { 'cities': ['koeln', 'hamburg', 'berlin'] }
       return lib
     })
 
