@@ -1,58 +1,106 @@
-// const dbs = require('../../lib/dbs')
+const dbs = require('../../lib/dbs')
 // const {
 //   isPartOfMonorepo,
 //   hasAllMonorepoUdates,
 //   getMonorepoGroup } = require('../../lib/monorepo')
-// const { npm } = await dbs()
 // await npm.put({
 //   _id: '49',
 //   accountId: '123',
 //   fullName: 'finnp/test'
 // })
-const simple = require('simple-mock')
 
-describe('lib monorepo', () => {
+const {
+  getMonorepoGroup,
+  isPartOfMonorepo
+} = require('../../lib/monorepo')
+
+describe('lib monorepo', async () => {
   beforeEach(() => {
     jest.resetModules()
     jest.clearAllMocks()
   })
 
   test('isPartOfMonorepo true', () => {
-    const {isPartOfMonorepo, getMonorepoGroup} = require('../../lib/monorepo')
-    simple.mock(getMonorepoGroup, 'getMonorepoGroup').resolveWith(['@avocado/dep', '@banana/dep'])
-    simple.mock(isPartOfMonorepo, 'isPartOfMonorepo').callOriginal('@avocado/dep')
-    const result = isPartOfMonorepo('@avocado/dep')
-    simple.restore()
+    jest.mock('../../lib/monorepo', () => {
+      const lib = require.requireActual('../../lib/monorepo')
+      lib.getMonorepoGroup = (dep) => {
+        return 'fruits'
+      }
+      return lib
+    })
 
-    console.log('### result', result)
-    expect(result).toBeTruthy()
-
-    // jest.mock('../../lib/monorepo', () => {
-    //   console.log('### mock')
-    //   const lib = require.requireActual('../../lib/monorepo')
-    //   lib.getMonorepoGroup = (dep) => {
-    //     console.log('### dep', dep)
-    //     return ['@avocado/dep', '@banana/dep']
-    //   }
-    //   console.log('### lib.isPartOfMonorepo(dep', lib.isPartOfMonorepo('dep/dep'))
-    //   // lib.isPartOfMonorepo = (dependency) => {
-    //   //   return !!lib.getMonorepoGroup(dependency)
-    //   // }
-    //   return lib
-    // })
-    // const libMonorepo = require.requireMock('../../lib/monorepo')
-    //
-    // const isPartOfMonorepo = libMonorepo.isPartOfMonorepo('@avocado/dep')
-    // console.log('### isPartOfMonorepo', isPartOfMonorepo)
-    // expect(isPartOfMonorepo).toBeTruthy()
+    const libMonorepo = require.requireMock('../../lib/monorepo')
+    const isPartOfMonorepo = libMonorepo.isPartOfMonorepo('@avocado/dep')
+    expect(isPartOfMonorepo).toBeTruthy()
   })
 
-  test.skip('getMonorepoGroup', () => {
-    const {getMonorepoGroup} = require('../../lib/monorepo')
+  test('isPartOfMonorepo false', () => {
+    const result = isPartOfMonorepo('some-dep')
+    expect(result).toBeFalsy()
+  })
 
-    const monorepoGroup = getMonorepoGroup('pouchdb')
-    console.log('### libMonorepo.getMonorepoGroup()', getMonorepoGroup('pouchdb'))
-    console.log('### monorepoGroup', monorepoGroup)
-    expect(monorepoGroup).toBeTruthy()
+  test('hasAllMonorepoUdates true', async () => {
+    const { npm } = await dbs()
+    await npm.put({
+      _id: '@avocado/dep',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
+      _id: '@banana/dep',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      const lib = require.requireActual('../../lib/monorepo')
+      lib.getMonorepoGroup = (dep) => {
+        return 'fruits'
+      }
+      lib.monorepoDefinitions = { 'fruits': ['@avocado/dep', '@banana/dep'] }
+      return lib
+    })
+
+    const libMonorepo = require.requireMock('../../lib/monorepo')
+    const result = await libMonorepo.hasAllMonorepoUdates('@avocado/dep', '2.0.0')
+    expect(result).toBeTruthy()
+  })
+
+  test('hasAllMonorepoUdates false', async () => {
+    const { npm } = await dbs()
+    await npm.put({
+      _id: 'berlin',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
+      _id: 'hamburg',
+      distTags: {
+        latest: '1.0.0'
+      }
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      const lib = require.requireActual('../../lib/monorepo')
+      lib.getMonorepoGroup = (dep) => {
+        return 'cities'
+      }
+      lib.monorepoDefinitions = { 'cities': ['berlin', 'hamburg'] }
+      return lib
+    })
+
+    const libMonorepo = require.requireMock('../../lib/monorepo')
+    const result = await libMonorepo.hasAllMonorepoUdates('berlin', '2.0.0')
+    expect(result).toBeFalsy()
+  })
+
+  test('getMonorepoGroup', () => {
+    const result = getMonorepoGroup('pouchdb-md5')
+    expect(result).toBe('pouchdb')
   })
 })
