@@ -52,7 +52,7 @@ module.exports = async function (
   })
 
   if (!distTag) {
-    log.info('exited: dependency has no distTag')
+    log.info(`exited: ${dependency} has no distTag`)
     return
   }
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
@@ -61,7 +61,7 @@ module.exports = async function (
   // so we can heavily optimise by exiting here
   // we want to handle different distTags in the future
   if (distTag !== 'latest') {
-    log.info('exited: dependency distTag is not latest')
+    log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
     return
   }
 
@@ -99,7 +99,7 @@ module.exports = async function (
     log.info(`exited: no repoDocs found that depend on ${dependency}`)
     return
   }
-  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that have that dependency`)
+  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
 
