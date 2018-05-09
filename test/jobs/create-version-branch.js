@@ -820,10 +820,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': false,
-        'npm-shrinkwrap.json': true,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': ['npm-shrinkwrap.json'],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {}
@@ -856,10 +856,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {}
@@ -892,10 +892,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {
@@ -935,10 +935,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {
