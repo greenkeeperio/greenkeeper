@@ -55,6 +55,12 @@ describe('create version brach', () => {
       _id: '1',
       accountId: '123',
       fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -183,6 +189,12 @@ describe('create version brach', () => {
       accountId: '124',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -313,6 +325,12 @@ describe('create version brach', () => {
       accountId: '124gke',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -442,6 +460,12 @@ describe('create version brach', () => {
       accountId: '125',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -517,6 +541,12 @@ describe('create version brach', () => {
         _id: '43',
         accountId: '126',
         fullName: 'finnp/test2',
+        files: {
+          'package.json': ['package.json'],
+          'package-lock.json': [],
+          'npm-shrinkwrap.json': [],
+          'yarn.lock': []
+        },
         packages: {
           'package.json': {
             greenkeeper: {
@@ -621,6 +651,12 @@ describe('create version brach', () => {
       _id: '44',
       accountId: '127',
       fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -701,6 +737,12 @@ describe('create version brach', () => {
       _id: '45',
       accountId: '123',
       fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -734,6 +776,12 @@ describe('create version brach', () => {
       _id: '51',
       accountId: '123',
       fullName: 'treasure-data/td-js-sdk',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -948,7 +996,7 @@ describe('create version brach', () => {
         }
       }
     })
-    expect.assertions(5)
+    expect.assertions(4)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -959,33 +1007,9 @@ describe('create version brach', () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .post('/repos/espy/test/pulls')
-      .reply(200, () => {
-        // pull request created
-        expect(true).toBeTruthy()
-        return {
-          id: 321,
-          number: 66,
-          state: 'open'
-        }
-      })
       .get('/repos/espy/test')
       .reply(200, {
         default_branch: 'master'
-      })
-      .post(
-        '/repos/espy/test/issues/66/labels',
-        body => body[0] === 'greenkeeper'
-      )
-      .reply(201, () => {
-        return {}
-      })
-      .post(
-        '/repos/espy/test/statuses/1234abcd',
-        ({ state }) => state === 'success'
-      )
-      .reply(201, () => {
-        return {}
       })
 
     jest.mock('../../lib/get-infos', () => () => {
@@ -1022,16 +1046,12 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('50:branch:1234abcd')
-    const pr = await repositories.get('50:pr:321')
-
-    expect(branch.processed).toBeTruthy()
-
-    expect(pr.number).toBe(66)
-    expect(pr.state).toEqual('open')
+    expect(branch).toBeTruthy()
+    await expect(repositories.get('50:pr:321')).rejects.toThrow('missing')
   })
 })
 
