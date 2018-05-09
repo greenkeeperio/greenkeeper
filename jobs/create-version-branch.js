@@ -177,7 +177,11 @@ module.exports = async function (
     }),
     'rows[0].doc'
   )
-  log.info('database: found open PR for this dependency', {openPR})
+  if (openPR) {
+    log.info('database: found open PR for this dependency', {repositoryId, dependency, openPR})
+  } else {
+    log.info('database: no open PR for this dependency', {repositoryId, dependency})
+  }
 
   const commitMessageKey = !satisfies && type === 'dependencies'
     ? 'dependencyUpdate'
