@@ -190,10 +190,10 @@ describe('create version brach', () => {
       fullName: 'finnp/testtest',
       private: true,
       files: {
-        'package.json': ['package.json'],
-        'package-lock.json': [],
-        'npm-shrinkwrap.json': [],
-        'yarn.lock': []
+        'package.json': true,
+        'package-lock.json': false,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
       },
       packages: {
         'package.json': {
@@ -1046,12 +1046,90 @@ describe('create version brach', () => {
       }
     })
 
-    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('50:branch:1234abcd')
     expect(branch).toBeTruthy()
     await expect(repositories.get('50:pr:321')).rejects.toThrow('missing')
+    expect(githubMock.isDone()).toBeTruthy()
+  })
+
+  test('runs if in range, has project lockfile, has gk-lockfile with old files object format', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '86',
+      accountId: '2323',
+      fullName: 'johnlocke/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          }
+        }
+      }
+    })
+    expect.assertions(4)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/johnlocke/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '2323',
+      repositoryId: '86',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '1.1.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '1.1.0': {}
+      }
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('86:branch:1234abcd')
+    expect(branch).toBeTruthy()
+    await expect(repositories.get('86:pr:321')).rejects.toThrow('missing')
+    expect(githubMock.isDone()).toBeTruthy()
   })
 })
 
@@ -1061,7 +1139,7 @@ afterAll(async () => {
   await Promise.all([
     removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'),
-    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321')
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
+    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
   ])
 })
