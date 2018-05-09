@@ -1,13 +1,4 @@
 const dbs = require('../../lib/dbs')
-// const {
-//   isPartOfMonorepo,
-//   hasAllMonorepoUdates,
-//   getMonorepoGroup } = require('../../lib/monorepo')
-// await npm.put({
-//   _id: '49',
-//   accountId: '123',
-//   fullName: 'finnp/test'
-// })
 
 const {
   getMonorepoGroup,
@@ -55,12 +46,16 @@ describe('lib monorepo', async () => {
       }
     })
 
+    jest.mock('../../utils/monorepo-definitions', () => {
+      const lib = require.requireActual('../../utils/monorepo-definitions')
+      lib.monorepoDefinitions = { 'fruits': ['@avocado/dep', '@banana/dep'] }
+      return lib
+    })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
       lib.getMonorepoGroup = (dep) => {
         return 'fruits'
       }
-      lib.monorepoDefinitions = { 'fruits': ['@avocado/dep', '@banana/dep'] }
       return lib
     })
 
@@ -92,6 +87,11 @@ describe('lib monorepo', async () => {
       }
     })
 
+    jest.mock('../../utils/monorepo-definitions', () => {
+      const lib = require.requireActual('../../utils/monorepo-definitions')
+      lib.monorepoDefinitions = { 'cities': ['koeln', 'hamburg', 'berlin'] }
+      return lib
+    })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
       lib.getMonorepoGroup = (dep) => {
