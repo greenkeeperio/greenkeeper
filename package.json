@@ -71,7 +71,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest monorepo"
+    "test": "NODE_ENV=testing jest -i"
   },
   "standard": {
     "env": {

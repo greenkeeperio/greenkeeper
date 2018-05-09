@@ -2,14 +2,14 @@ const nock = require('nock')
 
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
-const { cleanCache } = require('../helpers/module-cache-helpers')
+const { requireFresh, cleanCache } = require('../helpers/module-cache-helpers')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 jest.setTimeout(10000)
 
-describe('create version brach', () => {
+describe('create version branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
@@ -1274,8 +1274,8 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
 
-    const branch = await repositories.get('1:branch:1234abcd')
-    const pr = await repositories.get('1:pr:321')
+    const branch = await repositories.get('mono-1:branch:1234abcd')
+    const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
     // TODO we have to rename the branch
@@ -1285,7 +1285,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.state).toEqual('open')
   })
 
-  test('no new pull request or branch if repo does not have all monorepo updates', async () => {
+  test('no new pull request or branch if repo does not have all monorepo updates yet', async () => {
     expect.assertions(4)
 
     const githubMock = nock('https://api.github.com')
@@ -1342,6 +1342,155 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
   })
+
+  // This only works if all monorepo modules are updated to the same version number!
+  test('new pull request/branch after second of two monorepo deps updates', async () => {
+    expect.assertions(14)
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mono-3',
+      accountId: 'mono-123',
+      fullName: 'finnp/test',
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 3210,
+          number: 67,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+        '/repos/finnp/test/issues/67/labels',
+        body => body[0] === 'customlabel'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/2222abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+      const newPkg = JSON.parse(
+        transform(
+          JSON.stringify({
+            dependencies: {
+              '@avocado/dep1': '^1.0.0',
+              '@avocado/dep2': '^1.0.0'
+            }
+          })
+        )
+      )
+      const firstDependency = newPkg.dependencies['@avocado/dep1']
+      expect(firstDependency).toEqual('^2.0.0')
+      const secondDependency = newPkg.dependencies['@avocado/dep2']
+      expect(secondDependency).toEqual('^2.0.0')
+      return '2222abcd'
+    })
+    jest.mock('../../lib/monorepo', () => {
+      return {
+        isPartOfMonorepo: (dependency) => {
+          return true
+        },
+        hasAllMonorepoUdates: (dependency) => {
+          return dependency === '@avocado/dep2'
+        },
+        getMonorepoGroup: (dependency) => {
+          return ['@avocado/dep1', '@avocado/dep2']
+        }
+      }
+    })
+    const createFirstVersionBranch = requireFresh('../../jobs/create-version-branch')
+
+    const firstJob = await createFirstVersionBranch({
+      dependency: '@avocado/dep1',
+      accountId: 'mono-123',
+      repositoryId: 'mono-3',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    expect(firstJob).toBeFalsy()
+
+    const createSecondVersionBranch = requireFresh('../../jobs/create-version-branch')
+    const secondJob = await createSecondVersionBranch({
+      dependency: '@avocado/dep2',
+      accountId: 'mono-123',
+      repositoryId: 'mono-3',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(secondJob).toBeFalsy() // This doesn’t start another job even if it runs though
+
+    const branch = await repositories.get('mono-3:branch:2222abcd')
+    const pr = await repositories.get('mono-3:pr:3210')
+
+    expect(branch.processed).toBeTruthy()
+    // TODO we have to rename the branch
+    expect(branch.head).toEqual('greenkeeper/@avocado/dep2-2.0.0')
+
+    expect(pr.number).toBe(67)
+    expect(pr.state).toEqual('open')
+  })
 })
 afterAll(async () => {
   const { installations, repositories, payments } = await dbs()
@@ -1350,7 +1499,7 @@ afterAll(async () => {
     removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
     'mono-123'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1'),
-    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1', 'mono-3'),
+    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
   ])
 })
