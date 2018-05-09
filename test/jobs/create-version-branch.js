@@ -1012,13 +1012,13 @@ describe('create version brach', () => {
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
-        latest: '2.0.0'
+        latest: '1.1.0'
       },
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
         '1.0.0': {},
-        '2.0.0': {}
+        '1.1.0': {}
       }
     })
 
