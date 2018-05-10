@@ -588,6 +588,11 @@ describe('create version branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
+      .get('/repos/finnp/test2/pulls/5')
+      .reply(200, {
+        state: 'open',
+        merged: false
+      })
       .post('/repos/finnp/test2/issues/5/comments')
       .reply(201, () => {
         // comment created
