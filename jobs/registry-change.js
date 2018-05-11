@@ -13,6 +13,10 @@ const {
   getSatisfyingVersions,
   getOldVersionResolved
 } = require('../utils/utils')
+const {
+  isPartOfMonorepo,
+  hasAllMonorepoUdates
+} = require('../lib/monorepo')
 
 module.exports = async function (
   { dependency, distTags, versions, installation }
@@ -31,6 +35,14 @@ module.exports = async function (
 
   // use prefix for packageFilesForUpdatedDependency sent via webhook
   if (isFromHook) npmDoc._id = `${installation}:${npmDoc._id}`
+
+  // check if dependency update is part of a monorepo release
+  if (isPartOfMonorepo(dependency)) {
+    if (!await hasAllMonorepoUdates(dependency)) {
+      log.info('exited: is not last in list of monorepo packages')
+      return
+    }
+  }
 
   try {
     var npmDbDoc = await npm.get(npmDoc._id)
