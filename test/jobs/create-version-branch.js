@@ -55,12 +55,6 @@ describe('create version brach', () => {
       _id: '1',
       accountId: '123',
       fullName: 'finnp/test',
-      files: {
-        'package.json': ['package.json'],
-        'package-lock.json': [],
-        'npm-shrinkwrap.json': [],
-        'yarn.lock': []
-      },
       packages: {
         'package.json': {
           greenkeeper: {
