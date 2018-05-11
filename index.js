@@ -10,6 +10,7 @@ const Queue = require('promise-queue')
 
 const env = require('./lib/env')
 const dbs = require('./lib/dbs')
+const getSpamList = require('./lib/spam-list')
 const statsd = require('./lib/statsd')
 require('./lib/rollbar')
 
@@ -78,8 +79,14 @@ require('./lib/rollbar')
     }
   }
 
+  // ['23046691', '1623538', '133018953', 'dalavanmanphonsy', 'CNXTEoEorg', 'tectronics']
+  let spamQueueIds = await getSpamList()
+
   setTimeout(scheduleReminders, 5000)
   setInterval(scheduleReminders, 24 * 60 * 60 * 1000)
+  setInterval(async () => {
+    spamQueueIds = await getSpamList()
+  }, 60 * 1000)
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
@@ -109,7 +116,7 @@ require('./lib/rollbar')
         throw e
       }
     }
-    const spamQueueIds = ['23046691', '1623538', '133018953', 'dalavanmanphonsy', 'CNXTEoEorg', 'tectronics']
+
     if (spamQueueIds.includes(String(queueId))) {
       // spam
       channel.ack(job)
