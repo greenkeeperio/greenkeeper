@@ -62,12 +62,16 @@ module.exports = async function (
   //
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
-  const moduleLockFiles = ['npm-shrinkwrap.json']
-  const projectLockFiles = ['package-lock.json', 'yarn.lock']
-  const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
-  const hasProjectLockFile = _.some(_.pick(repository.files, projectLockFiles))
-  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
 
+  const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
+  const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
+  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
     log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
