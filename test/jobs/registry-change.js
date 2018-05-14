@@ -453,3 +453,130 @@ describe('registry change create jobs', async () => {
     expect(scndMonorepoJob.accountId).toEqual('123-two-repos')
   })
 })
+
+describe('monorepo-release: registry change create jobs', async () => {
+  beforeAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: 'monorepo-reĺease-1',
+        installation: 1,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: 'mr-1',
+        type: 'repository',
+        fullName: 'owner/another',
+        accountId: 'monorepo-reĺease-1',
+        packages: {
+          'package.json': {
+            dependencies: {
+              pouchdb: '1.0.0',
+              'pouchdb-core': '1.0.0',
+              colors: '1.0.0',
+              'colors-blue': '1.0.0'
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'pouchdb',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'pouchdb-core',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'colors',
+        distTags: {
+          latest: '2.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'colors-blue',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+  })
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, 'monorepo-release-1'),
+      removeIfExists(repositories, 'mr-1'),
+      removeIfExists(npm, 'pouchdb', 'pouchdb-core', 'colors', 'colors-blue')
+    ])
+  })
+  test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'pouchdb',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'kangaroo'
+        },
+        '1.0.0': {
+          gitHead: 'koala'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // no branch should be created
+    expect(newJobs).toBeFalsy()
+  })
+
+  test.only('monorepo-release: package is part of complete monorepoDefinition', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    jest.mock('../../lib/monorepo', () => {
+      return {
+        isPartOfMonorepo: (devDependency) => {
+          // expect(devDependency).toEqual('@avocado/dep1')
+          return true
+        },
+        hasAllMonorepoUdates: (devDependency) => {
+          // expect(devDependency).toEqual('@avocado/dep1')
+          return true
+        },
+        getMonorepoGroupNameForPackage: (devDependency) => {
+          return 'colors'
+        },
+        deleteMonorepoReleaseInfo: async () => {},
+        getMonorepoGroup: () => ['colors', 'colors-blue']
+      }
+    })
+    const registryChange = require('../../jobs/registry-change.js')
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'colors-blue',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'smurf'
+        },
+        '1.0.0': {
+          gitHead: 'sky'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // branch should be created
+    expect(newJobs).toBeTruthy()
+  })
+})

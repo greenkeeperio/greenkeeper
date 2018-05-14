@@ -25,7 +25,6 @@ module.exports = async function () {
   const releases = await pendingMonorepoReleases()
 
   return releases.map((release) => {
-
     // TODO: send slack/email notifications to us / Enterprise admins
 
     return {
