@@ -21,7 +21,7 @@ const {
 } = require('../lib/monorepo')
 
 module.exports = async function (
-  { dependency, distTags, versions, installation }
+  { dependency, distTags, versions, installation, force }
 ) {
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
@@ -74,8 +74,8 @@ module.exports = async function (
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
-  if (isPartOfMonorepo(dependency)) {
-    if (!await hasAllMonorepoUdates(dependency)) {
+  if (isPartOfMonorepo(dependency) {
+    if (force === true || !await hasAllMonorepoUdates(dependency)) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
