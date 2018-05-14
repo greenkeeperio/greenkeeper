@@ -15,7 +15,9 @@ const {
 } = require('../utils/utils')
 const {
   isPartOfMonorepo,
-  hasAllMonorepoUdates
+  hasAllMonorepoUdates,
+  getMonorepoGroup,
+  updateMonorepoReleaseInfo
 } = require('../lib/monorepo')
 
 module.exports = async function (
@@ -35,14 +37,6 @@ module.exports = async function (
 
   // use prefix for packageFilesForUpdatedDependency sent via webhook
   if (isFromHook) npmDoc._id = `${installation}:${npmDoc._id}`
-
-  // check if dependency update is part of a monorepo release
-  if (isPartOfMonorepo(dependency)) {
-    if (!await hasAllMonorepoUdates(dependency)) {
-      log.info('exited: is not last in list of monorepo packages')
-      return
-    }
-  }
 
   try {
     var npmDbDoc = await npm.get(npmDoc._id)
@@ -77,6 +71,21 @@ module.exports = async function (
     return
   }
 
+  let dependencies = [ dependency ]
+
+  // check if dependency update is part of a monorepo release
+  if (isPartOfMonorepo(dependency)) {
+    if (!await hasAllMonorepoUdates(dependency)) {
+      log.info('exited: is not last in list of monorepo packages')
+      // create/update npm/monorepo:dependency-version
+      await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
+      return // do nothing, one of the next registry-change jobs is going to handle the rest
+    }
+    // set up keys so we can query for all packages with a dependency on any of the packages
+    // in our monorepo group
+    dependencies = getMonorepoGroup() || dependencies
+  }
+
   /*
   Update: 'by_dependency' handles multiple package.json files, but not in the same result.
 
@@ -104,7 +113,7 @@ module.exports = async function (
 
   // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
-    key: dependency
+    keys: dependencies
   })).rows
 
   if (!packageFilesForUpdatedDependency.length) {
