@@ -32,7 +32,8 @@ module.exports = async function () {
       name: 'registry-change',
       dependency: release.dependency,
       distTags: release.distTags,
-      versions: release.versions
+      versions: release.versions,
+      force: true
     }
   })
 }
