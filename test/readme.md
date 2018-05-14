@@ -59,7 +59,7 @@ Jest puts each of these [methods and objects](https://facebook.github.io/jest/do
 #### Jest Object
 The [jest object](https://facebook.github.io/jest/docs/en/jest-object.html) is automatically in scope within every test file. The methods in the jest object help create mocks and let you control Jest's overall behavior.
 Below are the one we use.
-      
+
 **jest.mock()**
  Mocks a module with an auto-mocked version when it is being required. factory and options are optional. Modules that are mocked with `jest.mock` are mocked only for the file that calls `jest.mock`. Another file that imports the module will get the original implementation even if run after the test file that mocks the module.
  [See example](https://facebook.github.io/jest/docs/en/jest-object.html#jestmockmodulename-factory-options)
@@ -75,7 +75,7 @@ Clears the `mock.calls` and `mock.instances` properties of all mocks. Equivalent
 <summary> How to mock relative dependencies </summary>
 In this example the `getInfos-worker` uses the `getDiffCommits()` function from `lib/get-diff-commits`.
 We mock the diffCommits(), called in getInfos().
-  
+
 ```
   jest.mock('../../lib/get-diff-commits', () => () => {
     return 'diff commits'
@@ -112,7 +112,7 @@ const updatePayments = require('../../jobs/update-payments') // <-- called after
 <summary> How to mock a function call and test the given parameters</summary>
 In this example we want to mock a dependency-function an check if the given parameters are exepted.
 The `githubEvent` calls the `resolve`-function with specific parameters. The `resolve`-function comes from an external module.
-  
+
 ```
 jest.mock('path', () => {
     return {
@@ -125,4 +125,31 @@ jest.mock('path', () => {
 })
 const githubEvent = require('../../jobs/github-event.js')
 ```
+</details>
+
+<details>
+<summary> How to test a function which calls a mocked function</summary>
+In this example we want test the function `isPartOfMonorepo(dependency)`.
+This function calls `getMonorepoGroup(dependency)`, which we want to mock here.
+
+```
+ jest.mock('../../lib/monorepo', () => {
+   const lib = require.requireActual('../../lib/monorepo')        // <-- restore the original modules
+   lib.getMonorepoGroup = (dep) => {
+     return 'fruits'                                              // <-- overwrite the one you want to mock
+   }
+   return lib
+ })
+
+ const libMonorepo = require.requireMock('../../lib/monorepo')    // <-- Returns a mock module instead of the actual module
+ const isPartOfMonorepo = libMonorepo.isPartOfMonorepo('@avocado/dep')
+```
+It is important to export these functions
+```
+module.exports = {
+  isPartOfMonorepo,
+  getMonorepoGroup
+}
+```
+
 </details>
