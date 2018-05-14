@@ -71,7 +71,7 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest -i"
+    "test": "NODE_ENV=testing jest registry-change"
   },
   "standard": {
     "env": {

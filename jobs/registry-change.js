@@ -74,7 +74,7 @@ module.exports = async function (
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
-  if (isPartOfMonorepo(dependency) {
+  if (isPartOfMonorepo(dependency)) {
     if (force === true || !await hasAllMonorepoUdates(dependency)) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
