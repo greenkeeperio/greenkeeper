@@ -13,7 +13,12 @@ const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
-const { isPartOfMonorepo, hasAllMonorepoUdates, getMonorepoGroup } = require('../lib/monorepo')
+const {
+  isPartOfMonorepo,
+  hasAllMonorepoUdates,
+  getMonorepoGroupNameForPackage,
+  deleteMonorepoReleaseInfo
+} = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { generateGitHubCompareURL } = require('../utils/utils')
@@ -58,8 +63,9 @@ module.exports = async function (
       log.info('exited: is not last in list of monorepo packages')
       return
     }
-    monorepoGroup = await getMonorepoGroup(dependency)
-    log.info('last of a monorepo publish, starting the full update')
+    await deleteMonorepoReleaseInfo(dependency, version)
+    monorepoGroup = getMonorepoGroupNameForPackage(dependency)
+    log.info(`last of a monorepo publish, starting the full update for ${monorepoGroup}`)
   }
 
   // Shrinkwrap should behave differently from regular lockfiles:
