@@ -1245,10 +1245,11 @@ describe('create version branch for dependencies from monorepos', () => {
           expect(devDependency).toEqual('@finnpauls/dep')
           return true
         },
-        getMonorepoGroup: (devDependency) => {
+        getMonorepoGroupNameForPackage: (devDependency) => {
           expect(devDependency).toEqual('@finnpauls/dep')
           return ['@finnpauls/dep']
-        }
+        },
+        deleteMonorepoReleaseInfo: async () => {}
       }
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
@@ -1314,9 +1315,10 @@ describe('create version branch for dependencies from monorepos', () => {
           expect(devDependency).toEqual('@avocado/dep1')
           return false
         },
-        getMonorepoGroup: (devDependency) => {
+        getMonorepoGroupNameForPackage: (devDependency) => {
           return ['@avocado/dep1', '@avocado/dep2']
-        }
+        },
+        deleteMonorepoReleaseInfo: async () => {}
       }
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
@@ -1434,9 +1436,10 @@ describe('create version branch for dependencies from monorepos', () => {
         hasAllMonorepoUdates: (dependency) => {
           return dependency === '@avocado/dep2'
         },
-        getMonorepoGroup: (dependency) => {
+        getMonorepoGroupNameForPackage: (dependency) => {
           return ['@avocado/dep1', '@avocado/dep2']
-        }
+        },
+        deleteMonorepoReleaseInfo: async () => {}
       }
     })
     const createFirstVersionBranch = requireFresh('../../jobs/create-version-branch')

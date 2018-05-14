@@ -1,7 +1,7 @@
 const dbs = require('../../lib/dbs')
 
 const {
-  getMonorepoGroup,
+  getMonorepoGroupNameForPackage,
   isPartOfMonorepo
 } = require('../../lib/monorepo')
 
@@ -15,7 +15,7 @@ describe('lib monorepo', async () => {
   test('isPartOfMonorepo true', () => {
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
-      lib.getMonorepoGroup = (dep) => {
+      lib.getMonorepoGroupNameForPackage = (dep) => {
         return 'fruits'
       }
       return lib
@@ -54,7 +54,7 @@ describe('lib monorepo', async () => {
     })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
-      lib.getMonorepoGroup = (dep) => {
+      lib.getMonorepoGroupNameForPackage = (dep) => {
         return 'fruits'
       }
       return lib
@@ -95,7 +95,7 @@ describe('lib monorepo', async () => {
     })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
-      lib.getMonorepoGroup = (dep) => {
+      lib.getMonorepoGroupNameForPackage = (dep) => {
         return 'cities'
       }
       lib.monorepoDefinitions = { 'cities': ['koeln', 'hamburg', 'berlin'] }
@@ -108,7 +108,7 @@ describe('lib monorepo', async () => {
   })
 
   test('getMonorepoGroup', () => {
-    const result = getMonorepoGroup('pouchdb-md5')
+    const result = getMonorepoGroupNameForPackage('pouchdb-md5')
     expect(result).toBe('pouchdb')
   })
 })
