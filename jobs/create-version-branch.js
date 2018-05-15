@@ -1,5 +1,4 @@
 const _ = require('lodash')
-const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const Log = require('gk-log')
 
@@ -7,7 +6,6 @@ const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getMessage = require('../lib/get-message')
 const getInfos = require('../lib/get-infos')
-const getRangedVersion = require('../lib/get-ranged-version')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -15,13 +13,14 @@ const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const {
   isPartOfMonorepo,
+  getMonorepoGroup,
   hasAllMonorepoUdates,
-  getMonorepoGroupNameForPackage,
-  deleteMonorepoReleaseInfo
+  deleteMonorepoReleaseInfo,
+  getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { generateGitHubCompareURL } = require('../utils/utils')
+const { createTransformFunction, generateGitHubCompareURL } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -44,7 +43,9 @@ module.exports = async function (
   if (!semver.validRange(oldVersion)) return
 
   let isMonorepo = false
-  let monorepoGroup = []
+  let monorepoGroupName = ''
+  let monorepoGroup = ''
+  let relevantDependencies = []
   const version = distTags[distTag]
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
@@ -59,13 +60,17 @@ module.exports = async function (
   // monorepo module will then update the whole lot.
   if (isPartOfMonorepo(dependency)) {
     isMonorepo = true
-    if (!await hasAllMonorepoUdates(dependency)) {
+    if (!await hasAllMonorepoUdates(dependency, version)) {
       log.info('exited: is not last in list of monorepo packages')
       return
     }
     await deleteMonorepoReleaseInfo(dependency, version)
-    monorepoGroup = getMonorepoGroupNameForPackage(dependency)
-    log.info(`last of a monorepo publish, starting the full update for ${monorepoGroup}`)
+    monorepoGroupName = getMonorepoGroupNameForPackage(dependency)
+    monorepoGroup = getMonorepoGroup(monorepoGroupName)
+    relevantDependencies = monorepoGroup.filter(dep =>
+      !!JSON.stringify(repository.packages['package.json']).match(dep))
+
+    log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
 
   // Shrinkwrap should behave differently from regular lockfiles:
@@ -139,44 +144,54 @@ module.exports = async function (
   const newBranch = `${config.branchPrefix}${dependency}-${version}`
   log.info('branch name created', {branchName: newBranch})
 
-  function transform (pkg) {
-    try {
-      var json = JSON.parse(pkg)
-      var parsed = jsonInPlace(pkg)
-    } catch (e) {
-      log.warn('exited: parse error in package.json')
-      return // ignore parse errors
-    }
+  let group
+  if (isMonorepo) {
+    group = relevantDependencies
+  } else {
+    group = [dependency]
+  }
 
-    let group
-    if (isMonorepo) {
-      group = monorepoGroup
-    } else {
-      group = [dependency]
-    }
-
-    let shouldCreateVersionBranch = false
-    group.forEach(dep => {
-      const oldPkgVersion = _.get(json, [type, dep])
+  async function createTransformsArray (group, json) {
+    return group.map(async depName => {
+      const type = _.compact(
+        Object.keys(json).map(type => {
+          if (Object.keys(json[type]).includes(depName)) return type
+        })
+      )
+      if (type.length !== 1) return
+      const oldPkgVersion = _.get(json, [type[0], depName])
       if (!oldPkgVersion) {
-        log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
-        return
+        log.warn('exited: could not find old package version', {newVersion: version, json})
+        return null
       }
 
       if (semver.ltr(version, oldPkgVersion)) { // no downgrades
         log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
-        return
+        return null
       }
 
-      shouldCreateVersionBranch = true
-      parsed.set([type, dep], getRangedVersion(version, oldPkgVersion))
-    })
+      const commitMessageScope = !satisfies && type[0] === 'dependencies'
+        ? 'fix'
+        : 'chore'
+      let commitMessage = `${commitMessageScope}(package): update ${depName} to version ${version}`
 
-    if (!shouldCreateVersionBranch) return
-    return parsed.toString()
+      if (!satisfies && openPR) {
+        await upsert(repositories, openPR._id, {
+          comments: [...(openPR.comments || []), version]
+        })
+        commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
+      }
+      log.info('commit message created', {commitMessage})
+      return {
+        transform: createTransformFunction(type[0], depName, version, log),
+        path: 'package.json',
+        message: commitMessage
+      }
+    })
   }
 
   const openPR = _.get(
+    // TODO: Work with group!
     await repositories.query('pr_open_by_dependency', {
       key: [repositoryId, dependency],
       include_docs: true
@@ -203,6 +218,7 @@ module.exports = async function (
   }
   log.info('commit message created', {commitMessage})
 
+  const transforms = await createTransformsArray(group, repository.packages['package.json'])
   const sha = await createBranch({
     installationId,
     owner,
@@ -210,7 +226,7 @@ module.exports = async function (
     branch: base,
     newBranch,
     path: 'package.json',
-    transform,
+    transforms,
     message: commitMessage
   })
   if (sha) {
