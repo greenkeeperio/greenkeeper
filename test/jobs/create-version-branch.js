@@ -1145,20 +1145,46 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 
   test('new pull request', async () => {
-    const { repositories } = await dbs()
+    const { repositories, npm } = await dbs()
     await repositories.put({
       _id: 'mono-1',
       accountId: 'mono-123',
       fullName: 'finnp/test',
+      enabled: true,
       packages: {
         'package.json': {
-          greenkeeper: {
-            label: 'customlabel'
+          dependencies: {
+            pouchdb: '1.0.0',
+            'pouchdb-core': '1.0.0',
+            'colors-blue': '1.0.0',
+            bulldog: '1.0.0'
+          },
+          devDependencies: {
+            colors: '1.0.0'
           }
         }
       }
     })
-    expect.assertions(15)
+
+    await npm.put({
+      _id: 'colors',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-blue',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-red',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    // expect.assertions(15)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/1/access_tokens')
@@ -1183,13 +1209,8 @@ describe('create version branch for dependencies from monorepos', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .post(
-        '/repos/finnp/test/issues/66/labels',
-        body => body[0] === 'customlabel'
-      )
+      .post('/repos/finnp/test/issues/66/labels')
       .reply(201, () => {
-        // label created
-        expect(true).toBeTruthy()
         return {}
       })
       .post(
@@ -1206,7 +1227,6 @@ describe('create version branch for dependencies from monorepos', () => {
       installationId, dependency, version, diffBase, versions
     }) => {
       // used get-infos
-      expect(true).toBeTruthy()
       expect(version).toEqual('2.0.0')
 
       return {
@@ -1221,44 +1241,33 @@ describe('create version branch for dependencies from monorepos', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
-      const newPkg = JSON.parse(
-        transform(
-          JSON.stringify({
-            devDependencies: {
-              '@finnpauls/dep': '^1.0.0'
-            }
-          })
-        )
-      )
-      const devDependency = newPkg.devDependencies['@finnpauls/dep']
-      expect(devDependency).toEqual('^2.0.0')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      // TODO: test transforms array
+      expect(transforms).toHaveLength(2)
       return '1234abcd'
     })
+
+    jest.resetModules()
+    jest.clearAllMocks()
+
     jest.mock('../../lib/monorepo', () => {
-      return {
-        isPartOfMonorepo: (devDependency) => {
-          expect(devDependency).toEqual('@finnpauls/dep')
-          return true
-        },
-        hasAllMonorepoUdates: (devDependency) => {
-          expect(devDependency).toEqual('@finnpauls/dep')
-          return true
-        },
-        getMonorepoGroupNameForPackage: (devDependency) => {
-          expect(devDependency).toEqual('@finnpauls/dep')
-          return ['@finnpauls/dep']
-        },
-        deleteMonorepoReleaseInfo: async () => {}
-      }
+      jest.mock('../../utils/monorepo-definitions', () => {
+        const { monorepoDefinitions } = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          colors: ['colors', 'colors-blue', 'colors-red']
+        })
+        return { monorepoDefinitions: newDef }
+      })
+      const lib = require.requireActual('../../lib/monorepo')
+      return lib
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
-      dependency: '@finnpauls/dep',
+      dependency: 'colors-red',
       accountId: 'mono-123',
       repositoryId: 'mono-1',
-      type: 'devDependencies',
+      type: 'dependencies',
       distTag: 'latest',
       distTags: {
         latest: '2.0.0'
@@ -1280,7 +1289,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     expect(branch.processed).toBeTruthy()
     // TODO we have to rename the branch
-    expect(branch.head).toEqual('greenkeeper/@finnpauls/dep-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/colors-red-2.0.0')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1496,11 +1505,12 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 })
 afterAll(async () => {
-  const { installations, repositories, payments } = await dbs()
+  const { installations, repositories, payments, npm } = await dbs()
 
   await Promise.all([
     removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
     'mono-123'),
+    removeIfExists(npm, 'colors', 'colors-blue', 'colors-red'),
     removeIfExists(payments, '124', '125'),
     removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1', 'mono-3'),
     removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
