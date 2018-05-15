@@ -17,7 +17,8 @@ const {
   isPartOfMonorepo,
   hasAllMonorepoUdates,
   getMonorepoGroup,
-  updateMonorepoReleaseInfo
+  updateMonorepoReleaseInfo,
+  getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 
 module.exports = async function (
@@ -75,7 +76,8 @@ module.exports = async function (
 
   // check if dependency update is part of a monorepo release
   if (isPartOfMonorepo(dependency)) {
-    if (force === true || !await hasAllMonorepoUdates(dependency)) {
+    const version = distTags['latest']
+    if (force === true || !await hasAllMonorepoUdates(dependency, version)) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
@@ -83,7 +85,7 @@ module.exports = async function (
     }
     // set up keys so we can query for all packages with a dependency on any of the packages
     // in our monorepo group
-    dependencies = getMonorepoGroup() || dependencies
+    dependencies = getMonorepoGroup(getMonorepoGroupNameForPackage(dependency)) || dependencies
   }
 
   /*
