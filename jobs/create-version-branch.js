@@ -71,7 +71,9 @@ module.exports = async function (
 
   const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
   const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
-  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+  const usesGreenkeeperLockfile = repository.packages['package.json'] &&
+    repository.packages['package.json'].devDependencies &&
+    _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
     log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
