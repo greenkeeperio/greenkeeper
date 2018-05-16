@@ -43,7 +43,7 @@ module.exports = async function (
   if (!semver.validRange(oldVersion)) return
 
   let isMonorepo = false
-  let monorepoGroupName = ''
+  let monorepoGroupName = null
   let monorepoGroup = ''
   let relevantDependencies = []
   const version = distTags[distTag]
@@ -143,15 +143,15 @@ module.exports = async function (
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})
 
-  const newBranch = `${config.branchPrefix}${dependency}-${version}`
-  log.info('branch name created', {branchName: newBranch})
-
-  let group
+  let group, newBranch
   if (isMonorepo) {
     group = relevantDependencies
+    newBranch = `${config.branchPrefix}monorepo:${monorepoGroupName}-${version}`
   } else {
     group = [dependency]
+    newBranch = `${config.branchPrefix}${dependency}-${version}`
   }
+  log.info('branch name created', {branchName: newBranch})
 
   async function createTransformsArray (group, json) {
     return group.map(async depName => {
@@ -256,6 +256,7 @@ module.exports = async function (
     base,
     head: newBranch,
     dependency,
+    monorepoGroupName,
     version,
     oldVersion,
     oldVersionResolved,

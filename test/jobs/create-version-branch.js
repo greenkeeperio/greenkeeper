@@ -66,7 +66,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(13)
+    expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -170,7 +170,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
 
     const branch = await repositories.get('1:branch:1234abcd')
@@ -208,7 +208,7 @@ describe('create version branch', () => {
       _id: '124',
       plan: 'personal'
     })
-    expect.assertions(12)
+    expect.assertions(13)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -307,7 +307,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
 
@@ -344,7 +344,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(13)
+    expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/124/access_tokens')
@@ -448,7 +448,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
 
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('41:branch:1234abcd')
@@ -484,7 +484,7 @@ describe('create version branch', () => {
       _id: '125',
       plan: 'free'
     })
-    expect.assertions(1)
+    expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -526,7 +526,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -566,7 +566,7 @@ describe('create version branch', () => {
       })
     ])
 
-    expect.assertions(9)
+    expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/41/access_tokens')
@@ -648,7 +648,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('43:branch:1234abcd')
@@ -678,7 +678,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(2)
+    expect.assertions(3)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/42/access_tokens')
@@ -717,7 +717,7 @@ describe('create version branch', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -776,7 +776,7 @@ describe('create version branch', () => {
   })
 
   test('ignore ignored devDependency + empty gk config in repodoc', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '51',
@@ -840,11 +840,6 @@ describe('create version branch', () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/treasure-data/td-js-sdk')
-    .reply(200, {
-      default_branch: 'master'
-    })
-    .log(console.log)
 
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -860,7 +855,7 @@ describe('create version branch', () => {
       oldVersion: '1.3.0'
     })
 
-    console.log(githubMock.isDone())
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -1282,8 +1277,7 @@ describe('create version branch for dependencies from monorepos', () => {
         })
         return { monorepoDefinitions: newDef }
       })
-      const lib = require.requireActual('../../lib/monorepo')
-      return lib
+      return require.requireActual('../../lib/monorepo')
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -1304,7 +1298,6 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
-    githubMock.done()
     expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
 
@@ -1312,8 +1305,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    // TODO we have to rename the branch
-    expect(branch.head).toEqual('greenkeeper/colors-red-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1373,7 +1365,6 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
-    githubMock.done()
     expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
   })
