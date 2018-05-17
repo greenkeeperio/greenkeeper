@@ -1,15 +1,23 @@
 const dbs = require('../../lib/dbs')
+const removeIfExists = require('../helpers/remove-if-exists')
 
 const {
   getMonorepoGroupNameForPackage,
-  isPartOfMonorepo
+  isPartOfMonorepo,
+  pendingMonorepoReleases
 } = require('../../lib/monorepo')
 
 describe('lib monorepo', async () => {
   beforeEach(() => {
-    jest.setTimeout(10000)
     jest.resetModules()
     jest.clearAllMocks()
+  })
+  afterEach(async () => {
+    const { npm } = await dbs()
+    await Promise.all([
+      removeIfExists(npm, '@avocado/dep', '@banana/dep', 'koeln', 'berlin', 'hamburg',
+      'monorepo:11', 'monorepo:12', 'monorepo:22', 'monorepo:44', 'monorepo:55', 'monorepo:66')
+    ])
   })
 
   test('isPartOfMonorepo true', () => {
@@ -110,5 +118,76 @@ describe('lib monorepo', async () => {
   test('getMonorepoGroup', () => {
     const result = getMonorepoGroupNameForPackage('pouchdb-md5')
     expect(result).toBe('pouchdb')
+  })
+
+  test('pendingMonorepoReleases 11 and 44min', async () => {
+    const { npm } = await dbs()
+    await npm.put({
+      _id: 'monorepo:11',
+      distTags: {
+        latest: '2.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 11 * 60000).toJSON()
+    })
+
+    await npm.put({
+      _id: 'monorepo:44',
+      distTags: {
+        latest: '1.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 44 * 60000).toJSON()
+    })
+    const result = await pendingMonorepoReleases()
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toEqual('monorepo:44')
+  })
+
+  test('pendingMonorepoReleases 12 and 22min', async () => {
+    const { npm } = await dbs()
+    await npm.put({
+      _id: 'monorepo:12',
+      distTags: {
+        latest: '2.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 12 * 60000).toJSON()
+    })
+
+    await npm.put({
+      _id: 'monorepo:22',
+      distTags: {
+        latest: '1.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 22 * 60000).toJSON()
+    })
+    const result = await pendingMonorepoReleases()
+    expect(result).toHaveLength(0)
+  })
+
+  test('pendingMonorepoReleases 55 and 66min', async () => {
+    const { npm } = await dbs()
+    await npm.put({
+      _id: 'monorepo:55',
+      distTags: {
+        latest: '2.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 55 * 60000).toJSON()
+    })
+
+    await npm.put({
+      _id: 'monorepo:66',
+      distTags: {
+        latest: '1.0.0'
+      },
+      updatedAt: new Date(new Date().getTime() - 66 * 60000).toJSON()
+    })
+    const result = await pendingMonorepoReleases()
+    expect(result).toHaveLength(2)
+    expect(result[0]._id).toEqual('monorepo:66')
+    expect(result[1]._id).toEqual('monorepo:55')
+  })
+
+  test('pendingMonorepoReleases without data', async () => {
+    const result = await pendingMonorepoReleases()
+    expect(result).toHaveLength(0)
   })
 })
