@@ -212,7 +212,7 @@ ${mainMessage({enabled, depsUpdated, groupName})}
 
 ${!groupName && !enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
 
-${!groupName && secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
+${!env.IS_ENTERPRISE && !groupName && secret && accountTokenUrl && `💸  **Warning** 💸 Enabling Greenkeeper on this repository by merging this pull request might increase your monthly payment. If you’re unsure, please [check your billing status](${accountTokenUrl}).`}
 
 ${!groupName && greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
 

@@ -1,10 +1,16 @@
 const dbs = require('../lib/dbs')
 const _ = require('lodash')
+const env = require('env')
 
 const githubQueue = require('../lib/github-queue')
 const paymentActivatedText = require('../content/payment-activated')
 
 module.exports = async function ({ accountId }) {
+  if (env.IS_ENTERPRISE) {
+    // not sure what called me, but I should not run
+    return
+  }
+
   const { installations, repositories, payments } = await dbs()
   const installation = await installations.get(accountId)
   const ghqueue = githubQueue(installation.installation)
