@@ -164,17 +164,29 @@ module.exports = async function (
   }
   log.info('branch name created', {branchName: newBranch})
 
-  const openPR = _.get(
-    await repositories.query('pr_open_by_dependency_and_group', {
-      key: [repositoryId, dependencyKey, groupName],
-      include_docs: true
-    }),
-    'rows[0].doc'
-  )
-  if (openPR) {
-    log.info('database: found open PR for this dependency', {openPR})
-  } else {
-    log.info('database: no open PR for this dependency')
+  const openPR = await findOpenPR()
+
+  async function findOpenPR () {
+    const openPR = _.get(
+      await repositories.query('pr_open_by_dependency_and_group', {
+        key: [repositoryId, dependencyKey, groupName],
+        include_docs: true
+      }),
+      'rows[0].doc'
+    )
+
+    if (!openPR) return false
+    log.info(`database: found open PR for ${dependencyKey}`, {openPR})
+
+    const pr = await ghqueue.read(github => github.pullRequests.get({
+      owner,
+      repo,
+      number: openPR.number
+    }))
+    if (pr.state === 'open') return openPR
+
+    await upsert(repositories, openPR._id, _.pick(pr, ['state', 'merged']))
+    return false
   }
 
   async function createTransformsArray (monorepo) {
