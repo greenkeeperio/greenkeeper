@@ -136,15 +136,6 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
         inplace.set('engines.node', newEngines)
         engineTransformMessages.updated++
         return inplace.toString()
-        /*
-        if (semver.satisfies(semver.coerce(nodeVersion), currentEngines)) {
-          engineTransformMessages.updated++
-          inplace.set('engines.node', newLowestVersion)
-          return inplace.toString()
-        } else {
-          engineTransformMessages.notOutOfDate++
-        }
-        */
       }
     })
   })
