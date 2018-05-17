@@ -80,8 +80,8 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
         expect(body).toBeTruthy()
         expect(body).toMatch('Version 4 of Node.js (code name Argon) has been deprecated!')
         expect(body).toMatch('Version 6 (Boron) is now the lowest actively maintained Node.js version.')
-        expect(body).toMatch('- Upgraded away from the old version in your `.travis.yml`')
-        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new Node.js version')
+        expect(body).toMatch('- Upgraded away from the deprecated version in your `.travis.yml`')
+        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new lowest actively supported Node.js versio')
         expect(body).toMatch('"https://github.com/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
         // We didn’t pass in an announcementURL, so that shouldn’t be there
         expect(body).not.toMatch('You can find out more about the deprecation and possible update strategies')
