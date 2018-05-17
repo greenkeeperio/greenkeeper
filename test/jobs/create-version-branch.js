@@ -1266,7 +1266,6 @@ describe('create version branch for dependencies from monorepos', () => {
       result = JSON.parse(transform2.transform(result))
       expect(result.dependencies['colors-blue']).toBe('2.0.0')
       expect(result.devDependencies['colors']).toBe('2.0.0')
-      console.log('### result', result)
       return '1234abcd'
     })
 
@@ -1303,9 +1302,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(newJob).toBeFalsy()
 
     const branch = await repositories.get('mono-1:branch:1234abcd')
-    console.log('### branch', branch)
     const pr = await repositories.get('mono-1:pr:321')
-    console.log('### pr', pr)
 
     expect(branch.processed).toBeTruthy()
     expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
