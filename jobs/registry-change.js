@@ -18,6 +18,7 @@ const {
   hasAllMonorepoUdates,
   getMonorepoGroup,
   updateMonorepoReleaseInfo,
+  deleteMonorepoReleaseInfo,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 
@@ -87,6 +88,9 @@ module.exports = async function (
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
       return // do nothing, one of the next registry-change jobs is going to handle the rest
     }
+    // do the update now
+    await deleteMonorepoReleaseInfo(dependency, version)
+
     // set up keys so we can query for all packages with a dependency on any of the packages
     // in our monorepo group
     dependencies = await getMonorepoGroup(await getMonorepoGroupNameForPackage(dependency)) || dependencies

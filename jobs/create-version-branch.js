@@ -15,7 +15,6 @@ const {
   isPartOfMonorepo,
   getMonorepoGroup,
   hasAllMonorepoUdates,
-  deleteMonorepoReleaseInfo,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 
@@ -64,7 +63,6 @@ module.exports = async function (
       log.info('exited: is not last in list of monorepo packages')
       return
     }
-    await deleteMonorepoReleaseInfo(dependency, version)
     monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
     monorepoGroup = await getMonorepoGroup(monorepoGroupName)
     relevantDependencies = monorepoGroup.filter(dep =>
