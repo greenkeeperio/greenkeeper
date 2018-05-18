@@ -3,9 +3,11 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 describe('lib monorepo', async () => {
   beforeEach(() => {
+    jest.setTimeout(10000)
     jest.resetModules()
     jest.clearAllMocks()
   })
+
   afterEach(async () => {
     const { npm } = await dbs()
     await Promise.all([
@@ -90,7 +92,9 @@ describe('lib monorepo', async () => {
     })
 
     jest.mock('../../utils/monorepo-definitions', () => {
-      return { 'cities': ['koeln', 'hamburg', 'berlin'] }
+      const lib = require.requireActual('../../utils/monorepo-definitions')
+      lib['cities'] = ['koeln', 'hamburg', 'berlin']
+      return lib
     })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
@@ -112,7 +116,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases 11 and 44min', async () => {
-    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
+    const { pendingMonorepoReleases } = require('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:11',
@@ -135,7 +139,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases 12 and 22min', async () => {
-    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
+    const { pendingMonorepoReleases } = require('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:12',
@@ -157,7 +161,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases 55 and 66min', async () => {
-    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
+    const { pendingMonorepoReleases } = require('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:55',
@@ -181,8 +185,48 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases without data', async () => {
-    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
+    const { pendingMonorepoReleases } = require('../../lib/monorepo')
     const result = await pendingMonorepoReleases()
     expect(result).toHaveLength(0)
+  })
+
+  test('load monorepo definition from database: negative case', async () => {
+    const { getMonorepoGroup } = require('../../lib/monorepo')
+    const pouchdbGroup = await getMonorepoGroup('gk-test')
+    expect(pouchdbGroup).toHaveLength(3)
+
+    const noGroup = await getMonorepoGroup('grouchdb')
+    expect(noGroup).toBeFalsy()
+  })
+
+  test('load monorepo definition from database: load from db', async () => {
+    const { monorepo } = await dbs()
+    await monorepo.put({
+      _id: 'grouchdb',
+      packages: ['graaaah', 'aaargh']
+    })
+
+    const { getMonorepoGroup } = require('../../lib/monorepo')
+    const pouchdbGroup = await getMonorepoGroup('pouchdb')
+    expect(pouchdbGroup).toHaveLength(37)
+
+    const grouchGroup = await getMonorepoGroup('grouchdb')
+    expect(grouchGroup).toHaveLength(2)
+  })
+
+  test('load monorepo definition from database: db beats file', async () => {
+    const { getMonorepoGroup } = require('../../lib/monorepo')
+
+    const testGroup = await getMonorepoGroup('gk-test')
+    expect(testGroup).toHaveLength(3)
+
+    const { monorepo } = await dbs()
+    await monorepo.upsert('gk-test', (old = {}) => {
+      old.packages = ['graaaah', 'aaargh']
+      return old
+    })
+
+    const testAgainGroup = await getMonorepoGroup('gk-test')
+    expect(testAgainGroup).toHaveLength(2)
   })
 })
