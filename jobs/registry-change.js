@@ -77,7 +77,11 @@ module.exports = async function (
   // check if dependency update is part of a monorepo release
   if (isPartOfMonorepo(dependency)) {
     const version = distTags['latest']
-    if (force === true || !await hasAllMonorepoUdates(dependency, version)) {
+    // We only want to open a PR if either:
+    // 1. We have all of the modules that belong to the release (have the same version number)
+    // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete
+    //    after n minutes, but we want to open the PR anyway
+    if (!await hasAllMonorepoUdates(dependency, version) && !force) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
