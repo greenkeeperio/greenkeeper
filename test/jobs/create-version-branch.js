@@ -1151,6 +1151,153 @@ describe('create version branch for dependencies from monorepos', () => {
     })
   })
 
+  test.only('new pull request with ignored dependency', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mono-1-ignored',
+      accountId: 'mono-123',
+      fullName: 'finnp/test',
+      enabled: true,
+      greenkeeper: {
+        ignore: ['colors-blue']
+      },
+      packages: {
+        'package.json': {
+          dependencies: {
+            pouchdb: '1.0.0',
+            'pouchdb-core': '1.0.0',
+            'colors-blue': '1.0.0',
+            bulldog: '1.0.0'
+          },
+          devDependencies: {
+            colors: '1.0.0'
+          }
+        }
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/test/issues/66/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    // TODO: don't mock this.
+    // -> test hangs when not mocking this so something is fishy!
+    jest.mock('../../lib/get-infos', () => (obj) => {
+      expect(obj.version).toEqual('2.0.0')
+
+      return {
+        dependencyLink: '[colors]()',
+        release: '2.0.0',
+        diffCommits: `<details>
+         <summary>Commits</summary>
+         body <a href="https://urls.greenkeeper.io/greenkeeperio/greenkeeper">
+       </details>`
+      }
+    })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(1)
+      const transform = await transforms[0]
+      let result = JSON.parse(transform.transform(JSON.stringify({
+        dependencies: {
+          pouchdb: '1.0.0',
+          'pouchdb-core': '1.0.0',
+          'colors-blue': '1.0.0',
+          bulldog: '1.0.0'
+        },
+        devDependencies: {
+          colors: '1.0.0'
+        }
+      })))
+      expect(result.dependencies['colors-blue']).toBe('1.0.0')
+      expect(result.devDependencies['colors']).toBe('2.0.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          colors: ['colors', 'colors-blue', 'colors-red']
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'colors-red',
+      accountId: 'mono-123',
+      repositoryId: 'mono-1-ignored',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.0.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
+        }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-1-ignored:branch:1234abcd')
+    const pr = await repositories.get('mono-1-ignored:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
+
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
   test('new pull request', async () => {
     jest.resetModules()
     jest.clearAllMocks()

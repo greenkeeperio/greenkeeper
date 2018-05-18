@@ -132,7 +132,8 @@ module.exports = async function (
   }
 
   const [owner, repo] = repository.fullName.split('/')
-  if (_.includes(config.ignore, dependency)) {
+  if (_.includes(config.ignore, dependency) ||
+      (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
     log.warn('exited: dependency ignored by user config')
     return
   }
@@ -154,13 +155,15 @@ module.exports = async function (
   log.info('branch name created', {branchName: newBranch})
 
   async function createTransformsArray (group, json) {
-    return group.map(async depName => {
+    return Promise.all(group.map(async depName => {
       const type = _.compact(
         Object.keys(json).map(type => {
           if (Object.keys(json[type]).includes(depName)) return type
         })
       )
       if (type.length !== 1) return
+      if (_.includes(config.ignore, depName)) return
+
       const oldPkgVersion = _.get(json, [type[0], depName])
       if (!oldPkgVersion) {
         log.warn('exited: could not find old package version', {newVersion: version, json})
@@ -189,7 +192,7 @@ module.exports = async function (
         path: 'package.json',
         message: commitMessage
       }
-    })
+    }))
   }
 
   const openPR = _.get(
@@ -219,7 +222,7 @@ module.exports = async function (
   }
   log.info('commit message created', {commitMessage})
 
-  const transforms = await createTransformsArray(group, repository.packages['package.json'])
+  const transforms = _.compact(await createTransformsArray(group, repository.packages['package.json']))
   const sha = await createBranch({
     installationId,
     owner,

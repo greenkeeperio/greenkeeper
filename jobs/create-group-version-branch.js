@@ -132,7 +132,13 @@ module.exports = async function (
 
   if (
     _.includes(config.ignore, dependency) ||
-    _.includes(config.groups[groupName].ignore, dependency)
+    (monorepoGroupName && _.includes(config.ignore, monorepoGroupName)) ||
+    (relevantDependencies.length &&
+      _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length) ||
+    _.includes(config.groups[groupName].ignore, dependency) ||
+    (monorepoGroupName && _.includes(config.groups[groupName].ignore, monorepoGroupName)) ||
+    (relevantDependencies.length &&
+      _.intersection(config.groups[groupName].ignore, relevantDependencies).length === relevantDependencies.length)
   ) {
     log.warn('exited: dependency ignored by user config')
     return
@@ -175,6 +181,9 @@ module.exports = async function (
         const pkg = pkgRow.value
         const type = types.find(t => t.filename === pkg.filename)
         if (!type) return
+        if (_.includes(config.ignore, depName)) return
+        if (_.includes(config.groups[groupName].ignore, depName)) return
+
         const commitMessageScope = !satisfies && type.type === 'dependencies'
           ? 'fix'
           : 'chore'
@@ -195,7 +204,7 @@ module.exports = async function (
       })
     )))
   }
-  const transforms = _.flatten(await createTransformsArray(monorepo))
+  const transforms = _.compact(_.flatten(await createTransformsArray(monorepo)))
   const sha = await createBranch({
     installationId,
     owner,
