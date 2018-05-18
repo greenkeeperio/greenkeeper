@@ -1,12 +1,6 @@
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
-const {
-  getMonorepoGroupNameForPackage,
-  isPartOfMonorepo,
-  pendingMonorepoReleases
-} = require('../../lib/monorepo')
-
 describe('lib monorepo', async () => {
   beforeEach(() => {
     jest.resetModules()
@@ -20,22 +14,23 @@ describe('lib monorepo', async () => {
     ])
   })
 
-  test('isPartOfMonorepo true', () => {
+  test('isPartOfMonorepo true', async () => {
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
-      lib.getMonorepoGroupNameForPackage = (dep) => {
+      lib.getMonorepoGroupNameForPackage = async (dep) => {
         return 'fruits'
       }
       return lib
     })
 
     const libMonorepo = require.requireMock('../../lib/monorepo')
-    const isPartOfMonorepo = libMonorepo.isPartOfMonorepo('@avocado/dep')
+    const isPartOfMonorepo = await libMonorepo.isPartOfMonorepo('@avocado/dep')
     expect(isPartOfMonorepo).toBeTruthy()
   })
 
-  test('isPartOfMonorepo false', () => {
-    const result = isPartOfMonorepo('some-dep')
+  test('isPartOfMonorepo false', async () => {
+    const { isPartOfMonorepo } = await require.requireActual('../../lib/monorepo')
+    const result = await isPartOfMonorepo('some-dep')
     expect(result).toBeFalsy()
   })
 
@@ -56,13 +51,11 @@ describe('lib monorepo', async () => {
     })
 
     jest.mock('../../utils/monorepo-definitions', () => {
-      const lib = require.requireActual('../../utils/monorepo-definitions')
-      lib.monorepoDefinitions = { 'fruits': ['@avocado/dep', '@banana/dep'] }
-      return lib
+      return { 'fruits': ['@avocado/dep', '@banana/dep'] }
     })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
-      lib.getMonorepoGroupNameForPackage = (dep) => {
+      lib.getMonorepoGroupNameForPackage = async (dep) => {
         return 'fruits'
       }
       return lib
@@ -97,16 +90,13 @@ describe('lib monorepo', async () => {
     })
 
     jest.mock('../../utils/monorepo-definitions', () => {
-      const lib = require.requireActual('../../utils/monorepo-definitions')
-      lib.monorepoDefinitions = { 'cities': ['koeln', 'hamburg', 'berlin'] }
-      return lib
+      return { 'cities': ['koeln', 'hamburg', 'berlin'] }
     })
     jest.mock('../../lib/monorepo', () => {
       const lib = require.requireActual('../../lib/monorepo')
       lib.getMonorepoGroupNameForPackage = (dep) => {
         return 'cities'
       }
-      lib.monorepoDefinitions = { 'cities': ['koeln', 'hamburg', 'berlin'] }
       return lib
     })
 
@@ -115,12 +105,14 @@ describe('lib monorepo', async () => {
     expect(result).toBeFalsy()
   })
 
-  test('getMonorepoGroup', () => {
-    const result = getMonorepoGroupNameForPackage('pouchdb-md5')
+  test('getMonorepoGroup', async () => {
+    const { getMonorepoGroupNameForPackage } = require.requireActual('../../lib/monorepo')
+    const result = await getMonorepoGroupNameForPackage('pouchdb-md5')
     expect(result).toBe('pouchdb')
   })
 
   test('pendingMonorepoReleases 11 and 44min', async () => {
+    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:11',
@@ -143,6 +135,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases 12 and 22min', async () => {
+    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:12',
@@ -164,6 +157,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases 55 and 66min', async () => {
+    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:55',
@@ -187,6 +181,7 @@ describe('lib monorepo', async () => {
   })
 
   test('pendingMonorepoReleases without data', async () => {
+    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
     const result = await pendingMonorepoReleases()
     expect(result).toHaveLength(0)
   })
