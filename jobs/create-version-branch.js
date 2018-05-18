@@ -141,11 +141,13 @@ module.exports = async function (
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})
 
-  let group, newBranch
+  let group, newBranch, dependencyKey
   if (isMonorepo) {
+    dependencyKey = monorepoGroupName
     group = relevantDependencies
     newBranch = `${config.branchPrefix}monorepo:${monorepoGroupName}-${version}`
   } else {
+    dependencyKey = dependency
     group = [dependency]
     newBranch = `${config.branchPrefix}${dependency}-${version}`
   }
@@ -191,23 +193,22 @@ module.exports = async function (
   }
 
   const openPR = _.get(
-    // TODO: Work with group!
     await repositories.query('pr_open_by_dependency', {
-      key: [repositoryId, dependency],
+      key: [repositoryId, dependencyKey],
       include_docs: true
     }),
     'rows[0].doc'
   )
   if (openPR) {
-    log.info('database: found open PR for this dependency', {repositoryId, dependency, openPR})
+    log.info('database: found open PR for this dependency', {repositoryId, dependencyKey, openPR})
   } else {
-    log.info('database: no open PR for this dependency', {repositoryId, dependency})
+    log.info('database: no open PR for this dependency', {repositoryId, dependencyKey})
   }
 
   const commitMessageKey = !satisfies && type === 'dependencies'
     ? 'dependencyUpdate'
     : 'devDependencyUpdate'
-  const commitMessageValues = { dependency, version }
+  const commitMessageValues = { dependencyKey, version }
   let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
   if (!satisfies && openPR) {
     await upsert(repositories, openPR._id, {
@@ -303,7 +304,7 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependency} to the latest version 🚀`
+  const title = `Update ${dependencyKey} to the latest version 🚀`
 
   const body = prContent({
     dependencyLink,
@@ -355,7 +356,7 @@ module.exports = async function (
     accountId,
     version,
     oldVersion,
-    dependency,
+    dependency: dependencyKey,
     initial: false,
     merged: false,
     number: createdPr.number,
