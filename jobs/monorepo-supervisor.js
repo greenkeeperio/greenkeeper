@@ -27,9 +27,9 @@ const { pendingMonorepoReleases } = require('../lib/monorepo')
 module.exports = async function () {
   const releases = await pendingMonorepoReleases()
 
-  return releases.map((release) => {
+  return Promise.all(releases.map(async (release) => {
     // getMonorepoGroupNameForPackage will be async soon
-    const groupName = getMonorepoGroupNameForPackage(release.dependency)
+    const groupName = await getMonorepoGroupNameForPackage(release.dependency)
     const message = `There has been an incomplete release of the monorepo \`${groupName}\`, not all modules listed in the monorepo definition have been released together. This _may_ mean that the release definition for this monorepo is out of date.`
     notifyAdmin(message)
 
@@ -40,5 +40,5 @@ module.exports = async function () {
       versions: release.versions,
       force: true
     }
-  })
+  }))
 }
