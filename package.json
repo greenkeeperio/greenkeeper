@@ -71,7 +71,9 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "NODE_ENV=testing jest -i"
+    "test": "npm run test:parallel",
+    "test:sequential": "NODE_ENV=testing jest -i",
+    "test:parallel": "NODE_ENV=testing jest"
   },
   "standard": {
     "env": {
