@@ -13,6 +13,13 @@ const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL } = require('../utils/utils')
+const {
+  isPartOfMonorepo,
+  getMonorepoGroup,
+  hasAllMonorepoUdates,
+  deleteMonorepoReleaseInfo,
+  getMonorepoGroupNameForPackage
+} = require('../lib/monorepo')
 
 const prContent = require('../content/update-pr')
 
@@ -36,6 +43,10 @@ module.exports = async function (
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
 
+  let isMonorepo = false
+  let monorepoGroupName = null
+  let monorepoGroup = ''
+  let relevantDependencies = []
   const groupName = Object.keys(group)[0]
   const version = distTags[distTag]
   const { installations, repositories } = await dbs()
@@ -44,6 +55,26 @@ module.exports = async function (
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
   log.info('started', {dependency, version, oldVersion})
+
+  // if this dependency is part of a monorepo suite that usually gets released
+  // all at the same time, check if we have update info for all the other
+  // modules as well. If not, stop this update, the job started by the last
+  // monorepo module will then update the whole lot.
+  if (await isPartOfMonorepo(dependency)) {
+    isMonorepo = true
+    if (!await hasAllMonorepoUdates(dependency, version)) {
+      log.info('exited: is not last in list of monorepo packages')
+      return
+    }
+    await deleteMonorepoReleaseInfo(dependency, version)
+    monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
+    monorepoGroup = await getMonorepoGroup(monorepoGroupName)
+    relevantDependencies = monorepoGroup.filter(dep =>
+      !!JSON.stringify(repository.packages['package.json']).match(dep))
+
+    log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
+  }
+
   const satisfies = semver.satisfies(version, oldVersion)
 
   // Shrinkwrap should behave differently from regular lockfiles:
@@ -113,12 +144,21 @@ module.exports = async function (
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})
 
-  const newBranch = `${config.branchPrefix}${groupName}/${dependency}-${version}`
+  let dependencyGroup, newBranch, dependencyKey
+  if (isMonorepo) {
+    dependencyKey = monorepoGroupName
+    dependencyGroup = relevantDependencies
+    newBranch = `${config.branchPrefix}${groupName}/monorepo:${monorepoGroupName}-${version}`
+  } else {
+    dependencyKey = dependency
+    dependencyGroup = [dependency]
+    newBranch = `${config.branchPrefix}${groupName}/${dependency}-${version}`
+  }
   log.info('branch name created', {branchName: newBranch})
 
   const openPR = _.get(
     await repositories.query('pr_open_by_dependency_and_group', {
-      key: [repositoryId, dependency, groupName],
+      key: [repositoryId, dependencyKey, groupName],
       include_docs: true
     }),
     'rows[0].doc'
@@ -130,30 +170,32 @@ module.exports = async function (
   }
 
   async function createTransformsArray (monorepo) {
-    return monorepo.map(async pkgRow => {
-      const pkg = pkgRow.value
-      const type = types.find(t => t.filename === pkg.filename)
-      if (!type) return
-      const commitMessageScope = !satisfies && type.type === 'dependencies'
-        ? 'fix'
-        : 'chore'
-      let commitMessage = `${commitMessageScope}(package): update ${dependency} to version ${version}`
+    return Promise.all(dependencyGroup.map(async depName =>
+      Promise.all(monorepo.map(async pkgRow => {
+        const pkg = pkgRow.value
+        const type = types.find(t => t.filename === pkg.filename)
+        if (!type) return
+        const commitMessageScope = !satisfies && type.type === 'dependencies'
+          ? 'fix'
+          : 'chore'
+        let commitMessage = `${commitMessageScope}(package): update ${depName} to version ${version}`
 
-      if (!satisfies && openPR) {
-        await upsert(repositories, openPR._id, {
-          comments: [...(openPR.comments || []), version]
-        })
-        commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
-      }
-      log.info('commit message created', {commitMessage})
-      return {
-        transform: createTransformFunction(type.type, dependency, version, log),
-        path: pkg.filename,
-        message: commitMessage
-      }
-    })
+        if (!satisfies && openPR) {
+          await upsert(repositories, openPR._id, {
+            comments: [...(openPR.comments || []), version]
+          })
+          commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
+        }
+        log.info('commit message created', {commitMessage})
+        return {
+          transform: createTransformFunction(type.type, depName, version, log),
+          path: pkg.filename,
+          message: commitMessage
+        }
+      })
+    )))
   }
-  const transforms = await createTransformsArray(monorepo)
+  const transforms = _.flatten(await createTransformsArray(monorepo))
   const sha = await createBranch({
     installationId,
     owner,
@@ -178,6 +220,7 @@ module.exports = async function (
     base,
     head: newBranch,
     dependency,
+    monorepoGroupName,
     version,
     oldVersion,
     oldVersionResolved,
@@ -203,6 +246,7 @@ module.exports = async function (
   const { dependencyLink, release, diffCommits } = await getInfos({
     installationId,
     dependency,
+    monorepoGroupName,
     version,
     diffBase,
     versions
@@ -225,7 +269,7 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependency} in group ${groupName} to the latest version 🚀`
+  const title = `Update ${dependencyKey} in group ${groupName} to the latest version 🚀`
 
   // maybe adapt PR body
   const body = prContent({
@@ -233,6 +277,7 @@ module.exports = async function (
     oldVersionResolved,
     version,
     dependency,
+    monorepoGroupName,
     type: highestPriorityDependency,
     release,
     diffCommits
@@ -277,7 +322,7 @@ module.exports = async function (
     accountId,
     version,
     oldVersion,
-    dependency,
+    dependency: dependencyKey,
     initial: false,
     merged: false,
     number: createdPr.number,
