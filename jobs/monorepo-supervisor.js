@@ -1,3 +1,6 @@
+const { getMonorepoGroupNameForPackage } = require('../lib/monorepo')
+const { notifyAdmin } = require('../lib/comms')
+
 /*
   Ihis job is being run every $interval (say 5 minutes).
 
@@ -25,7 +28,10 @@ module.exports = async function () {
   const releases = await pendingMonorepoReleases()
 
   return releases.map((release) => {
-    // TODO: send slack/email notifications to us / Enterprise admins
+    // getMonorepoGroupNameForPackage will be async soon
+    const groupName = getMonorepoGroupNameForPackage(release.dependency)
+    const message = `There has been an incomplete release of the monorepo \`${groupName}\`, not all modules listed in the monorepo definition have been released together. This _may_ mean that the release definition for this monorepo is out of date.`
+    notifyAdmin(message)
 
     return {
       name: 'registry-change',

@@ -5,6 +5,12 @@ describe('monorepo supervisor', async () => {
   beforeEach(() => {
     jest.resetModules()
     jest.clearAllMocks()
+    // Mock away sending admin notifications so we don‘t get spammed when tests run.
+    jest.mock('../../lib/comms', () => {
+      const lib = require.requireActual('../../lib/comms')
+      lib.notifyAdmin = () => {}
+      return lib
+    })
   })
   afterAll(async () => {
     const { npm } = await dbs()
@@ -46,6 +52,9 @@ describe('monorepo supervisor', async () => {
           },
           dependency: 'wibbly'
         }]
+      }
+      lib.getMonorepoGroupNameForPackage = (dependencyName) => {
+        return dependencyName === 'wobbly' ? 'timelord' : 'tardis'
       }
       return lib
     })
