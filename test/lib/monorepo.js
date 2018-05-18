@@ -118,7 +118,7 @@ describe('lib monorepo', async () => {
     expect(result).toBe('pouchdb')
   })
 
-  test('pendingMonorepoReleases 11 and 44min', async () => {
+  test('pendingMonorepoReleases 3 and 44min', async () => {
     const { pendingMonorepoReleases } = require('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
@@ -126,7 +126,7 @@ describe('lib monorepo', async () => {
       distTags: {
         latest: '2.0.0'
       },
-      updatedAt: new Date(new Date().getTime() - 11 * 60000).toJSON()
+      updatedAt: new Date(new Date().getTime() - 3 * 60000).toJSON()
     })
 
     await npm.put({
@@ -141,15 +141,15 @@ describe('lib monorepo', async () => {
     expect(result[0]._id).toEqual('monorepo:44')
   })
 
-  test('pendingMonorepoReleases 12 and 22min', async () => {
-    const { pendingMonorepoReleases } = require('../../lib/monorepo')
+  test('pendingMonorepoReleases 3 and 4min', async () => {
+    const { pendingMonorepoReleases } = require.requireActual('../../lib/monorepo')
     const { npm } = await dbs()
     await npm.put({
       _id: 'monorepo:12',
       distTags: {
         latest: '2.0.0'
       },
-      updatedAt: new Date(new Date().getTime() - 12 * 60000).toJSON()
+      updatedAt: new Date(new Date().getTime() - 3 * 60000).toJSON()
     })
 
     await npm.put({
@@ -157,7 +157,7 @@ describe('lib monorepo', async () => {
       distTags: {
         latest: '1.0.0'
       },
-      updatedAt: new Date(new Date().getTime() - 22 * 60000).toJSON()
+      updatedAt: new Date(new Date().getTime() - 4 * 60000).toJSON()
     })
     const result = await pendingMonorepoReleases()
     expect(result).toHaveLength(0)
