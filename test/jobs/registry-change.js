@@ -557,11 +557,11 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     jest.mock('../../lib/monorepo', () => {
       jest.mock('../../utils/monorepo-definitions', () => {
-        const { monorepoDefinitions } = require.requireActual('../../utils/monorepo-definitions')
+        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           colors: ['colors', 'colors-blue']
         })
-        return { monorepoDefinitions: newDef }
+        return newDef
       })
       const lib = require.requireActual('../../lib/monorepo')
       return lib
@@ -600,11 +600,11 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     jest.mock('../../lib/monorepo', () => {
       jest.mock('../../utils/monorepo-definitions', () => {
-        const { monorepoDefinitions } = require.requireActual('../../utils/monorepo-definitions')
+        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           dogs: ['bulldog', 'pug']
         })
-        return { monorepoDefinitions: newDef }
+        return newDef
       })
       const lib = require.requireActual('../../lib/monorepo')
       return lib

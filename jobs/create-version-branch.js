@@ -58,15 +58,15 @@ module.exports = async function (
   // all at the same time, check if we have update info for all the other
   // modules as well. If not, stop this update, the job started by the last
   // monorepo module will then update the whole lot.
-  if (isPartOfMonorepo(dependency)) {
+  if (await isPartOfMonorepo(dependency)) {
     isMonorepo = true
     if (!await hasAllMonorepoUdates(dependency, version)) {
       log.info('exited: is not last in list of monorepo packages')
       return
     }
     await deleteMonorepoReleaseInfo(dependency, version)
-    monorepoGroupName = getMonorepoGroupNameForPackage(dependency)
-    monorepoGroup = getMonorepoGroup(monorepoGroupName)
+    monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
+    monorepoGroup = await getMonorepoGroup(monorepoGroupName)
     relevantDependencies = monorepoGroup.filter(dep =>
       !!JSON.stringify(repository.packages['package.json']).match(dep))
 

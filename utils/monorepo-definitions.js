@@ -47,10 +47,4 @@ const monorepoDefinitions = {
   ]
 }
 
-// function getMonorepoDefinitions () {
-//
-// }
-
-module.exports = {
-  monorepoDefinitions
-}
+module.exports = monorepoDefinitions

@@ -75,7 +75,7 @@ module.exports = async function (
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
-  if (isPartOfMonorepo(dependency)) {
+  if (await isPartOfMonorepo(dependency)) {
     const version = distTags['latest']
     // We only want to open a PR if either:
     // 1. We have all of the modules that belong to the release (have the same version number)
@@ -89,7 +89,7 @@ module.exports = async function (
     }
     // set up keys so we can query for all packages with a dependency on any of the packages
     // in our monorepo group
-    dependencies = getMonorepoGroup(getMonorepoGroupNameForPackage(dependency)) || dependencies
+    dependencies = await getMonorepoGroup(await getMonorepoGroupNameForPackage(dependency)) || dependencies
   }
 
   /*

@@ -1271,11 +1271,11 @@ describe('create version branch for dependencies from monorepos', () => {
 
     jest.mock('../../lib/monorepo', () => {
       jest.mock('../../utils/monorepo-definitions', () => {
-        const { monorepoDefinitions } = require.requireActual('../../utils/monorepo-definitions')
+        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           colors: ['colors', 'colors-blue', 'colors-red']
         })
-        return { monorepoDefinitions: newDef }
+        return newDef
       })
       return require.requireActual('../../lib/monorepo')
     })
@@ -1332,15 +1332,15 @@ describe('create version branch for dependencies from monorepos', () => {
     }))
     jest.mock('../../lib/monorepo', () => {
       return {
-        isPartOfMonorepo: (devDependency) => {
+        isPartOfMonorepo: async (devDependency) => {
           expect(devDependency).toEqual('@avocado/dep1')
           return true
         },
-        hasAllMonorepoUdates: (devDependency) => {
+        hasAllMonorepoUdates: async (devDependency) => {
           expect(devDependency).toEqual('@avocado/dep1')
           return false
         },
-        getMonorepoGroupNameForPackage: (devDependency) => {
+        getMonorepoGroupNameForPackage: async (devDependency) => {
           return ['@avocado/dep1', '@avocado/dep2']
         },
         deleteMonorepoReleaseInfo: async () => {}
