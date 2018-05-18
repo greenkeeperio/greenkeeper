@@ -44,6 +44,11 @@ const monorepoDefinitions = {
     'pouchdb-selector-core',
     'pouchdb-utils',
     'sublevel-pouchdb'
+  ],
+  'gk-test': [
+    'gk-test-a',
+    'gk-test-b',
+    'gk-test-c'
   ]
 }
 
