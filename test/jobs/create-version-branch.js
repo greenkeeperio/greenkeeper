@@ -1152,6 +1152,9 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 
   test('new pull request', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
     const { repositories, npm } = await dbs()
     await repositories.put({
       _id: 'mono-1',
@@ -1230,24 +1233,21 @@ describe('create version branch for dependencies from monorepos', () => {
         return {}
       })
 
-    jest.mock('../../lib/get-infos', () => ({
-      installationId, dependency, version, diffBase, versions
-    }) => {
-      // used get-infos
-      expect(version).toEqual('2.0.0')
+    // TODO: don't mock this.
+    // -> test hangs when not mocking this so something is fishy!
+    jest.mock('../../lib/get-infos', () => (obj) => {
+      expect(obj.version).toEqual('2.0.0')
 
       return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
+        dependencyLink: '[colors]()',
+        release: '2.0.0',
+        diffCommits: `<details>
+         <summary>Commits</summary>
+         body <a href="https://urls.greenkeeper.io/greenkeeperio/greenkeeper">
+       </details>`
       }
     })
-    jest.mock('../../lib/get-diff-commits', () => () => ({
-      html_url: 'https://github.com/lkjlsgfj/',
-      total_commits: 0,
-      behind_by: 0,
-      commits: []
-    }))
+
     jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
       expect(transforms).toHaveLength(2)
       const transform1 = await transforms[0]
@@ -1293,8 +1293,15 @@ describe('create version branch for dependencies from monorepos', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.0.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
+        }
       }
     })
 

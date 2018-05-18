@@ -282,6 +282,7 @@ module.exports = async function (
   const { dependencyLink, release, diffCommits } = await getInfos({
     installationId,
     dependency,
+    monorepoGroupName,
     version,
     diffBase,
     versions
@@ -311,9 +312,10 @@ module.exports = async function (
     oldVersionResolved,
     version,
     dependency,
-    type,
     release,
-    diffCommits
+    diffCommits,
+    monorepoGroupName,
+    type
   })
 
   // verify pull requests commit
