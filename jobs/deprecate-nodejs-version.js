@@ -76,7 +76,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
     if (!_.get(travisJSON, 'node_js')) return
 
     const nodeVersionFromYaml = getNodeVersionsFromTravisYML(travisYML)
-    const hasNodeVersion = getNodeVersionIndex(nodeVersionFromYaml.versions, nodeVersion, codeName) !== -1
+    const hasNodeVersion = getNodeVersionIndex(nodeVersionFromYaml.versions, nodeVersion, codeName, true) !== -1
     if (!hasNodeVersion) return
     const updatedTravisYaml = addNewLowestAndDeprecate({
       travisYML,
@@ -90,10 +90,11 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
 
   function nvmrcTransform (nvmrc) {
     if (!nvmrc) return nvmrc
-    if (hasNodeVersion(nvmrc, nodeVersion, codeName)) return nvmrc
-
-    const updatedNvmrc = updateNodeVersionToNvmrc(newLowestVersion)
-    return updatedNvmrc
+    if (hasNodeVersion(nvmrc, nodeVersion, codeName, true)) {
+      const updatedNvmrc = updateNodeVersionToNvmrc(newLowestVersion)
+      return updatedNvmrc
+    }
+    return nvmrc
   }
 
   let transforms = [

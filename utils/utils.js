@@ -184,20 +184,26 @@ const getNodeVersionsFromTravisYML = function (yml) {
 
 // version is a string: 'v8.10', '- "10"', 'Dubnium', "- 'lts/*'" etc
 // returns a boolean
-const hasNodeVersion = function (version, newVersion, newCodeName) {
-  const matches = ['node', 'stable', 'lts/\\*', `lts/${newCodeName}`, newCodeName, newVersion] // eslint-disable-line
-  return !!matches.find((match) => {
+// versionOnly: true will _not_ match placeholder strings for current versions, such as `stable`
+const hasNodeVersion = function (version, newVersion, newCodeName, versionOnly = false) {
+  let matches = [`lts/${newCodeName}`, newCodeName, newVersion] // eslint-disable-line
+  const tags = ['node', 'stable', 'lts/\\*']
+  if (!versionOnly) {
+    matches = matches.concat(tags)
+  }
+  const overallResult = !!matches.find((match) => {
     // first regex matches in array form ('- 10'), second regex matches the inline form ('10')
-    return !!(version.match(RegExp(`([^.])(${match})`, 'i')) || version.match(RegExp(`^${match}$`, 'i')))
+    return !!(version.match(RegExp(`([^.])(${match})`, 'i')) || version.match(RegExp(`^${match}`, 'i')))
   })
+  return overallResult
 }
 
 // existingVersionStrings is just an array of strings: ['- 7', '- 8'] or ['9']  or ['v8.10']
 // returns an index
-const getNodeVersionIndex = function (existingVersionStrings, newVersion, newCodeName) {
+const getNodeVersionIndex = function (existingVersionStrings, newVersion, newCodeName, versionOnly = false) {
   if (!existingVersionStrings || existingVersionStrings.length === 0) return -1
   return existingVersionStrings.findIndex((version) => {
-    return hasNodeVersion(version, newVersion, newCodeName)
+    return hasNodeVersion(version, newVersion, newCodeName, versionOnly)
   })
 }
 
@@ -243,7 +249,7 @@ const updateNodeVersionToNvmrc = function (newVersion) {
 const removeNodeVersionFromTravisYML = function (travisYML, newVersion, newCodeName, existingVersions) {
   // Should only remove the old version if it is actually present in any form
   if (existingVersions.versions.length === 0) return travisYML
-  const nodeVersionIndex = getNodeVersionIndex(existingVersions.versions, newVersion, newCodeName)
+  const nodeVersionIndex = getNodeVersionIndex(existingVersions.versions, newVersion, newCodeName, true)
   let travisYMLLines = travisYML.split('\n')
   // We only need to do something if the old version is present
   if (nodeVersionIndex !== -1) {
@@ -252,7 +258,7 @@ const removeNodeVersionFromTravisYML = function (travisYML, newVersion, newCodeN
       // Multiple node versions were defined in array format
       // set lines we want to remove to undefined in existingVersion.versions and filter them out afterwards
       const updatedVersionsArray = _.filter(existingVersions.versions.map((version) => {
-        return hasNodeVersion(version, newVersion, newCodeName) ? undefined : version
+        return hasNodeVersion(version, newVersion, newCodeName, true) ? undefined : version
       }), Boolean)
       // splice the updated existingversions into travisymllines
       travisYMLLines.splice(existingVersions.startIndex + 1, existingVersions.endIndex - existingVersions.startIndex, updatedVersionsArray)

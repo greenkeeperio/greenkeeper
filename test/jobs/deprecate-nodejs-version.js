@@ -25,7 +25,7 @@ describe('deprecate and update nodejs version', () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '1234', '12345', '321', '777'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '56', '56:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd', '4200', '4200:branch:1234abcd', '4200:issue:10')
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '56', '56:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd', '4200', '4200:branch:1234abcd', '4200:issue:10', '999666', '999666:branch:1234abcd')
     ])
   })
 
@@ -519,7 +519,7 @@ branches:
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
       const packageJSON = JSON.stringify({name: 'uhu'})
-      const updatedEngines = transforms[0].transform(packageJSON)
+      const updatedEngines = transforms[2].transform(packageJSON)
       expect(updatedEngines).toBeFalsy()
     })
 
@@ -543,6 +543,59 @@ branches:
     }
     try {
       await repositories.get('4200:issue:10')
+    } catch (e) {
+      expect(e.error).toEqual('not_found')
+    }
+  })
+
+  test('don’t update to 4 from v9 in nvmrc', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '999666',
+      accountId: '1234',
+      fullName: 'anna/nines',
+      enabled: true,
+      type: 'repository'
+    })
+    expect.assertions(3)
+
+    const ghNock = nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/anna/nines')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      const inputNvmrc = 'v9'
+      const targetNvmrc = 'v9'
+      const updatedNvmrc = transforms[1].transform(inputNvmrc)
+      transforms[1].created = false
+      expect(updatedNvmrc).toEqual(targetNvmrc)
+    })
+
+    const deprecateNodeJSVersion = require('../../jobs/deprecate-nodejs-version')
+
+    const newJob = await deprecateNodeJSVersion({
+      repositoryFullName: 'anna/nines',
+      nodeVersion: '4',
+      codeName: 'Argon',
+      newLowestVersion: 6,
+      newLowestCodeName: 'Boron'
+    })
+    ghNock.done()
+    expect(newJob).toBeFalsy()
+
+    try {
+      await repositories.get('999666:branch:1234abcd')
     } catch (e) {
       expect(e.error).toEqual('not_found')
     }
