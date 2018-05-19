@@ -6,7 +6,8 @@ const {
   getOldVersionResolved,
   getNodeVersionsFromTravisYML,
   addNodeVersionToTravisYML,
-  addNewLowestAndDeprecate
+  addNewLowestAndDeprecate,
+  hasNodeVersion
 } = require('../../utils/utils')
 
 const { cleanCache } = require('../helpers/module-cache-helpers')
@@ -1511,4 +1512,66 @@ after_success: npm run deploy`
     newLowestCodeName: 'Boron'
   })
   expect(updatedYML).toEqual(targetYML)
+})
+
+describe('correctly upgrade node version in .nvmrc', () => {
+  test('Don’t upgrade from 9', () => {
+    const hasNode = hasNodeVersion('9', '4', 'Argon', true)
+    expect(hasNode).toBeFalsy()
+  })
+
+  test('Don’t upgrade from v9', () => {
+    const hasNode = hasNodeVersion('v9', '4', 'Argon', true)
+    expect(hasNode).toBeFalsy()
+  })
+
+  test('Don’t upgrade from - 9', () => {
+    const hasNode = hasNodeVersion('- 9', '4', 'Argon', true)
+    expect(hasNode).toBeFalsy()
+  })
+
+  test('Don’t upgrade from - v9', () => {
+    const hasNode = hasNodeVersion('- v9', '4', 'Argon', true)
+    expect(hasNode).toBeFalsy()
+  })
+
+  test('Do upgrade from 4', () => {
+    const hasNode = hasNodeVersion('4', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from v4', () => {
+    const hasNode = hasNodeVersion('v4', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from 4.1.2', () => {
+    const hasNode = hasNodeVersion('4.1.2', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from v4.1.2', () => {
+    const hasNode = hasNodeVersion('v4.1.2', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from - 4', () => {
+    const hasNode = hasNodeVersion('- 4', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from - v4', () => {
+    const hasNode = hasNodeVersion('- v4', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from - 4.1.2', () => {
+    const hasNode = hasNodeVersion('- 4.1.2', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
+
+  test('Do upgrade from - v4.1.2', () => {
+    const hasNode = hasNodeVersion('- v4.1.2', '4', 'Argon', true)
+    expect(hasNode).toBeTruthy()
+  })
 })
