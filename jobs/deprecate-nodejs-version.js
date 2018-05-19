@@ -131,6 +131,7 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
         const oldPkgParsed = JSON.parse(oldPkg)
         const inplace = jsonInPlace(oldPkg)
         const currentEngines = _.get(oldPkgParsed, 'engines.node')
+        if (!currentEngines) return
         const newEngines = currentEngines.replace(RegExp(`^(>|>=|~|v)?(${nodeVersion})`, 'g'), `$1${newLowestVersion}`)
         if (newEngines === currentEngines) return
         inplace.set('engines.node', newEngines)
