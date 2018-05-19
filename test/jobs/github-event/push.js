@@ -9,6 +9,16 @@ const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers
 const pathToWorker = require.resolve('../../../jobs/github-event/push')
 jest.setTimeout(10000)
 
+const configFileContent = {
+  groups: {
+    default: {
+      packages: [
+        'package.json'
+      ]
+    }
+  }
+}
+
 describe('github-event push', async () => {
   beforeEach(() => {
     jest.resetModules()
@@ -40,11 +50,20 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
+      .get('/repos/finn/disabled/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/disabled/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -88,11 +107,11 @@ describe('github-event push', async () => {
       }
     })
 
-    expect(newJob).toBeTruthy()
-    const job = newJob.data
-    expect(job.name).toEqual('create-initial-branch')
-    expect(job.accountId).toEqual('123')
-    expect(job.repositoryId).toEqual('333')
+    expect(newJob).toBeFalsy()
+    // const job = newJob.data
+    // expect(job.name).toEqual('create-initial-branch')
+    // expect(job.accountId).toEqual('123')
+    // expect(job.repositoryId).toEqual('333')
 
     const repo = await repositories.get('333')
 
@@ -115,6 +134,16 @@ describe('github-event push', async () => {
 
   test('monorepo: subdirectory package.json was modified (555)', async () => {
     const { repositories } = await dbs()
+
+    const myConfigFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'packages/frontend/package.json'
+          ]
+        }
+      }
+    }
 
     await repositories.put({
       _id: '555',
@@ -142,29 +171,22 @@ describe('github-event push', async () => {
     })
 
     const githubPush = requireFresh(pathToWorker)
-    const configFileContent = {
-      groups: {
-        frontend: {
-          packages: [
-            'packages/frontend/package.json'
-          ]
-        }
-      }
-    }
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
         type: 'file',
         path: 'greenkeeper.json',
         name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+        content: Buffer.from(JSON.stringify(myConfigFileContent)).toString('base64')
       })
       .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
       .reply(200, {
@@ -239,7 +261,7 @@ describe('github-event push', async () => {
   test('monorepo: subdirectory package.json, which is not listed in the config, was modified (555)', async () => {
     const { repositories } = await dbs()
     const githubPush = requireFresh(pathToWorker)
-    const configFileContent = {
+    const myConfigFileContent = {
       groups: {
         frontend: {
           packages: [
@@ -248,20 +270,21 @@ describe('github-event push', async () => {
         }
       }
     }
-
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
         type: 'file',
         path: 'greenkeeper.json',
         name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+        content: Buffer.from(JSON.stringify(myConfigFileContent)).toString('base64')
       })
       .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
       .reply(200, {
@@ -370,11 +393,15 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/38/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(404, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -482,11 +509,15 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/39/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(404, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
         path: 'package.json',
@@ -561,10 +592,12 @@ describe('github-event push', async () => {
 
     nock('https://api.github.com')
       .post('/installations/40/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/finn/test/contents/package.json')
       .reply(200, {
@@ -627,6 +660,14 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/test/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+
       .get('/repos/finn/test/contents/package.json')
       .reply(200, () => {
         // should not request package.json
@@ -679,6 +720,13 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/enabled/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/test/contents/package.json')
       .reply(404, {})
 
@@ -736,6 +784,13 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/private/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
@@ -796,6 +851,14 @@ describe('github-event push', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
+      .get('/repos/finn/private/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+
       .get('/repos/finn/private/contents/package.json')
       .reply(404, {})
 
@@ -886,10 +949,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1036,10 +1101,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1223,10 +1290,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1423,10 +1492,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1629,6 +1700,16 @@ describe('github-event push: monorepo', () => {
           dependency: 'lodash',
           dependencyType: 'dependencies',
           head: 'greenkeeper/backend/lodash-2.0.0'
+        },
+        {
+          _id: '888:branch:initialGroup',
+          type: 'branch',
+          sha: '1234abcd',
+          repositoryId: '888',
+          head: 'greenkeeper/initial-frontend',
+          initial: false,
+          subgroupInitial: true,
+          group: 'frontend'
         }
       ])
     ])
@@ -1637,10 +1718,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1681,6 +1764,8 @@ describe('github-event push: monorepo', () => {
         expect(true).toBeFalsy()
         return {}
       })
+      .delete('/repos/hans/monorepo/git/refs/heads/greenkeeper/initial-frontend')
+      .reply(200, {})
 
     const newJob = await githubPush({
       installation: {
@@ -1738,6 +1823,8 @@ describe('github-event push: monorepo', () => {
     expect(frontend.referenceDeleted).toBeTruthy()
     const backend = await repositories.get('888:branch:1234abcb')
     expect(backend.referenceDeleted).toBeFalsy()
+    const subgroupInitial = await repositories.get('888:branch:initialGroup')
+    expect(subgroupInitial.referenceDeleted).toBeTruthy()
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
 
@@ -1828,10 +1915,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -1991,10 +2080,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2187,10 +2278,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2379,10 +2472,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2570,10 +2665,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2760,10 +2857,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -2958,10 +3057,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(200, {
@@ -3079,7 +3180,7 @@ describe('github-event push: monorepo', () => {
   })
 
   test('monorepo: greenkeeper.json deleted with existing branches (1117)', async () => {
-    const configFileContent = {
+    const configFileContentLocal = {
       groups: {
         frontend: {
           packages: [
@@ -3114,7 +3215,7 @@ describe('github-event push: monorepo', () => {
               }
             }
           },
-          greenkeeper: configFileContent
+          greenkeeper: configFileContentLocal
         },
         {
           _id: '1117:branch:1234abca',
@@ -3133,10 +3234,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(404)
@@ -3253,10 +3356,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/greenkeeper.json')
       .reply(404)
@@ -3364,10 +3469,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3471,10 +3578,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3581,10 +3690,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3696,10 +3807,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3812,10 +3925,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -3931,10 +4046,12 @@ describe('github-event push: monorepo', () => {
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .get('/repos/hans/monorepo/contents/package.json')
       .reply(200, {
@@ -4013,6 +4130,220 @@ describe('github-event push: monorepo', () => {
     expect(repo.greenkeeper).toMatchObject(configFileContent)
     expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
   })
+
+  test('monorepo: greenkeeper.json broken by user on a disabled repo receives validation issue (mgm4)', async () => {
+    const configFileContent = {
+      groups: {
+        'valid_groupname': {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    // Invalid JSON for the `greenkeeper.json` on GitHub, missing colon after `groups`
+    // JSON.parse will throw `Unexpected token g in JSON at position 8`
+    const invalidJSONString = `{
+      groups {
+        '#invalid#groupname#': {
+          packages: [
+            '/package.json'
+          ]
+        }
+      }
+    }`
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mgm4',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: false,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(invalidJSONString).toString('base64')
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: 'mgm4',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job.name).toEqual('invalid-config-file')
+    expect(job.messages[0]).toEqual('Could not parse `greenkeeper.json`, it appears to not be a valid JSON file.')
+
+    const repo = await repositories.get('mgm4')
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
+    expect(repo.headSha).toEqual('9049f1265b7d61be4a8904a9a27120d2064dab3b')
+  })
+
+  test('monorepo: invalid greenkeeper.json fixed by user, starts create-initial-branch (mgm5)', async () => {
+    const configFileContent = {
+      groups: {
+        frontend: {
+          packages: [
+            'package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mgm5',
+      fullName: 'hans/monorepo',
+      accountId: '321',
+      enabled: true,
+      headSha: 'hallo',
+      packages: {
+        'package.json': {
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: configFileContent,
+      openInitialPRWhenConfigFileFixed: true
+    })
+
+    // This is the invalid config file-issue
+    await repositories.put({
+      _id: 'mgm5:issue:12',
+      _rev: '1-a33c3fda82f864c0a9b8ddc351f25048',
+      type: 'issue',
+      initial: false,
+      invalidConfig: true,
+      repositoryId: 'mgm5',
+      number: 12,
+      state: 'open',
+      createdAt: '2018-04-13T10:12:10.591Z',
+      updatedAt: '2018-04-13T10:12:10.591Z'
+    })
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/hans/monorepo/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: encodePkg(configFileContent)
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: 'mgm5',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeTruthy()
+    const job = newJob.data
+    expect(job).toEqual({
+      name: 'create-initial-branch',
+      repositoryId: 'mgm5',
+      accountId: '321',
+      closes: [12]
+    })
+    const repo = await repositories.get('mgm5')
+    expect(repo.openInitialPRWhenConfigFileFixed).toBeFalsy()
+    expect(repo.greenkeeper).toMatchObject(configFileContent)
+  })
 })
 
 afterAll(async () => {
@@ -4031,7 +4362,7 @@ afterAll(async () => {
   '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
   '1117', '1117:branch:1234abca',
   '1118', '1118:branch:1234abca',
-  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3')
+  'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5')
   await removeIfExists(payments, '123')
 })
 

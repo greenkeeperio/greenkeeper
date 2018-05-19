@@ -20,9 +20,10 @@ const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
+const { invalidConfigFile } = require('../lib/invalid-config-file')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
 
-module.exports = async function ({ repositoryId }) {
+module.exports = async function ({ repositoryId, closes = [] }) {
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const repoDoc = await repositories.get(repositoryId)
@@ -38,12 +39,46 @@ module.exports = async function ({ repositoryId }) {
     return
   }
 
+  let config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
+  if (config.disabled) {
+    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
+    return
+  }
+
   const [owner, repo] = repoDoc.fullName.split('/')
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
   const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
-  // This mutates repoDoc
-  await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+  try {
+    // This mutates repoDoc!
+    // Also, this might fail, for example because of a `greenkeeper.json` validation issue, but all errors are handled
+    // and the rest of this file will run anyway.
+    await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+  } catch (e) {
+    // If the config file is invalid, we open an issue instead of the initial PR
+    if (e.name && e.name === 'GKConfigFileParseError') {
+      log.warn('create initial branch failed because of an invalid config file')
+      // We set a flag that the config was borked. When the next push for the greenkeeper.json comes and it is valid
+      // we can tell by the flag whether we still need to open the initial PR that we didn’t do here.
+      repoDoc.openInitialPRWhenConfigFileFixed = true
+      return invalidConfigFile({
+        repoDoc,
+        config,
+        repositories,
+        // Danger: repository keys are snake_case, repoDoc are camelCase!
+        // Handled in lib/invalid-config-file.js -> updateDoc()
+        repository: repoDoc,
+        repositoryId,
+        details: [{ formattedMessage: e.message }],
+        log,
+        isBlockingInitialPR: true
+      })
+    }
+  }
+
+  // Get config again after updateRepoDoc, because it now has the package.json entries
+  config = getConfig(repoDoc)
 
   // TODO: Test these two assertions
   if (!_.get(repoDoc, ['packages']) || Object.keys(repoDoc.packages).length === 0) {
@@ -52,13 +87,6 @@ module.exports = async function ({ repositoryId }) {
   }
 
   await upsert(repositories, repoDoc._id, repoDoc)
-
-  const config = getConfig(repoDoc)
-  log.info(`config for ${repoDoc.fullName}`, {config})
-  if (config.disabled) {
-    log.warn('exited: Greenkeeper is disabled for this repo in package.json')
-    return
-  }
 
   const packageJsonContents = _.get(repoDoc, ['packages'])
   const packagePaths = _.keys(packageJsonContents)
@@ -140,7 +168,7 @@ module.exports = async function ({ repositoryId }) {
       }
     }
   ]
-
+  let depsUpdated = false // this is ugly but works ¯\_(ツ)_/¯
   // create a transform loop for all the package.json paths and push into the transforms array below
   packagePaths.map((packagePath) => {
     transforms.unshift({
@@ -152,7 +180,7 @@ module.exports = async function ({ repositoryId }) {
 
         dependencies.forEach(({ type, name, newVersion }) => {
           if (!_.get(oldPkgParsed, [type, name])) return
-
+          depsUpdated = true
           inplace.set([type, name], newVersion)
         })
         return inplace.toString()
@@ -198,6 +226,7 @@ module.exports = async function ({ repositoryId }) {
       greenkeeperConfigFile
     })
     if (!_.isEmpty(greenkeeperConfigFile.groups)) {
+      const oldGreenkeeperConfigFile = _.cloneDeep(greenkeeperConfigFile)
       // mutates greenkeeperConfigFile & greenkeeperConfigInfo
       const updatedGreenkeeperConfigMeta = generateUpdatedGreenkeeperConfig({
         greenkeeperConfigFile,
@@ -207,7 +236,7 @@ module.exports = async function ({ repositoryId }) {
       })
       greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
       const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
-      log.info('updating existing greenkeeper config', {greekeeperJson: greenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
+      log.info('updating existing greenkeeper config', {oldGreekeeperJson: oldGreenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.message = getMessage(config.commitMessages, 'updateConfigFile')
       greenkeeperJSONTransform.transform = () => {
@@ -263,7 +292,6 @@ module.exports = async function ({ repositoryId }) {
     }
   }
 
-  const depsUpdated = transforms[0].created
   const travisModified = transforms[1].created
   const badgeAdded = transforms[2].created
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
@@ -277,7 +305,10 @@ module.exports = async function ({ repositoryId }) {
     travisModified,
     badgeAdded,
     badgeUrl,
-    greenkeeperConfigInfo
+    greenkeeperConfigInfo,
+    // If there are issues that should be closed by the initial PR message,
+    // put them in the branch doc so we can find them later
+    closes
   })
 
   statsd.increment('initial_branch')

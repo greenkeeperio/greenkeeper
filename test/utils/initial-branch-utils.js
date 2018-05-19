@@ -1,17 +1,10 @@
-const nock = require('nock')
-
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
-const { cleanCache } = require('../helpers/module-cache-helpers')
-
-nock.disableNetConnect()
-nock.enableNetConnect('localhost')
 
 describe('create initial branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     delete process.env.BADGES_HOST
-    cleanCache('../../lib/env')
     jest.resetModules()
   })
 
@@ -45,9 +38,6 @@ describe('create initial branch', () => {
     const packagePaths = ['package.json', 'frontend/package.json']
     const packageJsonContents = [{ devDependencies: {'@finnpauls/dep': '1.0.0'} }]
     const registryGet = () => {}
-    // const log = {
-    //   info: () => {}
-    // }
     const log = console
 
     const { repositories } = await dbs()

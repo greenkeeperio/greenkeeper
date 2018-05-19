@@ -183,6 +183,12 @@ describe('create version brach', () => {
       accountId: '124',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': true,
+        'package-lock.json': false,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -313,6 +319,12 @@ describe('create version brach', () => {
       accountId: '124gke',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -442,6 +454,12 @@ describe('create version brach', () => {
       accountId: '125',
       fullName: 'finnp/testtest',
       private: true,
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -517,6 +535,12 @@ describe('create version brach', () => {
         _id: '43',
         accountId: '126',
         fullName: 'finnp/test2',
+        files: {
+          'package.json': ['package.json'],
+          'package-lock.json': [],
+          'npm-shrinkwrap.json': [],
+          'yarn.lock': []
+        },
         packages: {
           'package.json': {
             greenkeeper: {
@@ -621,6 +645,12 @@ describe('create version brach', () => {
       _id: '44',
       accountId: '127',
       fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -701,6 +731,12 @@ describe('create version brach', () => {
       _id: '45',
       accountId: '123',
       fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
       packages: {
         'package.json': {
           greenkeeper: {
@@ -727,6 +763,96 @@ describe('create version brach', () => {
     expect(newJob).toBeFalsy()
   })
 
+  test('ignore ignored devDependency + empty gk config in repodoc', async () => {
+    expect.assertions(1)
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '51',
+      accountId: '123',
+      fullName: 'treasure-data/td-js-sdk',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
+      packages: {
+        'package.json': {
+          greenkeeper: {
+            ignore: ['domready', 'karma', 'mocha']
+          },
+          'devDependencies': {
+            'expect.js': '^0.3.1',
+            'express': '^4.14.0',
+            'glob': '^7.0.5',
+            'js-polyfills': '^0.1.34',
+            'karma': '1.3.0',
+            'karma-browserstack-launcher': '^1.3.0',
+            'karma-chrome-launcher': '^2.2.0',
+            'karma-firefox-launcher': '^1.0.1',
+            'karma-min-reporter': '^0.1.0',
+            'karma-mocha': '^1.3.0',
+            'karma-safari-launcher': '^1.0.0',
+            'karma-webpack': '^2.0.4',
+            'mocha': '^2.5.3',
+            'parse-domain': '^2.0.0',
+            'phantomjs-prebuilt': '^2.1.7',
+            'requirejs': '^2.2.0',
+            'selenium-standalone': '^5.4.0',
+            'simple-mock': '^0.8.0',
+            'standard': '^11.0.0',
+            'tape': '^4.6.0',
+            'uglifyjs': '^2.4.10',
+            'uglifyjs-webpack-plugin': '^0.4.6',
+            'wd': '^1.5.0',
+            'webpack': '^1.13.1'
+          },
+          'dependencies': {
+            'domready': '^0.3.0',
+            'global': '^4.3.0',
+            'json3': '^3.3.2',
+            'jsonp': '0.2.1',
+            'lodash-compat': '^3.10.1'
+          }
+        }
+      },
+      greenkeeper: {}
+    })
+
+    const githubMock = nock('https://api.github.com')
+    .post('/installations/37/access_tokens')
+    .optionally()
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .optionally()
+    .reply(200, {})
+    .get('/repos/treasure-data/td-js-sdk')
+    .reply(200, {
+      default_branch: 'master'
+    })
+    .log(console.log)
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'karma',
+      distTag: 'latest',
+      accountId: '123',
+      repositoryId: '51',
+      type: 'devDependencies',
+      distTags: {
+        latest: '2.0.2'
+      },
+      oldVersion: '1.3.0'
+    })
+
+    console.log(githubMock.isDone())
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
   test('bails if in range and shrinkwrap', async () => {
     expect.assertions(1)
 
@@ -736,10 +862,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': false,
-        'npm-shrinkwrap.json': true,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': ['npm-shrinkwrap.json'],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {}
@@ -772,10 +898,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {}
@@ -808,10 +934,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {
@@ -851,10 +977,10 @@ describe('create version brach', () => {
       accountId: '2323',
       fullName: 'espy/test',
       files: {
-        'package.json': true,
-        'package-lock.json': true,
-        'npm-shrinkwrap.json': false,
-        'yarn.lock': false
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
       },
       packages: {
         'package.json': {
@@ -864,7 +990,7 @@ describe('create version brach', () => {
         }
       }
     })
-    expect.assertions(5)
+    expect.assertions(4)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -875,33 +1001,9 @@ describe('create version brach', () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .post('/repos/espy/test/pulls')
-      .reply(200, () => {
-        // pull request created
-        expect(true).toBeTruthy()
-        return {
-          id: 321,
-          number: 66,
-          state: 'open'
-        }
-      })
       .get('/repos/espy/test')
       .reply(200, {
         default_branch: 'master'
-      })
-      .post(
-        '/repos/espy/test/issues/66/labels',
-        body => body[0] === 'greenkeeper'
-      )
-      .reply(201, () => {
-        return {}
-      })
-      .post(
-        '/repos/espy/test/statuses/1234abcd',
-        ({ state }) => state === 'success'
-      )
-      .reply(201, () => {
-        return {}
       })
 
     jest.mock('../../lib/get-infos', () => () => {
@@ -928,26 +1030,100 @@ describe('create version brach', () => {
       type: 'devDependencies',
       distTag: 'latest',
       distTags: {
-        latest: '2.0.0'
+        latest: '1.1.0'
       },
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
         '1.0.0': {},
-        '2.0.0': {}
+        '1.1.0': {}
       }
     })
 
-    githubMock.done()
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('50:branch:1234abcd')
-    const pr = await repositories.get('50:pr:321')
+    expect(branch).toBeTruthy()
+    await expect(repositories.get('50:pr:321')).rejects.toThrow('missing')
+    expect(githubMock.isDone()).toBeTruthy()
+  })
 
-    expect(branch.processed).toBeTruthy()
+  test('runs if in range, has project lockfile, has gk-lockfile with old files object format', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '86',
+      accountId: '2323',
+      fullName: 'johnlocke/test',
+      files: {
+        'package.json': true,
+        'package-lock.json': true,
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'greenkeeper-lockfile': '1.1.1'
+          }
+        }
+      }
+    })
+    expect.assertions(4)
 
-    expect(pr.number).toBe(66)
-    expect(pr.state).toEqual('open')
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/johnlocke/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '2323',
+      repositoryId: '86',
+      type: 'devDependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '1.1.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '1.1.0': {}
+      }
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('86:branch:1234abcd')
+    expect(branch).toBeTruthy()
+    await expect(repositories.get('86:pr:321')).rejects.toThrow('missing')
+    expect(githubMock.isDone()).toBeTruthy()
   })
 })
 
@@ -957,7 +1133,7 @@ afterAll(async () => {
   await Promise.all([
     removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50'),
-    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321')
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
+    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
   ])
 })

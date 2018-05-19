@@ -14,6 +14,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
+const { generateGitHubCompareURL } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -61,12 +62,18 @@ module.exports = async function (
   //
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
-  const moduleLockFiles = ['npm-shrinkwrap.json']
-  const projectLockFiles = ['package-lock.json', 'yarn.lock']
-  const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
-  const hasProjectLockFile = _.some(_.pick(repository.files, projectLockFiles))
-  const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
 
+  const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
+  const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
+  const usesGreenkeeperLockfile = repository.packages['package.json'] &&
+    repository.packages['package.json'].devDependencies &&
+    _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
     log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
@@ -223,12 +230,14 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
+  const compareURL = generateGitHubCompareURL(repository.fullName, base, newBranch)
+
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
-      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${env.GITHUB_URL}/${owner}/${repo}/compare/${encodeURIComponent(newBranch)}?expand=1) ${bodyDetails}`
+      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
     }))
 
     statsd.increment('pullrequest_comments')

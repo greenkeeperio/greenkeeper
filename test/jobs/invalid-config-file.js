@@ -17,6 +17,10 @@ describe('invalid-config-file', async () => {
       _id: 'invalid-config1',
       fullName: 'lisa/monorepo'
     })
+    await repositories.put({
+      _id: 'invalid-config4',
+      fullName: 'lisa/monorepo'
+    })
   })
 
   test('create new issue', async () => {
@@ -167,6 +171,53 @@ describe('invalid-config-file', async () => {
     expect(openIssues).toHaveLength(1)
     expect(openIssues[0].doc._id).toEqual('invalid-config3:issue:11')
   })
+
+  test('create new issue with reference to delayed initial PR', async () => {
+    expect.assertions(14)
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/lisa/monorepo/issues', ({ title, body, labels }) => {
+        expect(title).toBeTruthy()
+        expect(body).toBeTruthy()
+        expect(body).toMatch(/We found the following issue:/)
+        expect(body).toMatch(/1. The group name `#invalid#groupname#` is invalid./)
+        expect(body).toMatch(/which is preventing Greenkeeper from opening its initial pull request/)
+        expect(body).toMatch(/so Greenkeeper can run on this repository/)
+        expect(labels).toContain('greenkeeper')
+        return true
+      })
+      .reply(201, () => {
+        // issue created
+        expect(true).toBeTruthy()
+        return {
+          number: 11
+        }
+      })
+
+    const newJobs = await invalidConfigFile({
+      repositoryId: 'invalid-config4',
+      accountId: '2020',
+      messages: ['The group name `#invalid#groupname#` is invalid. Group names may only contain alphanumeric characters and underscores (a-zA-Z_).'],
+      isBlockingInitialPR: true
+    })
+    expect(newJobs).toBeFalsy()
+
+    const { repositories } = await dbs()
+    const issue = await repositories.get('invalid-config4:issue:11')
+    expect(issue.initial).toBeFalsy()
+    expect(issue.invalidConfig).toBeTruthy()
+    expect(issue.type).toEqual('issue')
+    expect(issue.number).toBe(11)
+    expect(issue.repositoryId).toBe('invalid-config4')
+    githubMock.done()
+  })
 })
 
 afterAll(async () => {
@@ -175,6 +226,6 @@ afterAll(async () => {
     removeIfExists(installations, '2020', '2121'),
     removeIfExists(repositories, 'invalid-config1', 'invalid-config1:issue:10',
     'invalid-config2', 'invalid-config2:issue:10',
-    'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11')
+    'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11', 'invalid-config4:issue:11')
   ])
 })

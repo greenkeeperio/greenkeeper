@@ -5,13 +5,14 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
+const getMessage = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency } = require('../utils/utils')
+const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -122,7 +123,11 @@ module.exports = async function (
     }),
     'rows[0].doc'
   )
-  log.info('database: found open PR for this dependency', {openPR})
+  if (openPR) {
+    log.info('database: found open PR for this dependency', {openPR})
+  } else {
+    log.info('database: no open PR for this dependency')
+  }
 
   async function createTransformsArray (monorepo) {
     return monorepo.map(async pkgRow => {
@@ -138,7 +143,7 @@ module.exports = async function (
         await upsert(repositories, openPR._id, {
           comments: [...(openPR.comments || []), version]
         })
-        commitMessage += `\n\nCloses #${openPR.number}`
+        commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
       log.info('commit message created', {commitMessage})
       return {
@@ -205,12 +210,14 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
+  const compareURL = generateGitHubCompareURL(repository.fullName, base, newBranch)
+
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
-      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${env.GITHUB_URL}/${owner}/${repo}/compare/${encodeURIComponent(newBranch)}?expand=1) ${bodyDetails}`
+      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
     }))
 
     statsd.increment('pullrequest_comments')

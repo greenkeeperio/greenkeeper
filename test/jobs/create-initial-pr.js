@@ -92,6 +92,29 @@ describe('create-initial-pr', async () => {
           'this-whole-group-should-disappear/package.json'
         ]}
     })
+
+    await repositories.put({
+      _id: 'repoId:branch:closes-issues',
+      type: 'branch',
+      initial: true,
+      sha: 'closes-issues',
+      base: 'master',
+      head: 'greenkeeper/initial',
+      processed: false,
+      depsUpdated: true,
+      badgeUrl: 'https://badges.greenkeeper.io/finnp/test.svg',
+      createdAt: '2017-01-13T17:33:56.698Z',
+      updatedAt: '2017-01-13T17:33:56.698Z',
+      closes: [5, 6],
+      greenkeeperConfigInfo: {
+        isMonorepo: true,
+        action: 'updated',
+        deletedGroups: ['empty'],
+        deletedPackageFiles: [
+          'this-file-no-longer-exists/package.json',
+          'this-whole-group-should-disappear/package.json'
+        ]}
+    })
   })
 
   test('create pr for account with `free` plan', async () => {
@@ -776,12 +799,79 @@ describe('create-initial-pr', async () => {
     })
   })
 
+  test('create pr for monorepo with fixed greenkeeper.json', async () => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+    const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '50',
+      accountId: '123free',
+      fullName: 'finnp/test'
+    })
+
+    expect.assertions(4)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/statuses/closes-issues')
+      .reply(201, () => {
+        // verify status added
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/pulls',
+        ({ head }) => head === 'greenkeeper/initial'
+      )
+      .reply(201, (uri, requestBody) => {
+        // pull request created
+        expect(true).toBeTruthy()
+        expect(JSON.parse(requestBody).body).toMatch('Closes: #5, #6')
+        return {
+          id: 333,
+          number: 3
+        }
+      })
+      .post(
+        '/repos/finnp/test/issues/3/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    const branchDoc = await repositories.get('repoId:branch:closes-issues')
+    await createInitial({
+      repository: { id: 50 },
+      branchDoc: branchDoc,
+      combined: {
+        state: 'success',
+        combined: []
+      },
+      installationId: 11,
+      accountId: '123free'
+    })
+  })
+
   afterAll(async () => {
     const { repositories, payments } = await dbs()
 
     await Promise.all([
       removeIfExists(payments, '123free', '123opensource', '123stripe', '123team', '123business'),
-      removeIfExists(repositories, '42', ' 42b', '43', '44', '44b', '45', '46', 'repoId:branch:1234abcd', '47', '48', '49', 'repoId:branch:monorepo1', 'repoId:branch:monorepo2')
+      removeIfExists(repositories, '42', ' 42b', '43', '44', '44b', '45', '46', 'repoId:branch:1234abcd', '47', '48', '49', '50', 'repoId:branch:monorepo1', 'repoId:branch:monorepo2', 'repoId:branch:closes-issues')
     ])
   })
 })

@@ -2,18 +2,16 @@ const crypto = require('crypto')
 const Log = require('gk-log')
 const _ = require('lodash')
 
-const statsd = require('../lib/statsd')
 const getConfig = require('../lib/get-config')
 const dbs = require('../lib/dbs')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
-const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 
 const prContent = require('../content/initial-pr')
 
 module.exports = async function (
-  { repository, branchDoc, combined, installationId, accountId }
+  { repository, branchDoc, combined, installationId, accountId, groupName }
 ) {
   accountId = String(accountId)
   const { repositories } = await dbs()
@@ -21,7 +19,7 @@ module.exports = async function (
   const repositoryId = String(repository.id)
   let repodoc = await repositories.get(repositoryId)
   const config = getConfig(repodoc)
-  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr'})
+  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-subgroup-pr'})
 
   log.info('started')
   log.info(`config for ${repodoc.fullName}`, {config})
@@ -37,17 +35,6 @@ module.exports = async function (
     badgeUrl,
     greenkeeperConfigInfo
   } = branchDoc
-
-  const closes = branchDoc.closes || []
-
-  let enabled = false
-  if (!depsUpdated && !repodoc.private) {
-    repodoc = await upsert(repositories, repodoc._id, {
-      enabled: true
-    })
-    enabled = true
-    log.info('repository: set to `enabled` as no dependencies where updated')
-  }
 
   branchDoc = await upsert(repositories, branchDoc._id, {
     statuses: combined.statuses,
@@ -68,28 +55,6 @@ module.exports = async function (
     target_url: 'https://greenkeeper.io/verify.html'
   }))
   log.info('github: set greenkeeper/verify status')
-
-  if (repodoc.private && !env.IS_ENTERPRISE) {
-    const billingAccount = await getActiveBilling(accountId)
-    const hasBillingAccount = !!billingAccount
-    const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
-
-    if (!hasBillingAccount || accountNeedsMarketplaceUpgrade) {
-      log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
-      const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
-
-      await ghqueue.write(github => github.repos.createStatus({
-        owner,
-        repo,
-        sha,
-        state: 'pending',
-        context: 'greenkeeper/payment',
-        description: 'Payment required, merging will have no effect',
-        target_url: targetUrl
-      }))
-      log.info('github: set greenkeeper/payment status')
-    }
-  }
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: repository info', {repositoryInfo: ghRepo})
@@ -112,10 +77,7 @@ module.exports = async function (
     } = await ghqueue.write(github => github.pullRequests.create({
       owner,
       repo,
-      title: enabled
-        ? `Add Greenkeeper badge 🌴`
-        : (depsUpdated ? 'Update dependencies' : 'Add badge') +
-            ' to enable Greenkeeper 🌴',
+      title: `Update dependencies for ${groupName} 🌴`,
       body: prContent({
         depsUpdated,
         ghRepo,
@@ -125,16 +87,14 @@ module.exports = async function (
         secret,
         installationId,
         success: combined.state === 'success',
-        enabled,
         accountTokenUrl,
         files,
         greenkeeperConfigInfo,
-        closes
+        groupName
       }),
       base,
       head
     }))
-    statsd.increment('initial_pullrequests')
     log.success('success')
 
     if (config.label !== false) {
@@ -147,7 +107,7 @@ module.exports = async function (
     }
   } catch (err) {
     if (err.code !== 422) {
-      log.error('Could not create initial pr')
+      log.error('Could not create initial subgroup pr')
       throw err
     }
 
@@ -171,7 +131,8 @@ module.exports = async function (
       repositoryId,
       accountId,
       type: 'pr',
-      initial: true,
+      initial: false,
+      subgroupInitial: true,
       number,
       head,
       state: 'open'
