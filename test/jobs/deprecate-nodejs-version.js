@@ -6,7 +6,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-describe('deprecate and update nodejs version in .travis.yml only', () => {
+describe('deprecate and update nodejs version', () => {
   beforeAll(async () => {
     jest.setTimeout(10000)
     const { installations } = await dbs()
@@ -24,8 +24,8 @@ describe('deprecate and update nodejs version in .travis.yml only', () => {
   afterAll(async () => {
     const { installations, repositories } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '123', '1234', '12345', '321'),
-      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '56', '56:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd')
+      removeIfExists(installations, '123', '1234', '12345', '321', '777'),
+      removeIfExists(repositories, '42', '42:branch:1234abcd', '42:issue:10', '55', '55:branch:1234abcd', '56', '56:branch:1234abcd', 'node-update-555', 'node-update-333', 'node-deprecation-777', 'node-deprecation-777:branch:1234abcd', '4200', '4200:branch:1234abcd', '4200:issue:10')
     ])
   })
 
@@ -480,5 +480,71 @@ branches:
     })
 
     expect(newJob).toBeFalsy()
+  })
+
+  test('package.json has no engines', async () => {
+    const { installations, repositories } = await dbs()
+    await installations.put({
+      _id: '777',
+      installation: 137,
+      plan: 'free'
+    })
+    await repositories.put({
+      _id: '4200',
+      accountId: '777',
+      fullName: 'finnp/horst',
+      enabled: true,
+      type: 'repository',
+      packages: {
+        'package.json': {
+        }
+      }
+    })
+    expect.assertions(4)
+
+    const ghNock = nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/horst')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      const packageJSON = JSON.stringify({name: 'uhu'})
+      const updatedEngines = transforms[0].transform(packageJSON)
+      expect(updatedEngines).toBeFalsy()
+    })
+
+    const deprecateNodeJSVersion = require('../../jobs/deprecate-nodejs-version')
+
+    const newJob = await deprecateNodeJSVersion({
+      repositoryFullName: 'finnp/horst',
+      nodeVersion: '4',
+      codeName: 'Argon',
+      newLowestVersion: 6,
+      newLowestCodeName: 'Boron'
+    })
+    ghNock.done()
+    expect(newJob).toBeFalsy()
+
+    // Neither of these should exist
+    try {
+      await repositories.get('4200:branch:1234abcd')
+    } catch (e) {
+      expect(e.error).toEqual('not_found')
+    }
+    try {
+      await repositories.get('4200:issue:10')
+    } catch (e) {
+      expect(e.error).toEqual('not_found')
+    }
   })
 })
