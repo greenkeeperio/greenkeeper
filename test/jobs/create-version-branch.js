@@ -1151,7 +1151,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
   })
 
-  test.only('new pull request with ignored dependency', async () => {
+  test('new pull request with ignored dependency', async () => {
     jest.resetModules()
     jest.clearAllMocks()
 
