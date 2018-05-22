@@ -453,3 +453,188 @@ describe('registry change create jobs', async () => {
     expect(scndMonorepoJob.accountId).toEqual('123-two-repos')
   })
 })
+
+describe('monorepo-release: registry change create jobs', async () => {
+  beforeAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: 'monorepo-release-1',
+        installation: 1,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: 'mr-1',
+        type: 'repository',
+        fullName: 'owner/another',
+        accountId: 'monorepo-release-1',
+        enabled: true,
+        packages: {
+          'package.json': {
+            dependencies: {
+              pouchdb: '1.0.0',
+              'pouchdb-core': '1.0.0',
+              colors: '1.0.0',
+              'colors-blue': '1.0.0',
+              bulldog: '1.0.0'
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: 'pouchdb',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'pouchdb-core',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'colors',
+        distTags: {
+          latest: '2.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'colors-blue',
+        distTags: {
+          latest: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'bulldog',
+        distTags: {
+          latest: '2.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'pug',
+        distTags: {
+          latest: '1.0.0'
+        }
+      })
+    ])
+  })
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, 'monorepo-release-1'),
+      removeIfExists(repositories, 'mr-1'),
+      removeIfExists(npm, 'pouchdb', 'pouchdb-core', 'colors', 'colors-blue')
+    ])
+  })
+
+  test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'pouchdb',
+      enabled: true,
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'kangaroo'
+        },
+        '1.0.0': {
+          gitHead: 'koala'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // no branch should be created
+    expect(newJobs).toBeFalsy()
+  })
+
+  test('monorepo-release: package is part of complete monorepoDefinition', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          colors: ['colors', 'colors-blue']
+        })
+        return newDef
+      })
+      const lib = require.requireActual('../../lib/monorepo')
+      return lib
+    })
+
+    const registryChange = require('../../jobs/registry-change.js')
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'colors-blue',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'smurf'
+        },
+        '1.0.0': {
+          gitHead: 'sky'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // a version branch should be created
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    expect(job.name).toBe('create-version-branch')
+    expect(job.dependency).toBe('colors-blue') // this might have to change?
+    expect(job.repositoryId).toBe('mr-1')
+  })
+
+  test('monorepo-release: package is part of complete monorepoDefinition, but is not using all the packages', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          dogs: ['bulldog', 'pug']
+        })
+        return newDef
+      })
+      const lib = require.requireActual('../../lib/monorepo')
+      return lib
+    })
+
+    const registryChange = require('../../jobs/registry-change.js')
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'pug',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'wau'
+        },
+        '1.0.0': {
+          gitHead: 'woof'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // a version branch should be created
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    expect(job.name).toBe('create-version-branch')
+    expect(job.repositoryId).toBe('mr-1')
+    expect(job.dependency).toBe('pug') // this might have to change?
+  })
+})

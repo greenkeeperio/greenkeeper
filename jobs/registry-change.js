@@ -13,9 +13,17 @@ const {
   getSatisfyingVersions,
   getOldVersionResolved
 } = require('../utils/utils')
+const {
+  isPartOfMonorepo,
+  hasAllMonorepoUdates,
+  getMonorepoGroup,
+  updateMonorepoReleaseInfo,
+  deleteMonorepoReleaseInfo,
+  getMonorepoGroupNameForPackage
+} = require('../lib/monorepo')
 
 module.exports = async function (
-  { dependency, distTags, versions, installation }
+  { dependency, distTags, versions, installation, force }
 ) {
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
@@ -65,6 +73,29 @@ module.exports = async function (
     return
   }
 
+  let dependencies = [ dependency ]
+
+  // check if dependency update is part of a monorepo release
+  if (await isPartOfMonorepo(dependency)) {
+    const version = distTags['latest']
+    // We only want to open a PR if either:
+    // 1. We have all of the modules that belong to the release (have the same version number)
+    // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete
+    //    after n minutes, but we want to open the PR anyway
+    if (!await hasAllMonorepoUdates(dependency, version) && !force) {
+      log.info('exited: is not last in list of monorepo packages')
+      // create/update npm/monorepo:dependency-version
+      await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)
+      return // do nothing, one of the next registry-change jobs is going to handle the rest
+    }
+    // do the update now
+    await deleteMonorepoReleaseInfo(dependency, version)
+
+    // set up keys so we can query for all packages with a dependency on any of the packages
+    // in our monorepo group
+    dependencies = await getMonorepoGroup(await getMonorepoGroupNameForPackage(dependency)) || dependencies
+  }
+
   /*
   Update: 'by_dependency' handles multiple package.json files, but not in the same result.
 
@@ -92,7 +123,7 @@ module.exports = async function (
 
   // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
-    key: dependency
+    keys: dependencies
   })).rows
 
   if (!packageFilesForUpdatedDependency.length) {

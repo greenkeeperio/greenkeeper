@@ -9,7 +9,7 @@ nock.enableNetConnect('localhost')
 
 jest.setTimeout(10000)
 
-describe('create version brach', () => {
+describe('create version branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
@@ -57,13 +57,16 @@ describe('create version brach', () => {
       fullName: 'finnp/test',
       packages: {
         'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          },
           greenkeeper: {
             label: 'customlabel'
           }
         }
       }
     })
-    expect.assertions(13)
+    expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -133,9 +136,10 @@ describe('create version brach', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      const transformFunc = await transforms[0]
       const newPkg = JSON.parse(
-        transform(
+        transformFunc.transform(
           JSON.stringify({
             devDependencies: {
               '@finnpauls/dep': '^1.0.0'
@@ -166,7 +170,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
 
     const branch = await repositories.get('1:branch:1234abcd')
@@ -191,6 +195,9 @@ describe('create version brach', () => {
       },
       packages: {
         'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          },
           greenkeeper: {
             label: 'customlabel'
           }
@@ -201,7 +208,7 @@ describe('create version brach', () => {
       _id: '124',
       plan: 'personal'
     })
-    expect.assertions(12)
+    expect.assertions(13)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -266,9 +273,10 @@ describe('create version brach', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      const transformFunc = await transforms[0]
       const newPkg = JSON.parse(
-        transform(
+        transformFunc.transform(
           JSON.stringify({
             devDependencies: {
               '@finnpauls/dep': '^1.0.0'
@@ -299,7 +307,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
 
@@ -327,13 +335,16 @@ describe('create version brach', () => {
       },
       packages: {
         'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          },
           greenkeeper: {
             label: 'customlabel'
           }
         }
       }
     })
-    expect.assertions(13)
+    expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/124/access_tokens')
@@ -403,9 +414,10 @@ describe('create version brach', () => {
       commits: []
     }))
 
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      const transformFunc = await transforms[0]
       const newPkg = JSON.parse(
-        transform(
+        transformFunc.transform(
           JSON.stringify({
             devDependencies: {
               '@finnpauls/dep': '^1.0.0'
@@ -436,7 +448,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
 
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('41:branch:1234abcd')
@@ -472,7 +484,7 @@ describe('create version brach', () => {
       _id: '125',
       plan: 'free'
     })
-    expect.assertions(1)
+    expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -514,7 +526,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -543,6 +555,9 @@ describe('create version brach', () => {
         },
         packages: {
           'package.json': {
+            devDependencies: {
+              '@finnpauls/dep2': '^1.0.0'
+            },
             greenkeeper: {
               label: 'customlabel'
             }
@@ -551,7 +566,7 @@ describe('create version brach', () => {
       })
     ])
 
-    expect.assertions(9)
+    expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/41/access_tokens')
@@ -599,9 +614,10 @@ describe('create version brach', () => {
       commits: []
     }))
 
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      const transformFunc = await transforms[0]
       const newPkg = JSON.parse(
-        transform(
+        transformFunc.transform(
           JSON.stringify({
             devDependencies: {
               '@finnpauls/dep2': '^1.0.0'
@@ -632,7 +648,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('43:branch:1234abcd')
@@ -653,13 +669,16 @@ describe('create version brach', () => {
       },
       packages: {
         'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^2.0.1'
+          },
           greenkeeper: {
             label: 'customlabel'
           }
         }
       }
     })
-    expect.assertions(2)
+    expect.assertions(3)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/42/access_tokens')
@@ -675,16 +694,9 @@ describe('create version brach', () => {
         default_branch: 'master'
       })
 
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
-      const newPkg = transform(
-        JSON.stringify({
-          devDependencies: {
-            '@finnpauls/dep': '^2.0.1'
-          }
-        })
-      )
-      // abort on downgrade
-      expect(newPkg).toBeFalsy()
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      const transformFunc = await transforms[0]
+      expect(transformFunc).toBeFalsy()
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -705,7 +717,7 @@ describe('create version brach', () => {
       }
     })
 
-    githubMock.done()
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -764,7 +776,7 @@ describe('create version brach', () => {
   })
 
   test('ignore ignored devDependency + empty gk config in repodoc', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '51',
@@ -828,11 +840,6 @@ describe('create version brach', () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/treasure-data/td-js-sdk')
-    .reply(200, {
-      default_branch: 'master'
-    })
-    .log(console.log)
 
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -848,7 +855,7 @@ describe('create version brach', () => {
       oldVersion: '1.3.0'
     })
 
-    console.log(githubMock.isDone())
+    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -1127,13 +1134,348 @@ describe('create version brach', () => {
   })
 })
 
+/*
+  Monorepo section
+*/
+describe('create version branch for dependencies from monorepos', () => {
+  beforeEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
+    nock.cleanAll()
+  })
+  beforeAll(async () => {
+    const { installations } = await dbs()
+    await installations.put({
+      _id: 'mono-123',
+      installation: 1
+    })
+  })
+
+  test('new pull request with ignored dependency', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'mono-1-ignored',
+      accountId: 'mono-123',
+      fullName: 'finnp/test',
+      enabled: true,
+      greenkeeper: {
+        ignore: ['colors-blue']
+      },
+      packages: {
+        'package.json': {
+          dependencies: {
+            pouchdb: '1.0.0',
+            'pouchdb-core': '1.0.0',
+            'colors-blue': '1.0.0',
+            bulldog: '1.0.0'
+          },
+          devDependencies: {
+            colors: '1.0.0'
+          }
+        }
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/test/issues/66/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    // TODO: don't mock this.
+    // -> test hangs when not mocking this so something is fishy!
+    jest.mock('../../lib/get-infos', () => (obj) => {
+      expect(obj.version).toEqual('2.0.0')
+
+      return {
+        dependencyLink: '[colors]()',
+        release: '2.0.0',
+        diffCommits: `<details>
+         <summary>Commits</summary>
+         body <a href="https://urls.greenkeeper.io/greenkeeperio/greenkeeper">
+       </details>`
+      }
+    })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(1)
+      const transform = await transforms[0]
+      let result = JSON.parse(transform.transform(JSON.stringify({
+        dependencies: {
+          pouchdb: '1.0.0',
+          'pouchdb-core': '1.0.0',
+          'colors-blue': '1.0.0',
+          bulldog: '1.0.0'
+        },
+        devDependencies: {
+          colors: '1.0.0'
+        }
+      })))
+      expect(result.dependencies['colors-blue']).toBe('1.0.0')
+      expect(result.devDependencies['colors']).toBe('2.0.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          colors: ['colors', 'colors-blue', 'colors-red']
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'colors-red',
+      accountId: 'mono-123',
+      repositoryId: 'mono-1-ignored',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.0.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
+        }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-1-ignored:branch:1234abcd')
+    const pr = await repositories.get('mono-1-ignored:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
+
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
+
+  test('new pull request', async () => {
+    jest.resetModules()
+    jest.clearAllMocks()
+
+    const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-1',
+      accountId: 'mono-123',
+      fullName: 'finnp/test',
+      enabled: true,
+      packages: {
+        'package.json': {
+          dependencies: {
+            pouchdb: '1.0.0',
+            'pouchdb-core': '1.0.0',
+            'colors-blue': '1.0.0',
+            bulldog: '1.0.0'
+          },
+          devDependencies: {
+            colors: '1.0.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: 'colors',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-blue',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-red',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    // expect.assertions(15)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/test/issues/66/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    // TODO: don't mock this.
+    // -> test hangs when not mocking this so something is fishy!
+    jest.mock('../../lib/get-infos', () => (obj) => {
+      expect(obj.version).toEqual('2.0.0')
+
+      return {
+        dependencyLink: '[colors]()',
+        release: '2.0.0',
+        diffCommits: `<details>
+         <summary>Commits</summary>
+         body <a href="https://urls.greenkeeper.io/greenkeeperio/greenkeeper">
+       </details>`
+      }
+    })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      const transform1 = await transforms[0]
+      const transform2 = await transforms[1]
+      let result = transform1.transform(JSON.stringify({
+        dependencies: {
+          pouchdb: '1.0.0',
+          'pouchdb-core': '1.0.0',
+          'colors-blue': '1.0.0',
+          bulldog: '1.0.0'
+        },
+        devDependencies: {
+          colors: '1.0.0'
+        }
+      }))
+      result = JSON.parse(transform2.transform(result))
+      expect(result.dependencies['colors-blue']).toBe('2.0.0')
+      expect(result.devDependencies['colors']).toBe('2.0.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          colors: ['colors', 'colors-blue', 'colors-red']
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'colors-red',
+      accountId: 'mono-123',
+      repositoryId: 'mono-1',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.0.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
+        }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-1:branch:1234abcd')
+    const pr = await repositories.get('mono-1:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
+
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
+})
+
 afterAll(async () => {
-  const { installations, repositories, payments } = await dbs()
+  const { installations, repositories, payments, npm } = await dbs()
 
   await Promise.all([
-    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
+    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
+    'mono-123'),
+    removeIfExists(npm, 'colors', 'colors-blue', 'colors-red'),
     removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
-    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd')
+    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1', 'mono-3'),
+    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
   ])
 })
