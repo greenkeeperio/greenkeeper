@@ -16,7 +16,7 @@ describe('create-group-version-branch', async () => {
   })
 
   beforeAll(async () => {
-    jest.setTimeout(40000)
+    jest.setTimeout(60000)
     const { installations, repositories } = await dbs()
     await installations.put({
       _id: '123-two-packages',
