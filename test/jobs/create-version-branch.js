@@ -1298,6 +1298,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
   })
+
   test('new pull request', async () => {
     jest.resetModules()
     jest.clearAllMocks()
