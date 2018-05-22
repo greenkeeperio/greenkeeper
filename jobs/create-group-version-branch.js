@@ -16,7 +16,6 @@ const { createTransformFunction, getHighestPriorityDependency, generateGitHubCom
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
-  hasAllMonorepoUdates,
   deleteMonorepoReleaseInfo,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
@@ -62,10 +61,6 @@ module.exports = async function (
   // monorepo module will then update the whole lot.
   if (await isPartOfMonorepo(dependency)) {
     isMonorepo = true
-    if (!await hasAllMonorepoUdates(dependency, version)) {
-      log.info('exited: is not last in list of monorepo packages')
-      return
-    }
     await deleteMonorepoReleaseInfo(dependency, version)
     monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
     monorepoGroup = await getMonorepoGroup(monorepoGroupName)

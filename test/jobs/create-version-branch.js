@@ -1465,65 +1465,8 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
   })
-
-  test('no new pull request or branch if repo does not have all monorepo updates yet', async () => {
-    expect.assertions(4)
-
-    const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
-      .optionally()
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .optionally()
-      .reply(200)
-
-    jest.mock('../../lib/get-diff-commits', () => () => ({
-      html_url: 'https://github.com/lkjlsgfj/',
-      total_commits: 0,
-      behind_by: 0,
-      commits: []
-    }))
-    jest.mock('../../lib/monorepo', () => {
-      return {
-        isPartOfMonorepo: async (devDependency) => {
-          expect(devDependency).toEqual('@avocado/dep1')
-          return true
-        },
-        hasAllMonorepoUdates: async (devDependency) => {
-          expect(devDependency).toEqual('@avocado/dep1')
-          return false
-        },
-        getMonorepoGroupNameForPackage: async (devDependency) => {
-          return ['@avocado/dep1', '@avocado/dep2']
-        },
-        deleteMonorepoReleaseInfo: async () => {}
-      }
-    })
-    const createVersionBranch = require('../../jobs/create-version-branch')
-
-    const newJob = await createVersionBranch({
-      dependency: '@avocado/dep1',
-      accountId: 'mono-123',
-      repositoryId: 'mono-1',
-      type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
-      oldVersion: '^1.0.0',
-      oldVersionResolved: '1.0.0',
-      versions: {
-        '1.0.0': {},
-        '2.0.0': {}
-      }
-    })
-
-    expect(githubMock.isDone()).toBeTruthy()
-    expect(newJob).toBeFalsy()
-  })
 })
+
 afterAll(async () => {
   const { installations, repositories, payments, npm } = await dbs()
 

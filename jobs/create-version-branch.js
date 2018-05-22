@@ -14,7 +14,6 @@ const upsert = require('../lib/upsert')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
-  hasAllMonorepoUdates,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 
@@ -52,6 +51,20 @@ module.exports = async function (
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info('started', {dependency, type, version, oldVersion})
+
+  // if this dependency is part of a monorepo suite that usually gets released
+  // all at the same time, check if we have update info for all the other
+  // modules as well. If not, stop this update, the job started by the last
+  // monorepo module will then update the whole lot.
+  if (await isPartOfMonorepo(dependency)) {
+    isMonorepo = true
+    monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
+    monorepoGroup = await getMonorepoGroup(monorepoGroupName)
+    relevantDependencies = monorepoGroup.filter(dep =>
+      !!JSON.stringify(repository.packages['package.json']).match(dep))
+
+    log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
+  }
 
   // Shrinkwrap should behave differently from regular lockfiles:
   //
