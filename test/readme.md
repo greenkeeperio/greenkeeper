@@ -165,3 +165,4 @@ GK_COUCHDB=http://127.0.0.1:5984 NODE_ENV=testing node --inspect-brk node_module
 to, for example, debug `monorepo-supervisor.js`. Then open `chrome://inspect` in a Chromium browser and click on `inspect` for the `node_modules/.bin/jest` node process in the `Remote Target` list. You’ll switch to the sources view where Jest is literally waiting for you. Press the `play` button in the top right to start running the test.
 
 If you intend to do this while running _all_ tests, you should force Jest to run them sequentially in a single process with the `--runInBand` option. [More info](https://facebook.github.io/jest/docs/en/troubleshooting.html#tests-are-failing-and-you-don-t-know-why).
+
