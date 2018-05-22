@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const semver = require('semver')
 const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
@@ -133,7 +134,13 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
         const inplace = jsonInPlace(oldPkg)
         const currentEngines = _.get(oldPkgParsed, 'engines.node')
         if (!currentEngines) return
-        const newEngines = currentEngines.replace(RegExp(`^(>|>=|~|v)?(${nodeVersion})`, 'g'), `$1${newLowestVersion}`)
+        // Don’t match `>`, because that skips the version we want to replace, which is fine
+        // See https://regex101.com/r/eI0KSH/1/ for examples
+        const newEngines = currentEngines.replace(RegExp(`^(>=|~|v)?(${nodeVersion}([^\\s]+)?)`, 'g'), `$1${newLowestVersion}`)
+        // If this would generate something that doesn’t satisfy `newLowestVersion` (such as `>=6 <6`), then bail
+        // Note that semver.satisfies absolutely requires the X.X.X version format in the first argument
+        // (hence `semver.coerce`), but not the second, so `>=6 <8` is valid syntax there.
+        if (!semver.satisfies(semver.coerce(newLowestVersion), newEngines)) return
         if (newEngines === currentEngines) return
         inplace.set('engines.node', newEngines)
         engineTransformMessages.updated++

@@ -57,10 +57,20 @@ describe('deprecate and update nodejs version', () => {
           engines: {
             node: '>=7 <9.1'
           }
+        },
+        'upgradablerange/package.json': {
+          engines: {
+            node: '>=4.4.5'
+          }
+        },
+        'nonupgradablerange/package.json': {
+          engines: {
+            node: '>=4.4.5 <6'
+          }
         }
       }
     })
-    expect.assertions(26)
+    expect.assertions(28)
 
     const ghNock = nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -81,7 +91,7 @@ describe('deprecate and update nodejs version', () => {
         expect(body).toMatch('Version 4 of Node.js (code name Argon) has been deprecated!')
         expect(body).toMatch('Version 6 (Boron) is now the lowest actively maintained Node.js version.')
         expect(body).toMatch('- Upgraded away from the deprecated version in your `.travis.yml`')
-        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new lowest actively supported Node.js versio')
+        expect(body).toMatch('The engines config in 2 of your `package.json` files was updated to the new lowest actively supported Node.js version')
         expect(body).toMatch('"https://github.com/finnp/test/compare/master...finnp:greenkeeper%2Fdeprecate-node-4"')
         // We didn’t pass in an announcementURL, so that shouldn’t be there
         expect(body).not.toMatch('You can find out more about the deprecation and possible update strategies')
@@ -146,15 +156,31 @@ after_success: npm run deploy`
           node: '>=7 <9.1'
         }
       })
+      const upgradableRangeJSON = JSON.stringify({
+        engines: {
+          node: '>=4.4.5'
+        }
+      })
+      const nonUpgradableRangeJSON = JSON.stringify({
+        engines: {
+          node: '>=4.4.5 <6'
+        }
+      })
       const updatedTravisYML = transforms[0].transform(inputTravisYML)
       transforms[0].created = true
       expect(updatedTravisYML).toEqual(targetTravisYML)
       const updatedEngines = transforms[2].transform(packageJSON)
       const updatedFrontendEngines = transforms[3].transform(frontendPackageJSON)
       const updatedBackendEngines = transforms[4].transform(backendPackageJSON)
+      const updatedUpgradableRangeEngines = transforms[4].transform(upgradableRangeJSON)
+      const updatedNonUpgradableRangeEngines = transforms[4].transform(nonUpgradableRangeJSON)
       expect(JSON.parse(updatedEngines)).toEqual({engines: {node: 'v6'}})
-      expect(JSON.parse(updatedFrontendEngines)).toEqual({engines: {node: '>6'}})
+      // `>4` is already `not 4`, so we don’t change that
+      expect(updatedFrontendEngines).toBeFalsy()
       expect(updatedBackendEngines).toBeFalsy()
+      expect(JSON.parse(updatedUpgradableRangeEngines)).toEqual({engines: {node: '>=6'}})
+      // The transform would result in `>=6 <6`, which doesn’t satisfy anything, so we don’t do it
+      expect(updatedNonUpgradableRangeEngines).toBeFalsy()
       return '1234abcd'
     })
 
