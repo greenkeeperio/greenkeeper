@@ -135,7 +135,7 @@ describe('getDependencyBranchesToDelete', () => {
         _id: '33224477:branch:beebfoot2',
         type: 'branch',
         repositoryId: '33224477',
-        head: 'greenkeeper/monorepo:pouchdb-11.0.0',
+        head: 'greenkeeper/monorepo.pouchdb-11.0.0',
         dependency: 'pouchdb-mapreduce',
         monorepoGroupName: 'pouchdb',
         version: '11.0.0',
@@ -239,7 +239,7 @@ describe('getDependencyBranchesToDelete', () => {
         _id: '77331177:branch:beebfoot2',
         type: 'branch',
         repositoryId: '77331177',
-        head: 'greenkeeper/hulahoop/monorepo:pouchdb-11.0.0',
+        head: 'greenkeeper/hulahoop/monorepo.pouchdb-11.0.0',
         dependency: 'pouchdb-mapreduce',
         monorepoGroupName: 'pouchdb',
         version: '11.0.0',
@@ -264,7 +264,7 @@ describe('getDependencyBranchesToDelete', () => {
     )
 
     expect(branches).toHaveLength(2)
-    expect(branches[0].head).toEqual('greenkeeper/hulahoop/monorepo:pouchdb-11.0.0')
+    expect(branches[0].head).toEqual('greenkeeper/hulahoop/monorepo.pouchdb-11.0.0')
     expect(branches[1].head).toEqual('greenkeeper/hulahoop/pouchdb-core-10.0.0')
   })
 })

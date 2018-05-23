@@ -677,7 +677,7 @@ describe('create-group-version-branch', async () => {
         // pull request created
         expect(true).toBeTruthy()
         expect(JSON.parse(requestBody).title).toEqual('Update pouchdb in group default to the latest version 🚀')
-        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo:pouchdb-2.0.0')
+        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo.pouchdb-2.0.0')
         return {
           id: 321,
           number: 66,
@@ -794,7 +794,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-monorepo-release:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-monorepo-release:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo:pouchdb-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-2.0.0')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -821,7 +821,7 @@ describe('create-group-version-branch', async () => {
         // pull request created
         expect(true).toBeTruthy()
         expect(JSON.parse(requestBody).title).toEqual('Update pouchdb in group default to the latest version 🚀')
-        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo:pouchdb-2.0.0')
+        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo.pouchdb-2.0.0')
         return {
           id: 321,
           number: 66,
@@ -938,7 +938,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-monorepo-release-ignore:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-monorepo-release-ignore:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo:pouchdb-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-2.0.0')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release-ignore')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
