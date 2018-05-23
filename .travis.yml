@@ -9,6 +9,7 @@ notifications:
 node_js: 8
 before_install:
 - npm install -g npm@5.2.0
+- ./travis-update-docker.sh
 install: npm install
 after_success: npm run deploy
 
