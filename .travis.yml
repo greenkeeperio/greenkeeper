@@ -8,7 +8,11 @@ notifications:
   email: false
 node_js: 8
 before_install:
+<<<<<<< HEAD
 - ./travis-update-docker.sh
+=======
+- npm install -g npm@5.2.0
+>>>>>>> parent of c4297be... test: faster builds maybe
 install: npm install
 after_success: npm run deploy
 
