@@ -1152,9 +1152,6 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 
   test('new pull request with ignored dependency', async () => {
-    jest.resetModules()
-    jest.clearAllMocks()
-
     const { repositories } = await dbs()
     await repositories.put({
       _id: 'mono-1-ignored',
@@ -1300,9 +1297,6 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 
   test('new pull request', async () => {
-    jest.resetModules()
-    jest.clearAllMocks()
-
     const { repositories, npm } = await dbs()
     await repositories.put({
       _id: 'mono-1',
