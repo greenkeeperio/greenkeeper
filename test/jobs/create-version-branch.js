@@ -1293,7 +1293,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1-ignored:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-2.0.0')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1460,7 +1460,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo:colors-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-2.0.0')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')

@@ -141,7 +141,7 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     group = relevantDependencies
-    newBranch = `${config.branchPrefix}monorepo:${monorepoGroupName}-${version}`
+    newBranch = `${config.branchPrefix}monorepo.${monorepoGroupName}-${version}`
   } else {
     dependencyKey = dependency
     group = [dependency]
