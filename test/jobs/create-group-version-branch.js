@@ -178,7 +178,7 @@ describe('create-group-version-branch', async () => {
         // pull request created
         expect(true).toBeTruthy()
         expect(JSON.parse(requestBody).title).toEqual('Update react in group default to the latest version 🚀')
-        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/react-2.0.0')
+        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo.react-2.0.0')
         return {
           id: 321,
           number: 66,
@@ -287,7 +287,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     const pr = await repositories.get('123-monorepo:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/react-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-2.0.0')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -314,7 +314,7 @@ describe('create-group-version-branch', async () => {
         // pull request created
         expect(true).toBeTruthy()
         expect(JSON.parse(requestBody).title).toEqual('Update react in group default to the latest version 🚀')
-        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/react-2.0.0')
+        expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo.react-2.0.0')
         return {
           id: 321,
           number: 66,
@@ -424,7 +424,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-different-types:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-different-types:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/react-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-2.0.0')
     expect(branch.repositoryId).toEqual('123-monorepo-different-types')
     expect(branch.accountId).toEqual('123-two-packages-different-types')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -654,7 +654,7 @@ describe('create-group-version-branch', async () => {
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/react-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-2.0.0')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
