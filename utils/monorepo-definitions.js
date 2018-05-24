@@ -24,7 +24,7 @@ const monorepoDefinitions = {
     '@angular/platform-webworker',
     '@angular/platform-webworker-dynamic',
     '@angular/bazel',
-    '@angular/language-service',
+    '@angular/language-service'
   ],
   'angular2': [
     '@angular/material',
@@ -33,26 +33,7 @@ const monorepoDefinitions = {
     '@angular/cdk-experimental',
     '@angular/material-moment-adapter'
   ],
-  'babel-6.13.0': [
-    // published 2 years ago
-    // 'babel-plugin-syntax-async-functions',
-    // 'babel-plugin-syntax-object-rest-spread',
-    // 'babel-plugin-syntax-class-properties',
-    // 'babel-plugin-syntax-decorators',
-    // 'babel-plugin-syntax-exponentiation-operator',
-    // 'babel-plugin-syntax-async-generators',
-    // 'babel-plugin-syntax-do-expressions',
-    // 'babel-plugin-syntax-function-bind',
-  ],
-  'babel-6.18.0': [
-    // published 2 years ago
-    // 'babel-plugin-syntax-flow',
-    // 'babel-plugin-syntax-jsx',
-    // 'babel-plugin-syntax-dynamic-import',
-    // 'babel-plugin-syntax-export-extensions',
-    // 'babel-plugin-syntax-function-sent',
-  ],
-  'babel-6.22.0': [
+  'babel': [
     'babel-plugin-transform-es2015-spread',
     'babel-plugin-syntax-trailing-function-commas',
     'babel-plugin-check-es2015-constants',
@@ -77,8 +58,6 @@ const monorepoDefinitions = {
     'babel-plugin-transform-async-functions',
     'babel-plugin-transform-es3-property-literals',
     'babel-plugin-transform-es3-member-expression-literals',
-  ],
-  'babel-6.23.0': [
     'babel-messages',
     'babel-preset-flow',
     'babel-plugin-transform-es2015-destructuring',
@@ -86,8 +65,6 @@ const monorepoDefinitions = {
     'babel-plugin-transform-es2015-typeof-symbol',
     'babel-plugin-transform-react-constant-elements',
     'babel-plugin-transform-runtime',
-  ],
-  'babel-6.24.1': [
     'babel-helpers',
     'babel-helper-plugin-test-runner',
     'babel-helper-function-name',
@@ -127,12 +104,8 @@ const monorepoDefinitions = {
     'babel-preset-stage-0',
     'babel-preset-stage-1',
     'babel-preset-stage-2',
-    'babel-preset-stage-3'
-  ],
-  'babel-6.25.0': [
+    'babel-preset-stage-3',
     'babel-plugin-transform-react-display-name',
-  ],
-  'babel-6.26.0': [
     'babel-polyfill',
     'babel-runtime',
     'babel-template',
@@ -150,19 +123,9 @@ const monorepoDefinitions = {
     'babel-helper-define-map',
     'babel-standalone',
     'babel-code-frame',
-  ],
-  'babel-6.26.1': [
-    'babel-generator',
-  ],
-  'babel-6.26.2': [
     'babel-plugin-transform-es2015-modules-commonjs',
     'babel-helper-fixtures',
     'babel-helper-transform-fixture-test-runner',
-  ],
-  'babel-6.26.3': [
-    'babel-core',
-  ],
-  'babel-7.0.0-alpha.11, 16, 19, 24...': [
     'babel-plugin-syntax-numeric-separator',
     'babel-plugin-syntax-optional-catch-binding',
     'babel-plugin-syntax-optional-chaining',
@@ -172,7 +135,7 @@ const monorepoDefinitions = {
     'babel-plugin-transform-new-target',
     'babel-plugin-transform-numeric-separator',
     'babel-plugin-transform-optional-catch-binding',
-    'babel-plugin-transform-optional-chaining',
+    'babel-plugin-transform-optional-chaining'
   ],
   'jest': [
     'jest',
