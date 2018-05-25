@@ -6,18 +6,6 @@ const { createTransformFunction } = require('../../utils/utils')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-// function ghToken (nocked) {
-//   return nocked
-//     .post('/installations/123/access_tokens')
-//     .optionally()
-//     .reply(200, {
-//       token: 'secret'
-//     })
-//     .get('/rate_limit')
-//     .optionally()
-//     .reply(200, {})
-// }
-
 describe('create branch', async () => {
   test('change one file (package.json)', async () => {
     const gitHubNock = nock('https://api.github.com')
