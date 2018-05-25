@@ -24,14 +24,19 @@ const { notifyAdmin } = require('../lib/comms')
 
 const { pendingMonorepoReleases } = require('../lib/monorepo')
 
+async function sendSlackNotification (dependency) {
+  const groupName = await getMonorepoGroupNameForPackage(dependency)
+  const message = `There has been an incomplete release of the monorepo \`${groupName}\`, not all modules listed in the monorepo definition have been released together. This _may_ mean that the release definition for this monorepo is out of date.`
+  notifyAdmin(message)
+}
+
 module.exports = async function () {
   const releases = await pendingMonorepoReleases()
 
   return Promise.all(releases.map(async (release) => {
-    // getMonorepoGroupNameForPackage will be async soon
-    const groupName = await getMonorepoGroupNameForPackage(release.dependency)
-    const message = `There has been an incomplete release of the monorepo \`${groupName}\`, not all modules listed in the monorepo definition have been released together. This _may_ mean that the release definition for this monorepo is out of date.`
-    notifyAdmin(message)
+    // We don't want ths for now
+    // remove if condifion to activate slacknotification again
+    if (release.slack) sendSlackNotification(release.dependency)
 
     return {
       name: 'registry-change',
