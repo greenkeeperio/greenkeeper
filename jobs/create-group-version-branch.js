@@ -62,8 +62,15 @@ module.exports = async function (
     isMonorepo = true
     monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
     monorepoGroup = await getMonorepoGroup(monorepoGroupName)
-    relevantDependencies = monorepoGroup.filter(dep =>
-      !!JSON.stringify(repository.packages['package.json']).match(dep))
+
+    relevantDependencies = monorepoGroup.filter(dep => {
+      return group[groupName].packages.map((packagePath) => {
+        const hasDependency = !!_.get(repository, `packages['${packagePath}'].dependencies.${dep}`)
+        const hasDevDependency = !!_.get(repository, `packages['${packagePath}'].devDependencies.${dep}`)
+        const hasPeerDependency = !!_.get(repository, `packages['${packagePath}'].peerDependencies.${dep}`)
+        return hasDependency || hasDevDependency || hasPeerDependency
+      }).filter(Boolean).length !== 0
+    })
 
     log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
@@ -169,13 +176,14 @@ module.exports = async function (
   }
 
   async function createTransformsArray (monorepo) {
-    return Promise.all(dependencyGroup.map(async depName =>
-      Promise.all(monorepo.map(async pkgRow => {
+    return Promise.all(dependencyGroup.map(async depName => {
+      return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
         const type = types.find(t => t.filename === pkg.filename)
         if (!type) return
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
+        if (!_.get(repository, `packages['${pkg.filename}'].${type.type}.${depName}`)) return
 
         const commitMessageScope = !satisfies && type.type === 'dependencies'
           ? 'fix'
@@ -194,8 +202,8 @@ module.exports = async function (
           path: pkg.filename,
           message: commitMessage
         }
-      })
-    )))
+      }))
+    }))
   }
   const transforms = _.compact(_.flatten(await createTransformsArray(monorepo)))
   const sha = await createBranch({
