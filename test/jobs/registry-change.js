@@ -473,23 +473,23 @@ describe('monorepo-release: registry change create jobs', async () => {
         packages: {
           'package.json': {
             dependencies: {
-              pouchdb: '1.0.0',
-              'pouchdb-core': '1.0.0',
-              colors: '1.0.0',
+              'kroko': '1.0.0',
+              'kroko-dile': '1.0.0',
+              'colors': '1.0.0',
               'colors-blue': '1.0.0',
-              bulldog: '1.0.0'
+              'bulldog': '1.0.0'
             }
           }
         }
       }),
       npm.put({
-        _id: 'pouchdb',
+        _id: 'kroko',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
-        _id: 'pouchdb-core',
+        _id: 'kroko-dile',
         distTags: {
           latest: '1.0.0'
         }
@@ -520,19 +520,23 @@ describe('monorepo-release: registry change create jobs', async () => {
       })
     ])
   })
+  beforeEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
+  })
   afterAll(async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, 'monorepo-release-1'),
       removeIfExists(repositories, 'mr-1'),
-      removeIfExists(npm, 'pouchdb', 'pouchdb-core', 'colors', 'colors-blue', 'pug')
+      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog')
     ])
   })
 
   test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
-      dependency: 'pouchdb',
+      dependency: 'react',
       enabled: true,
       distTags: {
         latest: '2.0.0'
@@ -553,9 +557,6 @@ describe('monorepo-release: registry change create jobs', async () => {
   })
 
   test('monorepo-release: package is part of complete monorepoDefinition', async () => {
-    jest.resetModules()
-    jest.clearAllMocks()
-
     jest.mock('../../lib/monorepo', () => {
       jest.mock('../../utils/monorepo-definitions', () => {
         const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
@@ -596,9 +597,6 @@ describe('monorepo-release: registry change create jobs', async () => {
   })
 
   test('monorepo-release: package is part of complete monorepoDefinition, but is not using all the packages', async () => {
-    jest.resetModules()
-    jest.clearAllMocks()
-
     jest.mock('../../lib/monorepo', () => {
       jest.mock('../../utils/monorepo-definitions', () => {
         const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
