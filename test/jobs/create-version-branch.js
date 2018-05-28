@@ -48,6 +48,15 @@ describe('create version branch', () => {
       installation: 40
     })
   })
+  afterAll(async () => {
+    const { installations, repositories, payments } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
+      removeIfExists(payments, '124', '125'),
+      removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
+      removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
+    ])
+  })
 
   test('new pull request', async () => {
     const { repositories } = await dbs()
@@ -1156,6 +1165,19 @@ describe('create version branch for dependencies from monorepos', () => {
     })
   })
 
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+    await Promise.all([
+      removeIfExists(installations, 'mono-123'),
+      removeIfExists(npm, 'colors', 'colors-blue', 'colors-red', 'colors-green'),
+      removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
+      removeIfExists(repositories, 'mono-1', 'mono-2'),
+      removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321',
+      'mono-2:branch:1234abcd', 'mono-2:pr:321'),
+      removeIfExists(repositories, '1:branch:2222abcd', '1:pr:3210')
+    ])
+  })
+
   test('new pull request with ignored dependency', async () => {
     const { repositories } = await dbs()
     await repositories.put({
@@ -1434,17 +1456,106 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
   })
-})
 
-test('new pull request with group of dependencies', async () => {
-  const { repositories, npm } = await dbs()
-  await repositories.put({
-    _id: 'mono-2',
-    accountId: 'mono-123',
-    fullName: 'finnp/test',
-    enabled: true,
-    packages: {
-      'package.json': {
+  test('new pull request with group of dependencies', async () => {
+    const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-2',
+      accountId: 'mono-123',
+      fullName: 'finnp/test',
+      enabled: true,
+      packages: {
+        'package.json': {
+          dependencies: {
+            'flowers-blue': '1.0.0',
+            'flowers-red': '1.0.0',
+            'flowers-green': '1.0.0'
+          },
+          devDependencies: {
+            flowers: '1.0.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: 'flowers',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-blue',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-red',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-green',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 77,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/test/issues/77/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(4)
+
+      const transform0 = await transforms[0]
+      expect(transform0.message).toEqual('chore(package): update flowers to version 2.0.0')
+
+      const transform1 = await transforms[1]
+      expect(transform1.message).toEqual('fix(package): update flowers-blue to version 2.0.0')
+
+      const transform2 = await transforms[2]
+      expect(transform2.message).toEqual('fix(package): update flowers-red to version 2.0.0')
+
+      const transform3 = await transforms[3]
+      expect(transform3.message).toEqual('fix(package): update flowers-green to version 2.0.0')
+
+      let input = {
         dependencies: {
           'flowers-blue': '1.0.0',
           'flowers-red': '1.0.0',
@@ -1454,177 +1565,73 @@ test('new pull request with group of dependencies', async () => {
           flowers: '1.0.0'
         }
       }
-    }
-  })
 
-  await npm.put({
-    _id: 'flowers',
-    distTags: {
-      latest: '2.0.0'
-    }
-  })
-  await npm.put({
-    _id: 'flowers-blue',
-    distTags: {
-      latest: '2.0.0'
-    }
-  })
-  await npm.put({
-    _id: 'flowers-red',
-    distTags: {
-      latest: '2.0.0'
-    }
-  })
-  await npm.put({
-    _id: 'flowers-green',
-    distTags: {
-      latest: '2.0.0'
-    }
-  })
+      let result = transform0.transform(JSON.stringify(input))
 
-  const githubMock = nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
-    .optionally()
-    .reply(200, {
-      token: 'secret'
-    })
-    .get('/rate_limit')
-    .optionally()
-    .reply(200, {})
-    .post('/repos/finnp/test/pulls')
-    .reply(200, () => {
-      // pull request created
-      expect(true).toBeTruthy()
-      return {
-        id: 321,
-        number: 77,
-        state: 'open'
-      }
-    })
-    .get('/repos/finnp/test')
-    .reply(200, {
-      default_branch: 'master'
-    })
-    .post('/repos/finnp/test/issues/77/labels')
-    .reply(201, () => {
-      return {}
-    })
-    .post(
-      '/repos/finnp/test/statuses/1234abcd',
-      ({ state }) => state === 'success'
-    )
-    .reply(201, () => {
-      // status created
-      expect(true).toBeTruthy()
-      return {}
+      result = transform1.transform(result)
+      result = transform2.transform(result)
+      result = transform3.transform(result)
+
+      result = JSON.parse(result)
+      expect(result.dependencies['flowers-blue']).toBe('2.0.0')
+      expect(result.dependencies['flowers-red']).toBe('2.0.0')
+      expect(result.dependencies['flowers-green']).toBe('2.0.0')
+      expect(result.devDependencies['flowers']).toBe('2.0.0')
+      return '1234abcd'
     })
 
-  jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
-    // expect(transforms).toHaveLength(4)
-
-    const transform0 = await transforms[0]
-    expect(transform0.message).toEqual('chore(package): update flowers to version 2.0.0')
-
-    const transform1 = await transforms[1]
-    expect(transform1.message).toEqual('fix(package): update flowers-blue to version 2.0.0')
-
-    const transform2 = await transforms[2]
-    expect(transform2.message).toEqual('fix(package): update flowers-red to version 2.0.0')
-
-    const transform3 = await transforms[3]
-    expect(transform3.message).toEqual('fix(package): update flowers-green to version 2.0.0')
-
-    let input = {
-      dependencies: {
-        'flowers-blue': '1.0.0',
-        'flowers-red': '1.0.0',
-        'flowers-green': '1.0.0'
-      },
-      devDependencies: {
-        flowers: '1.0.0'
-      }
-    }
-
-    let result = transform0.transform(JSON.stringify(input))
-
-    result = transform1.transform(result)
-    result = transform2.transform(result)
-    result = transform3.transform(result)
-
-    result = JSON.parse(result)
-    expect(result.dependencies['flowers-blue']).toBe('2.0.0')
-    expect(result.dependencies['flowers-red']).toBe('2.0.0')
-    expect(result.dependencies['flowers-green']).toBe('2.0.0')
-    expect(result.devDependencies['flowers']).toBe('2.0.0')
-    return '1234abcd'
-  })
-
-  jest.mock('../../lib/monorepo', () => {
-    jest.mock('../../utils/monorepo-definitions', () => {
-      let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
-      const newDef = Object.assign(monorepoDefinitions, {
-        flowers: ['flowers', 'flowers-blue', 'flowers-red', 'flowers-green']
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('../../utils/monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          flowers: ['flowers', 'flowers-blue', 'flowers-red', 'flowers-green']
+        })
+        return newDef
       })
-      return newDef
+      return require.requireActual('../../lib/monorepo')
     })
-    return require.requireActual('../../lib/monorepo')
-  })
-  const createVersionBranch = require('../../jobs/create-version-branch')
+    const createVersionBranch = require('../../jobs/create-version-branch')
 
-  const newJob = await createVersionBranch({
-    dependency: 'flowers-red',
-    accountId: 'mono-123',
-    repositoryId: 'mono-2',
-    type: 'dependencies',
-    distTag: 'latest',
-    distTags: {
-      latest: '2.0.0'
-    },
-    oldVersion: '^1.0.0',
-    oldVersionResolved: '1.0.0',
-    versions: {
-      '1.0.0': {
-        gitHead: 'deadbeef100'
+    const newJob = await createVersionBranch({
+      dependency: 'flowers-red',
+      accountId: 'mono-123',
+      repositoryId: 'mono-2',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
       },
-      '2.0.0': {
-        gitHead: 'deadbeef222',
-        repository: {
-          url: 'https://github.com/colors/monorepo'
-        }
-      },
-      '3.0.0': {
-        gitHead: 'deadbeef333',
-        repository: {
-          url: 'https://github.com/colors/monorepo'
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.0.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
+        },
+        '3.0.0': {
+          gitHead: 'deadbeef333',
+          repository: {
+            url: 'https://github.com/colors/monorepo'
+          }
         }
       }
-    }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-2:branch:1234abcd')
+    const pr = await repositories.get('mono-2:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo.flowers-2.0.0')
+
+    expect(pr.number).toBe(77)
+    expect(pr.state).toEqual('open')
   })
-
-  expect(githubMock.isDone()).toBeTruthy()
-  expect(newJob).toBeFalsy()
-
-  const branch = await repositories.get('mono-2:branch:1234abcd')
-  const pr = await repositories.get('mono-2:pr:321')
-
-  expect(branch.processed).toBeTruthy()
-  expect(branch.head).toEqual('greenkeeper/monorepo.flowers-2.0.0')
-
-  expect(pr.number).toBe(77)
-  expect(pr.state).toEqual('open')
-})
-
-afterAll(async () => {
-  const { installations, repositories, payments, npm } = await dbs()
-
-  await Promise.all([
-    removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323',
-    'mono-123'),
-    removeIfExists(npm, 'colors', 'colors-blue', 'colors-red', 'colors-green'),
-    removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
-    removeIfExists(payments, '124', '125'),
-    removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'mono-1', 'mono-2'),
-    removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321', 'mono-2:branch:1234abcd', 'mono-2:pr:321'),
-    removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
-  ])
 })
