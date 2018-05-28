@@ -525,7 +525,7 @@ describe('monorepo-release: registry change create jobs', async () => {
     await Promise.all([
       removeIfExists(installations, 'monorepo-release-1'),
       removeIfExists(repositories, 'mr-1'),
-      removeIfExists(npm, 'pouchdb', 'pouchdb-core', 'colors', 'colors-blue')
+      removeIfExists(npm, 'pouchdb', 'pouchdb-core', 'colors', 'colors-blue', 'pug')
     ])
   })
 
