@@ -7,8 +7,6 @@ const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers
 // requireFresh uses a path relative to THEIR path, that's why we use the resolved
 // path here, making it a bit clearer which file we're actually requiring
 const pathToWorker = require.resolve('../../../jobs/github-event/push')
-jest.setTimeout(10000)
-
 const configFileContent = {
   groups: {
     default: {

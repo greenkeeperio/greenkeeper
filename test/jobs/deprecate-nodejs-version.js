@@ -8,7 +8,6 @@ nock.enableNetConnect('localhost')
 
 describe('deprecate and update nodejs version', () => {
   beforeAll(async () => {
-    jest.setTimeout(10000)
     const { installations } = await dbs()
     await installations.put({
       _id: '1234',

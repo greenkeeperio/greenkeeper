@@ -6,7 +6,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 describe('create-initial-subgroup-pr', async () => {
   beforeEach(() => {
     jest.resetModules()
-    jest.setTimeout(20000)
   })
 
   test('create subgroup initial pr for monorepo', async () => {

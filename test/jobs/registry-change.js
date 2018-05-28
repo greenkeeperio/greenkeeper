@@ -5,7 +5,6 @@ const registryChange = require('../../jobs/registry-change.js')
 
 describe('registry change create jobs', async () => {
   beforeAll(async() => {
-    jest.setTimeout(10000)
     const { installations, repositories, npm } = await dbs()
 
     await Promise.all([

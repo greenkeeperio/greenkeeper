@@ -8,7 +8,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 describe('create-initial-pr', async () => {
   beforeEach(() => {
     jest.resetModules()
-    jest.setTimeout(20000)
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
   })

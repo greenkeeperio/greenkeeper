@@ -16,7 +16,6 @@ describe('create initial branch', () => {
   })
 
   beforeAll(async () => {
-    jest.setTimeout(20000)
     const { installations, payments } = await dbs()
 
     await installations.put({

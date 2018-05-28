@@ -3,8 +3,6 @@ const removeIfExists = require('../../../helpers/remove-if-exists.js')
 const changePurchase = require('../../../../jobs/github-event/marketplace_purchase/changed')
 
 describe('marketplace changed', async () => {
-  jest.setTimeout(20000)
-
   afterAll(async () => {
     const { payments } = await dbs()
     await removeIfExists(payments, '444')
