@@ -398,7 +398,7 @@ describe('create branch', async () => {
   const testFiveData = {
     'package.json': {
       dependencies: {
-        flowers: '1.0.0',
+        'flowers': '1.0.0',
         'flowers-pink': '1.0.0',
         'flowers-yellow': '1.0.0',
         'flowers-purple': '1.0.0'
@@ -544,5 +544,225 @@ describe('create branch', async () => {
     expect(sha).toEqual('789beef3')
 
     expect(gitHubNock.isDone()).toBeTruthy()
+  })
+
+  const testSixData = {
+    'package.json': {
+      dependencies: {
+        'flowers-pink': '1.0.0',
+        'flowers-purple': '1.0.0'
+      }
+    },
+    'backend/package.json': {
+      dependencies: {
+        'flowers': '1.0.0',
+        'flowers-pink': '1.0.0',
+        'flowers-yellow': '1.0.0',
+        'flowers-purple': '1.0.0'
+      }
+    }
+  }
+
+  test('handle monorepo-release and change multiple monorepo files (package.json, backend/package.json)', async () => {
+    expect.assertions(33)
+
+    const gitHubNock = nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/owner/repo/contents/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(testSixData['package.json'])).toString('base64')
+      })
+      .get('/repos/owner/repo/contents/backend/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(testSixData['backend/package.json'])).toString('base64')
+      })
+      .get('/repos/owner/repo/git/refs/heads/master')
+      .reply(200, {
+        object: {
+          sha: '123abc2'
+        }
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers-pink': '2.0.0',
+            'flowers-purple': '1.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def450'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers-pink': '2.0.0',
+            'flowers-purple': '2.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def451'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers': '2.0.0',
+            'flowers-pink': '1.0.0',
+            'flowers-yellow': '1.0.0',
+            'flowers-purple': '1.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def452'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers': '2.0.0',
+            'flowers-pink': '2.0.0',
+            'flowers-yellow': '1.0.0',
+            'flowers-purple': '1.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def453'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers': '2.0.0',
+            'flowers-pink': '2.0.0',
+            'flowers-yellow': '2.0.0',
+            'flowers-purple': '1.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def454'}
+      })
+      .post('/repos/owner/repo/git/trees')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
+        const expectedContent = {
+          dependencies: {
+            'flowers': '2.0.0',
+            'flowers-pink': '2.0.0',
+            'flowers-yellow': '2.0.0',
+            'flowers-purple': '2.0.0'
+          }
+        }
+        expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
+        return {sha: 'def455'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def450')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('123abc2')
+        expect(JSON.parse(requestBody).message).toEqual('flowers-pink')
+        return {sha: '789beef0'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def451')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef0')
+        expect(JSON.parse(requestBody).message).toEqual('flowers-purple')
+        return {sha: '789beef1'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def452')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef1')
+        expect(JSON.parse(requestBody).message).toEqual('flowers')
+        return {sha: '789beef2'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def453')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef2')
+        expect(JSON.parse(requestBody).message).toEqual('flowers-pink')
+        return {sha: '789beef3'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def454')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef3')
+        expect(JSON.parse(requestBody).message).toEqual('flowers-yellow')
+        return {sha: '789beef4'}
+      })
+      .post('/repos/owner/repo/git/commits')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).tree).toEqual('def455')
+        expect(JSON.parse(requestBody).parents[0]).toEqual('789beef4')
+        expect(JSON.parse(requestBody).message).toEqual('flowers-purple')
+        return {sha: '789beef5'}
+      })
+      .post('/repos/owner/repo/git/refs')
+      .reply(201, (uri, requestBody) => {
+        expect(JSON.parse(requestBody).sha).toEqual('789beef5')
+      })
+
+    const payload = {
+      installationId: 123,
+      owner: 'owner',
+      repo: 'repo',
+      branch: 'master',
+      newBranch: 'testBranch',
+      transforms: [
+        {
+          path: 'package.json',
+          message: 'flowers-pink',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers-pink', '2.0.0', console)(old)
+        },
+        {
+          path: 'package.json',
+          message: 'flowers-purple',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers-purple', '2.0.0', console)(old)
+        },
+        {
+          path: 'backend/package.json',
+          message: 'flowers',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers', '2.0.0', console)(old)
+        },
+        {
+          path: 'backend/package.json',
+          message: 'flowers-pink',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers-pink', '2.0.0', console)(old)
+        },
+        {
+          path: 'backend/package.json',
+          message: 'flowers-yellow',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers-yellow', '2.0.0', console)(old)
+        },
+        {
+          path: 'backend/package.json',
+          message: 'flowers-purple',
+          transform: (old, path) => createTransformFunction('dependencies', 'flowers-purple', '2.0.0', console)(old)
+        }
+      ]
+    }
+
+    const sha = await createBranch(payload)
+
+    expect(gitHubNock.isDone()).toBeTruthy()
+    expect(sha).toEqual('789beef5')
   })
 })
