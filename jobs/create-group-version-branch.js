@@ -52,7 +52,7 @@ module.exports = async function (
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
-  log.info('started', {dependency, version, oldVersion})
+  log.info('started', {dependency, version, oldVersion, oldVersionResolved})
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
