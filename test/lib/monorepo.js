@@ -3,7 +3,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 describe('lib monorepo', async () => {
   beforeEach(() => {
-    jest.setTimeout(10000)
     jest.resetModules()
     jest.clearAllMocks()
   })

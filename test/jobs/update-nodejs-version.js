@@ -7,10 +7,6 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 describe('update nodejs version in .travis.yml only', () => {
-  beforeAll(() => {
-    jest.setTimeout(10000)
-  })
-
   beforeEach(() => {
     jest.resetModules()
   })

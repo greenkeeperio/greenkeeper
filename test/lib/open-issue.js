@@ -6,10 +6,6 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-beforeEach(() => {
-  jest.setTimeout(20000)
-})
-
 afterAll(async () => {
   const { repositories } = await dbs()
 

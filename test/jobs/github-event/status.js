@@ -5,7 +5,6 @@ const removeIfExists = require('../../helpers/remove-if-exists')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
-jest.setTimeout(10000)
 
 describe('github-event status', async () => {
   beforeAll(async() => {

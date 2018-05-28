@@ -1,8 +1,6 @@
 const dbs = require('../../../../lib/dbs')
 const githubEvent = require('../../../../jobs/github-event')
 
-jest.setTimeout(10000)
-
 test('github-event installation deleted', async () => {
   expect.assertions(3)
   const { installations, repositories } = await dbs()

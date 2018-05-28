@@ -57,6 +57,7 @@
     "unmockedModulePathPatterns": [
       "<rootDir>/node_modules/nock"
     ],
+    "setupTestFrameworkScriptFile": "./jest.setup.js",
     "testEnvironment": "node"
   },
   "publishConfig": {

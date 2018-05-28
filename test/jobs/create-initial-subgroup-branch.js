@@ -10,7 +10,6 @@ describe('create initial subgroup branch', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     jest.resetModules()
-    jest.setTimeout(20000)
     nock.cleanAll()
   })
 
