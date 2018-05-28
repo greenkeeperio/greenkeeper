@@ -121,12 +121,12 @@ function createTransformFunction (type, dependency, version, log) {
     }
     const oldPkgVersion = _.get(json, [type, dependency])
     if (!oldPkgVersion) {
-      log.warn('exited: could not find old package version', {newVersion: version, packageJson: json})
+      log.warn(`exited: could not find old package version for dependency ${dependency}`, {newVersion: version, packageJson: json})
       return
     }
 
     if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-      log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+      log.warn('exited: would be a downgrade', {dependency, newVersion: version, oldVersion: oldPkgVersion})
       return
     }
 
