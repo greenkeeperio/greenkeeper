@@ -657,7 +657,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('monorepo release: new pull request, 1 group, 2 packages, same dependencyType', async () => {
-    expect.assertions(30)
+    expect.assertions(32)
     const { npm } = await dbs()
     await npm.put({
       _id: 'pouchdb-core',
@@ -687,6 +687,9 @@ describe('create-group-version-branch', async () => {
         expect(true).toBeTruthy()
         expect(JSON.parse(requestBody).title).toEqual('Update pouchdb in group default to the latest version 🚀')
         expect(JSON.parse(requestBody).head).toEqual('greenkeeper/default/monorepo.pouchdb-2.0.0')
+        expect(JSON.parse(requestBody).body).toMatch(`Current Version`)
+        expect(JSON.parse(requestBody).body).toMatch(`1.0.0`)
+
         return {
           id: 321,
           number: 66,

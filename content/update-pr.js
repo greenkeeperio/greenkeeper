@@ -15,15 +15,15 @@ ${_.isEmpty(monorepoGroupName)
       <code>${monorepoGroupName || dependency}</code>
     </td>
   </tr>
-  {oldVersionResolved
-  ? <tr>
+  ${oldVersionResolved
+  ? `<tr>
       <th align=left>
        Current Version
       </th>
       <td>
         ${oldVersionResolved}
       </td>
-    </tr>
+    </tr>`
   : ''
   }
   <tr>
