@@ -93,6 +93,9 @@ describe('create-group-version-branch', async () => {
           dependencies: {
             'pouchdb': '1.0.0'
           },
+          devDependencies: {
+            'pouchdb-core': '1.0.0'
+          },
           greenkeeper: {
             'groups': {
               'default': {
@@ -657,7 +660,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('monorepo release: new pull request, 1 group, 2 packages, same dependencyType', async () => {
-    expect.assertions(32)
+    expect.assertions(34)
     const { npm } = await dbs()
     await npm.put({
       _id: 'pouchdb-core',
@@ -740,7 +743,7 @@ describe('create-group-version-branch', async () => {
       }
     })
     jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
-      expect(transforms).toHaveLength(4)
+      expect(transforms).toHaveLength(5)
 
       const transform0 = await transforms[0]
       expect(transform0.message).toEqual('fix(package): update pouchdb to version 2.0.0')
@@ -752,11 +755,17 @@ describe('create-group-version-branch', async () => {
       expect(transform2.message).toEqual('fix(package): update pouchdb-adapter-utils to version 2.0.0')
 
       const transform3 = await transforms[3]
-      expect(transform3.message).toEqual('fix(package): update pouchdb-core to version 2.0.0')
+      expect(transform3.message).toEqual('chore(package): update pouchdb-core to version 2.0.0')
+
+      const transform4 = await transforms[4]
+      expect(transform4.message).toEqual('fix(package): update pouchdb-core to version 2.0.0')
 
       let input = {
         dependencies: {
           'pouchdb': '1.0.0'
+        },
+        devDependencies: {
+          'pouchdb-core': '1.0.0'
         },
         path: 'package.json'
       }
@@ -770,15 +779,17 @@ describe('create-group-version-branch', async () => {
       }
 
       let result = transform0.transform(JSON.stringify(input))
+      result = transform3.transform(result)
 
       let result2 = transform1.transform(JSON.stringify(input2))
       result2 = transform2.transform(result2)
-      result2 = transform3.transform(result2)
+      result2 = transform4.transform(result2)
 
       result = JSON.parse(result)
       result2 = JSON.parse(result2)
 
       expect(result.dependencies['pouchdb']).toBe('2.0.0')
+      expect(result.devDependencies['pouchdb-core']).toBe('2.0.0')
       expect(result2.dependencies['pouchdb-core']).toBe('2.0.0')
       expect(result2.dependencies['pouchdb-adapter-utils']).toBe('2.0.0')
       expect(result2.dependencies['pouchdb']).toBe('2.0.0')
@@ -802,7 +813,9 @@ describe('create-group-version-branch', async () => {
       repositoryId: '123-monorepo-monorepo-release',
       types: [
         {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'}],
+        {type: 'dependencies', filename: 'package.json'},
+        {type: 'devDependencies', filename: 'package.json'}
+      ],
       distTag: 'latest',
       distTags: {
         latest: '2.0.0'
@@ -822,6 +835,14 @@ describe('create-group-version-branch', async () => {
         }
       },
       monorepo: [
+        { id: '123-monorepo-monorepo-release',
+          key: 'pouchdb-core',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-two-packages',
+            filename: 'package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } },
         { id: '123-monorepo-monorepo-release',
           key: 'pouchdb',
           value: {
