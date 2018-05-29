@@ -179,13 +179,14 @@ module.exports = async function (
     return Promise.all(dependencyGroup.map(async depName => {
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
-        const type = types.find(t => t.filename === pkg.filename)
-        if (!type) return
+
+        if (!pkg.type) return
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
-        if (!_.get(repository, `packages['${pkg.filename}'].${type.type}.${depName}`)) return
 
-        const commitMessageScope = !satisfies && type.type === 'dependencies'
+        if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
+
+        const commitMessageScope = !satisfies && pkg.type === 'dependencies'
           ? 'fix'
           : 'chore'
         let commitMessage = `${commitMessageScope}(package): update ${depName} to version ${version}`
@@ -198,7 +199,7 @@ module.exports = async function (
         }
         log.info('commit message created', {commitMessage})
         return {
-          transform: createTransformFunction(type.type, depName, version, log),
+          transform: createTransformFunction(pkg.type, depName, version, log),
           path: pkg.filename,
           message: commitMessage
         }
