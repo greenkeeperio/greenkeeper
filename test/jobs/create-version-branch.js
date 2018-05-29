@@ -1470,7 +1470,8 @@ describe('create version branch for dependencies from monorepos', () => {
             'flowers-green': '1.0.0'
           },
           devDependencies: {
-            flowers: '1.0.0'
+            flowers: '1.0.0',
+            'flowers-blue': '1.0.0'
           }
         }
       }
@@ -1560,6 +1561,7 @@ describe('create version branch for dependencies from monorepos', () => {
           'flowers-green': '1.0.0'
         },
         devDependencies: {
+          'flowers-blue': '1.0.0',
           flowers: '1.0.0'
         }
       }
