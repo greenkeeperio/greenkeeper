@@ -151,15 +151,15 @@ module.exports = async function (
 
   async function createTransformsArray (group, json) {
     return Promise.all(group.map(async depName => {
-      const type = _.compact(
-        Object.keys(json).map(type => {
-          if (Object.keys(json[type]).includes(depName)) return type
-        })
-      )
-      if (type.length !== 1) return
+      const types = Object.keys(json).filter(type => {
+        if (Object.keys(json[type]).includes(depName)) return type
+      })
+      if (!types.length) return
+      let dependencyType = types[0]
+
       if (_.includes(config.ignore, depName)) return
 
-      const oldPkgVersion = _.get(json, [type[0], depName])
+      const oldPkgVersion = _.get(json, [dependencyType, depName])
       if (!oldPkgVersion) {
         log.warn('exited: could not find old package version', {newVersion: version, json})
         return null
@@ -170,7 +170,7 @@ module.exports = async function (
         return null
       }
 
-      const commitMessageScope = !satisfies && type[0] === 'dependencies'
+      const commitMessageScope = !satisfies && dependencyType === 'dependencies'
         ? 'fix'
         : 'chore'
       let commitMessage = `${commitMessageScope}(package): update ${depName} to version ${version}`
@@ -183,7 +183,7 @@ module.exports = async function (
       }
       log.info('commit message created', {commitMessage})
       return {
-        transform: createTransformFunction(type[0], depName, version, log),
+        transform: createTransformFunction(dependencyType, depName, version, log),
         path: 'package.json',
         message: commitMessage
       }
