@@ -155,7 +155,7 @@ module.exports = async function (
         if (Object.keys(json[type]).includes(depName)) return type
       })
       if (!types.length) return
-      let dependencyType = types[0]
+      const dependencyType = types[0]
 
       if (_.includes(config.ignore, depName)) return
 
