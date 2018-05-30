@@ -49,7 +49,7 @@ describe('update-payments', async () => {
   afterAll(async () => {
     const { repositories, installations } = await dbs()
     await Promise.all([
-      removeIfExists(repositories, '1', '2', '3', '4'),
+      removeIfExists(repositories, '1_update-payments', '2_update-payments', '3_update-payments', '4'),
       removeIfExists(installations, '111')
     ])
   })
