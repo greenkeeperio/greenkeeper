@@ -20,6 +20,11 @@ describe('payments', async () => {
       plan: 'personal'
     })
     await payments.put({
+      _id: '123_personal_year',
+      stripeSubscriptionId: 'stripe123',
+      plan: 'personal_year'
+    })
+    await payments.put({
       _id: '123free',
       plan: 'free'
     })
@@ -27,6 +32,11 @@ describe('payments', async () => {
       _id: '123org',
       stripeSubscriptionId: 'stripe124',
       plan: 'org'
+    })
+    await payments.put({
+      _id: '123org_year',
+      stripeSubscriptionId: 'stripe124',
+      plan: 'org_year'
     })
     await payments.put({
       _id: '123opensource',
@@ -76,7 +86,7 @@ describe('payments', async () => {
   afterAll(async () => {
     const { payments, repositories } = await dbs()
     await Promise.all([
-      removeIfExists(payments, '123', '123free', '123org', '123opensource', '123team', '123business'),
+      removeIfExists(payments, '123', '123_personal_year', '123free', '123org', '123org_year', '123opensource', '123team', '123business'),
       removeIfExists(repositories, '44a', '44b', '44c', '44d')
     ])
   })
@@ -88,10 +98,22 @@ describe('payments', async () => {
       expect(billing.plan).toEqual('personal')
     })
 
+    test('getActiveBilling with billing yearly personal', async () => {
+      const billing = await getActiveBilling('123_personal_year')
+      expect(billing.stripeSubscriptionId).toEqual('stripe123')
+      expect(billing.plan).toEqual('personal_year')
+    })
+
     test('getActiveBilling with billing org', async () => {
       const billing = await getActiveBilling('123org')
       expect(billing.stripeSubscriptionId).toEqual('stripe124')
       expect(billing.plan).toEqual('org')
+    })
+
+    test('getActiveBilling with billing yearly org', async () => {
+      const billing = await getActiveBilling('123org_year')
+      expect(billing.stripeSubscriptionId).toEqual('stripe124')
+      expect(billing.plan).toEqual('org_year')
     })
 
     test('getActiveBilling without billing', async () => {
@@ -138,6 +160,16 @@ describe('payments', async () => {
       const billing = await hasStripeBilling('123')
       expect(billing).toBeTruthy()
     })
+
+    test('hasStripeBilling with stripe - yearly payment org', async () => {
+      const billing = await hasStripeBilling('123org_year')
+      expect(billing).toBeTruthy()
+    })
+
+    test('hasStripeBilling with stripe - yearly payment personal', async () => {
+      const billing = await hasStripeBilling('123_personal_year')
+      expect(billing).toBeTruthy()
+    })
   })
 
   describe('maybeUpdatePaymentsJob', async() => {
@@ -176,7 +208,7 @@ describe('payments', async () => {
 
     test('getAmountOfCurrentlyPrivateAndEnabledRepos with one Repo', async () => {
       const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123team')
-      // one private, enabled repos
+      // one private, enabled repo
       expect(result).toBe(1)
     })
   })
@@ -197,8 +229,18 @@ describe('payments', async () => {
       expect(result).toBeFalsy()
     })
 
+    test('getAccountNeedsMarketplaceUpgrade with stripe `personal_year` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123_personal_year')
+      expect(result).toBeFalsy()
+    })
+
     test('getAccountNeedsMarketplaceUpgrade with stripe `org` plan', async () => {
       const result = await getAccountNeedsMarketplaceUpgrade('123org')
+      expect(result).toBeFalsy()
+    })
+
+    test('getAccountNeedsMarketplaceUpgrade with stripe `org_year` plan', async () => {
+      const result = await getAccountNeedsMarketplaceUpgrade('123org_year')
       expect(result).toBeFalsy()
     })
 
