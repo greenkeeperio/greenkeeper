@@ -34,6 +34,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
 
   log.info('started')
 
+  if (repoDoc.id === '135286129') return
+
   if (repoDoc.fork && !repoDoc.hasIssues) { // we should allways check if issues are disabled and exit
     log.warn('exited: Issues disabled on fork')
     return
