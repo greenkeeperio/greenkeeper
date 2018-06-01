@@ -22,6 +22,9 @@ module.exports = async function (data) {
   const logs = dbs.getLogsDb()
   const { after, repository, installation } = data
 
+  const repositoryId = String(repository.id)
+  if (repositoryId === '135286129') return
+
   const branchRef = `refs/heads/${repository.default_branch}`
   if (!data.head_commit || data.ref !== branchRef) return
 
@@ -35,7 +38,6 @@ module.exports = async function (data) {
 
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
 
-  const repositoryId = String(repository.id)
   let repoDoc = await repositories.get(repositoryId)
 
   const config = getConfig(repoDoc)

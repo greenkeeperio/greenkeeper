@@ -35,6 +35,8 @@ module.exports = async function (
     versions
   }
 ) {
+  if (repositoryId === '135286129') return
+
   // TODO: correctly handle beta versions, and hotfixes
   if (distTag !== 'latest') return
   // do not upgrade invalid versions
