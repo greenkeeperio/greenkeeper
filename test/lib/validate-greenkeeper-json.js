@@ -177,7 +177,7 @@ test('invalid: path includes invalid chars', () => {
   expect(result.error.details[0].path).toEqual([ 'groups', 'frontend', 'packages', 0 ])
   expect(result.error.details[0].context.value).toEqual('packages/awesome!/package.json')
   expect(result.error.details[0].message).toMatch(/fails to match the required pattern/)
-  expect(result.error.details[0].formattedMessage).toMatch('The package path `packages/awesome!/package.json` in the group `frontend` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash, and it must end in `package.json`. Allowed characters for a path are alphanumeric, underscores, dashes and the @ symbol (a-zA-Z_-@).')
+  expect(result.error.details[0].formattedMessage).toMatch('The package path `packages/awesome!/package.json` in the group `frontend` is invalid. It must be a relative path to a `package.json` file. The path may not start with a slash, and it must end in `package.json`. Allowed characters for a path are alphanumeric, underscores, dashes, periods and the @ symbol (a-zA-Z_-.@).')
 })
 
 test('invalid: group/s not under group key', () => {
