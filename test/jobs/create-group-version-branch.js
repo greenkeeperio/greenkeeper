@@ -566,6 +566,11 @@ describe('create-group-version-branch', async () => {
       .reply(200, {
         default_branch: 'master'
       })
+      .get('/repos/hans/monorepo/pulls/1')
+      .reply(200, {
+        state: 'open',
+        merged: false
+      })
       .post('/repos/hans/monorepo/issues/1/comments')
       .reply(201, () => {
         // comment created
