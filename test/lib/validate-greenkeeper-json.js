@@ -25,7 +25,8 @@ test('valid package paths', () => {
           'lol/WAAAAH/package.json',
           'apps/frontend/react/package.json',
           'oh/no/apps/frontend/react/package.json',
-          'this/is/stupid/oh/no/apps/frontend/react/package.json'
+          'this/is/stupid/oh/no/apps/frontend/react/package.json',
+          'example.com/site_generator/package.json'
         ]
       }
     }
