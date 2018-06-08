@@ -137,6 +137,20 @@ const monorepoDefinitions = {
     'babel-plugin-transform-optional-catch-binding',
     'babel-plugin-transform-optional-chaining'
   ],
+  'baset': [
+    'baset',
+    'baset-core',
+    'baset-cli',
+    'baset-vm',
+    'baset-reader-md',
+    'baset-reader-ts',
+    'baset-reader-babel',
+    'baset-baseliner-md',
+    'baset-baseliner-json',
+    'baset-resolver-react',
+    'baset-resolver-pixi',
+    'baset-env-browser'
+  ],
   'jest': [
     'jest',
     'babel-jest',
