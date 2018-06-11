@@ -8,7 +8,12 @@ function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
 
   return _.partition(resultsByRepo, (result) => {
-    return (result.length > 1 && hasDiffernetFilenames(result)) ||
+    // The repo is a monorepo if:
+    // - there’s more more than one file in the result array and
+    //   - their file paths aren’t all equal
+    //   - their file paths are all equal, but they’re not `package.json`
+    // - there’s only one file, and its path is _not_ `package.json`
+    return (result.length > 1 && hasDifferentFilenames(result)) ||
     (result.length === 1 && result[0].value.filename !== 'package.json')
   })
 }
@@ -17,9 +22,11 @@ function groupPackageFilesByRepo (packageFiles) {
   return _.groupBy(packageFiles, 'value.fullName')
 }
 
-function hasDiffernetFilenames (group) {
+function hasDifferentFilenames (group) {
   if (group.length === 1) return true
-  if (_.uniq(_.map(group, g => g.value.filename)).length > 1) return true
+  const uniqueFilenames = _.uniq(_.map(group, g => g.value.filename))
+  if (uniqueFilenames.length > 1) return true
+  if (uniqueFilenames[0] !== 'package.json') return true
   return false
 }
 
