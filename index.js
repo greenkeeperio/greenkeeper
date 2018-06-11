@@ -118,7 +118,7 @@ require('./lib/rollbar')
         throw e
       }
     }
-    const spamQueueIds = ['23046691', '1623538', '133018953', 'dalavanmanphonsy', 'CNXTEoEorg', 'tectronics']
+    const spamQueueIds = ['23046691', '1623538', '133018953', '13286164', 'dalavanmanphonsy', 'CNXTEoEorg', 'tectronics']
     if (spamQueueIds.includes(String(queueId))) {
       // spam
       channel.ack(job)
