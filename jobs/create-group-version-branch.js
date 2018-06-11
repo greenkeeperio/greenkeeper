@@ -200,10 +200,11 @@ module.exports = async function (
 
         if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
 
-        const commitMessageScope = !satisfies && pkg.type === 'dependencies'
-          ? 'fix'
-          : 'chore'
-        let commitMessage = `${commitMessageScope}(package): update ${depName} to version ${version}`
+        const commitMessageKey = !satisfies && pkg.type === 'dependencies'
+          ? 'dependencyUpdate'
+          : 'devDependencyUpdate'
+        const commitMessageValues = { dependency: depName, version }
+        let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
         if (!satisfies && openPR) {
           await upsert(repositories, openPR._id, {
