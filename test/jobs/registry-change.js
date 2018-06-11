@@ -634,4 +634,145 @@ describe('monorepo-release: registry change create jobs', async () => {
     expect(job.repositoryId).toBe('mr-1')
     expect(job.dependency).toBe('pug') // this might have to change?
   })
+
+  /*
+    Test case from a bug where `@storybook/vue` received an update (as part of the `storybook` monorepo definition) on a monorepo and registry-change started `create-version-branch` instead of `create-group-version-branch`.
+
+    The reason was that the repo had no root-level `package.json`, and only had `@storybook` deps in one of the multiple `package.json` files. It also didn’t depend on `@storybook/vue` directly, only on other `@storybook` packages, but that wan’t relevant in this case.
+  */
+  test('monorepo-release: package is part of complete monorepoDefinition, but is only targeting a single non-root package.jsoon', async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      installations.put({
+        _id: '11062018-bug-1-installation',
+        installation: 11062018,
+        plan: 'free'
+      }),
+      repositories.put({
+        _id: '11062018-bug-1-id',
+        enabled: true,
+        type: 'repository',
+        fullName: 'calvin/hobbes',
+        accountId: '11062018-bug-1-installation',
+        packages: {
+          'admin/package.json': {
+            name: 'cuistot-react-admin',
+            dependencies: {
+              '@material-ui/core': '1.0.0',
+              '@material-ui/icons': '1.0.0'
+            }
+          },
+          'backend/package.json': {
+            name: 'cuistot-back',
+            dependencies: {
+              'aws-sdk': '^2.220.1',
+              'babel-polyfill': '^6.26.0'
+            },
+            devDependencies: {
+              'babel-core': '^6.26.3',
+              'babel-loader': '^7.1.4'
+            }
+          },
+          'frontend/package.json': {
+            name: 'cuistot-front',
+            dependencies: {
+              '@jaredpalmer/after': '^1.3.1',
+              '@material-ui/core': '^1.2.0',
+              '@material-ui/docs': '^1.0.0-alpha.3',
+              '@material-ui/icons': '^1.1.0',
+              'apollo-cache-inmemory': '^1.2.2'
+            },
+            devDependencies: {
+              '@storybook/addon-actions': '^4.0.0-alpha.8',
+              '@storybook/addon-info': '^3.4.6',
+              '@storybook/addon-knobs': '^4.0.0-alpha.8',
+              '@storybook/addon-options': '^4.0.0-alpha.8',
+              '@storybook/react': '^4.0.0-alpha.8',
+              '@types/jest': '^23.0.0',
+              '@types/node': '10.1.4'
+            }
+          }
+        },
+        greenkeeper: {
+          groups: {
+            default: {
+              packages: [
+                'admin/package.json',
+                'backend/package.json',
+                'frontend/package.json'
+              ]
+            }
+          }
+        }
+      }),
+      npm.put({
+        _id: '@storybook/vue',
+        distTags: {
+          alpha: '4.0.0-alpha.9',
+          latest: '3.4.6',
+          rc: '3.4.0-rc.4'
+        }
+      })
+    ])
+
+    const registryChange = require('../../jobs/registry-change.js')
+
+    const newJobs = await registryChange({
+      dependency: '@storybook/vue',
+      version: '3.4.7',
+      name: 'registry-change',
+      distTags: {
+        alpha: '4.0.0-alpha.9',
+        latest: '3.4.7',
+        rc: '3.4.0-rc.4'
+      },
+      versions: {
+        '3.4.5': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '4.0.0-alpha.7': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '3.4.6': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '4.0.0-alpha.8': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '3.4.7': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '4.0.0-alpha.9': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // a group version branch should be created
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    expect(job.name).toBe('create-group-version-branch')
+    expect(job.repositoryId).toBe('11062018-bug-1-id')
+    expect(job.dependency).toBe('@storybook/vue') // this might have to change?
+  })
 })
