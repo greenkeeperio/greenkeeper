@@ -54,7 +54,7 @@ describe('lib monorepo', async () => {
       }
     })
 
-    jest.mock('../../utils/monorepo-definitions', () => {
+    jest.mock('greenkeeper-monorepo-definitions', () => {
       return { 'fruits': ['@avocado/dep', '@banana/dep'] }
     })
     jest.mock('../../lib/monorepo', () => {
@@ -93,8 +93,8 @@ describe('lib monorepo', async () => {
       }
     })
 
-    jest.mock('../../utils/monorepo-definitions', () => {
-      const lib = require.requireActual('../../utils/monorepo-definitions')
+    jest.mock('greenkeeper-monorepo-definitions', () => {
+      const lib = require.requireActual('greenkeeper-monorepo-definitions')
       lib['cities'] = ['koeln', 'hamburg', 'berlin']
       return lib
     })

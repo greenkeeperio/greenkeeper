@@ -801,8 +801,8 @@ describe('create-group-version-branch', async () => {
       return '1234abcd'
     })
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           pouchdb: ['pouchdb', 'pouchdb-core', 'pouchdb-adapter-utils']
         })
@@ -960,8 +960,8 @@ describe('create-group-version-branch', async () => {
       return '1234abcd'
     })
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           pouchdb: ['pouchdb', 'pouchdb-core', 'pouchdb-adapter-utils']
         })
