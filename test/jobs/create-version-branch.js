@@ -1517,8 +1517,11 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
-      .reply(200, () => {
+      .reply(200, (url, payload) => {
+        const PRBody = JSON.parse(payload).body
         // pull request created
+        expect(PRBody).toMatch('## Version **2.0.0** of the flowers packages was just published')
+        expect(PRBody).toMatch('This monorepo update includes releases of multiple dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/greenkeeper/blob/master/utils/monorepo-definitions.js).')
         expect(true).toBeTruthy()
         return {
           id: 321,
