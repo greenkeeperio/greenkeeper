@@ -18,10 +18,12 @@ ${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${st
 </details>
 `
 
-module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits}) => {
+module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName}) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
-## Version **${version}** of ${dependencyLink} was just published.
+${_.isEmpty(monorepoGroupName)
+  ? `## Version **${version}** of **${dependencyLink}** was just published.`
+  : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
 
 <table>
   <tr>
@@ -34,10 +36,13 @@ module.exports = ({version, dependencyLink, owner, repo, base, head, dependency,
   </tr>
   <tr>
     <th align=left>
-      Dependency
-    </td>
+      ${_.isEmpty(monorepoGroupName)
+        ? 'Dependency'
+        : 'Monorepo release group'
+      }
+    </th>
     <td>
-      <code>${dependency}</code>
+      <code>${monorepoGroupName || dependencyLink}</code>
     </td>
   </tr>
   <tr>
@@ -59,6 +64,9 @@ module.exports = ({version, dependencyLink, owner, repo, base, head, dependency,
 </table>
 
 This version is **covered** by your **current version range** and after updating it in your project **the build failed**.
+
+${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of multiple dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
+}
 
 ${
   dependencyType === 'dependencies'
