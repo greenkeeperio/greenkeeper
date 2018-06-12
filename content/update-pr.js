@@ -3,16 +3,19 @@ const md = require('./template')
 
 module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type}) => md`
 ${_.isEmpty(monorepoGroupName)
-  ? `## Version **${version}** of ${dependencyLink} was just published.`
-  : `## Version **${version}** of ${monorepoGroupName} packages were just published.`}
+  ? `## Version **${version}** of **${dependencyLink}** was just published.`
+  : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
 
 <table>
   <tr>
     <th align=left>
-      Dependency
+      ${_.isEmpty(monorepoGroupName)
+        ? 'Dependency'
+        : 'Monorepo release group'
+      }
     </th>
     <td>
-      <code>${monorepoGroupName || dependency}</code>
+      <code>${monorepoGroupName || dependencyLink}</code>
     </td>
   </tr>
   ${oldVersionResolved
@@ -35,6 +38,9 @@ ${_.isEmpty(monorepoGroupName)
     </td>
   </tr>
 </table>
+
+${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of multiple dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/greenkeeper/blob/master/utils/monorepo-definitions.js).`
+}
 
 The version **${version}** is **not covered** by your **current version range**.
 
