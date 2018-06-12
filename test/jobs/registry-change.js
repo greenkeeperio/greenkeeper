@@ -557,8 +557,8 @@ describe('monorepo-release: registry change create jobs', async () => {
 
   test('monorepo-release: package is part of complete monorepoDefinition', async () => {
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           colors: ['colors', 'colors-blue']
         })
@@ -597,8 +597,8 @@ describe('monorepo-release: registry change create jobs', async () => {
 
   test('monorepo-release: package is part of complete monorepoDefinition, but is not using all the packages', async () => {
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        const monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           dogs: ['bulldog', 'pug']
         })

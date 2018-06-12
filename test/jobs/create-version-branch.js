@@ -1263,8 +1263,8 @@ describe('create version branch for dependencies from monorepos', () => {
     })
 
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           colors: ['colors', 'colors-blue', 'colors-red']
         })
@@ -1412,8 +1412,8 @@ describe('create version branch for dependencies from monorepos', () => {
     })
 
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           colors: ['colors', 'colors-blue', 'colors-red']
         })
@@ -1520,8 +1520,8 @@ describe('create version branch for dependencies from monorepos', () => {
       .reply(200, (url, payload) => {
         const PRBody = JSON.parse(payload).body
         // pull request created
-        expect(PRBody).toMatch('## Version **2.0.0** of the flowers packages was just published')
-        expect(PRBody).toMatch('This monorepo update includes releases of multiple dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/greenkeeper/blob/master/utils/monorepo-definitions.js).')
+        expect(PRBody).toMatch('## Version **2.0.0** of the **flowers** packages was just published')
+        expect(PRBody).toMatch('This monorepo update includes releases of multiple dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/monorepo-definitions).')
         expect(true).toBeTruthy()
         return {
           id: 321,
@@ -1589,8 +1589,8 @@ describe('create version branch for dependencies from monorepos', () => {
     })
 
     jest.mock('../../lib/monorepo', () => {
-      jest.mock('../../utils/monorepo-definitions', () => {
-        let monorepoDefinitions = require.requireActual('../../utils/monorepo-definitions')
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
         const newDef = Object.assign(monorepoDefinitions, {
           flowers: ['flowers', 'flowers-blue', 'flowers-red', 'flowers-green']
         })
