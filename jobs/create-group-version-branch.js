@@ -54,7 +54,7 @@ module.exports = async function (
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
-  log.info('started', {dependency, version, oldVersion, oldVersionResolved})
+  log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
@@ -142,7 +142,7 @@ module.exports = async function (
     (relevantDependencies.length &&
       _.intersection(config.groups[groupName].ignore, relevantDependencies).length === relevantDependencies.length)
   ) {
-    log.warn('exited: dependency ignored by user config')
+    log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
     return
   }
 
@@ -162,7 +162,7 @@ module.exports = async function (
     dependencyGroup = [dependency]
     newBranch = `${config.branchPrefix}${groupName}/${dependency}-${version}`
   }
-  log.info('branch name created', {branchName: newBranch})
+  log.info(`branch name ${newBranch} created`)
 
   const openPR = await findOpenPR()
 
@@ -231,7 +231,7 @@ module.exports = async function (
     transforms
   })
   if (sha) {
-    log.success('github: branch created', {sha})
+    log.success(`github: branch ${newBranch} created`, {sha})
   }
 
   if (!sha) { // no branch was created
@@ -291,7 +291,7 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-    log.info('github: commented on already open PR for that dependency and group')
+    log.info(`github: commented on already open PR for ${dependency} in group ${groupName}`, {openPR})
     return
   }
 
@@ -333,10 +333,9 @@ module.exports = async function (
   })
 
   if (createdPr) {
-    log.success('github: pull request created', {pullRequest: createdPr})
-  }
-  if (!createdPr) {
-    log.error('github: pull request was not created')
+    log.success(`github: pull request for ${dependency} ${version} created`, {pullRequest: createdPr})
+  } else {
+    log.error(`github: pull request for ${dependency} ${version} could not be created`)
     return
   }
 
