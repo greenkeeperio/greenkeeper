@@ -65,7 +65,7 @@ ${_.isEmpty(monorepoGroupName)
 
 This version is **covered** by your **current version range** and after updating it in your project **the build failed**.
 
-${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of multiple dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
+${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
 }
 
 ${
