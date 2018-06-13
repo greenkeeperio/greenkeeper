@@ -52,7 +52,7 @@ module.exports = async function (
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
-  log.info('started', {dependency, type, version, oldVersion})
+  log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
@@ -100,14 +100,14 @@ module.exports = async function (
     _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
-    log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
     return
   }
 
   // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
   // won’t get updated without it
   if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
-    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile')
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile`)
     return
   }
 
@@ -116,7 +116,7 @@ module.exports = async function (
   log.info(`config for ${repository.fullName}`, {config})
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
   if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
-    log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true')
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true`)
     return
   }
 
@@ -131,7 +131,7 @@ module.exports = async function (
   const [owner, repo] = repository.fullName.split('/')
   if (_.includes(config.ignore, dependency) ||
       (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
-    log.warn('exited: dependency ignored by user config')
+    log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
     return
   }
   const installationId = installation.installation
@@ -149,7 +149,7 @@ module.exports = async function (
     group = [dependency]
     newBranch = `${config.branchPrefix}${dependency}-${version}`
   }
-  log.info('branch name created', {branchName: newBranch})
+  log.info(`branch name ${newBranch} created`)
 
   async function createTransformsArray (group, json) {
     return Promise.all(group.map(async depName => {
@@ -168,7 +168,7 @@ module.exports = async function (
       }
 
       if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-        log.warn('exited: would be a downgrade', {newVersion: version, oldVersion: oldPkgVersion})
+        log.warn(`exited: ${dependency} ${version} would be a downgrade from ${oldPkgVersion}`, {newVersion: version, oldVersion: oldPkgVersion})
         return null
       }
 
@@ -221,7 +221,7 @@ module.exports = async function (
     message: commitMessage
   })
   if (sha) {
-    log.success('github: branch created', {sha})
+    log.success(`github: branch ${newBranch} created`, {sha})
   }
 
   if (!sha) { // no branch was created
@@ -290,7 +290,7 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-    log.info('github: commented on already open PR for that dependency')
+    log.info(`github: commented on already open PR for ${dependency}`, {openPR})
     return
   }
 
@@ -331,10 +331,9 @@ module.exports = async function (
   })
 
   if (createdPr) {
-    log.success('github: pull request created', {pullRequest: createdPr})
-  }
-  if (!createdPr) {
-    log.error('github: pull request was not created')
+    log.success(`github: pull request for ${dependency} ${version} created`, {pullRequest: createdPr})
+  } else {
+    log.error(`github: pull request for ${dependency} ${version} could not be created`)
     return
   }
 
