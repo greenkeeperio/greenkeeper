@@ -39,7 +39,7 @@ ${_.isEmpty(monorepoGroupName)
   </tr>
 </table>
 
-${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of multiple dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
+${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
 }
 
 The version **${version}** is **not covered** by your **current version range**.

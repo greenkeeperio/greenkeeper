@@ -1521,7 +1521,7 @@ describe('create version branch for dependencies from monorepos', () => {
         const PRBody = JSON.parse(payload).body
         // pull request created
         expect(PRBody).toMatch('## Version **2.0.0** of the **flowers** packages was just published')
-        expect(PRBody).toMatch('This monorepo update includes releases of multiple dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/monorepo-definitions).')
+        expect(PRBody).toMatch('This monorepo update includes releases of one or more dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/monorepo-definitions).')
         expect(true).toBeTruthy()
         return {
           id: 321,
