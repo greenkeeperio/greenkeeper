@@ -151,6 +151,16 @@ const monorepoDefinitions = {
     'baset-resolver-pixi',
     'baset-env-browser'
   ],
+  'enzyme': [
+    'enzyme',
+    'enzyme-adapter-react-13',
+    'enzyme-adapter-react-14',
+    'enzyme-adapter-react-15.4',
+    'enzyme-adapter-react-15',
+    'enzyme-adapter-react-16',
+    'enzyme-adapter-utils',
+    'enzyme-adapter-react-helper'
+  ],
   'jest': [
     'jest',
     'babel-jest',
