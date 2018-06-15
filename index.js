@@ -11,7 +11,7 @@ const Queue = require('promise-queue')
 const env = require('./lib/env')
 const dbs = require('./lib/dbs')
 const statsd = require('./lib/statsd')
-const enterpriseSetup = require('./lib/enterprise-etup')
+const enterpriseSetup = require('./lib/enterprise-setup')
 
 require('./lib/rollbar')
 
