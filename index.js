@@ -11,6 +11,8 @@ const Queue = require('promise-queue')
 const env = require('./lib/env')
 const dbs = require('./lib/dbs')
 const statsd = require('./lib/statsd')
+const enterpriseSetup = require('./lib/enterprise-etup')
+
 require('./lib/rollbar')
 
 // if (cluster.isMaster && env.NODE_ENV !== 'development') {
@@ -67,6 +69,10 @@ require('./lib/rollbar')
     setInterval(function collectAccountQueueStats () {
       statsd.gauge('queues.account-jobs', Object.keys(queues).length)
     }, 5000)
+  }
+
+  if (env.IS_ENTERPRISE) {
+    await enterpriseSetup()
   }
 
   const scheduleRemindersJobData = Buffer.from(JSON.stringify({name: 'schedule-stale-initial-pr-reminders'}))
