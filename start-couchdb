@@ -6,7 +6,7 @@ set -e
 
 if [[ -n "$GK_COUCHDB" ]]; then
   echo "Using existing CouchDB on :5984"
-  curl -sX DELETE $GK_COUCHDB/{installations,npm,payments,repositories}-staging 2>&1 > /dev/null
+  curl -sX DELETE $GK_COUCHDB/{installations,npm,payments,repositories,monorepo}-staging 2>&1 > /dev/null
 else
   echo "Starting CouchDB via Docker"
   docker rm -fv gk-couchdb || true
