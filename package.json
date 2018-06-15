@@ -11,7 +11,7 @@
     "envalid": "^4.0.1",
     "escape-string-regexp": "^1.0.5",
     "github-url-from-git": "^1.4.0",
-    "gk-log": "1.4.0",
+    "gk-log": "1.5.0",
     "greenkeeper-monorepo-definitions": "^1.0.0",
     "hot-shots": "^5.0.0",
     "joi": "^13.1.2",
