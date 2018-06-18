@@ -195,20 +195,6 @@ module.exports = async function (
 
   const openPR = await findOpenPR()
 
-  const commitMessageKey = !satisfies && type === 'dependencies'
-    ? 'dependencyUpdate'
-    : 'devDependencyUpdate'
-  const commitMessageValues = { dependencyKey, version }
-  let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
-  if (!satisfies && openPR) {
-    await upsert(repositories, openPR._id, {
-      comments: [...(openPR.comments || []), version]
-    })
-
-    commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
-  }
-  log.info('commit message created', {commitMessage})
-
   const transforms = _.compact(await createTransformsArray(group, repository.packages['package.json']))
   const sha = await createBranch({
     installationId,
@@ -217,8 +203,7 @@ module.exports = async function (
     branch: base,
     newBranch,
     path: 'package.json',
-    transforms,
-    message: commitMessage
+    transforms
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})
