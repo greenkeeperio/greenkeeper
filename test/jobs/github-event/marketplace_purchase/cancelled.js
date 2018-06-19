@@ -11,7 +11,7 @@ describe('marketplace canceled', async () => {
     })
 
     const newJobs = await cancelPurchase({
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 444,

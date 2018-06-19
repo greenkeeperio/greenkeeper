@@ -16,7 +16,7 @@ test('github-event installation_repositories removed', async () => {
     type: 'installation_repositories',
     action: 'removed',
     installation: { account: { id: 2 } },
-    repositoriesRemoved: [{ id: 22 }, { id: 25 }, { id: 26 }]
+    repositories_removed: [{ id: 22 }, { id: 25 }, { id: 26 }]
   })
   expect(newJobs).toBeFalsy()
 

@@ -10,7 +10,7 @@ const { createDocs } = require('../../../lib/repository-docs')
 
 const max404Retries = 5
 
-module.exports = async function ({ installation, repositoriesAdded }) {
+module.exports = async function ({ installation, repositories_added: repositoriesAdded }) {
   const { repositories: reposDb } = await dbs()
   const logs = dbs.getLogsDb()
 
