@@ -289,6 +289,10 @@ const addNewLowestAndDeprecate = function ({
   return removeNodeVersionFromTravisYML(updatedTravisYaml, nodeVersion, codeName, versions)
 }
 
+const hasTooManyPackageJSONs = function (repo) {
+  return repo.packages && Object.keys(repo.packages).length > 300
+}
+
 module.exports = {
   seperateNormalAndMonorepos,
   getJobsPerGroup,
@@ -304,5 +308,6 @@ module.exports = {
   addNodeVersionToTravisYML,
   removeNodeVersionFromTravisYML,
   updateNodeVersionToNvmrc,
-  addNewLowestAndDeprecate
+  addNewLowestAndDeprecate,
+  hasTooManyPackageJSONs
 }

@@ -37,7 +37,7 @@ describe('create initial branch', () => {
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
       removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'to-many-packages',
-      '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
+        '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
     ])
   })
 

@@ -12,7 +12,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL } = require('../utils/utils')
+const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
@@ -54,7 +54,7 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
 
-  if (repository.packages && Object.keys(repository.packages).length > 300) {
+  if (hasTooManyPackageJSONs(repository)) {
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }

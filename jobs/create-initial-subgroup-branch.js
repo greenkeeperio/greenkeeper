@@ -10,6 +10,7 @@ const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
+const { hasTooManyPackageJSONs } = require('../utils/utils')
 const { getGroupBranchesToDelete } = require('../lib/branches-to-delete')
 const deleteBranches = require('../lib/delete-branches')
 
@@ -25,7 +26,7 @@ module.exports = async function ({ repositoryId, groupName }) {
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch'})
 
   log.info('started')
-  if (repoDoc.packages && Object.keys(repoDoc.packages).length > 300) {
+  if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }
