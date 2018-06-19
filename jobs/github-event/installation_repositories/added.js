@@ -10,7 +10,7 @@ const { createDocs } = require('../../../lib/repository-docs')
 
 const max404Retries = 5
 
-module.exports = async function ({ installation, repositories_added: repositoriesAdded }) {
+module.exports = async function ({ installation, repositories_added }) { // eslint-disable-line
   const { repositories: reposDb } = await dbs()
   const logs = dbs.getLogsDb()
 
@@ -20,21 +20,21 @@ module.exports = async function ({ installation, repositories_added: repositorie
     repoSlug: null,
     context: 'installation-repositories-added'
   })
-  log.info('started', { repositoriesAdded })
-  if (!repositoriesAdded.length) {
+  log.info('started', { repositories_added })
+  if (!repositories_added.length) {
     log.warn('exited: no repositories selected')
     return
   }
   // spam :(
   if (['23046691', '1623538'].includes(installation.account.id) ||
-    (repositoriesAdded[0] && repositoriesAdded[0].fullName &&
-      (repositoriesAdded[0].fullName.includes('dalavanmanphonsy') ||
-        repositoriesAdded[0].fullName.includes('CNXTEoEorg')))) {
+    (repositories_added[0] && repositories_added[0].fullName &&
+      (repositories_added[0].fullName.includes('dalavanmanphonsy') ||
+        repositories_added[0].fullName.includes('CNXTEoEorg')))) {
     log.warn('exited: spam')
     return
   }
 
-  const repositories = await Promise.mapSeries(repositoriesAdded, doc => {
+  const repositories = await Promise.mapSeries(repositories_added, doc => {
     const [owner, repo] = doc.full_name.split('/')
     return GithubQueue(installation.id).read(github => {
       return promiseRetry((retry, number) => {
