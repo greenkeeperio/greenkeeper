@@ -4,21 +4,21 @@ const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
 const normalizePlanName = require('../../../lib/normalize-plan-name')
 
-module.exports = async function ({ marketplace_purchase }) {
+module.exports = async function ({ marketplacePurchase }) {
   const { payments } = await dbs()
   const logs = dbs.getLogsDb()
   const log = Log({
     logsDb: logs,
-    accountId: marketplace_purchase.account.id,
+    accountId: marketplacePurchase.account.id,
     repoSlug: null,
     context: 'marketplace-purchase-created'
   })
-  log.info('started', { marketplace_purchase })
-  const accountId = String(marketplace_purchase.account.id)
+  log.info('started', { marketplacePurchase })
+  const accountId = String(marketplacePurchase.account.id)
   let paymentDoc
 
   await upsert(payments, accountId, {
-    plan: normalizePlanName(marketplace_purchase.plan.name)
+    plan: normalizePlanName(marketplacePurchase.plan.name)
   })
 
   try {

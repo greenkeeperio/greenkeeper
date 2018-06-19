@@ -4,7 +4,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 const registryChange = require('../../jobs/registry-change.js')
 
 describe('registry change create jobs', async () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { installations, repositories, npm } = await dbs()
 
     await Promise.all([

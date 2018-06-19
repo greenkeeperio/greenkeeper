@@ -20,10 +20,10 @@ afterAll(async () => {
   await Promise.all([
     removeIfExists(installations, '123'),
     removeIfExists(repositories, '332244:branch:deadbeef', '332244:branch:deadbeef0', '332244:branch:deadbeef1',
-    '774422:branch:deadbeef', '774422:branch:deadbeef0', '774422:branch:deadbeef1',
-    '1928:branch:deadbeef', '1928:branch:deadbeef0', '1928:branch:deadbeef1',
-    '1929:branch:deadbeef', '1929:branch:deadbeef0', '1929:branch:deadbeef1'
-  )
+      '774422:branch:deadbeef', '774422:branch:deadbeef0', '774422:branch:deadbeef1',
+      '1928:branch:deadbeef', '1928:branch:deadbeef0', '1928:branch:deadbeef1',
+      '1929:branch:deadbeef', '1929:branch:deadbeef0', '1929:branch:deadbeef1'
+    )
   ])
 })
 

@@ -10,31 +10,31 @@ const { createDocs } = require('../../../lib/repository-docs')
 
 const max404Retries = 5
 
-module.exports = async function ({ installation, repositories_added }) {
+module.exports = async function ({ installation, repositoriesAdded }) {
   const { repositories: reposDb } = await dbs()
   const logs = dbs.getLogsDb()
+
   const log = Log({
     logsDb: logs,
     accountId: installation.account.id,
     repoSlug: null,
     context: 'installation-repositories-added'
   })
-
-  log.info('started', { repositories_added })
-  if (!repositories_added.length) {
+  log.info('started', { repositoriesAdded })
+  if (!repositoriesAdded.length) {
     log.warn('exited: no repositories selected')
     return
   }
   // spam :(
   if (['23046691', '1623538'].includes(installation.account.id) ||
-    (repositories_added[0] && repositories_added[0].fullName &&
-      (repositories_added[0].fullName.includes('dalavanmanphonsy') ||
-      repositories_added[0].fullName.includes('CNXTEoEorg')))) {
+    (repositoriesAdded[0] && repositoriesAdded[0].fullName &&
+      (repositoriesAdded[0].fullName.includes('dalavanmanphonsy') ||
+        repositoriesAdded[0].fullName.includes('CNXTEoEorg')))) {
     log.warn('exited: spam')
     return
   }
 
-  const repositories = await Promise.mapSeries(repositories_added, doc => {
+  const repositories = await Promise.mapSeries(repositoriesAdded, doc => {
     const [owner, repo] = doc.full_name.split('/')
     return GithubQueue(installation.id).read(github => {
       return promiseRetry((retry, number) => {
@@ -44,19 +44,19 @@ module.exports = async function ({ installation, repositories_added }) {
           and to keep the retry logic in lib/github.js simple
         */
         return github.repos.get({ owner, repo })
-        .catch(error => {
-          if (error.code === 404) {
-            if (number === max404Retries) {
-              // ignore and log failure here
-              log.warn(`repo not found on attempt #${number}: gving up`)
-            } else {
-              log.warn(`repo not found on attempt #${number}: retrying`)
-              retry(error)
+          .catch(error => {
+            if (error.code === 404) {
+              if (number === max404Retries) {
+                // ignore and log failure here
+                log.warn(`repo not found on attempt #${number}: gving up`)
+              } else {
+                log.warn(`repo not found on attempt #${number}: retrying`)
+                retry(error)
+              }
+            } else { // not a 404, throw normally
+              throw error
             }
-          } else { // not a 404, throw normally
-            throw error
-          }
-        })
+          })
       }, {
         retries: max404Retries,
         minTimeout: process.env.NODE_ENV === 'testing' ? 1 : 3000

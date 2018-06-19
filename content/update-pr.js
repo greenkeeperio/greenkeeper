@@ -3,23 +3,23 @@ const md = require('./template')
 
 module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type}) => md`
 ${_.isEmpty(monorepoGroupName)
-  ? `## Version **${version}** of **${dependencyLink}** was just published.`
-  : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
+    ? `## Version **${version}** of **${dependencyLink}** was just published.`
+    : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
 
 <table>
   <tr>
     <th align=left>
       ${_.isEmpty(monorepoGroupName)
-        ? 'Dependency'
-        : 'Monorepo release group'
-      }
+    ? 'Dependency'
+    : 'Monorepo release group'
+}
     </th>
     <td>
       <code>${monorepoGroupName || dependencyLink}</code>
     </td>
   </tr>
   ${oldVersionResolved
-  ? `<tr>
+    ? `<tr>
       <th align=left>
        Current Version
       </th>
@@ -27,8 +27,8 @@ ${_.isEmpty(monorepoGroupName)
         ${oldVersionResolved}
       </td>
     </tr>`
-  : ''
-  }
+    : ''
+}
   <tr>
     <th align=left>
       Type
