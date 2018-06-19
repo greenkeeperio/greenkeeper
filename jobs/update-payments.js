@@ -4,9 +4,9 @@ const stripe = require('stripe')(env.STRIPE_SECRET_KEY)
 
 module.exports = async ({ accountId, repositoryId }) => {
   const billingAccount = await getActiveBilling(accountId)
-    // ignore non-stripe users
-    // checking for stripeSubscriptionId instead of stripeItemId because in
-    // jobs/stripe-event.js L33-L40 only then stripeSubscriptionId is set to null
+  // ignore non-stripe users
+  // checking for stripeSubscriptionId instead of stripeItemId because in
+  // jobs/stripe-event.js L33-L40 only then stripeSubscriptionId is set to null
   if (!billingAccount || !billingAccount.stripeSubscriptionId) return
 
   const currentlyPrivateAndEnabledRepos = await getAmountOfCurrentlyPrivateAndEnabledRepos(accountId)

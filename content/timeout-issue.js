@@ -2,7 +2,7 @@ const md = require('./template')
 const env = require('../lib/env')
 
 module.exports = ({fullName}) =>
-md`🚨 You need to enable Continuous Integration on all branches of this repository. 🚨
+  md`🚨 You need to enable Continuous Integration on all branches of this repository. 🚨
 
 To enable Greenkeeper, you need to make sure that a [commit status](https://help.github.com/articles/about-statuses/) is reported on all branches. This is required by Greenkeeper because it uses your CI build statuses to figure out when to notify you about breaking changes.
 

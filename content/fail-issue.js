@@ -22,8 +22,8 @@ module.exports = ({version, dependencyLink, owner, repo, base, head, dependency,
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ${_.isEmpty(monorepoGroupName)
-  ? `## Version **${version}** of **${dependencyLink}** was just published.`
-  : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
+    ? `## Version **${version}** of **${dependencyLink}** was just published.`
+    : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
 
 <table>
   <tr>
@@ -37,9 +37,9 @@ ${_.isEmpty(monorepoGroupName)
   <tr>
     <th align=left>
       ${_.isEmpty(monorepoGroupName)
-        ? 'Dependency'
-        : 'Monorepo release group'
-      }
+    ? 'Dependency'
+    : 'Monorepo release group'
+}
     </th>
     <td>
       <code>${monorepoGroupName || dependencyLink}</code>
@@ -70,8 +70,8 @@ ${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of on
 
 ${
   dependencyType === 'dependencies'
-  ? notDevDependency({dependency})
-  : devDependency({dependency, dependencyType})
+    ? notDevDependency({dependency})
+    : devDependency({dependency, dependencyType})
 }
 
 ${_.get(statuses, 'length') && ciStatuses({statuses})}

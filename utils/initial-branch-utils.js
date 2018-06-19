@@ -78,52 +78,52 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
   let dependencyActionsLog = {}
   // add `newVersion` to each dependency object in the array
   const outputDependencies = _(dependencies)
-  .filter(Boolean) // remove falsy values from input array
-  .map(dependency => {
+    .filter(Boolean) // remove falsy values from input array
+    .map(dependency => {
     // neither version nor range, so it's something weird (git url)
     // better not touch it
-    if (!semver.validRange(dependency.version)) {
-      dependencyActionsLog[dependency.name] = 'invalid range'
-      return
-    }
-    // new version is prerelease
-    const oldIsPrerelease = _.get(
-      semver.parse(dependency.version),
-      'prerelease.length'
-    ) > 0
+      if (!semver.validRange(dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'invalid range'
+        return
+      }
+      // new version is prerelease
+      const oldIsPrerelease = _.get(
+        semver.parse(dependency.version),
+        'prerelease.length'
+      ) > 0
 
-    let latest = _.get(dependency, 'data.dist-tags.latest')
-    const prereleaseDiff = oldIsPrerelease &&
+      let latest = _.get(dependency, 'data.dist-tags.latest')
+      const prereleaseDiff = oldIsPrerelease &&
       semver.diff(dependency.version, latest) === 'prerelease'
-    if (
-      !prereleaseDiff &&
+      if (
+        !prereleaseDiff &&
       _.get(semver.parse(latest), 'prerelease.length', 0) > 0
-    ) {
-      const versions = _.keys(_.get(dependency, 'data.versions'))
-      latest = _.reduce(versions, function (current, next) {
-        const parsed = semver.parse(next)
-        if (!parsed) return current
-        if (_.get(parsed, 'prerelease.length', 0) > 0) return current
-        if (semver.gtr(next, current)) return next
-        return current
-      })
-    }
-    // no to need change anything :)
-    if (semver.satisfies(latest, dependency.version)) {
-      dependencyActionsLog[dependency.name] = 'satisfies semver'
-      return
-    }
-    // no downgrades
-    if (semver.ltr(latest, dependency.version)) {
-      dependencyActionsLog[dependency.name] = 'would be a downgrade'
-      return
-    }
-    dependency.newVersion = getRangedVersion(latest, dependency.version)
-    dependencyActionsLog[dependency.name] = `updated to ${dependency.newVersion}`
-    return dependency
-  })
-  .filter(Boolean) // remove falsy values from output array
-  .value() // run lodash chain
+      ) {
+        const versions = _.keys(_.get(dependency, 'data.versions'))
+        latest = _.reduce(versions, function (current, next) {
+          const parsed = semver.parse(next)
+          if (!parsed) return current
+          if (_.get(parsed, 'prerelease.length', 0) > 0) return current
+          if (semver.gtr(next, current)) return next
+          return current
+        })
+      }
+      // no to need change anything :)
+      if (semver.satisfies(latest, dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'satisfies semver'
+        return
+      }
+      // no downgrades
+      if (semver.ltr(latest, dependency.version)) {
+        dependencyActionsLog[dependency.name] = 'would be a downgrade'
+        return
+      }
+      dependency.newVersion = getRangedVersion(latest, dependency.version)
+      dependencyActionsLog[dependency.name] = `updated to ${dependency.newVersion}`
+      return dependency
+    })
+    .filter(Boolean) // remove falsy values from output array
+    .value() // run lodash chain
 
   log.info('parsed dependency actions', {dependencyActionsLog})
   return outputDependencies

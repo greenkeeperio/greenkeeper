@@ -40,7 +40,7 @@ describe('github-event pull_request opened', async () => {
     cleanCache('../../lib/env')
   })
 
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '40',

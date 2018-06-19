@@ -264,8 +264,8 @@ module.exports = async function (
 
   const diffBase = openPR
     ? _.get(openPR, 'comments.length')
-        ? _.last(openPR.comments)
-        : openPR.version
+      ? _.last(openPR.comments)
+      : openPR.version
     : oldVersionResolved
 
   const { dependencyLink, release, diffCommits } = await getInfos({

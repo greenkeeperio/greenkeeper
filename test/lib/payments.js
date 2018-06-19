@@ -12,7 +12,7 @@ const {
 } = require('../../lib/payments')
 
 describe('payments', async () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { payments, repositories } = await dbs()
     await payments.put({
       _id: '123',
@@ -91,7 +91,7 @@ describe('payments', async () => {
     ])
   })
 
-  describe('getActiveBilling', async() => {
+  describe('getActiveBilling', async () => {
     test('getActiveBilling with billing personal', async () => {
       const billing = await getActiveBilling('123')
       expect(billing.stripeSubscriptionId).toEqual('stripe123')
@@ -150,7 +150,7 @@ describe('payments', async () => {
     })
   })
 
-  describe('hasStripeBilling', async() => {
+  describe('hasStripeBilling', async () => {
     test('hasStripeBilling without stripe', async () => {
       const billing = await hasStripeBilling('123team')
       expect(billing).toBeFalsy()
@@ -172,7 +172,7 @@ describe('payments', async () => {
     })
   })
 
-  describe('maybeUpdatePaymentsJob', async() => {
+  describe('maybeUpdatePaymentsJob', async () => {
     test('maybeUpdatePaymentsJob without billing', async () => {
       const newJob = await maybeUpdatePaymentsJob('000', true)
       expect(newJob).toBeFalsy()
@@ -199,7 +199,7 @@ describe('payments', async () => {
     })
   })
 
-  describe('getAmountOfCurrentlyPrivateAndEnabledRepos', async() => {
+  describe('getAmountOfCurrentlyPrivateAndEnabledRepos', async () => {
     test('getAmountOfCurrentlyPrivateAndEnabledRepos with no Repos', async () => {
       const result = await getAmountOfCurrentlyPrivateAndEnabledRepos('123')
       // zero private, enabled repos
@@ -213,7 +213,7 @@ describe('payments', async () => {
     })
   })
 
-  describe('getAccountNeedsMarketplaceUpgrade', async() => {
+  describe('getAccountNeedsMarketplaceUpgrade', async () => {
     test('getAccountNeedsMarketplaceUpgrade without billing', async () => {
       const result = await getAccountNeedsMarketplaceUpgrade('000')
       expect(result).toBeFalsy()

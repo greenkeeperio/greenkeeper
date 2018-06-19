@@ -7,7 +7,7 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 describe('github-event status', async () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { installations } = await dbs()
 
     await installations.put({
@@ -307,8 +307,8 @@ describe('github-event status', async () => {
     await Promise.all([
       removeIfExists(installations, '10'),
       removeIfExists(repositories, '42:branch:deadbeef', '43:branch:deadbeef',
-      '44:branch:deadbeef', '44:pr:1234', 'subgroup1:branch:abcdf1234',
-      'subgroup2:branch:plantsarethebest11', 'subgroup2:pr:1234')
+        '44:branch:deadbeef', '44:pr:1234', 'subgroup1:branch:abcdf1234',
+        'subgroup2:branch:plantsarethebest11', 'subgroup2:pr:1234')
     ])
   })
 })
