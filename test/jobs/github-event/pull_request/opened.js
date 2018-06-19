@@ -20,7 +20,8 @@ const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
       merged: false,
       state: 'open',
       head: {
-        ref: branchName
+        ref: branchName,
+        sha: 'deadsha'
       },
       user
     },
@@ -96,7 +97,7 @@ describe('github-event pull_request opened', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200)
-      .post('/repos/finnp/test/statuses/')
+      .post('/repos/finnp/test/statuses/deadsha')
       .reply(201, () => {
         // payment required status added
         expect(true).toBeTruthy()
@@ -132,8 +133,7 @@ describe('github-event pull_request opened', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200)
-      .post('/repos/finnp/test/statuses/')
-      .optionally()
+      .post('/repos/finnp/test/statuses/deadsha')
       .reply(201, () => {
         // not add payment required status
         return {}
