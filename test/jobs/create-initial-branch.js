@@ -142,7 +142,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 42})
+    const newJob = await createInitialBranch({ repositoryId: 42 })
     const newBranch = await repositories.get('42:branch:1234abcd')
 
     expect(newJob).toBeTruthy()
@@ -213,7 +213,7 @@ describe('create initial branch', () => {
         default_branch: 'custom'
       })
 
-    const newJob = await createInitialBranch({repositoryId: 44})
+    const newJob = await createInitialBranch({ repositoryId: 44 })
     expect(newJob).toBeFalsy()
     const repodoc = await repositories.get('44')
     expect(repodoc.files['package.json']).not.toHaveLength(0)
@@ -282,7 +282,7 @@ describe('create initial branch', () => {
         default_branch: 'custom'
       })
 
-    const newJob = await createInitialBranch({repositoryId: 45})
+    const newJob = await createInitialBranch({ repositoryId: 45 })
 
     expect(newJob).toBeTruthy()
     expect(newJob.data.name).toEqual('update-payments')
@@ -351,7 +351,7 @@ describe('create initial branch', () => {
         default_branch: 'custom'
       })
 
-    const newJob = await createInitialBranch({repositoryId: 46})
+    const newJob = await createInitialBranch({ repositoryId: 46 })
     expect(newJob).toBeFalsy()
   })
 
@@ -391,7 +391,7 @@ describe('create initial branch', () => {
   })
 
   /*
-    Monorepo tests
+  Monorepo tests
   */
   test('create pull request for monorepo and add greenkeeper.json', async () => {
     const { repositories } = await dbs()
@@ -547,7 +547,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 47})
+    const newJob = await createInitialBranch({ repositoryId: 47 })
     const newBranch = await repositories.get('47:branch:1234abcd')
     const repoDoc = await repositories.get('47')
 
@@ -721,7 +721,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 50})
+    const newJob = await createInitialBranch({ repositoryId: 50 })
     const newBranch = await repositories.get('50:branch:1234abcd')
     const repoDoc = await repositories.get('50')
 
@@ -967,7 +967,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 48})
+    const newJob = await createInitialBranch({ repositoryId: 48 })
     const newBranch = await repositories.get('48:branch:1234abcd')
     const repoDoc = await repositories.get('48')
 
@@ -1114,7 +1114,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 49})
+    const newJob = await createInitialBranch({ repositoryId: 49 })
     const newBranch = await repositories.get('49:branch:1234abcd')
     const repoDoc = await repositories.get('49')
 
@@ -1143,14 +1143,14 @@ describe('create initial branch', () => {
     })
 
     const invalidJSONString = `{
-      groups {
-        '#invalid#groupname#': {
-          packages: [
-            '/package.json'
-          ]
-        }
-      }
-    }`
+  groups {
+    '#invalid#groupname#': {
+      packages: [
+        '/package.json'
+      ]
+    }
+  }
+}`
     expect.assertions(4)
 
     nock('https://api.github.com')
@@ -1176,7 +1176,7 @@ describe('create initial branch', () => {
 
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 51})
+    const newJob = await createInitialBranch({ repositoryId: 51 })
     const repoDoc = await repositories.get('51')
 
     expect(newJob).toBeTruthy()
@@ -1208,46 +1208,46 @@ describe('create initial branch', () => {
     expect.assertions(10)
 
     nock('https://api.github.com')
-    .post('/installations/137/access_tokens')
-    .optionally()
-    .reply(200, {
-      token: 'secret'
-    })
-    .get('/rate_limit')
-    .optionally()
-    .reply(200, {})
-    .get('/repos/espy/test')
-    .reply(200, {
-      default_branch: 'master'
-    })
-    .get('/repos/espy/test/git/trees/master?recursive=true')
-    .reply(200, {
-      tree: [
-        {
-          'path': 'package.json',
-          'mode': '100644',
-          'type': 'blob',
-          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
-          'size': 1379,
-          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
-        }
-      ]
-    })
-    .get('/repos/espy/test/contents/package.json')
-    .reply(200, {
-      path: 'package.json',
-      name: 'package.json',
-      content: encodePkg(packageJSON)
-    })
-    .get('/repos/espy/test')
-    .reply(200, {
-      default_branch: 'custom'
-    })
-    .post('/repos/espy/test/labels', {
-      name: 'greenkeeper',
-      color: '00c775'
-    })
-    .reply(201)
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/espy/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .get('/repos/espy/test/git/trees/master?recursive=true')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
+      })
+      .get('/repos/espy/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg(packageJSON)
+      })
+      .get('/repos/espy/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/espy/test/labels', {
+        name: 'greenkeeper',
+        color: '00c775'
+      })
+      .reply(201)
 
     nock('https://registry.npmjs.org')
       .get('/@semanticrelease%2Fgit')
@@ -1298,7 +1298,7 @@ describe('create initial branch', () => {
     })
     const createInitialBranch = require('../../jobs/create-initial-branch')
 
-    const newJob = await createInitialBranch({repositoryId: 52})
+    const newJob = await createInitialBranch({ repositoryId: 52 })
     const newBranch = await repositories.get('52:branch:1234abcd')
     const repoDoc = await repositories.get('52')
 

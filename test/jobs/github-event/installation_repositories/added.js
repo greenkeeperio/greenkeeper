@@ -24,7 +24,7 @@ test('github-event installation_repositories but empty list of repos', async () 
         id: 2
       }
     },
-    repositories_added: [
+    repositoriesAdded: [
     ]
   })
 
@@ -67,7 +67,7 @@ test('github-event installation_repositories added', async () => {
         id: 2
       }
     },
-    repositories_added: [
+    repositoriesAdded: [
       { id: 31, full_name: 'bar/repo1' },
       { id: 32, full_name: 'bar/repo2' }
     ]
@@ -134,7 +134,7 @@ test('github-event installation_repositories added with intermittent 404s', asyn
         id: 2
       }
     },
-    repositories_added: [
+    repositoriesAdded: [
       { id: 31, full_name: 'bar/repo1' },
       { id: 32, full_name: 'bar/repo2' }
     ]
@@ -200,7 +200,7 @@ test('github-event installation_repositories added with too many 404s', async ()
           id: 2
         }
       },
-      repositories_added: [
+      repositoriesAdded: [
         { id: 31, full_name: 'bar/repo1' },
         { id: 32, full_name: 'bar/repo2' }
       ]
@@ -238,7 +238,7 @@ test('github-event installation_repositories added with a non 404 error', async 
           id: 2
         }
       },
-      repositories_added: [
+      repositoriesAdded: [
         { id: 31, full_name: 'bar/repo1' },
         { id: 32, full_name: 'bar/repo2' }
       ]

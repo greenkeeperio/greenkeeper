@@ -377,8 +377,8 @@ describe('create version branch', () => {
         default_branch: 'master'
       })
       .post(
-      '/repos/finnp/testtest/issues/66/labels',
-      body => body[0] === 'customlabel'
+        '/repos/finnp/testtest/issues/66/labels',
+        body => body[0] === 'customlabel'
       )
       .reply(201, () => {
         // label created
@@ -386,8 +386,8 @@ describe('create version branch', () => {
         return {}
       })
       .post(
-      '/repos/finnp/testtest/statuses/1234abcd',
-      ({ state }) => state === 'success'
+        '/repos/finnp/testtest/statuses/1234abcd',
+        ({ state }) => state === 'success'
       )
       .reply(201, () => {
         // status created
@@ -844,14 +844,14 @@ describe('create version branch', () => {
     })
 
     const githubMock = nock('https://api.github.com')
-    .post('/installations/37/access_tokens')
-    .optionally()
-    .reply(200, {
-      token: 'secret'
-    })
-    .get('/rate_limit')
-    .optionally()
-    .reply(200, {})
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
 
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -1176,7 +1176,7 @@ describe('create version branch for dependencies from monorepos', () => {
       removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
       removeIfExists(repositories, 'mono-1', 'mono-2'),
       removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321',
-      'mono-2:branch:1234abcd', 'mono-2:pr:321'),
+        'mono-2:branch:1234abcd', 'mono-2:pr:321'),
       removeIfExists(repositories, '1:branch:2222abcd', '1:pr:3210')
     ])
   })

@@ -11,9 +11,9 @@ describe('handle-branch-status', async () => {
     const { repositories, installations, npm } = await dbs()
     await Promise.all([
       removeIfExists(repositories, '42:branch:deadbeef', '42:branch:deadbeef2', '43:branch:deadbeef3', '43:issue:5',
-     'monorepo:branch:deadbeef3', 'monorepo:issue:9',
-     'monorepo:branch:deadbeef4', 'monorepo:issue:10',
-     'monorepo:branch:deadbeef5', 'monorepo:issue:11'),
+        'monorepo:branch:deadbeef3', 'monorepo:issue:9',
+        'monorepo:branch:deadbeef4', 'monorepo:issue:10',
+        'monorepo:branch:deadbeef5', 'monorepo:issue:11'),
       removeIfExists(installations, '10'),
       removeIfExists(npm, 'test', 'test2', 'test3', 'test4', 'test5')
     ])
@@ -23,7 +23,7 @@ describe('handle-branch-status', async () => {
     jest.clearAllMocks()
   })
 
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { repositories, installations, npm } = await dbs()
     await Promise.all([
       installations.put({

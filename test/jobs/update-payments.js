@@ -2,7 +2,7 @@ const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
 describe('update-payments', async () => {
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { repositories, installations } = await dbs()
 
     await installations.put({
@@ -61,7 +61,7 @@ describe('update-payments', async () => {
     // then overwrite the one you want to mock
     jest.mock('../../lib/payments', () => {
       const payments = require.requireActual('../../lib/payments')
-      payments.getActiveBilling = async() => {
+      payments.getActiveBilling = async () => {
         return {
           plan: 'personal',
           stripeSubscriptionId: 'stripe123',
@@ -92,7 +92,7 @@ describe('update-payments', async () => {
 
     jest.mock('../../lib/payments', () => {
       const payments = require.requireActual('../../lib/payments')
-      payments.getActiveBilling = async() => {
+      payments.getActiveBilling = async () => {
         return {
           plan: 'org'
         }

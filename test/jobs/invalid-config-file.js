@@ -225,7 +225,7 @@ afterAll(async () => {
   await Promise.all([
     removeIfExists(installations, '2020', '2121'),
     removeIfExists(repositories, 'invalid-config1', 'invalid-config1:issue:10',
-    'invalid-config2', 'invalid-config2:issue:10',
-    'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11', 'invalid-config4:issue:11')
+      'invalid-config2', 'invalid-config2:issue:10',
+      'invalid-config3', 'invalid-config3:issue:10', 'invalid-config3:issue:11', 'invalid-config4:issue:11')
   ])
 })
