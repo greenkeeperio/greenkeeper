@@ -18,7 +18,7 @@ const {
 } = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, generateGitHubCompareURL } = require('../utils/utils')
+const { createTransformFunction, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -52,7 +52,7 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
 
-  if (repository.packages && Object.keys(repository.packages).length > 300) {
+  if (hasTooManyPackageJSONs(repository)) {
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }

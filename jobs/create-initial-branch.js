@@ -22,6 +22,7 @@ const { maybeUpdatePaymentsJob } = require('../lib/payments')
 const upsert = require('../lib/upsert')
 const { invalidConfigFile } = require('../lib/invalid-config-file')
 const { getUpdatedDependenciesForFiles } = require('../utils/initial-branch-utils')
+const { hasTooManyPackageJSONs } = require('../utils/utils')
 
 module.exports = async function ({ repositoryId, closes = [] }) {
   const { installations, repositories } = await dbs()
@@ -33,7 +34,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
 
   log.info('started')
-  if (repoDoc.packages && Object.keys(repoDoc.packages).length > 300) {
+  if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }

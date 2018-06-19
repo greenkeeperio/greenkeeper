@@ -16,6 +16,7 @@ const {
 const getConfig = require('../../lib/get-config')
 const { validate } = require('../../lib/validate-greenkeeper-json')
 const { invalidConfigFile, getInvalidConfigIssueNumber } = require('../../lib/invalid-config-file')
+const { hasTooManyPackageJSONs } = require('../../utils/utils')
 
 module.exports = async function (data) {
   const { repositories } = await dbs()
@@ -40,7 +41,7 @@ module.exports = async function (data) {
   const log = Log({logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'push'})
   log.info('started')
 
-  if (repoDoc.packages && Object.keys(repoDoc.packages).length > 300) {
+  if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }
