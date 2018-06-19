@@ -11,7 +11,7 @@ describe('lib monorepo', async () => {
     const { npm, monorepo } = await dbs()
     await Promise.all([
       removeIfExists(npm, '@avocado/dep', '@banana/dep', 'koeln', 'berlin', 'hamburg',
-      'monorepo:11', 'monorepo:12', 'monorepo:22', 'monorepo:44', 'monorepo:55', 'monorepo:66')
+        'monorepo:11', 'monorepo:12', 'monorepo:22', 'monorepo:44', 'monorepo:55', 'monorepo:66')
     ])
     await Promise.all([
       removeIfExists(monorepo, 'grouchdb', 'gk-test')

@@ -50,7 +50,7 @@ describe('create initial branch', () => {
     // mock relative dependencies
     jest.mock('../../utils/initial-branch-utils', () => {
       const utils = require.requireActual('../../utils/initial-branch-utils')
-      utils.addNPMPackageData = async(dependencyInfo, registryGet, log) => {
+      utils.addNPMPackageData = async (dependencyInfo, registryGet, log) => {
         return [{
           name: '@finnpauls/dep',
           version: '1.0.0',

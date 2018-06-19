@@ -3,17 +3,17 @@ const Log = require('gk-log')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
 
-module.exports = async function ({ marketplace_purchase }) {
+module.exports = async function ({ marketplacePurchase }) {
   const { payments } = await dbs()
   const logs = dbs.getLogsDb()
   const log = Log({
     logsDb: logs,
-    accountId: marketplace_purchase.account.id,
+    accountId: marketplacePurchase.account.id,
     repoSlug: null,
     context: 'marketplace-purchase-cancelled'
   })
-  log.info('started', { marketplace_purchase })
-  const accountId = String(marketplace_purchase.account.id)
+  log.info('started', { marketplacePurchase })
+  const accountId = String(marketplacePurchase.account.id)
 
   try {
     await upsert(payments, accountId, { plan: 'free' })

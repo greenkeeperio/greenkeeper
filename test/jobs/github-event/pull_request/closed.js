@@ -14,7 +14,7 @@ describe('github-event pull_request closed', async () => {
     cleanCache('../../lib/env')
   })
 
-  beforeAll(async() => {
+  beforeAll(async () => {
     const { repositories, payments } = await dbs()
     await Promise.all([
       repositories.put({

@@ -2,7 +2,7 @@ const lolex = require('lolex')
 const dbs = require('../../lib/dbs')
 
 describe('dbs access', () => {
-  test('getLogsDb memoization', async() => {
+  test('getLogsDb memoization', async () => {
     const clock = lolex.install()
 
     const logsDb = dbs.getLogsDb()
