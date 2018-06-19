@@ -6,7 +6,7 @@ const statsd = require('../../../lib/statsd')
 const env = require('../../../lib/env')
 const { maybeUpdatePaymentsJob } = require('../../../lib/payments')
 
-module.exports = async function ({ installation, repositoriesRemoved }) {
+module.exports = async function ({ installation, repositories_removed: repositoriesRemoved }) {
   const { repositories: reposDb } = await dbs()
   const logs = dbs.getLogsDb()
 

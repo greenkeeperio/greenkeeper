@@ -3,7 +3,7 @@ const lolex = require('lolex')
 const enterpriseSetup = require('../../lib/enterprise-setup')
 
 describe('enterprise setup', () => {
-  test('creates LogsDb for actual and next month', async() => {
+  test('creates LogsDb for actual and next month', async () => {
     const clock = lolex.install()
     const enterpriseDbs = await enterpriseSetup()
 
@@ -15,7 +15,7 @@ describe('enterprise setup', () => {
     clock.uninstall()
   })
 
-  test('removes LogsDbs if there are older than 12 month', async() => {
+  test('removes LogsDbs if there are older than 12 month', async () => {
     const clock = lolex.install()
 
     let enterpriseDbs = await enterpriseSetup()

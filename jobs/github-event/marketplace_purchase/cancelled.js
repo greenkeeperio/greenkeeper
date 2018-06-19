@@ -3,7 +3,7 @@ const Log = require('gk-log')
 const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
 
-module.exports = async function ({ marketplacePurchase }) {
+module.exports = async function ({ marketplace_purchase: marketplacePurchase }) {
   const { payments } = await dbs()
   const logs = dbs.getLogsDb()
   const log = Log({

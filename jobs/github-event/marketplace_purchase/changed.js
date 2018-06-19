@@ -4,7 +4,7 @@ const dbs = require('../../../lib/dbs')
 const upsert = require('../../../lib/upsert')
 const normalizePlanName = require('../../../lib/normalize-plan-name')
 
-module.exports = async function ({ marketplacePurchase }) {
+module.exports = async function ({ marketplace_purchase: marketplacePurchase }) {
   const { payments } = await dbs()
   const logs = dbs.getLogsDb()
   const log = Log({

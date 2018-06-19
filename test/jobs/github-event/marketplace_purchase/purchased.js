@@ -7,7 +7,7 @@ describe('marketplace purchased', async () => {
     const { payments } = await dbs()
 
     const newJob = await purchasePurchase({
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 444,
@@ -43,7 +43,7 @@ describe('marketplace purchased', async () => {
     })
 
     const newJob = await purchasePurchase({
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 445,
@@ -81,7 +81,7 @@ describe('marketplace purchased', async () => {
     const newJob = await purchasePurchase({
       action: 'purchased',
       effective_date: '2017-04-06T02:01:16Z',
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 446,
@@ -123,7 +123,7 @@ describe('marketplace purchased', async () => {
     })
 
     const newJob = await purchasePurchase({
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 447,
@@ -165,7 +165,7 @@ describe('marketplace purchased', async () => {
     const newJob = await purchasePurchase({
       action: 'purchased',
       effective_date: '2017-04-06T02:01:16Z',
-      marketplacePurchase: {
+      marketplace_purchase: {
         account: {
           type: 'Organization',
           id: 448,
