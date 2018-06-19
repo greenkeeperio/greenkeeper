@@ -25,7 +25,10 @@ module.exports = async function ({ repositoryId, groupName }) {
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch'})
 
   log.info('started')
-  if (repoDoc.id === '135286129') return
+  if (repoDoc.packages && Object.keys(repoDoc.packages).length > 300) {
+    log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
+    return
+  }
 
   // delete existing initial subgroup branches
   const configChanges = { added: [], removed: [], modified: [groupName] }

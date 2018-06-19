@@ -36,7 +36,8 @@ describe('create initial branch', () => {
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'to-many-packages',
+      '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
     ])
   })
 
@@ -1311,6 +1312,27 @@ describe('create initial branch', () => {
     expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/espy/test.svg')
     expect(repoDoc.packages['package.json'].greenkeeper.ignore).toContain('@semantic-release/git')
   })
+
+  test('create no pull request for monorepo with too many package.jsons', async () => {
+    const huuuuuugeMonorepo = {}
+    for (let i = 0; i <= 333; i++) {
+      huuuuuugeMonorepo[i] = (i + '/package.json')
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'to-many-packages',
+      accountId: '123',
+      fullName: 'finnp/test',
+      packages: huuuuuugeMonorepo
+    })
+
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+    const newJob = await createInitialBranch({repositoryId: 'to-many-packages'})
+
+    expect(newJob).toBeFalsy()
+  })
+
   function encodePkg (pkg) {
     return Buffer.from(JSON.stringify(pkg)).toString('base64')
   }

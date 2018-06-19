@@ -33,8 +33,10 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
 
   log.info('started')
-
-  if (repoDoc.id === '135286129') return
+  if (repoDoc.packages && Object.keys(repoDoc.packages).length > 300) {
+    log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
+    return
+  }
 
   if (repoDoc.fork && !repoDoc.hasIssues) { // we should allways check if issues are disabled and exit
     log.warn('exited: Issues disabled on fork')

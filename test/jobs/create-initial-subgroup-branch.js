@@ -564,6 +564,28 @@ describe('create initial subgroup branch', () => {
     expect(newBranch.initial).toBeFalsy()
   })
 
+  test('create no subgroup branch because of too many package.jsons', async () => {
+    const huuuuuugeMonorepo = {}
+    for (let i = 0; i <= 333; i++) {
+      huuuuuugeMonorepo[i] = (i + '/package.json')
+    }
+
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'to-many-packages',
+      accountId: '123',
+      enabled: true,
+      headSha: 'hallo',
+      fullName: 'finnp/test',
+      packages: huuuuuugeMonorepo
+    })
+
+    const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
+    const newJob = await createInitialSubgroupBranch({repositoryId: 'to-many-packages'})
+
+    expect(newJob).toBeFalsy()
+  })
+
   function encodePkg (pkg) {
     return Buffer.from(JSON.stringify(pkg)).toString('base64')
   }

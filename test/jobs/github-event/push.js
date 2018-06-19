@@ -902,6 +902,117 @@ describe('github-event push: monorepo', () => {
     nock.cleanAll()
   })
 
+  test('monorepo: create no pull request for too many package.jsons', async () => {
+    const huuuuuugeMonorepo = {}
+    for (let i = 0; i <= 333; i++) {
+      huuuuuugeMonorepo[i] = ('packages/' + i + '/package.json')
+    }
+
+    const newConfigFileContent = {
+      groups: {
+        default: {
+          packages: [
+            'packages/11/package.json',
+            'packages/22/package.json',
+            'packages/33/package.json'
+          ]
+        }
+      }
+    }
+
+    const { repositories } = await dbs()
+
+    await repositories.put(
+      {
+        _id: 'too-many-packages',
+        fullName: 'hans/monorepo',
+        accountId: '321',
+        enabled: true,
+        headSha: 'hallo',
+        packages: huuuuuugeMonorepo
+      }
+    )
+
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+      .get('/repos/hans/monorepo/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(newConfigFileContent)).toString('base64')
+      })
+      .get('/repos/hans/monorepo/contents/packages/frontend/package.json')
+      .reply(200, {
+        path: 'packages/frontend/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/11/package.json')
+      .reply(200, {
+        path: 'packages/11/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+      .get('/repos/hans/monorepo/contents/packages/22/package.json')
+      .reply(200, {
+        path: 'packages/22/package.json',
+        name: 'package.json',
+        content: encodePkg({
+          name: 'testpkg',
+          dependencies: {
+            lodash: '^1.0.0'
+          }
+        })
+      })
+
+    const newJob = await githubPush({
+      installation: {
+        id: 11
+      },
+      ref: 'refs/heads/master',
+      after: '9049f1265b7d61be4a8904a9a27120d2064dab3b',
+      head_commit: {},
+      commits: [
+        {
+          added: ['packages/22/package.json'],
+          removed: [],
+          modified: ['greenkeeper.json']
+        }
+      ],
+      repository: {
+        id: 'too-many-packages',
+        full_name: 'hans/monorepo',
+        name: 'test',
+        owner: {
+          login: 'hans'
+        },
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+  })
+
   test('monorepo: 2 package.jsons in 2 groups modified (666)', async () => {
     const configFileContent = {
       groups: {
@@ -4360,7 +4471,7 @@ afterAll(async () => {
     '1116', '1116:branch:1234abca', '1116:branch:1234abcb',
     '1117', '1117:branch:1234abca',
     '1118', '1118:branch:1234abca',
-    'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5')
+    'mga1', 'mga2', 'mga3', 'mgm1', 'mgm2', 'mgm3', 'mgm4', 'mgm5', 'too-many-packages')
   await removeIfExists(payments, '123')
 })
 
