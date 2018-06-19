@@ -67,7 +67,7 @@ describe('create initial branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -184,7 +184,7 @@ describe('create initial branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -253,7 +253,7 @@ describe('create initial branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -322,7 +322,7 @@ describe('create initial branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -425,7 +425,7 @@ describe('create initial branch', () => {
       .reply(404, {
         message: 'Not Found'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -602,7 +602,7 @@ describe('create initial branch', () => {
       .reply(404, {
         message: 'Not Found'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -831,7 +831,7 @@ describe('create initial branch', () => {
         name: 'greenkeeper.json',
         content: Buffer.from(JSON.stringify(githubConfigFileContent)).toString('base64')
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -1030,7 +1030,7 @@ describe('create initial branch', () => {
       .reply(404, {
         message: 'Not Found'
       })
-      .get('/repos/finnp/test/git/trees/master?recursive=true')
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
@@ -1221,7 +1221,7 @@ describe('create initial branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
-      .get('/repos/espy/test/git/trees/master?recursive=true')
+      .get('/repos/espy/test/git/trees/master?recursive=1')
       .reply(200, {
         tree: [
           {
