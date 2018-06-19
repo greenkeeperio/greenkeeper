@@ -51,7 +51,7 @@ describe('create version branch', () => {
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
       removeIfExists(payments, '124', '125'),
-      removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86'),
+      removeIfExists(repositories, '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages'),
       removeIfExists(repositories, '41:branch:1234abcd', '41:pr:321', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '50:pr:321', '86:branch:1234abcd', '1:branch:2222abcd', '1:pr:3210')
     ])
   })
@@ -536,6 +536,72 @@ describe('create version branch', () => {
     expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
+  })
+
+  test('no pull request, too many package.jsons', async () => {
+    const { repositories } = await dbs()
+    const huuuuuugeMonorepo = {}
+    for (let i = 0; i <= 333; i++) {
+      huuuuuugeMonorepo[`packages/${i}/package.json`] = {
+        'dependencies': {
+          '@finnpauls/dep': '^1.0.0'
+        },
+        greenkeeper: {
+          label: 'customlabel'
+        }
+      }
+    }
+
+    await repositories.put({
+      _id: 'too-many-packages',
+      accountId: '123',
+      fullName: 'finnp/test',
+      packages: huuuuuugeMonorepo
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '123',
+      repositoryId: 'too-many-packages',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    await expect(repositories.get('too-many-packages:branch:1234abcd')).rejects.toThrow('missing')
+    await expect(repositories.get('too-many-packages:pr:321')).rejects.toThrow('missing')
   })
 
   test('comment pr', async () => {

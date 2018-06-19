@@ -35,8 +35,6 @@ module.exports = async function (
     versions
   }
 ) {
-  if (repositoryId === '135286129') return
-
   // TODO: correctly handle beta versions, and hotfixes
   if (distTag !== 'latest') return
   // do not upgrade invalid versions
@@ -54,6 +52,10 @@ module.exports = async function (
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
 
+  if (repository.packages && Object.keys(repository.packages).length > 300) {
+    log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
+    return
+  }
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
   // modules as well. If not, stop this update, the job started by the last
