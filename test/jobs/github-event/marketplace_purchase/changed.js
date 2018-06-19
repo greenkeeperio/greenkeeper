@@ -16,7 +16,7 @@ describe('marketplace changed', async () => {
     })
 
     const newJobs = await changePurchase({
-      marketplace_purchase: {
+      marketplacePurchase: {
         account: {
           type: 'Organization',
           id: 444,
