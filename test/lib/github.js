@@ -5,6 +5,8 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
 test('parse github host', async () => {
+  expect.assertions(1)
+
   nock('https://enterprise.github')
     .get('/api/v3/repos/greenkeeperio/greenkeeper')
     .reply(200, () => {

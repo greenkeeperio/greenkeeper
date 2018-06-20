@@ -281,7 +281,7 @@ test('discoverPackageFiles: regular repo', async () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/owner/repo/git/trees/master?recursive=true')
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
       tree: [
         {
@@ -326,7 +326,7 @@ test('discoverPackageFiles: monorepo', async () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/owner/repo/git/trees/master?recursive=true')
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
       tree: [
         {
@@ -406,7 +406,7 @@ test('discoverPackageFilePaths: regular repo', async () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/owner/repo/git/trees/master?recursive=true')
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
       tree: [
         {
@@ -445,7 +445,7 @@ test('discoverPackageFilePaths: monorepo', async () => {
     .get('/rate_limit')
     .optionally()
     .reply(200, {})
-    .get('/repos/owner/repo/git/trees/master?recursive=true')
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
       tree: [
         {
