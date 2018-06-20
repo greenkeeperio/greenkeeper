@@ -13,7 +13,7 @@ test('parse github host', async () => {
       expect(true).toBeTruthy()
     })
 
-  simple.mock(process.env, 'GITHUB_HOST', 'https://enterprise.github/api/v3/')
+  simple.mock(process.env, 'GITHUB_HOST', 'https://enterprise.github')
 
   const Github = require('../../lib/github')
   const github = Github()
