@@ -122,8 +122,9 @@ module.exports = async function (
     return
   }
 
+  let billing = null
   if (repository.private && !env.IS_ENTERPRISE) {
-    const billing = await getActiveBilling(accountId)
+    billing = await getActiveBilling(accountId)
     if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
       log.warn('exited: payment required')
       return
@@ -283,6 +284,11 @@ module.exports = async function (
 
   const title = `Update ${dependencyKey} to the latest version 🚀`
 
+  // Inform monthly paying customers about the new yearly plan
+  const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")
+  const today = Date.now()
+  const yearlyBillingAd = (today <= adExpiredBy) && billing && (billing.plan === 'org' || billing.plan === 'personal')
+
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -291,7 +297,8 @@ module.exports = async function (
     release,
     diffCommits,
     monorepoGroupName,
-    type
+    type,
+    yearlyBillingAd
   })
 
   // verify pull requests commit

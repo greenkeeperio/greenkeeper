@@ -1,7 +1,11 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type}) => md`
+module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, yearlyBillingAd}) => md`
+${yearlyBillingAd
+    ? `👛 Greenkeeper now offers yearly billing options. Get two month for free!\n`
+    : ''}
+
 ${_.isEmpty(monorepoGroupName)
     ? `## Version **${version}** of **${dependencyLink}** was just published.`
     : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
