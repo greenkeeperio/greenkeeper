@@ -144,17 +144,14 @@ module.exports = async function (data) {
 
   // If there was no package information in the repoDoc, create an initial branch and return
   if (!oldPkg) {
-    // TODO: comment this in again sometime after monorepo release
-    // log.success('starting create-initial-branch')
-    // return {
-    //   data: {
-    //     name: 'create-initial-branch',
-    //     repositoryId,
-    //     accountId: repoDoc.accountId
-    //   }
-    // }
-    log.info('NOT starting create-initial-branch')
-    return null
+    log.success('starting create-initial-branch')
+    return {
+      data: {
+        name: 'create-initial-branch',
+        repositoryId,
+        accountId: repoDoc.accountId
+      }
+    }
   }
 
   // Delete all branches for modified or deleted dependencies
