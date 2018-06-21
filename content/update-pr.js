@@ -1,9 +1,9 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, yearlyBillingAd}) => md`
+module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, yearlyBillingAd, orgName}) => md`
 ${yearlyBillingAd
-    ? `👛 Greenkeeper now offers yearly billing options. Get two month for free!\n`
+    ? `👛 Save 16% on your Greenkeeper invoice by switching to yearly billing in the [account dashboard](https://account.greenkeeper.io/account/${orgName}#plans-and-billing).\n`
     : ''}
 
 ${_.isEmpty(monorepoGroupName)

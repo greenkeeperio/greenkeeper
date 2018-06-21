@@ -298,7 +298,8 @@ module.exports = async function (
     diffCommits,
     monorepoGroupName,
     type,
-    yearlyBillingAd
+    yearlyBillingAd,
+    orgName: owner
   })
 
   // verify pull requests commit
