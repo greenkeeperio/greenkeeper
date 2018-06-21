@@ -471,6 +471,14 @@ test('discoverPackageFilePaths: monorepo', async () => {
           'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
           'size': 1379,
           'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'tests/package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
         }
       ]
     })
