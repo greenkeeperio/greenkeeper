@@ -123,11 +123,13 @@ module.exports = async function (
   }
 
   let billing = null
-  if (repository.private && !env.IS_ENTERPRISE) {
+  if (!env.IS_ENTERPRISE) {
     billing = await getActiveBilling(accountId)
-    if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
-      log.warn('exited: payment required')
-      return
+    if (repository.private) {
+      if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
+        log.warn('exited: payment required')
+        return
+      }
     }
   }
 
