@@ -1,51 +1,44 @@
-const _ = require('lodash')
+/*
 
-const dbs = require('../lib/dbs')
+Invalid Config File Issue
+
+Generates an issue if the greenkeeper.json config file in the
+repo is invalid, and also saves this issue in our DB.
+
+It takes the following arguments:
+
+repositoryId:Number: eg. 7914533, the GitHub repo ID. Might be a string.
+accountId:Number: eg. , the GitHub account ID. Might be a string
+messages:Array of strings: The validation error messages to be displayed in the issue
+isBlockingInitialPR:Boolean: Adds extra info to the comment text to make clear that Greenkeeper can’t work until the problem is fixed
+
+Outputs/Effects:
+
+Unless we already have an issue of this type on the repo, opens an issue and adds it to our DB as well.
+
+*/
+const assert = require('assert')
+
 const statsd = require('../lib/statsd')
-const githubQueue = require('../lib/github-queue')
-const updatedAt = require('../lib/updated-at')
+const GKKit = require('../lib/gk-kit')
 const invalidConfigBody = require('../content/invalid-config-issue')
-const getConfig = require('../lib/get-config')
 
 module.exports = async function ({ repositoryId, accountId, messages, isBlockingInitialPR }) {
-  const { installations, repositories } = await dbs()
-  const installation = await installations.get(String(accountId))
-  const installationId = installation.installation
+  const repo = await GKKit(accountId).repositories(repositoryId)
+  const openConfigIssues = await repo.issues.getInvalidConfigIssues()
 
-  const openIssues = _.get(
-    await repositories.query('open_invalid_config_issue', {
-      key: repositoryId,
-      include_docs: true
-    }),
-    'rows'
+  assert(!openConfigIssues || !openConfigIssues.length, 'Repo already has an open issue')
+
+  const title = `Invalid Greenkeeper configuration file`
+  const body = invalidConfigBody(messages, isBlockingInitialPR)
+  await repo.issues.create(
+    title,
+    body,
+    {
+      initial: false,
+      invalidConfig: true
+    }
   )
-  // don't send too many issues!
-  if (openIssues && openIssues.length) return
-
-  const repoDoc = await repositories.get(String(repositoryId))
-  const { fullName } = repoDoc
-  const [owner, repo] = fullName.split('/')
-  const { label } = getConfig(repoDoc)
-
-  const { number } = await githubQueue(installationId).write(github => github.issues.create({
-    owner,
-    repo,
-    title: `Invalid Greenkeeper configuration file`,
-    body: invalidConfigBody(messages, isBlockingInitialPR),
-    labels: [label]
-  }))
 
   statsd.increment('invalid_config_issues')
-
-  await repositories.put(
-    updatedAt({
-      _id: `${repositoryId}:issue:${number}`,
-      type: 'issue',
-      initial: false,
-      invalidConfig: true,
-      repositoryId,
-      number,
-      state: 'open'
-    })
-  )
 }
