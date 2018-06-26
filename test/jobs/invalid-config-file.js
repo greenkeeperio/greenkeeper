@@ -12,7 +12,7 @@ describe('invalid-config-file', async () => {
     kit.mockImplementation((accountId) => ({
       repositories: (repositoryId) => ({
         issues: {
-          getInvalidConfigIssues: () => [],
+          getInvalidConfigIssueNumber: () => undefined,
           create: (title, body, issueDoc) => {
             expect(accountId).toEqual('2020')
             expect(repositoryId).toEqual('invalid-config1')
@@ -46,9 +46,7 @@ describe('invalid-config-file', async () => {
         expect(repositoryId).toEqual('invalid-config2')
         return {
           issues: {
-            getInvalidConfigIssues: () => {
-              return [{issue: 'Yes'}]
-            }
+            getInvalidConfigIssueNumber: () => 12
           }
         }
       }
@@ -68,7 +66,7 @@ describe('invalid-config-file', async () => {
     kit.mockImplementation((accountId) => ({
       repositories: (repositoryId) => ({
         issues: {
-          getInvalidConfigIssues: () => [],
+          getInvalidConfigIssueNumber: () => undefined,
           create: (title, body, issueDoc) => {
             expect(accountId).toEqual('2020')
             expect(repositoryId).toEqual('invalid-config4')

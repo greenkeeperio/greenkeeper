@@ -5,6 +5,7 @@ const dbs = require('../../lib/dbs')
 const env = require('../../lib/env')
 const { updateRepoDoc } = require('../../lib/repository-docs')
 const updatedAt = require('../../lib/updated-at')
+// inconsistent naming
 const diff = require('../../lib/diff-package-json')
 const diffGreenkeeperJson = require('../../lib/diff-greenkeeper-json')
 const deleteBranches = require('../../lib/delete-branches')
@@ -21,11 +22,15 @@ const { hasTooManyPackageJSONs } = require('../../utils/utils')
 module.exports = async function (data) {
   const { repositories } = await dbs()
   const logs = dbs.getLogsDb()
+  // maybe destructuring in arguments
   const { after, repository, installation } = data
 
+  // -> gh-kit
   const branchRef = `refs/heads/${repository.default_branch}`
+  // assert
   if (!data.head_commit || data.ref !== branchRef) return
 
+  // What is relevant? :D
   const relevantFiles = [
     'package.json',
     'package-lock.json',
@@ -33,19 +38,19 @@ module.exports = async function (data) {
     'yarn.lock',
     'greenkeeper.json'
   ]
-
+  // assert, naming, should be in github-utils or something
   if (!hasRelevantChanges(data.commits, relevantFiles)) return
-
+  // string magic + db access -> gk-kit
   const repositoryId = String(repository.id)
   let repoDoc = await repositories.get(repositoryId)
   const log = Log({logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'push'})
   log.info('started')
-
+  // assert with log
   if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: RepoDoc has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }
-
+  // use kit
   const config = getConfig(repoDoc)
   /*
   1. Update repoDoc with new greenkeeper.json
@@ -63,6 +68,7 @@ module.exports = async function (data) {
   // get path of changed package json
   // always put package.jsons in the repoDoc (new & old)
   // if remove event: delete key of package.json
+  // ⚠️
   const oldPkg = _.get(repoDoc, ['packages'])
   try {
     await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
@@ -82,6 +88,8 @@ module.exports = async function (data) {
     log.warn('updateRepoDoc failed, we do not know why', {exception: e})
     throw e
   }
+  // naming: pgk? allPackageFileContents or sth.
+  // ⚠️
   const pkg = _.get(repoDoc, ['packages'])
   // If there are no more packages in the repoDoc, disable the repo, which means it will also stop being counted for billing
   if (_.isEmpty(pkg)) {
@@ -120,16 +128,20 @@ module.exports = async function (data) {
       }
     }
   }
-
+  // maybe move up?
   // if there are no changes in package.json files or the greenkeeper config
+  // ⚠️
   if (_.isEqual(oldPkg, pkg) && _.isEqual(config.groups, repoDoc.greenkeeper.groups)) {
     log.info('there are no changes in package.json files or the greenkeeper config')
+    // why are we doing this? save sha? have same formatting?
     await updateDoc(repositories, repository, repoDoc)
+    // inconsistent, why null?
     return null
   }
 
   // if greenkeeper config was deleted but only contained the root package.json
   // there is no need to delete the branches
+  // ⚠️ Also maybe goes into repo.cleanUpBranches()
   if (
     _.isEqual(oldPkg, pkg) &&
     Object.keys(pkg).length === 1 &&
@@ -154,6 +166,7 @@ module.exports = async function (data) {
     }
   }
 
+  // This can all live in GK-kit ->
   // Delete all branches for modified or deleted dependencies
   // Do diff + getBranchesToDelete per file for each group
   // Get all dependency branches, grouped or not
@@ -180,8 +193,12 @@ module.exports = async function (data) {
       repositoryId
     })
   )
+  // <- move previous block into repo.cleanUpBranches
 
+  // in gkkit.repo.shouldCreateInitialSubgroupBranches()
+  // in gkkit.repo.createInitialSubgroupBranches()
   if (configChanges.added.length || configChanges.modified.length) {
+    // should be a named function
     const relevantModifiedGroups = configChanges.modified.filter((group) => {
       if (!_.isEmpty(_.difference(repoDoc.greenkeeper.groups[group].packages, config.groups[group].packages))) {
         return true
@@ -240,6 +257,7 @@ function hasRelevantConfigFileChanges (commits) {
   })
 }
 
+// -> gk-kit
 async function disableRepo ({ repositories, repoDoc, repository }) {
   repoDoc.enabled = false
   await updateDoc(repositories, repository, repoDoc)

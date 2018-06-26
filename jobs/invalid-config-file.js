@@ -32,9 +32,9 @@ const invalidConfigBody = require('../content/invalid-config-issue')
 
 module.exports = async function ({ repositoryId, accountId, messages, isBlockingInitialPR }) {
   const repo = await GKKit(accountId).repositories(repositoryId)
-  const openConfigIssues = await repo.issues.getInvalidConfigIssues()
+  const openConfigIssueNumber = await repo.issues.getInvalidConfigIssueNumber()
 
-  assert(!openConfigIssues || !openConfigIssues.length, 'Repo already has an open issue')
+  assert(!openConfigIssueNumber, 'Repo already has an open issue')
 
   const title = `Invalid Greenkeeper configuration file`
   const body = invalidConfigBody(messages, isBlockingInitialPR)
