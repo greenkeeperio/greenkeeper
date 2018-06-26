@@ -43,10 +43,22 @@ To support standardjs in test files, we need this configuration:
 Jest put their functions (e.g. describe, test) on the global object. Since these functions are not defined or require'd anywhere in your code, standard will warn that you're using a variable that is not defined. But we want to disable it for these global variables.
 
 ## Run
-Run your tests with
+### Running all tests
 ```sh
   npm test
 ```
+This will use n-1 available CPU cores to run tests in parallel. If you want to use fewer cores (ad in this example, also use a local CouchDB instead of the docker image), you can do:
+
+```sh
+ GK_COUCHDB=http://127.0.0.1:5984 NODE_ENV=testing node_modules/.bin/jest -w2
+```
+
+### Running individual tests
+```sh
+GK_COUCHDB=http://127.0.0.1:5984 NODE_ENV=testing jest invalid-config-file
+```
+
+Jest will fuzzy match the filename to any file it finds in `/test`.
 
 ## Test
 #### Api
@@ -72,7 +84,8 @@ Clears the `mock.calls` and `mock.instances` properties of all mocks. Equivalent
 
 ## Use Cases
 <details>
-<summary> How to mock relative dependencies </summary>
+<summary> (Deprecated) How to mock relative dependencies </summary>
+
 In this example the `getInfos-worker` uses the `getDiffCommits()` function from `lib/get-diff-commits`.
 We mock the diffCommits(), called in getInfos().
 
@@ -86,8 +99,9 @@ You can see that we use the **path relative to the test file** to mock the depen
 </details>
 
 <details>
-<summary> How to mock only one function of a dependency </summary>
-To mock only specific modules, use require.requireActual to restore the original modules,
+<summary> (Deprecated) How to mock only one function of a dependency </summary>
+
+To mock only specific modules, use `require.requireActua` to restore the original modules,
 then overwrite the one you want to mock.
 
 In this example we only want to mock the `getActiveBilling()` from `payments`, which is called in `updatePayments`.
@@ -109,7 +123,8 @@ const updatePayments = require('../../jobs/update-payments') // <-- called after
 </details>
 
 <details>
-<summary> How to mock a function call and test the given parameters</summary>
+<summary> (Deprecated) How to mock a function call and test the given parameters</summary>
+
 In this example we want to mock a dependency-function an check if the given parameters are exepted.
 The `githubEvent` calls the `resolve`-function with specific parameters. The `resolve`-function comes from an external module.
 
@@ -128,7 +143,8 @@ const githubEvent = require('../../jobs/github-event.js')
 </details>
 
 <details>
-<summary> How to test a function which calls a mocked function</summary>
+<summary> (Deprecated) How to test a function which calls a mocked function</summary>
+
 In this example we want test the function `isPartOfMonorepo(dependency)`.
 This function calls `getMonorepoGroup(dependency)`, which we want to mock here.
 
@@ -150,6 +166,68 @@ module.exports = {
   isPartOfMonorepo,
   getMonorepoGroup
 }
+```
+
+</details>
+
+<details>
+<summary> 🎁  New ways to mock</summary>
+
+We’ve found that there are simpler ways to mock dependencies and override their sub-dependencies as well. Here we use a helper module called `gk-kit`, which exposes a variety of functions. We’re only going to mock one of them, `kit(accountId).repositories(repositoryId).issues.getInvalidConfigIssues()`:
+
+```javascript
+jest.mock('../../lib/gk-kit')
+jest.mock('../../lib/dbs')
+const kit = require('../../lib/gk-kit')
+kit.mockImplementation((accountId) => ({
+  repositories: (repositoryId) => {
+    expect(accountId).toEqual('2121')
+    expect(repositoryId).toEqual('invalid-config2')
+    return {
+      issues: {
+        getInvalidConfigIssues: () => {
+          return [{issue: 'Yes'}]
+        }
+      }
+    }
+  }
+}))
+```
+ℹ️ Note that `accountId` can be tested all the way inside the nested object, it doesn’t have to be tested on the level it is introduced at. In deeply nested library modules this can save a lot of extra `return` statements and curlies in the tests
+
+⚠️ Note that `gk-kit` calls `dbs` internally, which makes calls to our CouchDB. We don’t want it to do that, because we’re mocking away the method that makes the db call (`getInvalidConfigIssues()`). These lines: 
+
+```javascript
+jest.mock('../../lib/gk-kit')
+jest.mock('../../lib/dbs')
+```
+make that possible. To be more DRY, you can put these two in the top of your describe block and the `beforeEach()`:
+
+```javascript
+beforeEach(() => {
+  jest.resetModules()
+  jest.mock('../../lib/gk-kit')
+})
+
+jest.mock('../../lib/dbs')
+```
+
+We do it this way because `dbs` should always be mocked away completely and never make real DB requests, but mocking `gk-kit` goes in `beforeEach()` with a `jest.resetModules()` because we’re mocking different bits of `gk-kit` with different returns in each individual test.
+</details>
+
+<details>
+<summary> Using and testing assertions</summary>
+
+From now on, we want to bail from jobs not by doing `if (false) return`, but by using assertions, for example:
+
+```javascript
+assert(!openConfigIssues || !openConfigIssues.length, 'Repo already has an open issue')
+```
+
+which will then throw with that message. The way to efficently test this is:
+
+```javascript
+await expect(job(invalidPayload)).rejects.toThrow('Repo already has an open issue')
 ```
 
 </details>
