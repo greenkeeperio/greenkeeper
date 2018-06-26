@@ -42,7 +42,7 @@ describe('get-infos', () => {
       }
     })
 
-    expect(infos.dependencyLink).toEqual('[@finnpauls/dep](https://github.com/finnp/test)')
+    expect(infos.dependencyLink).toEqual('https://github.com/finnp/test')
     expect(infos.diffCommits).toEqual('diff commits')
     expect(infos.release).toMatch(/Cool new features/)
     expect(infos.release).toMatch(/thename/)
@@ -90,7 +90,7 @@ describe('get-infos', () => {
       }
     })
 
-    expect(infos.dependencyLink).toEqual('[pouchdb](https://github.com/pouchdb/pouchdb)')
+    expect(infos.dependencyLink).toEqual('https://github.com/pouchdb/pouchdb')
     expect(infos.diffCommits).toEqual('diff commits')
     expect(infos.release).toMatch(/Cool new features/)
     expect(infos.release).toMatch(/thename/)

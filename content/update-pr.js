@@ -7,7 +7,7 @@ ${yearlyBillingAd
     : ''}
 
 ${_.isEmpty(monorepoGroupName)
-    ? `## Version **${version}** of **${dependencyLink}** was just published.`
+    ? `## Version **${version}** of **${dependency}** was just published.`
     : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
 
 <table>
@@ -19,7 +19,7 @@ ${_.isEmpty(monorepoGroupName)
 }
     </th>
     <td>
-      <code>${monorepoGroupName || dependencyLink}</code>
+      <a target=_blank href=${dependencyLink}>${monorepoGroupName || dependency}</a>
     </td>
   </tr>
   ${oldVersionResolved
