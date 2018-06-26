@@ -1,5 +1,3 @@
-// const kit = require('../../lib/gk-kit')
-
 describe('invalid-config-file', async () => {
   beforeEach(() => {
     jest.resetModules()
@@ -11,7 +9,6 @@ describe('invalid-config-file', async () => {
   test('create new issue', async () => {
     expect.assertions(6)
     const kit = require('../../lib/gk-kit')
-
     kit.mockImplementation((accountId) => ({
       repositories: (repositoryId) => ({
         issues: {
@@ -42,10 +39,10 @@ describe('invalid-config-file', async () => {
 
   test('an open issue already exists', async () => {
     expect.assertions(3)
-    jest.mock('../../lib/gk-kit', (accountId) => (accountId) => {
-      expect(accountId).toEqual('2121')
-      const lib = require.requireActual('../../lib/gk-kit')
-      lib.repositories = (repositoryId) => {
+    const kit = require('../../lib/gk-kit')
+    kit.mockImplementation((accountId) => ({
+      repositories: (repositoryId) => {
+        expect(accountId).toEqual('2121')
         expect(repositoryId).toEqual('invalid-config2')
         return {
           issues: {
@@ -55,8 +52,7 @@ describe('invalid-config-file', async () => {
           }
         }
       }
-      return lib
-    })
+    }))
 
     const invalidConfigFile = require('../../jobs/invalid-config-file')
 
@@ -68,32 +64,27 @@ describe('invalid-config-file', async () => {
 
   test('create new issue with reference to delayed initial PR', async () => {
     expect.assertions(8)
-    jest.mock('../../lib/gk-kit', (accountId) => (accountId) => {
-      expect(accountId).toEqual('2020')
-      const lib = require.requireActual('../../lib/gk-kit')
-      lib.repositories = (repositoryId) => {
-        expect(repositoryId).toEqual('invalid-config4')
-        return {
-          issues: {
-            getInvalidConfigIssues: () => {
-              return []
-            },
-            create: (title, body, issueDoc) => {
-              expect(title).toEqual('Invalid Greenkeeper configuration file')
-              expect(body).toMatch(/We found the following issue:/)
-              expect(body).toMatch(/1. The group name `#invalid#groupname#` is invalid./)
-              expect(body).toMatch(/which is preventing Greenkeeper from opening its initial pull request/)
-              expect(body).toMatch(/so Greenkeeper can run on this repository/)
-              expect(issueDoc).toMatchObject({
-                initial: false,
-                invalidConfig: true
-              })
-            }
+    const kit = require('../../lib/gk-kit')
+    kit.mockImplementation((accountId) => ({
+      repositories: (repositoryId) => ({
+        issues: {
+          getInvalidConfigIssues: () => [],
+          create: (title, body, issueDoc) => {
+            expect(accountId).toEqual('2020')
+            expect(repositoryId).toEqual('invalid-config4')
+            expect(title).toEqual('Invalid Greenkeeper configuration file')
+            expect(body).toMatch(/We found the following issue:/)
+            expect(body).toMatch(/1. The group name `#invalid#groupname#` is invalid./)
+            expect(body).toMatch(/which is preventing Greenkeeper from opening its initial pull request/)
+            expect(body).toMatch(/so Greenkeeper can run on this repository/)
+            expect(issueDoc).toMatchObject({
+              initial: false,
+              invalidConfig: true
+            })
           }
         }
-      }
-      return lib
-    })
+      })
+    }))
 
     const invalidConfigFile = require('../../jobs/invalid-config-file')
 
