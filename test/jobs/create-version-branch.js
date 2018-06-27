@@ -51,7 +51,7 @@ describe('create version branch', () => {
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
       removeIfExists(payments, '124', '125'),
-      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages'),
+      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease'),
       removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd',
         '41:pr:321', '50:pr:321', '1:pr:3210')
     ])
@@ -605,6 +605,69 @@ describe('create version branch', () => {
     await expect(repositories.get('too-many-packages:pr:321')).rejects.toThrow('missing')
   })
 
+  test('no pull request if prerelease', async () => {
+    const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: 'prerelease',
+      accountId: '123',
+      fullName: 'finnp/test',
+      packages: {
+        'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          },
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      return '1234abcd'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '123',
+      repositoryId: 'too-many-packages',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0-beta'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0-beta': {}
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    await expect(repositories.get('prerelease:branch:1234abcd')).rejects.toThrow('missing')
+    await expect(repositories.get('prerelease:pr:321')).rejects.toThrow('missing')
+  })
   test('comment pr', async () => {
     const { repositories } = await dbs()
     await Promise.all([

@@ -125,6 +125,26 @@ describe('registry change create jobs', async () => {
     expect(newJob).toBeFalsy()
   })
 
+  test('registry change skip prereleases in latest', async () => {
+    const newJob = await registryChange({
+      name: 'registry-change',
+      dependency: 'standard',
+      distTags: {
+        latest: '8.0.0-beta.4',
+        next: '8.0.1'
+      },
+      versions: {
+        '8.0.1': {},
+        '8.0.0-beta.4': {
+          gitHead: 'deadbeef'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    expect(newJob).toBeFalsy()
+  })
+
   test('registry change skip peerDependencies', async () => {
     const { repositories } = await dbs()
 

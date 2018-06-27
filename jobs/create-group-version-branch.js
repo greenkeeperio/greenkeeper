@@ -36,7 +36,6 @@ module.exports = async function (
     monorepo
   }
 ) {
-  // TODO: correctly handle beta versions, and hotfixes
   if (distTag !== 'latest') return
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
@@ -47,6 +46,8 @@ module.exports = async function (
   let relevantDependencies = []
   const groupName = Object.keys(group)[0]
   const version = distTags[distTag]
+  // Ignore releases on `latest` that have prerelease identifiers
+  if (semver.prerelease(version)) return
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)

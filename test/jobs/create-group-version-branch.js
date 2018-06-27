@@ -67,6 +67,14 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       packages: huuuuuugeMonorepo
     })
+    await repositories.put({
+      _id: 'prerelease',
+      enabled: true,
+      type: 'repository',
+      fullName: 'hans/monorepo',
+      accountId: '123-two-packages',
+      packages: huuuuuugeMonorepo
+    })
     await installations.put({
       _id: '123-two-packages-different-types',
       installation: 88,
@@ -174,7 +182,7 @@ describe('create-group-version-branch', async () => {
 
     await Promise.all([
       removeIfExists(installations, '123-two-packages', '123-two-packages-different-types', '123-dep-ignored-on-group-level'),
-      removeIfExists(repositories, '123-monorepo', '123-monorepo-different-types', '123-monorepo-dep-ignored-on-group-level', '123-monorepo-monorepo-release', 'too-many-packages'),
+      removeIfExists(repositories, '123-monorepo', '123-monorepo-different-types', '123-monorepo-dep-ignored-on-group-level', '123-monorepo-monorepo-release', 'too-many-packages', 'prerelease'),
       removeIfExists(repositories, '123-monorepo:branch:1234abcd', '123-monorepo:pr:321', '123-monorepo-different-types:branch:1234abcd', '123-monorepo-different-types:pr:321', '123-monorepo-old-pr')
     ])
   })
@@ -629,6 +637,83 @@ describe('create-group-version-branch', async () => {
     const { repositories } = await dbs()
     await expect(repositories.get('too-many-packages:branch:1234abcd')).rejects.toThrow('missing')
     await expect(repositories.get('too-many-packages:pr:321')).rejects.toThrow('missing')
+  })
+
+  test('no pull request if prerelease', async () => {
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/87/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+
+    jest.mock('../../lib/get-infos', () => () => ({
+      dependencyLink: '[]()',
+      release: 'the release',
+      diffCommits: 'commits...'
+    }))
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => () => '1234abcd')
+    const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
+
+    const newJob = await createGroupVersionBranch({
+      dependency: 'react',
+      accountId: '123-two-packages',
+      repositoryId: 'prerelease',
+      types: [
+        {type: 'dependencies', filename: '22/package.json'},
+        {type: 'dependencies', filename: '11/package.json'}],
+      distTag: 'latest',
+      distTags: {
+        latest: '2.0.0-prerelease'
+      },
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0-prerelease': {}
+      },
+      group: {
+        'default': {
+          'packages': [
+            '11/package.json',
+            '22/package.json'
+          ]
+        }
+      },
+      monorepo: [
+        { id: 'prerelease',
+          key: 'react',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-two-packages',
+            filename: '11/package.json',
+            type: 'dependencies',
+            oldVersion: '1.0.0' } },
+        { id: 'too-many-packages',
+          key: 'react',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-two-packages',
+            filename: '22/package.json',
+            type: 'dependencies',
+            oldVersion: '1.0.0' } } ]
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const { repositories } = await dbs()
+    await expect(repositories.get('prerelease:branch:1234abcd')).rejects.toThrow('missing')
+    await expect(repositories.get('prerelease:pr:321')).rejects.toThrow('missing')
   })
 
   test('new pull request, 1 group, 2 packages, same dependencyType, old PR exists', async () => {
