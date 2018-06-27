@@ -55,7 +55,6 @@ module.exports = async function (
       log.info(`exited: nothing to update, is first release of ${dependency}`)
       return true
     }
-
     return semver.lt(oldVersion, version)
   })
 
@@ -73,11 +72,17 @@ module.exports = async function (
     return
   }
 
+  const version = distTags['latest']
+  // Ignore releases on `latest` that have prerelease identifiers
+  if (semver.prerelease(version)) {
+    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
+    return
+  }
+
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
   if (await isPartOfMonorepo(dependency)) {
-    const version = distTags['latest']
     // We only want to open a PR if either:
     // 1. We have all of the modules that belong to the release (have the same version number)
     // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete
