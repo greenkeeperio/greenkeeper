@@ -10,11 +10,29 @@ const devDependency = ({dependency, dependencyType}) => md`
 ${dependency} is a ${dependencyType.replace(/ies$/, 'y')} of this project. It **might not break your production code or affect downstream projects**, but probably breaks your build or test tools, which may **prevent deploying or publishing**.
 `
 
+/*
+This formats both statuses and checks:
+
+status key -> check_run key
+state -> check_run.conclusion
+context -> check_run.name
+description -> check_run.output.summary
+target_url -> no equivalent, is included in summary
+
+*/
+const individualStatusOrCheck = (status) => {
+  let output = `- ${status.state === 'success' ? '✅' : '❌'} **${status.context}** ${status.description} `
+  if (status.target_url) {
+    output += ` [Details](${status.target_url})`
+  }
+  return output
+}
+
 const ciStatuses = ({statuses}) => md`
 <details>
 <summary>Status Details</summary>
 
-${statuses.map(status => `- ${status.state === 'success' ? '✅' : '❌'} **${status.context}** ${status.description} [Details](${status.target_url})`)}
+${statuses.map(status => individualStatusOrCheck(status))}
 </details>
 `
 
