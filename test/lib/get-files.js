@@ -352,6 +352,14 @@ test('discoverPackageFiles: monorepo', async () => {
           'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
           'size': 1379,
           'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+        },
+        {
+          'path': 'elm/elm-package.json',
+          'mode': '100644',
+          'type': 'blob',
+          'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+          'size': 1379,
+          'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
         }
       ]
     })
@@ -374,6 +382,13 @@ test('discoverPackageFiles: monorepo', async () => {
       type: 'file',
       path: 'backend/package.json',
       name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/elm/elm-package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'elm/elm-package.json',
+      name: 'elm-package.json',
       content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
     })
 
