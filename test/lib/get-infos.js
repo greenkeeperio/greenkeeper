@@ -110,8 +110,8 @@ describe('get-infos', () => {
     expect(infos.release).toMatch(/Did the thing!/)
     expect(infos.release).toMatch(/Cookie is now round and delicious!/)
     expect(infos.release).not.toMatch(/https:\/\/github.com\/finnp/)
-    expect(infos.release).not.toMatch(/a class="user-mention"/)
-    expect(infos.release).not.toMatch(/data-hovercard-user-id="22222"/)
+    expect(infos.release).not.toMatch(/@realtin/)
+    expect(infos.release).not.toMatch(/@finnp/)
   })
 
   test('get changelog for monorepo dependency', async () => {
