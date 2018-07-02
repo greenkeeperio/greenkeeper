@@ -33,6 +33,8 @@ To run the tests you will need [Docker](https://docs.docker.com/engine/installat
 ```bash
 # Install CouchDB on Docker
 $ docker pull apache/couchdb:2.1.1
+# Start the CouchDB Container on Docker
+$ docker run -d -p 5984:5984 --name couchdb apache/couchdb:2.1.1
 ```
 A fake private key in the .env file is needed generate it like this:
 * Linux
