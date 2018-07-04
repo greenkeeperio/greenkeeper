@@ -88,7 +88,7 @@ No problem! Greenkeeper sits between npm and GitHub, observing all of the module
 
 Based on the test results and your current version definitions we will open up clear, actionable issues for you. If there’s nothing for you to do, we won’t nag you, but if a dependency *does* break your software, you’ll know immediately, and can get started on fixing the problem.
 
-And if a you’ve got stuff to do, we understand. Sometimes you simply have to make a pragmatic trade-off between fixing your build for the breaking update or just pinning the working version so you can get back to it later. Our bot can respect that, and will let you pin the last working version of the dependency right there in the issue thread:
+And if a you’ve got stuff to do, we understand. Sometimes you simply have to make a pragmatic trade-off between fixing your build for the breaking update or just pinning the working version so you can get back to it later. Our bot can respect that, and will let you pin the last working version of the dependency in the issue thread:
 
 | **Screenshot - Pinning dependencies** |
 |---|
@@ -108,9 +108,9 @@ If you find any, **don’t share security vulnerabilities publicly** (in a GitHu
 
 1. Click on the green **Install** button at the top of the [app page](https://github.com/apps/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
 
-2. You can then choose the organization you want to install Greenkeeper on, and then either enable specific repositories (we strongly recommend this), or all of them.
+2. You can choose the specific organization to install Greenkeeper on, and have the option to enable specific repositories (we strongly recommend this), or all of the repositories.
 
-    **Important:** just having the Greenkeeper _installed_ on a repo doesn’t necessarily _enable_ it yet. More on that below. By the way, you can change this behaviour later on the `Installed integrations` page in your organizations’ settings.
+    **Important:** just having the Greenkeeper _installed_ on a repo doesn’t necessarily _enable_ it. More on that below. By the way, you can change this behaviour on the `Installed integrations` page in your organizations’ settings.
 
     | **Screenshot - Installing Greenkeeper on repositories** |
     |---|
@@ -122,9 +122,9 @@ If you find any, **don’t share security vulnerabilities publicly** (in a GitHu
     |---|
     | ![Inital pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
 
-    **Important:** If all dependencies are already up-to-date, we currently *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the app on the repos you actually need it on, in step 1 above. Again, we highly recommend taking the time to whitelist repos individually.
+    **Important:** If all dependencies are already up-to-date, we *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the app on the repos you actually need it on, using step 1. Again, we highly recommend taking the time to whitelist repos individually.
 
-4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get more reliable software with a minimum amount of work.
+4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get a more reliable software with minimum amount of work.
 
 ### Additional Notes
 - With the new Greenkeeper public scoped npm packages work out of the box. Private scoped packages require an additional setup step, which is described in the initial pull request.
