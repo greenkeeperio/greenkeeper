@@ -248,3 +248,57 @@ test('worker requeues job on scheduling error, then throws away', async () => {
     }
   )
 })
+
+test('worker measures runtime and sends it to statsd with tag', async () => {
+  expect.assertions(4)
+
+  jest.mock('path', () => {
+    const path = require.requireActual('path')
+    path.jobPath = (job) => [
+      {
+        data: true,
+        plan: 'free'
+      },
+      {
+        data: true,
+        plan: 'supporter'
+      },
+      {
+        data: true
+      },
+      {
+        data: false
+      }
+    ]
+    return path
+  })
+  const path = require('path')
+
+  expect(() => {
+    path.jobPath('update-payments')
+  }).not.toThrow()
+
+  jest.mock('../../lib/statsd', () => {
+    return {
+      increment: jest.fn(),
+      gauge: jest.fn()
+    }
+  })
+  const statsd = require('../../lib/statsd')
+
+  const worker = require('../../lib/worker')
+  await worker(
+    expect.anything(),
+    {
+      ack: () => {},
+      nack: () => {}
+    }, {
+      content: Buffer.from(JSON.stringify({ name: 'update-payments', accountId: '123' })),
+      fields: ['hello']
+
+    }
+  )
+  expect(statsd.gauge).toHaveBeenCalled()
+  expect(statsd.gauge).toHaveBeenCalledTimes(1)
+  expect(statsd.gauge).toHaveBeenCalledWith('job_runtime', expect.any(Number), {tag: 'update-payments'})
+})
