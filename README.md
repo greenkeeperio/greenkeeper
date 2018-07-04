@@ -108,7 +108,7 @@ If you find any, **don’t share security vulnerabilities publicly** (in a GitHu
 
 1. Click on the green **Install** button at the top of the [app page](https://github.com/apps/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
 
-2. You can choose the specific organization to install Greenkeeper on, and have the option to enable specific repositories (we strongly recommend this), or all of the repositories.
+2. You can choose the specific organization to install Greenkeeper on, and have the option to enable individual repositories (we strongly recommend this), or all of the repositories.
 
     **Important:** just having the Greenkeeper _installed_ on a repo doesn’t necessarily _enable_ it. More on that below. By the way, you can change this behaviour on the `Installed integrations` page in your organizations’ settings.
 
