@@ -1,6 +1,7 @@
 const nock = require('nock')
 const _ = require('lodash')
 
+const enterprisePrivateKey = require('../../helpers/enterprise-private-key')
 const dbs = require('../../../lib/dbs')
 const removeIfExists = require('../../helpers/remove-if-exists')
 const { cleanCache, requireFresh } = require('../../helpers/module-cache-helpers')
@@ -16,12 +17,14 @@ const configFileContent = {
     }
   }
 }
+let defaultPrivateKey = process.env.PRIVATE_KEY
 
 describe('github-event push', async () => {
   beforeEach(() => {
     jest.resetModules()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
+    defaultPrivateKey ? process.env.PRIVATE_KEY = defaultPrivateKey : delete process.env.PRIVATE_KEY
     nock.cleanAll()
   })
 
@@ -770,6 +773,74 @@ describe('github-event push', async () => {
     expect(repo.enabled).toBeFalsy()
   })
 
+  test('package.json deleted on private repo within GKE (448)', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '448',
+      fullName: 'finn/private',
+      accountId: '123',
+      enabled: true,
+      private: true
+    })
+    process.env.IS_ENTERPRISE = true
+    process.env.PRIVATE_KEY = enterprisePrivateKey
+    const githubPush = requireFresh(pathToWorker)
+
+    nock('https://api.github.com')
+      .post('/installations/37/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finn/private/contents/greenkeeper.json')
+      .reply(200, {
+        type: 'file',
+        path: 'greenkeeper.json',
+        name: 'greenkeeper.json',
+        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
+      })
+
+      .get('/repos/finn/private/contents/package.json')
+      .reply(404, {})
+
+    const newJob = await githubPush({
+      installation: {
+        id: 42
+      },
+      ref: 'refs/heads/master',
+      after: 'deadbeef',
+      head_commit: {},
+      commits: [
+        {
+          added: [],
+          removed: ['package.json'],
+          modified: []
+        }
+      ],
+      repository: {
+        id: 448,
+        full_name: 'finn/private',
+        name: 'private',
+        owner: {
+          login: 'finn'
+        },
+        private: true,
+        default_branch: 'master'
+      }
+    })
+
+    expect(newJob).toBeFalsy()
+
+    const repo = await repositories.get('448')
+    expect(repo.packages).toMatchObject({})
+    expect(repo.files).not.toHaveProperty('package.json')
+    expect(repo.headSha).toEqual('deadbeef')
+    expect(repo.enabled).toBeFalsy()
+  })
+
   test('package.json deleted on private repo (447)', async () => {
     const { repositories } = await dbs()
     await repositories.put({
@@ -830,73 +901,6 @@ describe('github-event push', async () => {
     expect(newJob.data.name).toEqual('update-payments')
 
     const repo = await repositories.get('447')
-    expect(repo.packages).toMatchObject({})
-    expect(repo.files).not.toHaveProperty('package.json')
-    expect(repo.headSha).toEqual('deadbeef')
-    expect(repo.enabled).toBeFalsy()
-  })
-
-  test('package.json deleted on private repo within GKE (448)', async () => {
-    const { repositories } = await dbs()
-    await repositories.put({
-      _id: '448',
-      fullName: 'finn/private',
-      accountId: '123',
-      enabled: true,
-      private: true
-    })
-    process.env.IS_ENTERPRISE = true
-    const githubPush = requireFresh(pathToWorker)
-
-    nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
-      .optionally()
-      .reply(200, {
-        token: 'secret'
-      })
-      .get('/rate_limit')
-      .optionally()
-      .reply(200, {})
-      .get('/repos/finn/private/contents/greenkeeper.json')
-      .reply(200, {
-        type: 'file',
-        path: 'greenkeeper.json',
-        name: 'greenkeeper.json',
-        content: Buffer.from(JSON.stringify(configFileContent)).toString('base64')
-      })
-
-      .get('/repos/finn/private/contents/package.json')
-      .reply(404, {})
-
-    const newJob = await githubPush({
-      installation: {
-        id: 42
-      },
-      ref: 'refs/heads/master',
-      after: 'deadbeef',
-      head_commit: {},
-      commits: [
-        {
-          added: [],
-          removed: ['package.json'],
-          modified: []
-        }
-      ],
-      repository: {
-        id: 448,
-        full_name: 'finn/private',
-        name: 'private',
-        owner: {
-          login: 'finn'
-        },
-        private: true,
-        default_branch: 'master'
-      }
-    })
-
-    expect(newJob).toBeFalsy()
-
-    const repo = await repositories.get('448')
     expect(repo.packages).toMatchObject({})
     expect(repo.files).not.toHaveProperty('package.json')
     expect(repo.headSha).toEqual('deadbeef')
