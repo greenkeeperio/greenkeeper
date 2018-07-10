@@ -1,5 +1,6 @@
 const nock = require('nock')
 
+const enterprisePrivateKey = require('../../../helpers/enterprise-private-key')
 const dbs = require('../../../../lib/dbs')
 const { cleanCache, requireFresh } = require('../../../helpers/module-cache-helpers')
 const removeIfExists = require('../../../helpers/remove-if-exists')
@@ -7,11 +8,13 @@ const removeIfExists = require('../../../helpers/remove-if-exists')
 // path here, making it a bit clearer which file we're actually requiring
 const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request/closed')
 
+let defaultPrivateKey = process.env.PRIVATE_KEY
 describe('github-event pull_request closed', async () => {
   beforeEach(() => {
     jest.resetModules()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
+    defaultPrivateKey ? process.env.PRIVATE_KEY = defaultPrivateKey : delete process.env.PRIVATE_KEY
   })
 
   beforeAll(async () => {
@@ -162,6 +165,7 @@ describe('github-event pull_request closed', async () => {
 
   test('initial pr merged on private repo with payment plan on GKE', async () => {
     process.env.IS_ENTERPRISE = true
+    process.env.PRIVATE_KEY = enterprisePrivateKey
     const prClosed = requireFresh(pathToWorker)
 
     expect.assertions(1)

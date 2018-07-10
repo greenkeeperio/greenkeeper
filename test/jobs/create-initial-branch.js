@@ -1,5 +1,6 @@
 const nock = require('nock')
 
+const enterprisePrivateKey = require('../helpers/enterprise-private-key')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 const { cleanCache } = require('../helpers/module-cache-helpers')
@@ -7,11 +8,13 @@ const { cleanCache } = require('../helpers/module-cache-helpers')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+let defaultPrivateKey = process.env.PRIVATE_KEY
 describe('create initial branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     delete process.env.BADGES_HOST
     cleanCache('../../lib/env')
+    defaultPrivateKey ? process.env.PRIVATE_KEY = defaultPrivateKey : delete process.env.PRIVATE_KEY
     jest.resetModules()
   })
 
@@ -292,6 +295,7 @@ describe('create initial branch', () => {
 
   test('badge already added for private repo within GKE', async () => {
     process.env.IS_ENTERPRISE = true
+    process.env.PRIVATE_KEY = enterprisePrivateKey
     const { repositories } = await dbs()
 
     await repositories.put({

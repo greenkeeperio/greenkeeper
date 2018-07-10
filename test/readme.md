@@ -48,6 +48,26 @@ Run your tests with
   npm test
 ```
 
+## ⚠️ Important Notes/Pitfalls
+
+Enterprise decodes the GitHub private key differently than SaaS. SaaS encodes with `gzip | base64`, Enterprise only does `base64`. For this reason, you have to use a different `env.PRIVATE_KEY` when writing a test for Enterprise. A correctly encoded test key is available in `test/helpers/enterprise-private-key.js`. Use it like so in a test file:
+
+```javasript
+const enterprisePrivateKey = require('../helpers/enterprise-private-key')
+
+beforeEach(() => {
+  delete process.env.IS_ENTERPRISE
+  delete process.env.PRIVATE_KEY
+  cleanCache('../../lib/env')
+  jest.resetModules()
+})
+
+// and then inside each test:
+
+process.env.IS_ENTERPRISE = true
+process.env.PRIVATE_KEY = enterprisePrivateKey
+```
+
 ## Test
 #### Api
 Jest puts each of these [methods and objects](https://facebook.github.io/jest/docs/en/api.html) into the global environment. We don't have to require or import anything to use them.

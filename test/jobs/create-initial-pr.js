@@ -1,15 +1,18 @@
 const nock = require('nock')
 const simple = require('simple-mock')
 
+const enterprisePrivateKey = require('../helpers/enterprise-private-key')
 const dbs = require('../../lib/dbs')
 const { requireFresh, cleanCache } = require('../helpers/module-cache-helpers')
 const removeIfExists = require('../helpers/remove-if-exists')
 
+let defaultPrivateKey = process.env.PRIVATE_KEY
 describe('create-initial-pr', async () => {
   beforeEach(() => {
     jest.resetModules()
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
+    defaultPrivateKey ? process.env.PRIVATE_KEY = defaultPrivateKey : delete process.env.PRIVATE_KEY
   })
 
   beforeAll(async () => {
@@ -340,6 +343,7 @@ describe('create-initial-pr', async () => {
 
   test('create pr for private repo within GKE', async () => {
     process.env.IS_ENTERPRISE = true
+    process.env.PRIVATE_KEY = enterprisePrivateKey
     const createInitial = requireFresh('../../jobs/create-initial-pr')
     const { repositories } = await dbs()
 

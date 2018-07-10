@@ -1,5 +1,6 @@
 const nock = require('nock')
 
+const enterprisePrivateKey = require('../helpers/enterprise-private-key')
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 const { cleanCache } = require('../helpers/module-cache-helpers')
@@ -7,10 +8,12 @@ const { cleanCache } = require('../helpers/module-cache-helpers')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+let defaultPrivateKey = process.env.PRIVATE_KEY
 describe('create version branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
+    defaultPrivateKey ? process.env.PRIVATE_KEY = defaultPrivateKey : delete process.env.PRIVATE_KEY
     jest.resetModules()
     jest.clearAllMocks()
     nock.cleanAll()
@@ -328,6 +331,7 @@ describe('create version branch', () => {
 
   test('new pull request private repo within GKE', async () => {
     process.env.IS_ENTERPRISE = true
+    process.env.PRIVATE_KEY = enterprisePrivateKey
     const { repositories } = await dbs()
 
     await repositories.put({
