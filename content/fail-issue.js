@@ -21,9 +21,9 @@ target_url -> no equivalent, is included in summary
 
 */
 const individualStatusOrCheck = (status) => {
-  let output = `- ${status.state === 'success' ? '✅' : '❌'} **${status.context}** ${status.description} `
+  let output = `- ${status.state === 'success' ? '✅' : '❌'} **${status.context}:** ${status.description} `
   if (status.target_url) {
-    output += ` [Details](${status.target_url})`
+    output += `([Details](${status.target_url})).`
   }
   return output
 }
