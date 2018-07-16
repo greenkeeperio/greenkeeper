@@ -176,7 +176,7 @@ describe('github-event status', async () => {
       .get('/repos/club/mate/commits/hats/status')
       .reply(200, {
         state: 'success',
-        statuses: [{'state': 'success'}, {'state': 'success',}]
+        statuses: [{'state': 'success'}, {'state': 'success'}]
       })
       .get('/repos/club/mate/commits/hats/check-runs')
       .reply(200, {
