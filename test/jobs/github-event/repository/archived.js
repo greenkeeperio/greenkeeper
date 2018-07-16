@@ -40,9 +40,12 @@ test('github-event public repository archived', async () => {
 })
 
 test('github-event private repository archived', async () => {
+  expect.assertions(4)
   jest.mock('../../../../lib/payments', () => {
     const payments = require.requireActual('../../../../lib/payments')
     payments.maybeUpdatePaymentsJob = async () => {
+      // This must be called if the repo is private
+      expect(true).toBeTruthy()
       // pretend this is a private repo with stripe payment
       return Promise.resolve({
         data: {
