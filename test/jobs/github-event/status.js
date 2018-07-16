@@ -24,7 +24,7 @@ describe('github-event status', async () => {
     const { repositories, installations } = await dbs()
     await Promise.all([
       removeIfExists(installations, '10'),
-      removeIfExists(repositories, '42:branch:deadbeef', '42:branch:muppets', '42:branch:hats', '43:branch:deadbeef', '44:branch:deadbeef', '44:pr:1234', 'subgroup1:branch:abcdf1234', 'subgroup2:branch:plantsarethebest11', 'subgroup2:pr:1234')
+      removeIfExists(repositories, '42:branch:deadbeef', '42:branch:muppets', '42:branch:hats', '43:branch:deadbeef', '44:branch:deadbeef', '44:pr:1234', 'subgroup1:branch:abcdf1234', 'subgroup2:branch:plantsarethebest11', 'subgroup2:pr:1234', '45:branch:gnu')
     ])
   })
 
@@ -479,6 +479,64 @@ describe('github-event status', async () => {
       installation: { id: 1337 },
       repository: {
         id: 43,
+        full_name: 'club/mate',
+        owner: {
+          id: 10
+        }
+      }
+    })
+    expect(newJob).toBeFalsy()
+  })
+
+  test('No permission to access checks API', async () => {
+    // Should still work without access to the Checks API
+    const { repositories } = await dbs()
+    expect.assertions(6)
+
+    jest.mock('../../../lib/handle-branch-status', () => (args) => {
+      expect(args.installationId).toBe(1337)
+      expect(args.repository.id).toBe(45)
+      expect(args.branchDoc.dependency).toEqual('test')
+      expect(args.accountId).toEqual('10')
+      expect(args.combined.state).toEqual('success')
+    })
+    const githubStatus = require('../../../jobs/github-event/status')
+
+    nock('https://api.github.com')
+      .post('/installations/1337/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/club/mate/commits/gnu2/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
+      .get('/repos/club/mate/commits/gnu2/check-runs')
+      .reply(403, {
+        'message': 'Resource not accessible by integration',
+        ' documentation_url': 'https://developer.github.com/v3/checks/runs/#list-check-runs-for-a-specific-ref'
+      })
+
+    await repositories.put({
+      _id: '45:branch:gnu',
+      type: 'branch',
+      sha: 'gnu2',
+      head: 'branchname',
+      dependency: 'test',
+      version: '1.0.1'
+    })
+
+    const newJob = await githubStatus({
+      state: 'success',
+      sha: 'gnu2',
+      installation: { id: 1337 },
+      repository: {
+        id: 45,
         full_name: 'club/mate',
         owner: {
           id: 10
