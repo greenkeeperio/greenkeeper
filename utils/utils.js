@@ -292,6 +292,13 @@ const addNewLowestAndDeprecate = function ({
 const hasTooManyPackageJSONs = function (repo) {
   return repo.packages && Object.keys(repo.packages).length > 300
 }
+const hasPrerelease = function (packages) {
+  const types = _.omit(packages, 'greenkeeper')
+  if (!types.devDependencies) types.devDependencies = {}
+  if (!types.peerDependencies) types.peerDependencies = {}
+  const allDependenciesInPackageJSON = [...Object.values(types.dependencies), ...Object.values(types.devDependencies), ...Object.values(types.peerDependencies)]
+  return allDependenciesInPackageJSON.some((depName) => depName.includes('-'))
+}
 
 module.exports = {
   seperateNormalAndMonorepos,
@@ -309,5 +316,6 @@ module.exports = {
   removeNodeVersionFromTravisYML,
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
-  hasTooManyPackageJSONs
+  hasTooManyPackageJSONs,
+  hasPrerelease
 }

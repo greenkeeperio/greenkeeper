@@ -71,6 +71,10 @@ describe('create version branch', () => {
           devDependencies: {
             '@finnpauls/dep': '^1.0.0'
           },
+          dependencies: {
+            '@finnpauls/dep': '^1.1.0',
+            'jest': '^1.0.0-alpha.42'
+          },
           greenkeeper: {
             label: 'customlabel'
           }

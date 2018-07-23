@@ -105,28 +105,8 @@ describe('registry change create jobs', async () => {
     expect(newJob).toBeFalsy()
   })
 
-  test('registry change skip distTags other than latest', async () => {
-    const newJob = await registryChange({
-      name: 'registry-change',
-      dependency: 'standard',
-      distTags: {
-        latest: '8.0.0',
-        next: '8.0.1'
-      },
-      versions: {
-        '8.0.1': {},
-        '8.0.0': {
-          gitHead: 'deadbeef'
-        }
-      },
-      registry: 'https://skimdb.npmjs.com/registry'
-    })
-
-    expect(newJob).toBeFalsy()
-  })
-
-  test('registry change skip prereleases in latest', async () => {
-    const newJob = await registryChange({
+  test('registry change allow prereleases in latest', async () => {
+    const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'standard',
       distTags: {
@@ -134,15 +114,22 @@ describe('registry change create jobs', async () => {
         next: '8.0.1'
       },
       versions: {
-        '8.0.1': {},
+        '8.0.1': {
+          gitHead: 'bubblegum'
+        },
         '8.0.0-beta.4': {
-          gitHead: 'deadbeef'
+          gitHead: 'mugelbbub'
         }
       },
       registry: 'https://skimdb.npmjs.com/registry'
     })
 
-    expect(newJob).toBeFalsy()
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    console.log('### job', job)
+    expect(job.repositoryId).toEqual('888')
+    expect(job.distTag).toEqual('latest')
+    expect(job.oldVersion).toEqual('1.0.0')
   })
 
   test('registry change skip peerDependencies', async () => {
@@ -274,10 +261,10 @@ describe('registry change create jobs', async () => {
         latest: '8.0.0'
       },
       versions: {
-        '8.0.0': {
+        '7.0.0': {
           gitHead: 'deadbeef'
         },
-        '1.0.0': {
+        '8.0.0': {
           gitHead: 'deadbeet'
         }
       },
@@ -346,10 +333,10 @@ describe('registry change create jobs', async () => {
         latest: '8.0.0'
       },
       versions: {
-        '8.0.0': {
+        '7.0.0': {
           gitHead: 'deadbeef'
         },
-        '1.0.0': {
+        '8.0.0': {
           gitHead: 'deadbeet'
         }
       },
@@ -438,10 +425,10 @@ describe('registry change create jobs', async () => {
         latest: '8.0.0'
       },
       versions: {
-        '8.0.0': {
+        '6.0.0': {
           gitHead: 'tomato'
         },
-        '1.0.0': {
+        '8.0.0': {
           gitHead: 'tomato'
         }
       },
@@ -561,10 +548,10 @@ describe('monorepo-release: registry change create jobs', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '2.0.0': {
+        '1.0.0': {
           gitHead: 'kangaroo'
         },
-        '1.0.0': {
+        '2.0.0': {
           gitHead: 'koala'
         }
       },
@@ -597,10 +584,10 @@ describe('monorepo-release: registry change create jobs', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '2.0.0': {
+        '1.0.0': {
           gitHead: 'smurf'
         },
-        '1.0.0': {
+        '2.0.0': {
           gitHead: 'sky'
         }
       },
@@ -637,10 +624,10 @@ describe('monorepo-release: registry change create jobs', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '2.0.0': {
+        '1.0.0': {
           gitHead: 'wau'
         },
-        '1.0.0': {
+        '2.0.0': {
           gitHead: 'woof'
         }
       },
@@ -660,7 +647,7 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     The reason was that the repo had no root-level `package.json`, and only had `@storybook` deps in one of the multiple `package.json` files. It also didn’t depend on `@storybook/vue` directly, only on other `@storybook` packages, but that wan’t relevant in this case.
   */
-  test('monorepo-release: package is part of complete monorepoDefinition, but is only targeting a single non-root package.jsoon', async () => {
+  test('monorepo-release: package is part of complete monorepoDefinition, but is only targeting a single non-root package.json', async () => {
     const { installations, repositories, npm } = await dbs()
 
     await Promise.all([
@@ -790,6 +777,7 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     // a group version branch should be created
     expect(newJobs).toHaveLength(1)
+    console.log('### newJobs', newJobs)
     const job = newJobs[0].data
     expect(job.name).toBe('create-group-version-branch')
     expect(job.repositoryId).toBe('11062018-bug-1-id')

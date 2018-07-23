@@ -67,27 +67,31 @@ module.exports = async function (
   // currently we only handle latest versions
   // so we can heavily optimise by exiting here
   // we want to handle different distTags in the future
-  if (distTag !== 'latest') {
-    log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
-    return
-  }
+  // if (distTag !== 'latest') {
+  //   log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
+  //   return
+  // }
 
-  const version = distTags['latest']
+  // const version = distTags['latest']
+
+  // get the last version
+  const version = Object.keys(versions)[Object.keys(versions).length - 1]
   // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) {
-    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
-    return
-  }
+  // if (semver.prerelease(version)) {
+  //   log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
+  //   return
+  // }
 
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
   if (await isPartOfMonorepo(dependency)) {
+    console.log('### dependency', dependency, version)
     // We only want to open a PR if either:
     // 1. We have all of the modules that belong to the release (have the same version number)
     // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete
     //    after n minutes, but we want to open the PR anyway
-    if (!await hasAllMonorepoUdates(dependency, version) && !force) {
+    if (!await hasAllMonorepoUdates(dependency, version, distTag) && !force) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)

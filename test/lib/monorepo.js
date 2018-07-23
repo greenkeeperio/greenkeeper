@@ -66,7 +66,7 @@ describe('lib monorepo', async () => {
     })
 
     const libMonorepo = require.requireMock('../../lib/monorepo')
-    const result = await libMonorepo.hasAllMonorepoUdates('@avocado/dep', '2.0.0')
+    const result = await libMonorepo.hasAllMonorepoUdates('@avocado/dep', '2.0.0', 'latest')
     expect(result).toBeTruthy()
   })
 
@@ -107,7 +107,7 @@ describe('lib monorepo', async () => {
     })
 
     const libMonorepo = require.requireMock('../../lib/monorepo')
-    const result = await libMonorepo.hasAllMonorepoUdates('berlin', '2.0.0')
+    const result = await libMonorepo.hasAllMonorepoUdates('berlin', '2.0.0', 'latest')
     expect(result).toBeFalsy()
   })
 

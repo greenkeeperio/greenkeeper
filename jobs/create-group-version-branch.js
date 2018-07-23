@@ -12,7 +12,8 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
+const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs, hasPrerelease } = require('../utils/utils')
+
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
@@ -36,7 +37,6 @@ module.exports = async function (
     monorepo
   }
 ) {
-  if (distTag !== 'latest') return
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
 
@@ -46,12 +46,12 @@ module.exports = async function (
   let relevantDependencies = []
   const groupName = Object.keys(group)[0]
   const version = distTags[distTag]
-  // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) return
+
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
+
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
 
@@ -59,6 +59,13 @@ module.exports = async function (
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }
+
+  // only allow prereleases if there is one defined in package.json
+  const allSavedDependencies = {}
+  group[groupName].packages.forEach((packagePath) => {
+    Object.assign(allSavedDependencies, repository.packages[packagePath])
+  })
+  if (!hasPrerelease(allSavedDependencies) && distTag !== 'latest') return
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
