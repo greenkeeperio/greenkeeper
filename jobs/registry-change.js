@@ -49,6 +49,7 @@ module.exports = async function (
   }
 
   const oldDistTags = npmDbDoc.distTags || {}
+  // which distTag has changed
   const distTag = _.findKey(distTags, (version, tag) => {
     const oldVersion = oldDistTags[tag]
     if (!oldVersion) {
@@ -65,12 +66,8 @@ module.exports = async function (
   console.log('### distTag', distTag)
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
-  // get the last version
-  console.log('')
-  const version = Object.keys(versions)[Object.keys(versions).length - 1]
-  console.log('### version', version)
-  const version2 = distTags[distTag]
-  console.log('### version2', version2)
+  const version = distTags[distTag]
+  console.log('### version2', version)
   console.log('')
   if (semver.prerelease(version) && distTag === 'latest') {
     console.info(`exited: ${dependency} ${version} is a prerelease on latest`)

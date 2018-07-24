@@ -18,7 +18,7 @@ const {
 } = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, generateGitHubCompareURL, hasTooManyPackageJSONs, hasPrerelease } = require('../utils/utils')
+const { createTransformFunction, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -55,12 +55,6 @@ module.exports = async function (
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }
-
-  console.log('### hasPrerelease', hasPrerelease(repository.packages['package.json']))
-  console.log('### distTag', distTag)
-
-  // only allow prereleases if there is one defined in package.json
-  if (!hasPrerelease(repository.packages['package.json']) && distTag !== 'latest') return
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other

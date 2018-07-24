@@ -12,7 +12,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs, hasPrerelease } = require('../utils/utils')
+const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
 
 const {
   isPartOfMonorepo,
@@ -59,13 +59,6 @@ module.exports = async function (
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }
-
-  // only allow prereleases if there is one defined in package.json
-  const allSavedDependencies = {}
-  group[groupName].packages.forEach((packagePath) => {
-    Object.assign(allSavedDependencies, repository.packages[packagePath])
-  })
-  if (!hasPrerelease(allSavedDependencies) && distTag !== 'latest') return
 
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other

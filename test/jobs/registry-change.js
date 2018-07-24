@@ -22,7 +22,8 @@ describe('registry change create jobs', async () => {
         packages: {
           'package.json': {
             dependencies: {
-              standard: '1.0.0'
+              standard: '1.0.0',
+              betazed: '1.0.0'
             }
           }
         }
@@ -38,6 +39,18 @@ describe('registry change create jobs', async () => {
               standard: '1.0.0'
             }
           }
+        }
+      }),
+      npm.put({
+        _id: 'alphacentauri',
+        distTags: {
+          alpha: '1.0.0'
+        }
+      }),
+      npm.put({
+        _id: 'betazed',
+        distTags: {
+          beta: '1.0.0-.beta.6'
         }
       }),
       npm.put({
@@ -60,7 +73,7 @@ describe('registry change create jobs', async () => {
     await Promise.all([
       removeIfExists(installations, '999', '123-two-packages', '123-two-groups', '123-two-repos'),
       removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups', 'rg-no-monorepo', 'rg-monorepo'),
-      removeIfExists(npm, 'standard', 'eslint', 'lodash', 'redux')
+      removeIfExists(npm, 'standard', 'eslint', 'lodash', 'redux', 'betazed', 'alphacentauri')
     ])
   })
 
@@ -105,7 +118,7 @@ describe('registry change create jobs', async () => {
     expect(newJob).toBeFalsy()
   })
 
-  test('registry change allow non-latest distTags', async () => {
+  test('registry change allow prereleses in non-latest', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'standard',
@@ -141,7 +154,32 @@ describe('registry change create jobs', async () => {
       versions: {
         '8.0.1': {},
         '8.0.0-beta.4': {
-          gitHead: 'deadbeef'
+          gitHead: 'happycow'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+    expect(newJob).toBeFalsy()
+  })
+
+  test('registry change skip non-prereleases in non-latest', async () => {
+    const newJob = await registryChange({
+      name: 'registry-change',
+      dependency: 'betazed',
+      distTags: {
+        next: '8.0.1',
+        latest: '8.0.0-beta.4',
+        alpha: '8.0.2-alpha.2'
+      },
+      versions: {
+        '8.0.1': {
+          gitHead: 'happycow'
+        },
+        '8.0.0-beta.4': {
+          gitHead: 'happycow'
+        },
+        '8.0.0-alpha.2': {
+          gitHead: 'happycow'
         }
       },
       registry: 'https://skimdb.npmjs.com/registry'
@@ -666,7 +704,7 @@ describe('monorepo-release: registry change create jobs', async () => {
     The reason was that the repo had no root-level `package.json`, and only had `@storybook` deps in one of the multiple `package.json` files.
     It also didn’t depend on `@storybook/vue` directly, only on other `@storybook` packages, but that wan’t relevant in this case.
   */
-  test.skip('monorepo-release: package is part of complete monorepoDefinition, but is only targeting a single non-root package.json', async () => {
+  test('monorepo-release: package is part of complete monorepoDefinition, but is only targeting a single non-root package.json', async () => {
     const { installations, repositories, npm } = await dbs()
 
     await Promise.all([
@@ -746,11 +784,10 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     const newJobs = await registryChange({
       dependency: '@storybook/vue',
-      version: '3.4.7',
       name: 'registry-change',
       distTags: {
         alpha: '4.0.0-alpha.9',
-        latest: '3.4.7',
+        latest: '4.0.0',
         rc: '3.4.0-rc.4'
       },
       versions: {
@@ -791,6 +828,12 @@ describe('monorepo-release: registry change create jobs', async () => {
           }
         },
         '4.0.0-alpha.9': {
+          repository: {
+            type: 'git',
+            url: 'git+https://github.com/storybooks/storybook.git'
+          }
+        },
+        '4.0.0': {
           repository: {
             type: 'git',
             url: 'git+https://github.com/storybooks/storybook.git'
