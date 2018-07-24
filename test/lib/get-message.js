@@ -1,4 +1,4 @@
-const getMessage = require('../../lib/get-message')
+const {getMessage} = require('../../lib/get-message')
 
 /* eslint-disable no-template-curly-in-string */
 
