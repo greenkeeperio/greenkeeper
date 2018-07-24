@@ -63,20 +63,15 @@ module.exports = async function (
     log.info(`exited: ${dependency} has no distTag`)
     return
   }
-  console.log('### distTag', distTag)
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
   const version = distTags[distTag]
-  console.log('### version2', version)
-  console.log('')
   if (semver.prerelease(version) && distTag === 'latest') {
-    console.info(`exited: ${dependency} ${version} is a prerelease on latest`)
     log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
     return
   }
 
   if (!semver.prerelease(version) && distTag !== 'latest') {
-    console.info(`exited: ${dependency} ${version} is a non-prerelease on non-latest`)
     log.info(`exited: ${dependency} ${version} is a non-prerelease on non-latest`)
     return
   }
