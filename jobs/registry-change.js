@@ -62,31 +62,32 @@ module.exports = async function (
     log.info(`exited: ${dependency} has no distTag`)
     return
   }
+  console.log('### distTag', distTag)
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
-  // currently we only handle latest versions
-  // so we can heavily optimise by exiting here
-  // we want to handle different distTags in the future
-  // if (distTag !== 'latest') {
-  //   log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
-  //   return
-  // }
-
-  // const version = distTags['latest']
-
   // get the last version
+  console.log('')
   const version = Object.keys(versions)[Object.keys(versions).length - 1]
-  // Ignore releases on `latest` that have prerelease identifiers
-  // if (semver.prerelease(version)) {
-  //   log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
-  //   return
-  // }
+  console.log('### version', version)
+  const version2 = distTags[distTag]
+  console.log('### version2', version2)
+  console.log('')
+  if (semver.prerelease(version) && distTag === 'latest') {
+    console.info(`exited: ${dependency} ${version} is a prerelease on latest`)
+    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
+    return
+  }
+
+  if (!semver.prerelease(version) && distTag !== 'latest') {
+    console.info(`exited: ${dependency} ${version} is a non-prerelease on non-latest`)
+    log.info(`exited: ${dependency} ${version} is a non-prerelease on non-latest`)
+    return
+  }
 
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
   if (await isPartOfMonorepo(dependency)) {
-    console.log('### dependency', dependency, version)
     // We only want to open a PR if either:
     // 1. We have all of the modules that belong to the release (have the same version number)
     // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete

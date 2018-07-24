@@ -294,8 +294,10 @@ const hasTooManyPackageJSONs = function (repo) {
 }
 const hasPrerelease = function (packages) {
   const types = _.omit(packages, 'greenkeeper')
+  if (!types.dependencies) types.dependencies = {}
   if (!types.devDependencies) types.devDependencies = {}
   if (!types.peerDependencies) types.peerDependencies = {}
+
   const allDependenciesInPackageJSON = [...Object.values(types.dependencies), ...Object.values(types.devDependencies), ...Object.values(types.peerDependencies)]
   return allDependenciesInPackageJSON.some((depName) => depName.includes('-'))
 }

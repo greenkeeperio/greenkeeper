@@ -56,6 +56,9 @@ module.exports = async function (
     return
   }
 
+  console.log('### hasPrerelease', hasPrerelease(repository.packages['package.json']))
+  console.log('### distTag', distTag)
+
   // only allow prereleases if there is one defined in package.json
   if (!hasPrerelease(repository.packages['package.json']) && distTag !== 'latest') return
 
