@@ -5,6 +5,7 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getMessage = require('../lib/get-message')
+const getPRTitle = require('../lib/get-pr-title')
 const getInfos = require('../lib/get-infos')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
@@ -292,7 +293,10 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependencyKey} to the latest version 🚀`
+  const title = getPRTitle({
+    version: 'basicPR',
+    dependency: dependencyKey,
+    customTitle: config.prTitle})
 
   // Inform monthly paying customers about the new yearly plan
   const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")

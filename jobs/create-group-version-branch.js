@@ -6,6 +6,7 @@ const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
 const getMessage = require('../lib/get-message')
+const getPRTitle = require('../lib/get-pr-title')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -299,7 +300,11 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependencyKey} in group ${groupName} to the latest version 🚀`
+  const title = getPRTitle({
+    version: 'groupPR',
+    dependency: dependencyKey,
+    group: groupName,
+    customTitle: config.prTitle})
 
   // maybe adapt PR body
   const body = prContent({
