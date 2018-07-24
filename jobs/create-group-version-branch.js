@@ -304,7 +304,7 @@ module.exports = async function (
     version: 'groupPR',
     dependency: dependencyKey,
     group: groupName,
-    customTitle: config.prTitle})
+    customTitle: config.prTitles})
 
   // maybe adapt PR body
   const body = prContent({

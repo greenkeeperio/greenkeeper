@@ -26,6 +26,10 @@ test('get default config', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
   }
   expect(getConfig(repository)).toEqual(expected)
@@ -68,6 +72,10 @@ test('get config from root greenkeeper section', () => {
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
     },
+    prTitles: {
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
+    },
     groups: {
       backend: {
         ignore: ['lodash'],
@@ -109,6 +117,10 @@ test('get custom commit message', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
   }
   expect(getConfig(repository)).toEqual(expected)
@@ -179,6 +191,10 @@ test('get ignore config with empty greenkeeper config', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
   }
 
