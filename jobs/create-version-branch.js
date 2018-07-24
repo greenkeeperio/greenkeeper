@@ -295,7 +295,7 @@ module.exports = async function (
   const title = getPRTitle({
     version: 'basicPR',
     dependency: dependencyKey,
-    customTitle: config.prTitles})
+    prTitles: config.prTitles})
 
   // Inform monthly paying customers about the new yearly plan
   const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")
