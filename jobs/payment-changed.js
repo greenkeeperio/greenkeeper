@@ -1,7 +1,7 @@
-const dbs = require('../lib/dbs')
 const _ = require('lodash')
-const env = require('env')
 
+const env = require('../lib/env')
+const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const paymentActivatedText = require('../content/payment-activated')
 
