@@ -14,7 +14,8 @@ const upsert = require('../lib/upsert')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
-  getMonorepoGroupNameForPackage
+  getMonorepoGroupNameForPackage,
+  isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
@@ -134,6 +135,13 @@ module.exports = async function (
   }
 
   const [owner, repo] = repository.fullName.split('/')
+
+  // Bail if the dependency is ignored in a group (yes, group configs make no sense in a non-monorepo, but we respect it anyway)
+  if (config.groups && isDependencyIgnoredInGroups(config.groups, 'package.json', dependency)) {
+    log.warn(`exited: ${dependency} ${version} ignored by groups config`, { config })
+    return
+  }
+  // Bail if the dependency is ignored globally
   if (_.includes(config.ignore, dependency) ||
       (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
     log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })

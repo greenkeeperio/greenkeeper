@@ -231,4 +231,128 @@ describe('lib monorepo', async () => {
     const testAgainGroup = await getMonorepoGroup('gk-test')
     expect(testAgainGroup).toHaveLength(2)
   })
+
+  test('getGroupForPackageFile, has result', async () => {
+    const { getGroupForPackageFile } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ],
+          'ignore': [
+            'jasmine-core',
+            'jasmine-spec-reporter',
+            'karma',
+            'karma-chrome-launcher'
+          ]
+        }
+      }
+    }
+    const group = getGroupForPackageFile(config.groups, 'package.json')
+    expect(group).toEqual('default')
+  })
+
+  test('getGroupForPackageFile, has no result', async () => {
+    const { getGroupForPackageFile } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ],
+          'ignore': [
+            'jasmine-core',
+            'jasmine-spec-reporter',
+            'karma',
+            'karma-chrome-launcher'
+          ]
+        }
+      }
+    }
+    const group = getGroupForPackageFile(config.groups, 'cats/package.json')
+    expect(group).toBeFalsy()
+  })
+
+  test('isDependencyIgnoredInGroups: yes', async () => {
+    const { isDependencyIgnoredInGroups } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ],
+          'ignore': [
+            'jasmine-core',
+            'jasmine-spec-reporter',
+            'karma',
+            'karma-chrome-launcher'
+          ]
+        }
+      }
+    }
+    const isIgnored = isDependencyIgnoredInGroups(config.groups, 'package.json', 'karma')
+    expect(isIgnored).toBeTruthy()
+  })
+
+  test('isDependencyIgnoredInGroups: no', async () => {
+    const { isDependencyIgnoredInGroups } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ],
+          'ignore': [
+            'jasmine-core',
+            'jasmine-spec-reporter',
+            'karma',
+            'karma-chrome-launcher'
+          ]
+        }
+      }
+    }
+    const isIgnored = isDependencyIgnoredInGroups(config.groups, 'package.json', 'standard')
+    expect(isIgnored).toBeFalsy()
+  })
+
+  test('isDependencyIgnoredInGroups: groups is empty', async () => {
+    const { isDependencyIgnoredInGroups } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {}
+    }
+    const isIgnored = isDependencyIgnoredInGroups(config.groups, 'package.json', 'standard')
+    expect(isIgnored).toBeFalsy()
+  })
+
+  test('isDependencyIgnoredInGroups: ignore is missing', async () => {
+    const { isDependencyIgnoredInGroups } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ]
+        }
+      }
+    }
+    const isIgnored = isDependencyIgnoredInGroups(config.groups, 'package.json', 'standard')
+    expect(isIgnored).toBeFalsy()
+  })
+
+  test('isDependencyIgnoredInGroups: ignore is empty', async () => {
+    const { isDependencyIgnoredInGroups } = await require.requireActual('../../lib/monorepo')
+    const config = {
+      'groups': {
+        'default': {
+          'packages': [
+            'package.json'
+          ],
+          'ignore': []
+        }
+      }
+    }
+    const isIgnored = isDependencyIgnoredInGroups(config.groups, 'package.json', 'standard')
+    expect(isIgnored).toBeFalsy()
+  })
 })
