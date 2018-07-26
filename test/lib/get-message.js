@@ -1,4 +1,4 @@
-const {getMessage, getPRTitle} = require('../../lib/get-message')
+const {getMessage, getPrTitle} = require('../../lib/get-message')
 
 /* eslint-disable no-template-curly-in-string */
 
@@ -81,7 +81,7 @@ describe('custom pr titles', () => {
   const group = 'jacoba'
 
   test('get default pr titles', () => {
-    const defaultPRTitles = {
+    const defaultPrTitles = {
       basicPR: 'Update ${dependency} to the latest version 🚀',
       groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
@@ -91,16 +91,16 @@ describe('custom pr titles', () => {
     }
 
     expect.assertions(2)
-    expect(getPRTitle({
+    expect(getPrTitle({
       version: 'basicPR',
       dependency,
-      prTitles: defaultPRTitles})).toEqual(expected.basicPR)
+      prTitles: defaultPrTitles})).toEqual(expected.basicPR)
 
-    expect(getPRTitle({
+    expect(getPrTitle({
       version: 'groupPR',
       dependency,
       group,
-      prTitles: defaultPRTitles})).toEqual(expected.groupPR)
+      prTitles: defaultPrTitles})).toEqual(expected.groupPR)
   })
 
   test("throws when it doesn't know a pr title", () => {
@@ -110,7 +110,7 @@ describe('custom pr titles', () => {
 
     expect.assertions(1)
     expect(() => {
-      getPRTitle({
+      getPrTitle({
         version: 'basicPR',
         dependency,
         prTitles})
@@ -129,12 +129,12 @@ describe('custom pr titles', () => {
     }
 
     expect.assertions(2)
-    expect(getPRTitle({
+    expect(getPrTitle({
       version: 'basicPR',
       dependency,
       prTitles: wrongPRTitles})).toEqual(expected.basicPR)
 
-    expect(getPRTitle({
+    expect(getPrTitle({
       version: 'groupPR',
       group,
       dependency,

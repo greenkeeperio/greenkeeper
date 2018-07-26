@@ -5,7 +5,7 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
-const {getMessage, getPRTitle} = require('../lib/get-message')
+const {getMessage, getPrTitle} = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -299,7 +299,7 @@ module.exports = async function (
     return
   }
 
-  const title = getPRTitle({
+  const title = getPrTitle({
     version: 'groupPR',
     dependency: dependencyKey,
     group: groupName,
