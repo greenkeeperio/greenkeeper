@@ -3,6 +3,7 @@ const Log = require('gk-log')
 const _ = require('lodash')
 
 const getConfig = require('../lib/get-config')
+const { getPrTitle } = require('../lib/get-message')
 const dbs = require('../lib/dbs')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
@@ -68,6 +69,10 @@ module.exports = async function (
   const accountTokenUrl = `https://account.greenkeeper.io/status?token=${repodoc.accountToken}`
 
   const files = _.get(repodoc, 'files', {})
+  const title = getPrTitle({
+    version: 'initialSubgroupPR',
+    group: groupName,
+    prTitles: config.prTitles})
 
   // enabled
   try {
@@ -77,7 +82,7 @@ module.exports = async function (
     } = await ghqueue.write(github => github.pullRequests.create({
       owner,
       repo,
-      title: `Update dependencies for ${groupName} 🌴`,
+      title,
       body: prContent({
         depsUpdated,
         ghRepo,

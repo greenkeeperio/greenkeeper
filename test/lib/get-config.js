@@ -28,6 +28,10 @@ test('get default config', () => {
       closes: '\n\nCloses #${number}'
     },
     prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
       basicPR: 'Update ${dependency} to the latest version 🚀',
       groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
@@ -73,6 +77,10 @@ test('get config from root greenkeeper section', () => {
       closes: '\n\nCloses #${number}'
     },
     prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
       basicPR: 'Update ${dependency} to the latest version 🚀',
       groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     },
@@ -119,6 +127,10 @@ test('get custom commit message', () => {
       closes: '\n\nCloses #${number}'
     },
     prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
       basicPR: 'Update ${dependency} to the latest version 🚀',
       groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
@@ -138,7 +150,7 @@ test('get custom pr title', () => {
           },
           prTitles: {
             basicPR: 'update Jacoba to the latest version',
-            groupPR: 'update group of Jacoba to the latest verion'
+            groupPR: 'update group of Jacoba to the latest version'
           }
         }
       }
@@ -162,8 +174,12 @@ test('get custom pr title', () => {
       closes: '\n\nCloses #${number}'
     },
     prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
       basicPR: 'update Jacoba to the latest version',
-      groupPR: 'update group of Jacoba to the latest verion'
+      groupPR: 'update group of Jacoba to the latest version'
     }
   }
   expect(getConfig(repository)).toEqual(expected)
@@ -236,6 +252,10 @@ test('get ignore config with empty greenkeeper config', () => {
       closes: '\n\nCloses #${number}'
     },
     prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
       basicPR: 'Update ${dependency} to the latest version 🚀',
       groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }

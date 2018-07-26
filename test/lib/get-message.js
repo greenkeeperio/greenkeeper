@@ -1,4 +1,5 @@
 const {getMessage, getPrTitle} = require('../../lib/get-message')
+const {defaultPrTitles} = require('../../lib/default-pr-titles')
 
 /* eslint-disable no-template-curly-in-string */
 
@@ -81,16 +82,34 @@ describe('custom pr titles', () => {
   const group = 'jacoba'
 
   test('get default pr titles', () => {
-    const defaultPrTitles = {
-      basicPR: 'Update ${dependency} to the latest version 🚀',
-      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
-    }
     const expected = {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for jacoba 🌴',
       basicPR: 'Update jacoba to the latest version 🚀',
       groupPR: 'Update jacoba in group jacoba to the latest version 🚀'
     }
 
-    expect.assertions(2)
+    expect.assertions(6)
+
+    expect(getPrTitle({
+      version: 'initialPR',
+      prTitles: defaultPrTitles})).toEqual(expected.initialPR)
+
+    expect(getPrTitle({
+      version: 'initialPrBadge',
+      prTitles: defaultPrTitles})).toEqual(expected.initialPrBadge)
+
+    expect(getPrTitle({
+      version: 'initialPrBadgeOnly',
+      prTitles: defaultPrTitles})).toEqual(expected.initialPrBadgeOnly)
+
+    expect(getPrTitle({
+      version: 'initialSubgroupPR',
+      group,
+      prTitles: defaultPrTitles})).toEqual(expected.initialSubgroupPR)
+
     expect(getPrTitle({
       version: 'basicPR',
       dependency,
