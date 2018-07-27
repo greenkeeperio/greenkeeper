@@ -50,17 +50,17 @@ No additional setup is required 😊
 
 `
 
-const updatePullRequestText = ({ newBranch }) => md`
+const updatePullRequestText = ({ ghRepo, newBranch }) => md`
 <summary>👩‍💻 How to update this pull request</summary>
 
 \`\`\`bash
   # Change into your repository’s directory
-  git fetch
+  git fetch --all
   git checkout ${newBranch}
   npm install-test
   # Adapt your code until everything works again
   git commit -m 'chore: adapt code to updated dependencies'
-  git push origin ${newBranch}
+  git push ${ghRepo.clone_url} ${newBranch}
 \`\`\`
 `
 

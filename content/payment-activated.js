@@ -1,5 +1,5 @@
 const md = require('./template')
-const env = require('./env')
+const env = require('../lib/env')
 
 module.exports = ({accountToken}) => {
   if (env.IS_ENTERPRISE) {
