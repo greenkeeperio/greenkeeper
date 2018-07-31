@@ -168,10 +168,7 @@ describe('create version branch', () => {
       accountId: '123',
       repositoryId: '1',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -305,10 +302,7 @@ describe('create version branch', () => {
       accountId: '124',
       repositoryId: '42',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -447,10 +441,7 @@ describe('create version branch', () => {
       accountId: '124gke',
       repositoryId: '41',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -525,10 +516,8 @@ describe('create version branch', () => {
       accountId: '125',
       repositoryId: '46',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
+
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -589,10 +578,8 @@ describe('create version branch', () => {
       accountId: '123',
       repositoryId: 'too-many-packages',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
+
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -653,10 +640,7 @@ describe('create version branch', () => {
       accountId: '123',
       repositoryId: 'too-many-packages',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0-beta'
-      },
+      version: '2.0.0-beta',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -781,10 +765,7 @@ describe('create version branch', () => {
       accountId: '126',
       repositoryId: '43',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -850,10 +831,7 @@ describe('create version branch', () => {
       accountId: '127',
       repositoryId: '44',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^2.0.1',
       oldVersionResolved: '2.0.1',
       versions: {
@@ -872,7 +850,6 @@ describe('create version branch', () => {
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
-      distTag: 'latest',
       oldVersion: 'invalid/version'
     })
 
@@ -907,12 +884,9 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'b',
-      distTag: 'latest',
       accountId: '123',
       repositoryId: '45',
-      distTags: {
-        latest: '1.0.1'
-      },
+      version: '1.0.1',
       oldVersion: '1.0.0'
     })
 
@@ -990,13 +964,10 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'karma',
-      distTag: 'latest',
       accountId: '123',
       repositoryId: '51',
       type: 'devDependencies',
-      distTags: {
-        latest: '2.0.2'
-      },
+      version: '2.0.2',
       oldVersion: '1.3.0'
     })
 
@@ -1028,12 +999,9 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'b',
-      distTag: 'latest',
       accountId: '2323',
       repositoryId: '47',
-      distTags: {
-        latest: '1.0.1'
-      },
+      version: '1.0.1',
       oldVersion: '^1.0.0'
     })
 
@@ -1064,12 +1032,9 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'b',
-      distTag: 'latest',
       accountId: '2323',
       repositoryId: '48',
-      distTags: {
-        latest: '1.0.1'
-      },
+      version: '1.0.1',
       oldVersion: '^1.0.0'
     })
 
@@ -1109,12 +1074,9 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'b',
-      distTag: 'latest',
       accountId: '2323',
       repositoryId: '49',
-      distTags: {
-        latest: '1.0.1'
-      },
+      version: '1.0.1',
       oldVersion: '^1.0.0'
     })
 
@@ -1180,10 +1142,7 @@ describe('create version branch', () => {
       accountId: '2323',
       repositoryId: '50',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '1.1.0'
-      },
+      version: '1.1.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1258,10 +1217,7 @@ describe('create version branch', () => {
       accountId: '2323',
       repositoryId: '86',
       type: 'devDependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '1.1.0'
-      },
+      version: '1.1.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1317,10 +1273,7 @@ describe('create version branch', () => {
       accountId: '2323',
       repositoryId: 'ignored-in-group-1',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '5.5.6'
-      },
+      version: '5.5.6',
       oldVersion: '^5.0.0',
       oldVersionResolved: '5.5.5',
       versions: {
@@ -1467,10 +1420,7 @@ describe('create version branch for dependencies from monorepos', () => {
       accountId: 'mono-123',
       repositoryId: 'mono-1-ignored',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1616,10 +1566,8 @@ describe('create version branch for dependencies from monorepos', () => {
       accountId: 'mono-123',
       repositoryId: 'mono-1',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
+
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1793,10 +1741,8 @@ describe('create version branch for dependencies from monorepos', () => {
       accountId: 'mono-123',
       repositoryId: 'mono-2',
       type: 'dependencies',
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
+
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {

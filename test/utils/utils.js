@@ -152,7 +152,8 @@ test('getJobsPerGroup', () => {
     versions,
     account,
     repositoryId,
-    plan
+    plan,
+    logs: console.log
   })).toHaveLength(1)
   // creates two jobs if all package.json files are in two groups
   expect(getJobsPerGroup({

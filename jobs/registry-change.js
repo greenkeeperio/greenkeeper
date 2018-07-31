@@ -49,6 +49,7 @@ module.exports = async function (
   }
 
   const oldDistTags = npmDbDoc.distTags || {}
+  // which distTag has changed
   const distTag = _.findKey(distTags, (version, tag) => {
     const oldVersion = oldDistTags[tag]
     if (!oldVersion) {
@@ -72,13 +73,7 @@ module.exports = async function (
     return
   }
 
-  const version = distTags['latest']
-  // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) {
-    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
-    return
-  }
-
+  const version = distTags[distTag]
   let dependencies = [ dependency ]
 
   // check if dependency update is part of a monorepo release
@@ -125,7 +120,6 @@ module.exports = async function (
     "oldVersion": "^4.2.4"
   }
   */
-
   // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     keys: dependencies
@@ -138,7 +132,6 @@ module.exports = async function (
   log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
-
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
 
@@ -162,6 +155,7 @@ module.exports = async function (
   // ******** Monorepos begin
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
+
   if (keysToFindMonorepoDocs.length) {
     const monorepoDocs = (await repositories.query('by_full_name', {
       keys: keysToFindMonorepoDocs,
@@ -170,6 +164,8 @@ module.exports = async function (
 
     _.forEach(withMultiplePackageJSON, monorepo => {
       const account = accounts[monorepo[0].value.accountId]
+      if (isFromHook && String(account.installation) !== installation) return {}
+
       const plan = account.plan
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
       if (!repoDoc) return
@@ -183,7 +179,8 @@ module.exports = async function (
         versions,
         account,
         repositoryId: repoDoc.id,
-        plan}))
+        plan,
+        log}))
     })
   }
   // ******** Monorepos end
@@ -202,14 +199,17 @@ module.exports = async function (
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
+      if (semver.prerelease(version) && !semver.prerelease(pkg.value.oldVersion)) {
+        log.info(`exited: ${dependency} ${version} is a prerelease on latest and user does not use prereleases`)
+        return
+      }
 
       return {
         data: Object.assign(
           {
             name: 'create-version-branch',
             dependency,
-            distTags,
-            distTag,
+            version,
             versions,
             oldVersionResolved,
             repositoryId: pkg.id,
