@@ -26,6 +26,14 @@ test('get default config', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
   }
   expect(getConfig(repository)).toEqual(expected)
@@ -68,6 +76,14 @@ test('get config from root greenkeeper section', () => {
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
     },
+    prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
+    },
     groups: {
       backend: {
         ignore: ['lodash'],
@@ -109,6 +125,61 @@ test('get custom commit message', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
+    }
+  }
+  expect(getConfig(repository)).toEqual(expected)
+})
+
+test('get custom pr title', () => {
+  expect.assertions(1)
+
+  const repository = {
+    packages: {
+      'package.json': {
+        greenkeeper: {
+          commitMessages: {
+            initialBadge: 'HELLO Greenkeeper badge'
+          },
+          prTitles: {
+            basicPR: 'update Jacoba to the latest version',
+            groupPR: 'update group of Jacoba to the latest version'
+          }
+        }
+      }
+    }
+  }
+
+  const expected = {
+    label: 'greenkeeper',
+    branchPrefix: 'greenkeeper/',
+    ignore: [],
+    commitMessages: {
+      addConfigFile: 'chore: add Greenkeeper config file',
+      updateConfigFile: 'chore: update Greenkeeper config file',
+      initialBadge: 'HELLO Greenkeeper badge',
+      initialDependencies: 'chore(package): update dependencies',
+      initialBranches: 'chore(travis): whitelist greenkeeper branches',
+      dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
+      devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
+      devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
+      closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
+      basicPR: 'update Jacoba to the latest version',
+      groupPR: 'update group of Jacoba to the latest version'
     }
   }
   expect(getConfig(repository)).toEqual(expected)
@@ -179,6 +250,14 @@ test('get ignore config with empty greenkeeper config', () => {
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
+    },
+    prTitles: {
+      initialPR: 'Update dependencies to enable Greenkeeper 🌴',
+      initialPrBadge: 'Add badge to enable Greenkeeper 🌴',
+      initialPrBadgeOnly: 'Add Greenkeeper badge 🌴',
+      initialSubgroupPR: 'Update dependencies for ${group} 🌴',
+      basicPR: 'Update ${dependency} to the latest version 🚀',
+      groupPR: 'Update ${dependency} in group ${group} to the latest version 🚀'
     }
   }
 

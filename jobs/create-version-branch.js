@@ -4,7 +4,7 @@ const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const getMessage = require('../lib/get-message')
+const {getMessage, getPrTitle} = require('../lib/get-message')
 const getInfos = require('../lib/get-infos')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
@@ -14,7 +14,8 @@ const upsert = require('../lib/upsert')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
-  getMonorepoGroupNameForPackage
+  getMonorepoGroupNameForPackage,
+  isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
 
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
@@ -135,6 +136,13 @@ module.exports = async function (
   }
 
   const [owner, repo] = repository.fullName.split('/')
+
+  // Bail if the dependency is ignored in a group (yes, group configs make no sense in a non-monorepo, but we respect it anyway)
+  if (config.groups && isDependencyIgnoredInGroups(config.groups, 'package.json', dependency)) {
+    log.warn(`exited: ${dependency} ${version} ignored by groups config`, { config })
+    return
+  }
+  // Bail if the dependency is ignored globally
   if (_.includes(config.ignore, dependency) ||
       (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
     log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
@@ -285,7 +293,10 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependencyKey} to the latest version 🚀`
+  const title = getPrTitle({
+    version: 'basicPR',
+    dependency: dependencyKey,
+    prTitles: config.prTitles})
 
   // Inform monthly paying customers about the new yearly plan
   const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")

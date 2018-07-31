@@ -54,9 +54,8 @@ describe('create version branch', () => {
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
       removeIfExists(payments, '124', '125'),
-      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease'),
-      removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd',
-        '41:pr:321', '50:pr:321', '1:pr:3210')
+      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease', 'ignored-in-group-1'),
+      removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd', '41:pr:321', '50:pr:321', '1:pr:3210')
     ])
   })
 
@@ -1281,6 +1280,61 @@ describe('create version branch', () => {
     expect(branch).toBeTruthy()
     await expect(repositories.get('86:pr:321')).rejects.toThrow('missing')
     expect(githubMock.isDone()).toBeTruthy()
+  })
+
+  // If it’s not a monorepo, but the user still defines a group for that single package.json, we still
+  // respect its ignore config
+  test('no branch with single package.json in default group and ignored dependency', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'ignored-in-group-1',
+      accountId: '2323',
+      fullName: 'finnp/test',
+      enabled: true,
+      greenkeeper: {
+        'groups': {
+          'default': {
+            'packages': [
+              'package.json'
+            ],
+            'ignore': [
+              'karma',
+              'karma-chrome-launcher',
+              'karma-coverage-istanbul-reporter'
+            ]
+          }
+        }
+      },
+      packages: {
+        'package.json': {
+          dependencies: {
+            karma: '5.5.5'
+          }
+        }
+      }
+    })
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'karma',
+      accountId: '2323',
+      repositoryId: 'ignored-in-group-1',
+      type: 'dependencies',
+      distTag: 'latest',
+      distTags: {
+        latest: '5.5.6'
+      },
+      oldVersion: '^5.0.0',
+      oldVersionResolved: '5.5.5',
+      versions: {
+        '5.5.6': {
+          gitHead: 'deadbeef222'
+        }
+      }
+    })
+
+    expect(newJob).toBeFalsy()
   })
 })
 

@@ -9,6 +9,7 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const upsert = require('../lib/upsert')
+const { getPrTitle } = require('../lib/get-message')
 
 const prContent = require('../content/initial-pr')
 
@@ -113,9 +114,10 @@ module.exports = async function (
       owner,
       repo,
       title: enabled
-        ? `Add Greenkeeper badge 🌴`
-        : (depsUpdated ? 'Update dependencies' : 'Add badge') +
-            ' to enable Greenkeeper 🌴',
+        ? getPrTitle({ version: 'initialPrBadgeOnly', prTitles: config.prTitles })
+        : (depsUpdated
+          ? getPrTitle({ version: 'initialPR', prTitles: config.prTitles })
+          : getPrTitle({ version: 'initialPrBadge', prTitles: config.prTitles })),
       body: prContent({
         depsUpdated,
         ghRepo,

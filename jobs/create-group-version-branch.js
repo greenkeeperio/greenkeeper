@@ -5,7 +5,7 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
-const getMessage = require('../lib/get-message')
+const {getMessage, getPrTitle} = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -299,7 +299,11 @@ module.exports = async function (
     return
   }
 
-  const title = `Update ${dependencyKey} in group ${groupName} to the latest version 🚀`
+  const title = getPrTitle({
+    version: 'groupPR',
+    dependency: dependencyKey,
+    group: groupName,
+    prTitles: config.prTitles})
 
   // maybe adapt PR body
   const body = prContent({
