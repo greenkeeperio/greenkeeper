@@ -49,6 +49,7 @@ module.exports = async function (
   }
 
   const oldDistTags = npmDbDoc.distTags || {}
+  // which distTag has changed
   const distTag = _.findKey(distTags, (version, tag) => {
     const oldVersion = oldDistTags[tag]
     if (!oldVersion) {
@@ -64,18 +65,14 @@ module.exports = async function (
   }
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
-  // currently we only handle latest versions
-  // so we can heavily optimise by exiting here
-  // we want to handle different distTags in the future
-  if (distTag !== 'latest') {
-    log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
+  const version = distTags[distTag]
+  if (semver.prerelease(version) && distTag === 'latest') {
+    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
     return
   }
 
-  const version = distTags['latest']
-  // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) {
-    log.info(`exited: ${dependency} ${version} is a prerelease on latest`)
+  if (!semver.prerelease(version) && distTag !== 'latest') {
+    log.info(`exited: ${dependency} ${version} is a non-prerelease on non-latest`)
     return
   }
 
@@ -87,7 +84,7 @@ module.exports = async function (
     // 1. We have all of the modules that belong to the release (have the same version number)
     // 2. The release is forced by the monorepo-supervisor. This means the release is still incomplete
     //    after n minutes, but we want to open the PR anyway
-    if (!await hasAllMonorepoUdates(dependency, version) && !force) {
+    if (!await hasAllMonorepoUdates(dependency, version, distTag) && !force) {
       log.info('exited: is not last in list of monorepo packages')
       // create/update npm/monorepo:dependency-version
       await updateMonorepoReleaseInfo(dependency, distTags, distTag, versions)

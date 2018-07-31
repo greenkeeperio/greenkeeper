@@ -36,7 +36,6 @@ module.exports = async function (
     versions
   }
 ) {
-  if (distTag !== 'latest') return
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
   let isMonorepo = false
@@ -44,12 +43,12 @@ module.exports = async function (
   let monorepoGroup = ''
   let relevantDependencies = []
   const version = distTags[distTag]
-  // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) return
+
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
+
   const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
 
@@ -57,6 +56,7 @@ module.exports = async function (
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }
+
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
   // modules as well. If not, stop this update, the job started by the last
@@ -88,6 +88,7 @@ module.exports = async function (
   //
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
+  // this is a good candidate for a utils function :)
   function isTrue (x) {
     if (typeof x === 'object') {
       return !!x.length

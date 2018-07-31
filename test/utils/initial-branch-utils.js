@@ -2,34 +2,10 @@ const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
 describe('create initial branch', () => {
-  beforeEach(() => {
-    delete process.env.IS_ENTERPRISE
-    delete process.env.BADGES_HOST
-    jest.resetModules()
-  })
-
-  beforeAll(async () => {
-    const { installations, payments } = await dbs()
-
-    await installations.put({
-      _id: '123',
-      installation: 137,
-      plan: 'free'
-    })
-
-    await payments.put({
-      _id: '123',
-      stripeSubscriptionId: 'stripe123',
-      plan: 'personal'
-    })
-  })
-
   afterAll(async () => {
-    const { installations, repositories, payments } = await dbs()
+    const { repositories } = await dbs()
     await Promise.all([
-      removeIfExists(installations, '123'),
-      removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd')
+      removeIfExists(repositories, '49', '49:branch:1234abcd')
     ])
   })
 
@@ -60,11 +36,11 @@ describe('create initial branch', () => {
               latest: '3.0.0-rc1'
             },
             versions: {
+              '1.0.0': true,
               '2.0.0-rc1': true,
               '2.0.0-rc2': true,
               '2.0.0': true,
-              '3.0.0-rc1': true,
-              '1.0.0': true
+              '3.0.0-rc1': true
             }
           }
         }]
