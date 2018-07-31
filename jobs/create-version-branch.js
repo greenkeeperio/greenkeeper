@@ -29,23 +29,19 @@ module.exports = async function (
     accountId,
     repositoryId,
     type,
-    distTag,
-    distTags,
+    version,
     oldVersion,
     oldVersionResolved,
     versions
   }
 ) {
-  if (distTag !== 'latest') return
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
   let isMonorepo = false
   let monorepoGroupName = null
   let monorepoGroup = ''
   let relevantDependencies = []
-  const version = distTags[distTag]
-  // Ignore releases on `latest` that have prerelease identifiers
-  if (semver.prerelease(version)) return
+
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
@@ -88,6 +84,7 @@ module.exports = async function (
   //
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
+  // this is a good candidate for a utils function :)
   function isTrue (x) {
     if (typeof x === 'object') {
       return !!x.length

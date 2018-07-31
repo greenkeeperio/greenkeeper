@@ -270,10 +270,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'dependencies', filename: 'backend/package.json'},
         {type: 'dependencies', filename: 'package.json'}],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -407,10 +404,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'devDependencies', filename: 'backend/package.json'},
         {type: 'dependencies', filename: 'package.json'}],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -527,10 +521,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'devDependencies', filename: 'backend/package.json'}
       ],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -594,10 +585,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'dependencies', filename: '22/package.json'},
         {type: 'dependencies', filename: '11/package.json'}],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -798,10 +786,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'dependencies', filename: 'backend/package.json'},
         {type: 'dependencies', filename: 'package.json'}],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1002,10 +987,7 @@ describe('create-group-version-branch', async () => {
         {type: 'dependencies', filename: 'package.json'},
         {type: 'devDependencies', filename: 'package.json'}
       ],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
@@ -1158,10 +1140,7 @@ describe('create-group-version-branch', async () => {
       types: [
         {type: 'dependencies', filename: 'backend/package.json'},
         {type: 'dependencies', filename: 'package.json'}],
-      distTag: 'latest',
-      distTags: {
-        latest: '2.0.0'
-      },
+      version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {

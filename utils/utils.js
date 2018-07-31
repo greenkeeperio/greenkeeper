@@ -72,7 +72,8 @@ function getJobsPerGroup ({
   versions,
   account,
   repositoryId,
-  plan
+  plan,
+  log
 }) {
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
   const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
@@ -95,13 +96,17 @@ function getJobsPerGroup ({
     const relevantMonorepoChangeFiles = monorepo.filter(change => {
       return group[groupName].packages.includes(change.value.filename)
     })
+    const version = distTags[distTag]
+    if (semver.prerelease(version) && !semver.prerelease(relevantMonorepoChangeFiles[0].value.oldVersion)) {
+      log.info(`exited: ${dependency} ${version} is a prerelease on latest and user does not use prereleases`)
+      return
+    }
 
     return {
       data: Object.assign({
         name: 'create-group-version-branch',
         group,
-        distTags,
-        distTag,
+        version,
         dependency,
         versions,
         repositoryId,
