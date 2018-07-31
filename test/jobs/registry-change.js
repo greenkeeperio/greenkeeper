@@ -72,7 +72,7 @@ describe('registry change create jobs', async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, '999', '123-two-packages', '123-two-groups', '123-two-repos'),
-      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups', 'rg-no-monorepo', 'rg-monorepo'),
+      removeIfExists(repositories, '775', '776', '777', '888', '123-monorepo', '123-monorepo-two-groups', 'rg-no-monorepo', 'rg-monorepo', 'beta-monorepo'),
       removeIfExists(npm, 'standard', 'eslint', 'lodash', 'redux', 'betazed', 'kronos')
     ])
   })
@@ -517,16 +517,11 @@ describe('registry change create jobs', async () => {
   })
 
   test('creates one monorepo job for a user who uses prereleases', async () => {
-    const { installations, repositories } = await dbs()
+    const { repositories } = await dbs()
 
     await Promise.all([
-      installations.put({
-        _id: '123-two-repos',
-        installation: 10409,
-        plan: 'free'
-      }),
       repositories.put({
-        _id: 'rg-monorepo',
+        _id: 'beta-monorepo',
         enabled: true,
         type: 'repository',
         fullName: 'ilse/monorepo',
