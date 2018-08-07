@@ -33,7 +33,7 @@ async function sendSlackNotification (dependency) {
 module.exports = async function () {
   const releases = await pendingMonorepoReleases()
 
-  return Promise.all(releases.map(async (release) => {
+  return releases.map((release) => {
     // We don't want ths for now
     // remove if condifion to activate slacknotification again
     if (release.slack) sendSlackNotification(release.dependency)
@@ -45,5 +45,5 @@ module.exports = async function () {
       versions: release.versions,
       force: true
     }
-  }))
+  })
 }
