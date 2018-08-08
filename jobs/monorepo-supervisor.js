@@ -1,3 +1,6 @@
+const Log = require('gk-log')
+
+const dbs = require('../lib/dbs')
 const { getMonorepoGroupNameForPackage } = require('../lib/monorepo')
 const { notifyAdmin } = require('../lib/comms')
 
@@ -31,19 +34,30 @@ async function sendSlackNotification (dependency) {
 }
 
 module.exports = async function () {
+  const logs = dbs.getLogsDb()
+  const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'monorepo-supervisor'})
+
   const releases = await pendingMonorepoReleases()
 
-  return releases.map((release) => {
+  log.info(`starting ${releases.length} monorepo releases`, {releases})
+
+  const jobs = releases.map((release) => {
     // We don't want ths for now
     // remove if condifion to activate slacknotification again
     if (release.slack) sendSlackNotification(release.dependency)
 
     return {
-      name: 'registry-change',
-      dependency: release.doc.dependency,
-      distTags: release.doc.distTags,
-      versions: release.doc.versions,
-      force: true
+      data: {
+        name: 'registry-change',
+        dependency: release.dependency,
+        distTags: release.distTags,
+        versions: release.versions,
+        force: true
+      }
     }
   })
+
+  log.info(`created ${jobs.length} jobs`, {jobs})
+
+  return jobs
 }

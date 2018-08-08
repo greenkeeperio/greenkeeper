@@ -24,39 +24,34 @@ describe('monorepo supervisor', async () => {
       const lib = require.requireActual('../../lib/monorepo')
       lib.pendingMonorepoReleases = () => {
         return [{
-          id: 'monorepo:wobbly',
-          doc: {
-            _id: 'monorepo:wobbly',
-            distTags: {
-              latest: '2.0.0'
+          _id: 'monorepo:wobbly',
+          distTags: {
+            latest: '2.0.0'
+          },
+          versions: {
+            '2.0.0': {
+              gitHead: 'timey'
             },
-            versions: {
-              '2.0.0': {
-                gitHead: 'timey'
-              },
-              '1.0.0': {
-                gitHead: 'wimey'
-              }
+            '1.0.0': {
+              gitHead: 'wimey'
+            }
+          },
+          dependency: 'wobbly'
+        },
+        {
+          _id: 'monorepo:wibbly',
+          distTags: {
+            latest: '2.0.0'
+          },
+          versions: {
+            '2.0.0': {
+              gitHead: 'smurf'
             },
-            dependency: 'wobbly'
-          }
-        }, {
-          id: 'monorepo:wibbly',
-          doc: {
-            _id: 'monorepo:wibbly',
-            distTags: {
-              latest: '2.0.0'
-            },
-            versions: {
-              '2.0.0': {
-                gitHead: 'smurf'
-              },
-              '1.0.0': {
-                gitHead: 'sky'
-              }
-            },
-            dependency: 'wibbly'
-          }
+            '1.0.0': {
+              gitHead: 'sky'
+            }
+          },
+          dependency: 'wibbly'
         }]
       }
       lib.getMonorepoGroupNameForPackage = (dependencyName) => {
@@ -67,9 +62,9 @@ describe('monorepo supervisor', async () => {
     const monorepoSupervisor = require('../../jobs/monorepo-supervisor')
     const newJob = await monorepoSupervisor()
     expect(newJob).toBeTruthy()
-    expect(newJob[0].name).toEqual('registry-change')
-    expect(newJob[0].dependency).toEqual('wobbly')
-    expect(newJob[1].dependency).toEqual('wibbly')
+    expect(newJob[0].data.name).toEqual('registry-change')
+    expect(newJob[0].data.dependency).toEqual('wobbly')
+    expect(newJob[1].data.dependency).toEqual('wibbly')
   })
 
   test('no pending releases', async () => {

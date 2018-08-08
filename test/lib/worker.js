@@ -189,6 +189,53 @@ test('worker schedules further jobs on success', async () => {
   )
 })
 
+test('worker schedules further monorepo-supervisor jobs on success', async () => {
+  expect.assertions(7)
+
+  const monorepoSupervisorJobData = { content: Buffer.from(JSON.stringify({name: 'monorepo-supervisor'})) }
+
+  jest.mock('../../jobs/monorepo-supervisor', () => {
+    return async () => [
+      {
+        data: {
+          name: 'registry-change',
+          dependency: 'jest'
+        }
+      },
+      {
+        data: {
+          name: 'registry-change',
+          dependency: 'angular'
+        }
+      },
+      {
+        data: {
+          name: 'registry-change',
+          dependency: 'pouchdb'
+        }
+      }
+    ]
+  })
+
+  const worker = require('../../lib/worker')
+
+  await worker(
+    (data) => {
+      const job = JSON.parse(data.toString())
+      expect(job.name).toBe('registry-change')
+      expect(['jest', 'angular', 'pouchdb'].includes(job.dependency)).toBeTruthy()
+    },
+    {
+      ack: (arg) => {
+        const job = JSON.parse(arg.content.toString())
+        expect(job.name).toBe('monorepo-supervisor')
+      },
+      nack: () => expect.anything()
+    },
+    monorepoSupervisorJobData
+  )
+})
+
 test('worker requeues job on scheduling error, then throws away', async () => {
   expect.assertions(5)
 
