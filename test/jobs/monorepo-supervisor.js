@@ -24,33 +24,39 @@ describe('monorepo supervisor', async () => {
       const lib = require.requireActual('../../lib/monorepo')
       lib.pendingMonorepoReleases = () => {
         return [{
-          _id: 'monorepo:wobbly',
-          distTags: {
-            latest: '2.0.0'
-          },
-          versions: {
-            '2.0.0': {
-              gitHead: 'timey'
+          id: 'monorepo:wobbly',
+          doc: {
+            _id: 'monorepo:wobbly',
+            distTags: {
+              latest: '2.0.0'
             },
-            '1.0.0': {
-              gitHead: 'wimey'
-            }
-          },
-          dependency: 'wobbly'
+            versions: {
+              '2.0.0': {
+                gitHead: 'timey'
+              },
+              '1.0.0': {
+                gitHead: 'wimey'
+              }
+            },
+            dependency: 'wobbly'
+          }
         }, {
-          _id: 'monorepo:wibbly',
-          distTags: {
-            latest: '2.0.0'
-          },
-          versions: {
-            '2.0.0': {
-              gitHead: 'smurf'
+          id: 'monorepo:wibbly',
+          doc: {
+            _id: 'monorepo:wibbly',
+            distTags: {
+              latest: '2.0.0'
             },
-            '1.0.0': {
-              gitHead: 'sky'
-            }
-          },
-          dependency: 'wibbly'
+            versions: {
+              '2.0.0': {
+                gitHead: 'smurf'
+              },
+              '1.0.0': {
+                gitHead: 'sky'
+              }
+            },
+            dependency: 'wibbly'
+          }
         }]
       }
       lib.getMonorepoGroupNameForPackage = (dependencyName) => {
