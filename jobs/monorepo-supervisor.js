@@ -47,11 +47,13 @@ module.exports = async function () {
     if (release.slack) sendSlackNotification(release.dependency)
 
     return {
-      name: 'registry-change',
-      dependency: release.dependency,
-      distTags: release.distTags,
-      versions: release.versions,
-      force: true
+      data: {
+        name: 'registry-change',
+        dependency: release.dependency,
+        distTags: release.distTags,
+        versions: release.versions,
+        force: true
+      }
     }
   })
 
