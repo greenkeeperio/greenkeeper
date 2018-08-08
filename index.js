@@ -75,7 +75,7 @@ require('./lib/rollbar')
     await enterpriseSetup()
   }
 
-  const scheduleRemindersJobData = Buffer.from(JSON.stringify({name: 'schedule-stale-initial-pr-reminders'}))
+  const scheduleRemindersJobData = { content: Buffer.from(JSON.stringify({name: 'schedule-stale-initial-pr-reminders'})) }
   async function scheduleReminders () {
     try {
       await scheduleJob(scheduleRemindersJobData, {priority: 1})
