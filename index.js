@@ -84,7 +84,7 @@ require('./lib/rollbar')
     }
   }
 
-  const monorepoSupervisorJobData = Buffer.from(JSON.stringify({name: 'monorepo-supervisor'}))
+  const monorepoSupervisorJobData = { content: Buffer.from(JSON.stringify({name: 'monorepo-supervisor'})) }
   async function scheduleMonorepoReleaseSupervisor () {
     try {
       await scheduleJob(monorepoSupervisorJobData, {priority: 1})
