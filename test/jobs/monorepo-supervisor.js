@@ -62,9 +62,9 @@ describe('monorepo supervisor', async () => {
     const monorepoSupervisor = require('../../jobs/monorepo-supervisor')
     const newJob = await monorepoSupervisor()
     expect(newJob).toBeTruthy()
-    expect(newJob[0].name).toEqual('registry-change')
-    expect(newJob[0].dependency).toEqual('wobbly')
-    expect(newJob[1].dependency).toEqual('wibbly')
+    expect(newJob[0].data.name).toEqual('registry-change')
+    expect(newJob[0].data.dependency).toEqual('wobbly')
+    expect(newJob[1].data.dependency).toEqual('wibbly')
   })
 
   test('no pending releases', async () => {
