@@ -40,9 +40,9 @@ module.exports = async function () {
 
     return {
       name: 'registry-change',
-      dependency: release.dependency,
-      distTags: release.distTags,
-      versions: release.versions,
+      dependency: release.doc.dependency,
+      distTags: release.doc.distTags,
+      versions: release.doc.versions,
       force: true
     }
   })
