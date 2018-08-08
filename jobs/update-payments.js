@@ -12,7 +12,7 @@ module.exports = async ({ accountId, repositoryId }) => {
   const currentlyPrivateAndEnabledRepos = await getAmountOfCurrentlyPrivateAndEnabledRepos(accountId)
 
   // charge for new repo from Stripe
-  const baseRepos = (billingAccount.plan === 'org' || billingAccount.plan === 'org_year') ? 10 : 0
+  const baseRepos = (['org', 'org_eur', 'org_year', 'org_year_eur'].includes(billingAccount.plan)) ? 10 : 0
   const newQuantity = Math.max(baseRepos, currentlyPrivateAndEnabledRepos)
   await stripe.subscriptionItems.update(billingAccount.stripeItemId, {
     quantity: newQuantity
