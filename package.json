@@ -73,11 +73,10 @@
     "format": "prettier-standard-formatter jobs lib test",
     "db:start": "./start-couchdb",
     "deploy": "./deploy",
-    "pretest": "standard && npm run db:start",
+    "pretest": "standard && npm run db:start NODE_ENV=testing",
     "start": "node index.js",
-    "test": "npm run test:parallel",
-    "test:sequential": "NODE_ENV=testing jest -i",
-    "test:parallel": "NODE_ENV=testing jest"
+    "test": "npm run jest",
+    "test:sequential": "npm run pretest && jest -i"
   },
   "standard": {
     "env": {
