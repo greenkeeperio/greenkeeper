@@ -275,7 +275,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const sha = await createBranch({ // try/catch
     installationId,
     owner,
-    repo,
+    repoName: repo,
     branch,
     newBranch,
     transforms

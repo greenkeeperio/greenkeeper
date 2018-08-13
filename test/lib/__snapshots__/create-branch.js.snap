@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create branch with lockfiles change one file (package.json) and generate its lockfile (old syntax) 1`] = `
+Object {
+  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMS4xIn19\\"}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"^1.0.0\\"}}",
+  "type": "npm",
+}
+`;
+
+exports[`create branch with lockfiles change two file (package.json, frontend/package.json) and generate their lockfiles 1`] = `
+Object {
+  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMS4xIn19\\"}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"^1.0.0\\"}}",
+  "type": "npm",
+}
+`;
+
+exports[`create branch with lockfiles change two file (package.json, frontend/package.json) and generate their lockfiles 2`] = `
+Object {
+  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"frontend/package-lock.json\\",\\"name\\":\\"frontend/package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMS4xIn19\\"}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"^1.0.0\\"}}",
+  "type": "npm",
+}
+`;

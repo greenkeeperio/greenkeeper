@@ -31,11 +31,11 @@ test('open-issue', async () => {
   })
 
   jest.mock('../../lib/create-branch', () => ({
-    installationId, owner, repo, branch, newBranch, path, message, transform
+    installationId, owner, repoName, branch, newBranch, path, message, transform
   }) => {
     expect(installationId).toBeTruthy()
     expect(owner).toEqual('finnp')
-    expect(repo).toEqual('testrepo')
+    expect(repoName).toEqual('testrepo')
     expect(branch).toEqual('master')
     expect(newBranch).toEqual('prefix-standard-pin-1.4.0')
     expect(path).toEqual('package.json')
