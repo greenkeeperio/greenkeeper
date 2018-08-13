@@ -1,0 +1,5 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create version branch lockfile: runs if in range, has package-lock.json 1`] = `"{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}"`;
+
+exports[`create version branch lockfile: runs if in range, package-lock.json has not changed 1`] = `"{\\"devDependencies\\":{\\"best\\":\\"1.2.0\\"}}"`;

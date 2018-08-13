@@ -17,9 +17,11 @@ const {
   getMonorepoGroupNameForPackage,
   isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
-
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
+const { createTransformFunction,
+  generateGitHubCompareURL,
+  hasTooManyPackageJSONs
+} = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -45,12 +47,12 @@ module.exports = async function (
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
-  const repository = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-version-branch'})
+  const repoDoc = await repositories.get(repositoryId)
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
 
-  if (hasTooManyPackageJSONs(repository)) {
-    log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
+  if (hasTooManyPackageJSONs(repoDoc)) {
+    log.warn(`exited: repository has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }
   // if this dependency is part of a monorepo suite that usually gets released
@@ -62,7 +64,7 @@ module.exports = async function (
     monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
     monorepoGroup = await getMonorepoGroup(monorepoGroupName)
     relevantDependencies = monorepoGroup.filter(dep =>
-      !!JSON.stringify(repository.packages['package.json']).match(dep))
+      !!JSON.stringify(repoDoc.packages['package.json']).match(dep))
 
     log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
@@ -77,7 +79,7 @@ module.exports = async function (
   // the CI build wouldn‘t install anything new anyway).
   //
   // Variable name explanations:
-  // - moduleLogFile: Lockfiles that get published to npm and that influence what
+  // - moduleLockFile: Lockfiles that get published to npm and that influence what
   //   gets installed on a user’s machine, such as `npm-shrinkwrap.json`.
   // - projectLockFile: lockfiles that don’t get published to npm and have no
   //   influence on the users’ dependency trees, like package-lock and yarn-lock
@@ -93,37 +95,26 @@ module.exports = async function (
   }
 
   const satisfies = semver.satisfies(version, oldVersion)
-  const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
-  const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
-  const usesGreenkeeperLockfile = repository.packages['package.json'] &&
-    repository.packages['package.json'].devDependencies &&
-    _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
+
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
     log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
     return
   }
 
-  // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
-  // won’t get updated without it
-  if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
-    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile`)
-    return
-  }
-
   // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
-  const config = getConfig(repository)
-  log.info(`config for ${repository.fullName}`, {config})
+  const config = getConfig(repoDoc)
+  log.info(`config for ${repoDoc.fullName}`, {config})
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
-  if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
-    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true`)
-    return
-  }
+
+  let processLockfiles = true
+  if (onlyUpdateLockfilesIfOutOfRange && satisfies) processLockfiles = false
 
   let billing = null
   if (!env.IS_ENTERPRISE) {
     billing = await getActiveBilling(accountId)
-    if (repository.private) {
+    if (repoDoc.private) {
       if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
         log.warn('exited: payment required')
         return
@@ -131,7 +122,7 @@ module.exports = async function (
     }
   }
 
-  const [owner, repo] = repository.fullName.split('/')
+  const [owner, repo] = repoDoc.fullName.split('/')
 
   // Bail if the dependency is ignored in a group (yes, group configs make no sense in a non-monorepo, but we respect it anyway)
   if (config.groups && isDependencyIgnoredInGroups(config.groups, 'package.json', dependency)) {
@@ -140,10 +131,11 @@ module.exports = async function (
   }
   // Bail if the dependency is ignored globally
   if (_.includes(config.ignore, dependency) ||
-      (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
+  (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
     log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
     return
   }
+
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
@@ -199,6 +191,7 @@ module.exports = async function (
         commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
       log.info('commit message created', {commitMessage})
+
       return {
         transform: createTransformFunction(dependencyType, depName, latestDependencyVersion, log),
         path: 'package.json',
@@ -209,15 +202,19 @@ module.exports = async function (
 
   const openPR = await findOpenPR()
 
-  const transforms = _.compact(await createTransformsArray(group, repository.packages['package.json']))
+  const transforms = _.compact(_.flatten(await createTransformsArray(group, repoDoc.packages['package.json'])))
+  const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
   const sha = await createBranch({
     installationId,
     owner,
-    repo,
+    repoName: repo,
+    repoDoc,
     branch: base,
     newBranch,
     path: 'package.json',
-    transforms
+    transforms,
+    processLockfiles,
+    lockFileCommitMessage
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})
@@ -278,7 +275,7 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
-  const compareURL = generateGitHubCompareURL(repository.fullName, base, newBranch)
+  const compareURL = generateGitHubCompareURL(repoDoc.fullName, base, newBranch)
 
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({

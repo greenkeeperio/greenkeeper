@@ -254,7 +254,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('new pull request, 1 group, 2 packages, same dependencyType', async () => {
-    expect.assertions(20)
+    expect.assertions(21)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/87/access_tokens')
@@ -325,7 +325,8 @@ describe('create-group-version-branch', async () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => ({ transform, processLockfiles }) => {
+      expect(processLockfiles).toBeTruthy()
       return '1234abcd'
     })
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
@@ -387,7 +388,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('new pull request, 1 group, 2 packages, different dependencyType', async () => {
-    expect.assertions(20)
+    expect.assertions(21)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/88/access_tokens')
@@ -458,7 +459,8 @@ describe('create-group-version-branch', async () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => ({ transform, processLockfiles }) => {
+      expect(processLockfiles).toBeTruthy()
       return '1234abcd'
     })
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
@@ -771,7 +773,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('new pull request, 1 group, 2 packages, same dependencyType, old PR exists', async () => {
-    expect.assertions(13)
+    expect.assertions(14)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '123-monorepo-old-pr',
@@ -840,7 +842,8 @@ describe('create-group-version-branch', async () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => {
+    jest.mock('../../lib/create-branch', () => ({ transform, processLockfiles }) => {
+      expect(processLockfiles).toBeTruthy()
       return '1234abcd'
     })
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
@@ -897,7 +900,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('monorepo release: new pull request, 1 group, 2 packages, same dependencyType', async () => {
-    expect.assertions(34)
+    expect.assertions(35)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/87/access_tokens')
@@ -966,24 +969,9 @@ describe('create-group-version-branch', async () => {
        </details>`
       }
     })
-    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles }) => {
       expect(transforms).toHaveLength(5)
-
-      const transform0 = await transforms[0]
-      expect(transform0.message).toEqual('fix(package): update pouchdb to version 2.0.0')
-
-      const transform1 = await transforms[1]
-      expect(transform1.message).toEqual('fix(package): update pouchdb to version 2.0.0')
-
-      const transform2 = await transforms[2]
-      expect(transform2.message).toEqual('fix(package): update pouchdb-adapter-utils to version 2.0.0')
-
-      const transform3 = await transforms[3]
-      expect(transform3.message).toEqual('chore(package): update pouchdb-core to version 2.0.0')
-
-      const transform4 = await transforms[4]
-      expect(transform4.message).toEqual('fix(package): update pouchdb-core to version 2.0.0')
-
+      expect(processLockfiles).toBeTruthy()
       let input = {
         dependencies: {
           'pouchdb': '1.0.0'
@@ -1002,12 +990,18 @@ describe('create-group-version-branch', async () => {
         path: 'backend/package.json'
       }
 
-      let result = transform0.transform(JSON.stringify(input))
-      result = transform3.transform(result)
+      expect(transforms[0].message).toEqual('fix(package): update pouchdb to version 2.0.0')
+      expect(transforms[1].message).toEqual('fix(package): update pouchdb to version 2.0.0')
+      expect(transforms[2].message).toEqual('fix(package): update pouchdb-adapter-utils to version 2.0.0')
+      expect(transforms[3].message).toEqual('chore(package): update pouchdb-core to version 2.0.0')
+      expect(transforms[4].message).toEqual('fix(package): update pouchdb-core to version 2.0.0')
 
-      let result2 = transform1.transform(JSON.stringify(input2))
-      result2 = transform2.transform(result2)
-      result2 = transform4.transform(result2)
+      let result = transforms[0].transform(JSON.stringify(input))
+      result = transforms[3].transform(result)
+
+      let result2 = transforms[1].transform(JSON.stringify(input2))
+      result2 = transforms[2].transform(result2)
+      result2 = transforms[4].transform(result2)
 
       result = JSON.parse(result)
       result2 = JSON.parse(result2)
@@ -1422,5 +1416,309 @@ describe('create-group-version-branch', async () => {
     expect(pr.state).toEqual('open')
     expect(pr.repositoryId).toEqual('123-monorepo-monorepo-release-ignore')
     expect(pr.accountId).toEqual('123-two-packages')
+  })
+})
+
+describe('create-group-version-branch with lockfiles', async () => {
+  beforeEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
+    nock.cleanAll()
+  })
+
+  beforeAll(async () => {
+    const { installations, npm } = await dbs()
+    await installations.put({
+      _id: '123-lockfiles',
+      installation: 87,
+      plan: 'free'
+    })
+
+    await npm.put({
+      _id: '@finnpauls/dep',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
+      _id: '@finnpauls/depp',
+      distTags: {
+        latest: '1.1.0'
+      }
+    })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+  })
+
+  afterAll(async () => {
+    const { installations, repositories, npm } = await dbs()
+
+    await Promise.all([
+      removeIfExists(installations, '123-lockfiles'),
+      removeIfExists(npm, '@finnpauls/dep', '@finnpauls/depp'),
+      removeIfExists(repositories, 'monorepo-with-lockfiles-1', 'monorepo-with-lockfiles-2', 'monorepo-with-lockfiles-1:branch:1234abcd', 'monorepo-with-lockfiles-2:branch:1234abcd')
+    ])
+  })
+
+  const twoGroupsConfig = {
+    'groups': {
+      'default': {
+        'packages': [
+          'frontend/package.json',
+          'backend/package.json'
+        ]
+      }
+    }
+  }
+
+  test('new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles', async () => {
+    expect.assertions(11)
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'monorepo-with-lockfiles-1',
+      accountId: '123-lockfiles',
+      fullName: 'finnp/monorepo-with-lockfiles',
+      private: false,
+      files: {
+        'package.json': ['frontend/package.json', 'backend/package.json'],
+        'package-lock.json': ['frontend/package-lock.json', 'backend/package-lock.json'],
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'frontend/package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          }
+        },
+        'backend/package.json': {
+          devDependencies: {
+            '@finnpauls/dep': '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: twoGroupsConfig
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
+      .get('/rate_limit').optionally().reply(200)
+      .get('/repos/finnp/monorepo-with-lockfiles')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/monorepo-with-lockfiles/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 71,
+          state: 'open'
+        }
+      })
+      .post(
+        '/repos/finnp/monorepo-with-lockfiles/issues/71/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201)
+      .post(
+        '/repos/finnp/monorepo-with-lockfiles/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201)
+
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles }) => {
+      expect(transforms).toHaveLength(2)
+      expect(processLockfiles).toBeTruthy()
+      let newPackageJSON = transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          '@finnpauls/dep': '2.0.0'
+        }
+      }))
+
+      expect(transforms[0].path).toEqual('frontend/package.json')
+      expect(transforms[1].path).toEqual('backend/package.json')
+      expect(newPackageJSON).toMatchSnapshot()
+
+      return '1234abcd'
+    })
+    const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
+
+    const newJob = await createGroupVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '123-lockfiles',
+      repositoryId: 'monorepo-with-lockfiles-1',
+      types: [
+        {type: 'devDependencies', filename: 'backend/package.json'},
+        {type: 'devDependencies', filename: 'frontend/package.json'}],
+      version: '2.0.0',
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      },
+      group: {
+        'default': {
+          'packages': [
+            'frontend/package.json',
+            'backend/package.json'
+          ]
+        }
+      },
+      monorepo: [
+        { id: '123-lockfiles',
+          key: '@finnpauls/dep',
+          value: {
+            fullName: 'finnp/monorepo-with-lockfiles',
+            accountId: '123-lockfiles',
+            filename: 'frontend/package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } },
+        { id: '123-monorepo',
+          key: '@finnpauls/dep',
+          value: {
+            fullName: 'finnp/monorepo-with-lockfiles',
+            accountId: '123-lockfiles',
+            filename: 'backend/package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } } ]
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('monorepo-with-lockfiles-1:branch:1234abcd')
+    expect(branch.head).toEqual('greenkeeper/default/@finnpauls/dep-2.0.0')
+    expect(branch.repositoryId).toEqual('monorepo-with-lockfiles-1')
+    expect(branch.dependencyType).toEqual('devDependencies')
+  })
+
+  test('new pull request, 2 groups, 1 package, same dependencyType, skip lockfiles because of config', async () => {
+    expect.assertions(10)
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'monorepo-with-lockfiles-2',
+      accountId: '123-lockfiles',
+      fullName: 'finnp/monorepo-with-lockfiles-skip',
+      private: false,
+      files: {
+        'package.json': ['frontend/package.json', 'backend/package.json'],
+        'package-lock.json': ['frontend/package-lock.json', 'backend/package-lock.json'],
+        'npm-shrinkwrap.json': false,
+        'yarn.lock': false
+      },
+      packages: {
+        'frontend/package.json': {
+          devDependencies: {
+            '@finnpauls/depp': '^1.0.0'
+          }
+        },
+        'backend/package.json': {
+          devDependencies: {
+            '@finnpauls/depp': '^1.0.0'
+          }
+        }
+      },
+      greenkeeper: {
+        'lockfiles': {
+          'outOfRangeUpdatesOnly': true
+        },
+        'groups': {
+          'default': {
+            'packages': [
+              'frontend/package.json',
+              'backend/package.json'
+            ]
+          }
+        }
+      }
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
+      .get('/rate_limit').optionally().reply(200)
+      .get('/repos/finnp/monorepo-with-lockfiles-skip')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles }) => {
+      expect(transforms).toHaveLength(2)
+      expect(processLockfiles).toBeFalsy()
+      let newPackageJSON = transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          '@finnpauls/depp': '1.1.0'
+        }
+      }))
+
+      expect(transforms[0].path).toEqual('frontend/package.json')
+      expect(transforms[1].path).toEqual('backend/package.json')
+      expect(newPackageJSON).toMatchSnapshot()
+
+      return '1234abcd'
+    })
+    const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
+
+    const newJob = await createGroupVersionBranch({
+      dependency: '@finnpauls/depp',
+      accountId: '123-lockfiles',
+      repositoryId: 'monorepo-with-lockfiles-2',
+      types: [
+        {type: 'devDependencies', filename: 'backend/package.json'},
+        {type: 'devDependencies', filename: 'frontend/package.json'}],
+      version: '1.1.0',
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '1.1.0': {}
+      },
+      group: {
+        'default': {
+          'packages': [
+            'frontend/package.json',
+            'backend/package.json'
+          ]
+        }
+      },
+      monorepo: [
+        { id: '123-lockfiles',
+          key: '@finnpauls/depp',
+          value: {
+            fullName: 'finnp/monorepo-with-lockfiles',
+            accountId: '123-lockfiles',
+            filename: 'frontend/package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } },
+        { id: '123-monorepo',
+          key: '@finnpauls/depp',
+          value: {
+            fullName: 'finnp/monorepo-with-lockfiles',
+            accountId: '123-lockfiles',
+            filename: 'backend/package.json',
+            type: 'devDependencies',
+            oldVersion: '1.0.0' } } ]
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('monorepo-with-lockfiles-2:branch:1234abcd')
+    expect(branch.head).toEqual('greenkeeper/default/@finnpauls/depp-1.1.0')
+    expect(branch.repositoryId).toEqual('monorepo-with-lockfiles-2')
+    expect(branch.dependencyType).toEqual('devDependencies')
   })
 })

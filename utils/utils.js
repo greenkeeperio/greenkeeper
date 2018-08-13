@@ -124,10 +124,10 @@ function getJobsPerGroup ({
 }
 
 function createTransformFunction (type, dependency, version, log) {
-  return (pkg) => {
+  return (packageJson) => {
     try {
-      var json = JSON.parse(pkg)
-      var parsed = jsonInPlace(pkg)
+      var json = JSON.parse(packageJson)
+      var parsed = jsonInPlace(packageJson)
     } catch (e) {
       return // ignore parse errors
     }
@@ -145,6 +145,24 @@ function createTransformFunction (type, dependency, version, log) {
     parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
     return parsed.toString()
   }
+}
+
+// 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
+// 'newer' repoDocs have an array (empty or with the paths)
+// packageFilename: path of pckage.json
+const getLockfilePath = function (files, packageFilename) {
+  const convertedFiles = _.flatten(Object.keys(files).map(key => {
+    if (files[key] === true) return key
+    else return files[key]
+  }))
+
+  const hasPackageLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'package-lock.json'))
+  if (hasPackageLock) return packageFilename.replace('package.json', 'package-lock.json')
+
+  const hasYarnLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'yarn.lock'))
+  if (hasYarnLock) return packageFilename.replace('package.json', 'yarn.lock')
+
+  return null
 }
 
 const generateGitHubCompareURL = function (fullName, branch, compareWith) {
@@ -314,5 +332,6 @@ module.exports = {
   removeNodeVersionFromTravisYML,
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
-  hasTooManyPackageJSONs
+  hasTooManyPackageJSONs,
+  getLockfilePath
 }

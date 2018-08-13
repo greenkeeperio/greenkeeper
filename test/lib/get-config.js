@@ -23,6 +23,7 @@ test('get default config', () => {
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
       dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
       devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      lockfileUpdate: 'chore(package): update lockfile',
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
@@ -72,6 +73,7 @@ test('get config from root greenkeeper section', () => {
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
       dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
       devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      lockfileUpdate: 'chore(package): update lockfile',
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
@@ -122,6 +124,7 @@ test('get custom commit message', () => {
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
       dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
       devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      lockfileUpdate: 'chore(package): update lockfile',
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
@@ -169,6 +172,7 @@ test('get custom pr title', () => {
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
       dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
       devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      lockfileUpdate: 'chore(package): update lockfile',
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'
@@ -247,6 +251,7 @@ test('get ignore config with empty greenkeeper config', () => {
       initialBranches: 'chore(travis): whitelist greenkeeper branches',
       dependencyUpdate: 'fix(package): update ${dependency} to version ${version}',
       devDependencyUpdate: 'chore(package): update ${dependency} to version ${version}',
+      lockfileUpdate: 'chore(package): update lockfile',
       dependencyPin: 'fix: pin ${dependency} to ${oldVersion}',
       devDependencyPin: 'chore: pin ${dependency} to ${oldVersion}',
       closes: '\n\nCloses #${number}'

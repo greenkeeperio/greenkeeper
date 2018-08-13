@@ -108,7 +108,7 @@ module.exports = async function ({ repositoryId, groupName }) {
   const sha = await createBranch({ // try/catch
     installationId,
     owner,
-    repo,
+    repoName: repo,
     branch,
     newBranch,
     transforms
