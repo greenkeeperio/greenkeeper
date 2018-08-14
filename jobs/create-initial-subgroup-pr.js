@@ -112,7 +112,7 @@ module.exports = async function (
     }
   } catch (err) {
     if (err.code !== 422) {
-      log.error('Could not create initial subgroup pr')
+      log.error('Could not create initial subgroup pr', {err})
       throw err
     }
 
@@ -125,8 +125,11 @@ module.exports = async function (
       head: `${owner}:${head}`
     })))[0]
     log.warn('pr was already created', {pullRequestInfo: pr})
-    id = pr.id
-    number = pr.number
+
+    if (pr) {
+      id = pr.id
+      number = pr.number
+    }
   }
 
   await upsert(

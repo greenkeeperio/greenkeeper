@@ -149,7 +149,7 @@ module.exports = async function (
     }
   } catch (err) {
     if (err.code !== 422) {
-      log.error('Could not create initial pr')
+      log.error('Could not create initial pr', {err})
       throw err
     }
 
