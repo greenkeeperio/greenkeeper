@@ -42,7 +42,6 @@ describe('worker', () => {
         nack: (job, allUpTo, requeue) => {
           const jobResult = JSON.parse(job.content.toString())
           expect(jobResult.name).toEqual('unimplemented-job')
-          expect(job).toBeTruthy()
           expect(allUpTo).toBeFalsy()
           expect(requeue).toBeFalsy()
         }
@@ -77,7 +76,6 @@ describe('worker', () => {
         nack: (job, allUpTo, requeue) => {
           const jobResult = JSON.parse(job.content.toString())
           expect(jobResult.name).toEqual('unimplemented-job')
-          expect(job).toBeTruthy()
           expect(allUpTo).toBeFalsy()
           expect(requeue).toBeFalsy()
         }
@@ -114,7 +112,6 @@ describe('worker', () => {
         nack: (job) => {
           const jobResult = JSON.parse(job.content.toString())
           expect(jobResult.name).toEqual('failing-job')
-          expect(job).toBeTruthy()
         }
       },
       {
@@ -132,7 +129,6 @@ describe('worker', () => {
         nack: (job, allUpTo, requeue) => {
           const jobResult = JSON.parse(job.content.toString())
           expect(jobResult.name).toEqual('failing-job')
-          expect(job).toBeTruthy()
           expect(allUpTo).toBeFalsy()
           expect(requeue).toBeFalsy()
         }
@@ -303,7 +299,6 @@ describe('worker', () => {
         nack: (job, allUpTo, requeue) => {
           const jobRes = JSON.parse(job.content.toString())
           expect(jobRes.name).toEqual('failing-schedule')
-          expect(job).toBeTruthy()
           expect(allUpTo).toBeFalsy()
           expect(requeue).toBeFalsy()
         }
@@ -325,7 +320,6 @@ describe('worker', () => {
         nack: (job, allUpTo, requeue) => {
           const jobRes = JSON.parse(job.content.toString())
           expect(jobRes.name).toEqual('failing-schedule')
-          expect(job).toBeTruthy()
           expect(allUpTo).toBeFalsy()
           expect(requeue).toBeFalsy()
         }
