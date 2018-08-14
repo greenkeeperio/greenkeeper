@@ -49,15 +49,21 @@ module.exports = async function (
   }
 
   const oldDistTags = npmDbDoc.distTags || {}
-  // which distTag has changed
-  const distTag = _.findKey(distTags, (version, tag) => {
-    const oldVersion = oldDistTags[tag]
-    if (!oldVersion) {
-      log.info(`exited: nothing to update, is first release of ${dependency}`)
-      return true
-    }
-    return semver.lt(oldVersion, version)
-  })
+  let distTag
+
+  if (force) {
+    distTag = 'latest'
+  } else {
+    // which distTag has changed
+    distTag = _.findKey(distTags, (version, tag) => {
+      const oldVersion = oldDistTags[tag]
+      if (!oldVersion) {
+        log.info(`exited: nothing to update, is first release of ${dependency}`)
+        return true
+      }
+      return semver.lt(oldVersion, version)
+    })
+  }
 
   if (!distTag) {
     log.info(`exited: ${dependency} has no distTag`)
