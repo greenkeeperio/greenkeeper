@@ -228,6 +228,7 @@ module.exports = async function (
         path: 'package.json',
         message: commitMessage
       })
+      return transformFuns
     }))
   }
 
