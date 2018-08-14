@@ -148,7 +148,7 @@ function createTransformFunction (type, dependency, version, log) {
   }
 }
 
-async function createLockfileTransformFunction (type, dependency, version, log) {
+async function createLockfileTransformFunction ({type, dependency, version, log, packageJson, lock}) {
   return async (pkg) => {
     try {
       var json = JSON.parse(pkg)
@@ -171,7 +171,7 @@ async function createLockfileTransformFunction (type, dependency, version, log) 
     }
 
     // send contents to exec server
-    const {ok, newLockfile} = await getNewLockfile(pkg)
+    const {ok, newLockfile} = await getNewLockfile(pkg, packageJson, lock)
     // return new lockfile, or nothing if ok: false
     if (ok) {
       return newLockfile

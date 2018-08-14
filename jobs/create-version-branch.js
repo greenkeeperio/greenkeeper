@@ -17,7 +17,7 @@ const {
   getMonorepoGroupNameForPackage,
   isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
-
+const { getGithubFile } = require('../lib/get-files')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { createTransformFunction,
   generateGitHubCompareURL,
@@ -89,6 +89,8 @@ module.exports = async function (
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
   // this is a good candidate for a utils function :)
+  // 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
+  // 'newer' repoDocs have an array (empty or with the paths)
   function isTrue (x) {
     if (typeof x === 'object') {
       return !!x.length
@@ -201,14 +203,24 @@ module.exports = async function (
       log.info('commit message created', {commitMessage})
       let transformFuns = []
 
-      const hasLockfile = !!(json.packages['package-lock.json'] || json.packages['yarn.lock'])
-      if (hasLockfile) {
-        const isNpm = !!json.packages['package-lock.json']
-        transformFuns.push({
-          transform: createLockfileTransformFunction(dependencyType, depName, version, log),
-          path: isNpm ? 'package-lock.json' : 'yarn.lock',
-          message: commitMessage
-        })
+      if (hasProjectLockFile) {
+        // TODO: repositories often have both lockfiles..
+        const isNpm = isTrue(repository.files['package-lock.json'])
+        log.info(`has ${isNpm ? 'package-lock.json' : 'yarn.lock'}`)
+        try {
+          // get package.json & lockfile
+          const packageJson = await getGithubFile(ghqueue, { path: 'package.json', owner, repo })
+          const lockFilePath = isNpm ? 'package-lock.json' : 'yarn.lock'
+          const lock = await getGithubFile(ghqueue, { path: lockFilePath, owner, repo })
+
+          transformFuns.push({
+            transform: createLockfileTransformFunction({dependencyType, depName, version, log, packageJson, lock}),
+            path: lockFilePath,
+            message: commitMessage
+          })
+        } catch (error) {
+          console.warn('could not update lockfile', {error})
+        }
       }
 
       transformFuns.push({
