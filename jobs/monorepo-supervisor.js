@@ -51,6 +51,7 @@ module.exports = async function () {
         name: 'registry-change',
         dependency: release.dependency,
         distTags: release.distTags,
+        distTag: release.distTag,
         versions: release.versions,
         force: true
       }
