@@ -43,7 +43,8 @@
     "nock": "^9.0.0",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
     "simple-mock": "^0.8.0",
-    "standard": "^11.0.1"
+    "standard": "^11.0.1",
+    "weak": "^1.0.1"
   },
   "engines": {
     "node": "8"
@@ -75,9 +76,12 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "npm run test:parallel",
+    "test": "npm run test:lib && npm run test:jobs && npm run test:rest",
     "test:sequential": "NODE_ENV=testing jest -i",
-    "test:parallel": "NODE_ENV=testing jest"
+    "test:parallel": "NODE_ENV=testing jest",
+    "test:lib": "NODE_ENV=testing jest lib --logHeapUsage",
+    "test:jobs": "NODE_ENV=testing jest jobs --logHeapUsage",
+    "test:rest": "NODE_ENV=testing jest content utils --logHeapUsage"
   },
   "standard": {
     "env": {
