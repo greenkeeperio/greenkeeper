@@ -19,7 +19,7 @@ describe('create version branch', () => {
     nock.cleanAll()
   })
   beforeAll(async () => {
-    const { installations } = await dbs()
+    const { installations, npm } = await dbs()
     await installations.put({
       _id: '123',
       installation: 37
@@ -48,11 +48,26 @@ describe('create version branch', () => {
       _id: '2323',
       installation: 40
     })
+
+    await npm.put({
+      _id: '@finnpauls/dep',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
+      _id: '@finnpauls/dep2',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
   })
   afterAll(async () => {
-    const { installations, repositories, payments } = await dbs()
+    const { installations, repositories, payments, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
+      removeIfExists(npm, '@finnpauls/dep', '@finnpauls/dep2'),
       removeIfExists(payments, '124', '125'),
       removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease', 'ignored-in-group-1'),
       removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd', '41:pr:321', '50:pr:321', '1:pr:3210')
@@ -655,6 +670,7 @@ describe('create version branch', () => {
     await expect(repositories.get('prerelease:branch:1234abcd')).rejects.toThrow('missing')
     await expect(repositories.get('prerelease:pr:321')).rejects.toThrow('missing')
   })
+
   test('comment pr', async () => {
     const { repositories } = await dbs()
     await Promise.all([
@@ -1302,10 +1318,54 @@ describe('create version branch for dependencies from monorepos', () => {
     nock.cleanAll()
   })
   beforeAll(async () => {
-    const { installations } = await dbs()
+    const { installations, npm } = await dbs()
     await installations.put({
       _id: 'mono-123',
       installation: 1
+    })
+
+    await npm.put({
+      _id: 'colors',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-blue',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'colors-red',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+
+    await npm.put({
+      _id: 'flowers',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-blue',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-red',
+      distTags: {
+        latest: '2.0.0'
+      }
+    })
+    await npm.put({
+      _id: 'flowers-green',
+      distTags: {
+        latest: '2.0.0'
+      }
     })
   })
 
@@ -1315,7 +1375,8 @@ describe('create version branch for dependencies from monorepos', () => {
       removeIfExists(installations, 'mono-123'),
       removeIfExists(npm, 'colors', 'colors-blue', 'colors-red', 'colors-green'),
       removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
-      removeIfExists(repositories, 'mono-1', 'mono-2'),
+      removeIfExists(npm, 'numbers', 'numbers-three', 'numbers-four'),
+      removeIfExists(repositories, 'mono-1', 'mono-1-ignored', 'mono-deps-diff', 'mono-2'),
       removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321',
         'mono-2:branch:1234abcd', 'mono-2:pr:321'),
       removeIfExists(repositories, '1:branch:2222abcd', '1:pr:3210')
@@ -1450,7 +1511,7 @@ describe('create version branch for dependencies from monorepos', () => {
   })
 
   test('new pull request', async () => {
-    const { repositories, npm } = await dbs()
+    const { repositories } = await dbs()
     await repositories.put({
       _id: 'mono-1',
       accountId: 'mono-123',
@@ -1471,24 +1532,6 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
-    await npm.put({
-      _id: 'colors',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
-    await npm.put({
-      _id: 'colors-blue',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
-    await npm.put({
-      _id: 'colors-red',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
     expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
@@ -1596,8 +1639,155 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.state).toEqual('open')
   })
 
-  test('new pull request with group of dependencies', async () => {
+  test('new pull request with different versions', async () => {
     const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-deps-diff',
+      accountId: 'mono-123',
+      fullName: 'finnp/numbers',
+      enabled: true,
+      packages: {
+        'package.json': {
+          dependencies: {
+            pouchdb: '1.0.0',
+            'pouchdb-core': '1.0.0',
+            'numbers-three': '1.5.0',
+            bulldog: '1.0.0'
+          },
+          devDependencies: {
+            numbers: '2.1.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: 'numbers',
+      distTags: {
+        latest: '2.2.0'
+      }
+    })
+    await npm.put({
+      _id: 'numbers-three',
+      distTags: {
+        latest: '1.5.0'
+      }
+    })
+    await npm.put({
+      _id: 'numbers-four',
+      distTags: {
+        latest: '1.3.0'
+      }
+    })
+    expect.assertions(11)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/finnp/numbers/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/finnp/numbers')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/finnp/numbers/issues/66/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/finnp/numbers/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      const transform1 = await transforms[0]
+      const transform2 = await transforms[1]
+      let result = transform1.transform(JSON.stringify({
+        dependencies: {
+          pouchdb: '1.0.0',
+          'pouchdb-core': '1.0.0',
+          'numbers-three': '1.5.0',
+          bulldog: '1.0.0'
+        },
+        devDependencies: {
+          numbers: '2.1.0'
+        }
+      }))
+      result = JSON.parse(transform2.transform(result))
+      expect(result.dependencies['numbers-three']).toBe('1.5.0')
+      expect(result.devDependencies['numbers']).toBe('2.2.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          numbers: ['numbers', 'numbers-three', 'numbers-four']
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'numbers',
+      accountId: 'mono-123',
+      repositoryId: 'mono-deps-diff',
+      type: 'dependencies',
+      version: '2.2.0',
+
+      oldVersion: '2.1.0',
+      oldVersionResolved: '2.1.0',
+      versions: {
+        '1.0.0': {
+          gitHead: 'deadbeef100'
+        },
+        '2.1.0': {
+          gitHead: 'deadbeef222',
+          repository: {
+            url: 'https://github.com/numbers/monorepo'
+          }
+        }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-deps-diff:branch:1234abcd')
+    const pr = await repositories.get('mono-deps-diff:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo.numbers-2.2.0')
+
+    expect(pr.number).toBe(66)
+    expect(pr.state).toEqual('open')
+  })
+
+  test('new pull request with group of dependencies', async () => {
+    const { repositories } = await dbs()
     await repositories.put({
       _id: 'mono-2',
       accountId: 'mono-123',
@@ -1615,31 +1805,6 @@ describe('create version branch for dependencies from monorepos', () => {
             'flowers-blue': '1.0.0'
           }
         }
-      }
-    })
-
-    await npm.put({
-      _id: 'flowers',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
-    await npm.put({
-      _id: 'flowers-blue',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
-    await npm.put({
-      _id: 'flowers-red',
-      distTags: {
-        latest: '2.0.0'
-      }
-    })
-    await npm.put({
-      _id: 'flowers-green',
-      distTags: {
-        latest: '2.0.0'
       }
     })
 
