@@ -6,7 +6,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 const { cleanCache } = require('../helpers/module-cache-helpers')
 
 nock.disableNetConnect()
-nock.enableNetConnect('localhost')
+nock.enableNetConnect('localhost:5984')
 
 let defaultPrivateKey = process.env.PRIVATE_KEY
 describe('create version branch', () => {
@@ -655,6 +655,7 @@ describe('create version branch', () => {
     await expect(repositories.get('prerelease:branch:1234abcd')).rejects.toThrow('missing')
     await expect(repositories.get('prerelease:pr:321')).rejects.toThrow('missing')
   })
+
   test('comment pr', async () => {
     const { repositories } = await dbs()
     await Promise.all([
@@ -976,7 +977,7 @@ describe('create version branch', () => {
     expect(newJob).toBeFalsy()
   })
 
-  test('bails if in range and shrinkwrap', async () => {
+  test('lockfile: bails if in range and shrinkwrap', async () => {
     expect.assertions(1)
 
     const { repositories } = await dbs()
@@ -1009,102 +1010,27 @@ describe('create version branch', () => {
     expect(newJob).toBeFalsy()
   })
 
-  test('bails if in range and project lockfile and no gk-lockfile', async () => {
-    expect.assertions(1)
-
-    const { repositories } = await dbs()
-    await repositories.put({
-      _id: '48',
-      accountId: '2323',
-      fullName: 'espy/test',
-      files: {
-        'package.json': ['package.json'],
-        'package-lock.json': ['package-lock.json'],
-        'npm-shrinkwrap.json': [],
-        'yarn.lock': []
-      },
-      packages: {
-        'package.json': {}
-      }
-    })
-
-    const createVersionBranch = require('../../jobs/create-version-branch')
-
-    const newJob = await createVersionBranch({
-      dependency: 'b',
-      accountId: '2323',
-      repositoryId: '48',
-      version: '1.0.1',
-      oldVersion: '^1.0.0'
-    })
-
-    // no new job scheduled
-    expect(newJob).toBeFalsy()
-  })
-
-  test('bails if in range and project lockfile, has gk-lockfile, but onlyUpdateLockfilesIfOutOfRange is true', async () => {
-    expect.assertions(1)
-
-    const { repositories } = await dbs()
-    await repositories.put({
-      _id: '49',
-      accountId: '2323',
-      fullName: 'espy/test',
-      files: {
-        'package.json': ['package.json'],
-        'package-lock.json': ['package-lock.json'],
-        'npm-shrinkwrap.json': [],
-        'yarn.lock': []
-      },
-      packages: {
-        'package.json': {
-          devDependencies: {
-            'greenkeeper-lockfile': '1.1.1'
-          },
-          greenkeeper: {
-            lockfiles: {
-              outOfRangeUpdatesOnly: true
-            }
-          }
-        }
-      }
-    })
-
-    const createVersionBranch = require('../../jobs/create-version-branch')
-
-    const newJob = await createVersionBranch({
-      dependency: 'b',
-      accountId: '2323',
-      repositoryId: '49',
-      version: '1.0.1',
-      oldVersion: '^1.0.0'
-    })
-
-    // no new job scheduled
-    expect(newJob).toBeFalsy()
-  })
-
-  test('runs if in range, has project lockfile, has gk-lockfile', async () => {
+  test.only('lockfile: runs if in range, has package-lock.json', async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '50',
       accountId: '2323',
       fullName: 'espy/test',
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'jest': '1.1.1'
+          }
+        }
+      },
       files: {
         'package.json': ['package.json'],
         'package-lock.json': ['package-lock.json'],
         'npm-shrinkwrap.json': [],
         'yarn.lock': []
-      },
-      packages: {
-        'package.json': {
-          devDependencies: {
-            'greenkeeper-lockfile': '1.1.1'
-          }
-        }
       }
     })
-    expect.assertions(4)
+    expect.assertions(7)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1118,6 +1044,28 @@ describe('create version branch', () => {
       .get('/repos/espy/test')
       .reply(200, {
         default_branch: 'master'
+      })
+      .get('/repos/espy/test/contents/package-lock.json')
+      .reply(200, {
+        type: 'file',
+        path: 'package-lock.json',
+        name: 'package-lock.json',
+        content: Buffer.from(JSON.stringify({})).toString('base64')
+      })
+
+    nock('http://localhost:1234')
+      .post('/', (body) => {
+        expect(typeof body.type).toBe('string')
+        expect(typeof body.packageJson).toBe('string')
+        expect(typeof body.lock).toBe('string')
+        expect(body).toMatchSnapshot()
+        return true
+      })
+      .reply(200, () => {
+        return {
+          ok: true,
+          newLockfile: '{"dependencies":{"jest": {"version": "1.2.0"}}}'
+        }
       })
 
     jest.mock('../../lib/get-infos', () => () => {
@@ -1134,32 +1082,52 @@ describe('create version branch', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      let newPackageLock = await transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          'jest': '1.1.1'
+        }
+      }))
+      let newPackageJSON = transforms[1].transform(JSON.stringify({
+        devDependencies: {
+          'jest': '1.1.1'
+        }
+      }))
+
+      expect(transforms[0].path).toEqual('package-lock.json')
+      expect(transforms[1].path).toEqual('package.json')
+      expect(newPackageJSON).toMatchSnapshot()
+      expect(newPackageLock).toMatchSnapshot()
+
+      return '1234abcd'
+    })
+
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
-      dependency: '@finnpauls/dep',
+      dependency: 'jest',
       accountId: '2323',
       repositoryId: '50',
       type: 'devDependencies',
-      version: '1.1.0',
-      oldVersion: '^1.0.0',
-      oldVersionResolved: '1.0.0',
+      version: '1.2.0',
+      oldVersion: '1.1.1',
+      oldVersionResolved: '1.1.1',
       versions: {
         '1.0.0': {},
-        '1.1.0': {}
+        '1.1.1': {}
       }
     })
 
     // no new job scheduled
-    expect(newJob).toBeFalsy()
+    expect(newJob).toBeTruthy()
     const branch = await repositories.get('50:branch:1234abcd')
     expect(branch).toBeTruthy()
-    await expect(repositories.get('50:pr:321')).rejects.toThrow('missing')
+    await expect(repositories.get('50:pr:321')).not.toThrow('missing')
     expect(githubMock.isDone()).toBeTruthy()
   })
 
-  test('runs if in range, has project lockfile, has gk-lockfile with old files object format', async () => {
+  test('lockfile: runs if in range, has package-lock.json, with old files object format', async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '86',

@@ -3,6 +3,7 @@ const env = require('../lib/env')
 const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
+const { getNewLockfile } = require('../lib/lockfile')
 
 function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
@@ -124,10 +125,10 @@ function getJobsPerGroup ({
 }
 
 function createTransformFunction (type, dependency, version, log) {
-  return (pkg) => {
+  return (packageJson) => {
     try {
-      var json = JSON.parse(pkg)
-      var parsed = jsonInPlace(pkg)
+      var json = JSON.parse(packageJson)
+      var parsed = jsonInPlace(packageJson)
     } catch (e) {
       return // ignore parse errors
     }
@@ -143,6 +144,38 @@ function createTransformFunction (type, dependency, version, log) {
     }
 
     parsed.set([type, dependency], getRangedVersion(version, oldPkgVersion))
+    return parsed.toString()
+  }
+}
+
+function createLockfileTransformFunction (type, dependency, version, log, lock, isNpm) {
+  return async (packageJson) => {
+    try {
+      var json = JSON.parse(packageJson)
+      var parsed = jsonInPlace(packageJson)
+    } catch (e) {
+      return // ignore parse errors
+    }
+
+    // the two if statments below are the same as in createTransformFunction, so we bail for the same reasons
+    // we need to rework how transforms work to clean all that up, but one dragon at a time
+    const oldPkgVersion = _.get(json, [type, dependency])
+    if (!oldPkgVersion) {
+      log.warn(`exited: could not find old package version for dependency ${dependency}`, {newVersion: version, packageJson: json})
+      return
+    }
+
+    if (semver.ltr(version, oldPkgVersion)) { // no downgrades
+      log.warn('exited: would be a downgrade', {dependency, newVersion: version, oldVersion: oldPkgVersion})
+      return
+    }
+
+    // send contents to exec server
+    const {ok, newLockfile} = await getNewLockfile(packageJson, lock, isNpm)
+    // return new lockfile, or nothing if ok: false
+    if (ok) {
+      return newLockfile
+    }
     return parsed.toString()
   }
 }
@@ -314,5 +347,6 @@ module.exports = {
   removeNodeVersionFromTravisYML,
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
-  hasTooManyPackageJSONs
+  hasTooManyPackageJSONs,
+  createLockfileTransformFunction
 }

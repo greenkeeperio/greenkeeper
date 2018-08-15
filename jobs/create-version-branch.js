@@ -17,9 +17,12 @@ const {
   getMonorepoGroupNameForPackage,
   isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
-
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
+const { createTransformFunction,
+  generateGitHubCompareURL,
+  hasTooManyPackageJSONs,
+  createLockfileTransformFunction
+} = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
 
@@ -85,6 +88,8 @@ module.exports = async function (
   // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
 
   // this is a good candidate for a utils function :)
+  // 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
+  // 'newer' repoDocs have an array (empty or with the paths)
   function isTrue (x) {
     if (typeof x === 'object') {
       return !!x.length
@@ -95,9 +100,9 @@ module.exports = async function (
   const satisfies = semver.satisfies(version, oldVersion)
   const hasModuleLockFile = repository.files && isTrue(repository.files['npm-shrinkwrap.json'])
   const hasProjectLockFile = repository.files && (isTrue(repository.files['package-lock.json']) || isTrue(repository.files['yarn.lock']))
-  const usesGreenkeeperLockfile = repository.packages['package.json'] &&
-    repository.packages['package.json'].devDependencies &&
-    _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
+  // const usesGreenkeeperLockfile = repository.packages['package.json'] &&
+  //   repository.packages['package.json'].devDependencies &&
+  //   _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
   // Bail if it’s in range and the repo uses shrinkwrap
   if (satisfies && hasModuleLockFile) {
     log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
@@ -106,10 +111,10 @@ module.exports = async function (
 
   // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
   // won’t get updated without it
-  if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
-    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile`)
-    return
-  }
+  // if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
+  //   log.info(`exited: ${dependency} ${version} satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile`)
+  //   return
+  // }
 
   // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const config = getConfig(repository)
@@ -195,17 +200,39 @@ module.exports = async function (
         commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
       log.info('commit message created', {commitMessage})
-      return {
+      let transformFuns = []
+
+      if (hasProjectLockFile) {
+        // TODO: repositories often have both lockfiles..
+        const isNpm = isTrue(repository.files['package-lock.json'])
+        log.info(`has ${isNpm ? 'package-lock.json' : 'yarn.lock'}`)
+        try {
+          // get package.json & lockfile
+          const lockFilePath = isNpm ? 'package-lock.json' : 'yarn.lock'
+          const lock = await ghqueue.read(github => github.repos.getContent({ path: lockFilePath, owner, repo }))
+          const lockString = JSON.stringify(lock)
+          transformFuns.push({
+            transform: createLockfileTransformFunction(dependencyType, depName, version, log, lockString, isNpm),
+            path: lockFilePath,
+            message: commitMessage
+          })
+        } catch (error) {
+          console.warn('could not update lockfile', {error})
+        }
+      }
+
+      transformFuns.push({
         transform: createTransformFunction(dependencyType, depName, version, log),
         path: 'package.json',
         message: commitMessage
-      }
+      })
+      return transformFuns
     }))
   }
 
   const openPR = await findOpenPR()
 
-  const transforms = _.compact(await createTransformsArray(group, repository.packages['package.json']))
+  const transforms = _.compact(_.flatten(await createTransformsArray(group, repository.packages['package.json'])))
   const sha = await createBranch({
     installationId,
     owner,
