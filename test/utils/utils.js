@@ -1,3 +1,5 @@
+const nock = require('nock')
+
 const {
   seperateNormalAndMonorepos,
   getJobsPerGroup,
@@ -7,10 +9,12 @@ const {
   getNodeVersionsFromTravisYML,
   addNodeVersionToTravisYML,
   addNewLowestAndDeprecate,
-  hasNodeVersion
+  hasNodeVersion,
+  createLockfileTransformFunction
 } = require('../../utils/utils')
 
 const { cleanCache } = require('../helpers/module-cache-helpers')
+nock.disableNetConnect()
 
 beforeEach(() => {
   delete process.env.GITHUB_URL
@@ -249,6 +253,32 @@ test('getOldVersionResolved', () => {
   const output = getOldVersionResolved(satisfyingVersions, distTags, distTag)
   // returns the last satisfying version
   expect(output).toEqual('9.3.1')
+})
+
+test('createLockfileTransformFunction', async () => {
+  nock('http://localhost:1234')
+    .post('/', (body) => {
+      expect(typeof body.type).toBe('string')
+      expect(typeof body.packageJson).toBe('string')
+      expect(typeof body.lock).toBe('string')
+      expect(body).toMatchSnapshot()
+      return true
+    })
+    .reply(200, () => {
+      return {
+        ok: true,
+        newLockfile: '{"name":"greenkeeper","version":"1.0.0","lockfileVersion":1,"requires":true,"dependencies":{"jest": {"version": "23.0.0"}}}'
+      }
+    })
+
+  const type = 'devDependencies'
+  const dependency = 'jest'
+  const version = '23.0.0'
+  const lock = '{"name":"greenkeeper","version":"1.0.0","lockfileVersion":1,"requires":true,"dependencies":{"jest": {"version": "22.4.2"}}}'
+  const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
+
+  const result = await createLockfileTransformFunction(type, dependency, version, console, lock, true)(packageJson)
+  expect(result).toMatchSnapshot()
 })
 
 test('Use default env.GITHUB_URL in github compare URL', () => {

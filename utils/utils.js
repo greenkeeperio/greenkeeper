@@ -125,10 +125,10 @@ function getJobsPerGroup ({
 }
 
 function createTransformFunction (type, dependency, version, log) {
-  return (pkg) => {
+  return (packageJson) => {
     try {
-      var json = JSON.parse(pkg)
-      var parsed = jsonInPlace(pkg)
+      var json = JSON.parse(packageJson)
+      var parsed = jsonInPlace(packageJson)
     } catch (e) {
       return // ignore parse errors
     }
@@ -148,11 +148,11 @@ function createTransformFunction (type, dependency, version, log) {
   }
 }
 
-async function createLockfileTransformFunction ({type, dependency, version, log, packageJson, lock}) {
-  return async (pkg) => {
+function createLockfileTransformFunction (type, dependency, version, log, lock, isNpm) {
+  return async (packageJson) => {
     try {
-      var json = JSON.parse(pkg)
-      var parsed = jsonInPlace(pkg)
+      var json = JSON.parse(packageJson)
+      var parsed = jsonInPlace(packageJson)
     } catch (e) {
       return // ignore parse errors
     }
@@ -171,12 +171,12 @@ async function createLockfileTransformFunction ({type, dependency, version, log,
     }
 
     // send contents to exec server
-    const {ok, newLockfile} = await getNewLockfile(pkg, packageJson, lock)
+    const {ok, newLockfile} = await getNewLockfile(packageJson, lock, isNpm)
     // return new lockfile, or nothing if ok: false
     if (ok) {
       return newLockfile
     }
-    return parsed.toString
+    return parsed.toString()
   }
 }
 
