@@ -44,7 +44,7 @@ module.exports = async function (
   let relevantDependencies = []
   const groupName = Object.keys(group)[0]
 
-  const { installations, repositories } = await dbs()
+  const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
@@ -191,6 +191,10 @@ module.exports = async function (
 
   async function createTransformsArray (monorepo) {
     return Promise.all(dependencyGroup.map(async depName => {
+      // get version for each dependency
+      const npmDoc = await npm.get(depName)
+      const latestDependencyVersion = npmDoc['distTags']['latest']
+
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
 
@@ -198,23 +202,26 @@ module.exports = async function (
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
 
-        if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
+        const oldPkgVersion = _.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
+        if (!oldPkgVersion) return
+        console.log('oldPkgVersion', oldPkgVersion)
+        if (semver.ltr(latestDependencyVersion, oldPkgVersion)) return // no downgrades
 
         const commitMessageKey = !satisfies && pkg.type === 'dependencies'
           ? 'dependencyUpdate'
           : 'devDependencyUpdate'
-        const commitMessageValues = { dependency: depName, version }
+        const commitMessageValues = { dependency: depName, version: latestDependencyVersion }
         let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
         if (!satisfies && openPR) {
           await upsert(repositories, openPR._id, {
-            comments: [...(openPR.comments || []), version]
+            comments: [...(openPR.comments || []), latestDependencyVersion]
           })
           commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
         }
         log.info('commit message created', {commitMessage})
         return {
-          transform: createTransformFunction(pkg.type, depName, version, log),
+          transform: createTransformFunction(pkg.type, depName, latestDependencyVersion, log),
           path: pkg.filename,
           message: commitMessage
         }
