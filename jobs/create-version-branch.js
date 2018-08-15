@@ -17,7 +17,6 @@ const {
   getMonorepoGroupNameForPackage,
   isDependencyIgnoredInGroups
 } = require('../lib/monorepo')
-const { getGithubFile } = require('../lib/get-files')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { createTransformFunction,
   generateGitHubCompareURL,
@@ -209,12 +208,11 @@ module.exports = async function (
         log.info(`has ${isNpm ? 'package-lock.json' : 'yarn.lock'}`)
         try {
           // get package.json & lockfile
-          const packageJson = await getGithubFile(ghqueue, { path: 'package.json', owner, repo })
           const lockFilePath = isNpm ? 'package-lock.json' : 'yarn.lock'
-          const lock = await getGithubFile(ghqueue, { path: lockFilePath, owner, repo })
-
+          const lock = await ghqueue.read(github => github.repos.getContent({ path: lockFilePath, owner, repo }))
+          const lockString = JSON.stringify(lock)
           transformFuns.push({
-            transform: createLockfileTransformFunction({dependencyType, depName, version, log, packageJson, lock}),
+            transform: createLockfileTransformFunction(dependencyType, depName, version, log, lockString, isNpm),
             path: lockFilePath,
             message: commitMessage
           })

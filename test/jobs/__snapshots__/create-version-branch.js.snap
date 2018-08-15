@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create version branch lockfile: runs if in range, has package-lock.json 1`] = `
+Object {
+  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"e30=\\"}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
+  "type": "npm",
+}
+`;
+
+exports[`create version branch lockfile: runs if in range, has package-lock.json 2`] = `
+Object {
+  "devDependencies": Object {
+    "jest": "1.2.0",
+  },
+}
+`;
+
+exports[`create version branch lockfile: runs if in range, has package-lock.json 3`] = `"{\\"dependencies\\":{\\"jest\\": {\\"version\\": \\"1.2.0\\"}}}"`;
