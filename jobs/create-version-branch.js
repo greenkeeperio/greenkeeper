@@ -215,6 +215,7 @@ module.exports = async function (
           // return new lockfile, or nothing if ok: false
           const {ok, contents} = await getNewLockfile(JSON.stringify(json), JSON.stringify(lock), isNpm)
           if (ok) {
+            let commitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
             transformFuns.push({
               transform: () => contents,
               path: lockFilePath,

@@ -18,7 +18,7 @@ const {
   getMonorepoGroup,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
-
+const { getNewLockfile } = require('../lib/lockfile')
 const prContent = require('../content/update-pr')
 
 module.exports = async function (
@@ -196,17 +196,33 @@ module.exports = async function (
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
         if (!pkg.type) return
-
-        if (!onlyUpdateLockfilesIfOutOfRange) {
-          const groupHasPackageLock = _.includes(repository.files['package-lock'], pkg.filname.replace('package.json', 'package-lock.json'))
-          const groupHasYarnLock = _.includes(repository.files['yarn.lock'], pkg.filname.replace('package.json', 'yarn.lock'))
-          const hasLockFile = repository.files && (groupHasPackageLock || groupHasYarnLock)
-        }
-
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
-
         if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
+
+        const transforms = []
+
+        if (!onlyUpdateLockfilesIfOutOfRange) {
+          const groupHasPackageLock = _.includes(_.get(repository.files, 'package-lock.json', []), pkg.filename.replace('package.json', 'package-lock.json'))
+          const groupHasYarnLock = _.includes(_.get(repository.files, 'yarn.lock', []), pkg.filename.replace('package.json', 'yarn.lock'))
+          const hasLockFile = repository.files && (groupHasPackageLock || groupHasYarnLock)
+          if (hasLockFile) {
+            const path = pkg.filename.replace('package.json', groupHasPackageLock ? 'package-lock.json' : 'yarn.lock')
+            const lockfile = await ghqueue.read(github => github.repos.getContent({ path, owner, repo }))
+            const packageFile = repository.packages[pkg.filename]
+            // send contents to exec server
+            // return new lockfile, or nothing if ok: false
+            const {ok, contents} = await getNewLockfile(JSON.stringify(packageFile), JSON.stringify(lockfile), !!groupHasPackageLock)
+            if (ok) {
+              let commitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
+              transforms.push({
+                transform: () => contents,
+                path,
+                message: commitMessage
+              })
+            }
+          }
+        }
 
         const commitMessageKey = !satisfies && pkg.type === 'dependencies'
           ? 'dependencyUpdate'
@@ -221,15 +237,16 @@ module.exports = async function (
           commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
         }
         log.info('commit message created', {commitMessage})
-        return {
+        transforms.push({
           transform: createTransformFunction(pkg.type, depName, version, log),
           path: pkg.filename,
           message: commitMessage
-        }
+        })
+        return transforms
       }))
     }))
   }
-  const transforms = _.compact(_.flatten(await createTransformsArray(monorepo)))
+  const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
   const sha = await createBranch({
     installationId,
     owner,

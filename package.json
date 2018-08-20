@@ -55,7 +55,7 @@
       "/node_modules/",
       "/test/helpers/.*\\.js$"
     ],
-    "collectCoverage": true,
+    "collectCoverage": false,
     "unmockedModulePathPatterns": [
       "<rootDir>/node_modules/nock"
     ],
