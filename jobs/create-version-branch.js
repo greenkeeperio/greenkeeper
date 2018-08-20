@@ -20,9 +20,9 @@ const {
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { createTransformFunction,
   generateGitHubCompareURL,
-  hasTooManyPackageJSONs,
-  createLockfileTransformFunction
+  hasTooManyPackageJSONs
 } = require('../utils/utils')
+const { getNewLockfile } = require('../lib/lockfile')
 
 const prContent = require('../content/update-pr')
 
@@ -210,12 +210,17 @@ module.exports = async function (
           // get package.json & lockfile
           const lockFilePath = isNpm ? 'package-lock.json' : 'yarn.lock'
           const lock = await ghqueue.read(github => github.repos.getContent({ path: lockFilePath, owner, repo }))
-          const lockString = JSON.stringify(lock)
-          transformFuns.push({
-            transform: createLockfileTransformFunction(dependencyType, depName, version, log, lockString, isNpm),
-            path: lockFilePath,
-            message: commitMessage
-          })
+
+          // send contents to exec server
+          // return new lockfile, or nothing if ok: false
+          const {ok, contents} = await getNewLockfile(JSON.stringify(json), JSON.stringify(lock), isNpm)
+          if (ok) {
+            transformFuns.push({
+              transform: () => contents,
+              path: lockFilePath,
+              message: commitMessage
+            })
+          }
         } catch (error) {
           console.warn('could not update lockfile', {error})
         }

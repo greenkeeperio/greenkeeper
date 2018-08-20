@@ -190,11 +190,19 @@ module.exports = async function (
   }
 
   async function createTransformsArray (monorepo) {
+    const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
+
     return Promise.all(dependencyGroup.map(async depName => {
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
-
         if (!pkg.type) return
+
+        if (!onlyUpdateLockfilesIfOutOfRange) {
+          const groupHasPackageLock = _.includes(repository.files['package-lock'], pkg.filname.replace('package.json', 'package-lock.json'))
+          const groupHasYarnLock = _.includes(repository.files['yarn.lock'], pkg.filname.replace('package.json', 'yarn.lock'))
+          const hasLockFile = repository.files && (groupHasPackageLock || groupHasYarnLock)
+        }
+
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
 

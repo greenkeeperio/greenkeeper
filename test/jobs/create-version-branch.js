@@ -55,7 +55,8 @@ describe('create version branch', () => {
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
       removeIfExists(payments, '124', '125'),
       removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease', 'ignored-in-group-1'),
-      removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd', '1:branch:2222abcd', '41:pr:321', '50:pr:321', '1:pr:3210')
+      removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd',
+        '1:branch:2222abcd', '41:pr:321', '50:pr:321', '1:pr:3210', '50_cvb_lockfile', '50_cvb_lockfile:pr:1234', '50_cvb_lockfile:branch:1234abcd')
     ])
   })
 
@@ -1083,7 +1084,7 @@ describe('create version branch', () => {
       .reply(200, () => {
         return {
           ok: true,
-          newLockfile: '{"dependencies":{"jest": {"version": "1.2.0"}}}'
+          contents: '{"dependencies":{"jest": {"version": "1.2.0"}}}'
         }
       })
 
@@ -1218,6 +1219,131 @@ describe('create version branch', () => {
     const branch = await repositories.get('86:branch:1234abcd')
     expect(branch).toBeTruthy()
     await expect(repositories.get('86:pr:321')).rejects.toThrow('missing')
+    expect(githubMock.isDone()).toBeTruthy()
+  })
+
+  test('lockfile: runs if in range, package-lock.json has not changed', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '50_cvb_lockfile',
+      accountId: '2323',
+      fullName: 'espy/test',
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'jest': '1.1.1'
+          }
+        }
+      },
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      }
+    })
+    expect.assertions(12)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/40/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/espy/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post(
+        '/repos/espy/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201)
+      .get('/repos/espy/test/contents/package-lock.json')
+      .reply(200, {
+        type: 'file',
+        path: 'package-lock.json',
+        name: 'package-lock.json',
+        content: Buffer.from(JSON.stringify({devDependencies: {
+          'jest': '1.2.0'
+        }})).toString('base64')
+      })
+      .post('/repos/espy/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 1234,
+          number: 50,
+          state: 'open'
+        }
+      })
+      .post('/repos/espy/test/issues/50/labels')
+      .reply(201)
+
+    nock('http://localhost:1234')
+      .post('/', (body) => {
+        expect(typeof body.type).toBe('string')
+        expect(typeof body.packageJson).toBe('string')
+        expect(typeof body.lock).toBe('string')
+        expect(body).toMatchSnapshot()
+        return true
+      })
+      .reply(200, { ok: false })
+
+    jest.mock('../../lib/get-infos', () => () => {
+      return {
+        dependencyLink: '[]()',
+        release: 'the release',
+        diffCommits: 'commits...'
+      }
+    })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(1)
+
+      let newPackageJSON = transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          'jest': '1.1.1'
+        }
+      }))
+
+      expect(transforms[0].path).toEqual('package.json')
+      expect(newPackageJSON).toMatchSnapshot()
+
+      return '1234abcd'
+    })
+
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: 'jest',
+      accountId: '2323',
+      repositoryId: '50_cvb_lockfile',
+      type: 'devDependencies',
+      version: '1.2.0',
+      oldVersion: '1.1.1',
+      oldVersionResolved: '1.1.1',
+      versions: {
+        '1.0.0': {},
+        '1.1.1': {}
+      }
+    })
+
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+    const branch = await repositories.get('50_cvb_lockfile:branch:1234abcd')
+    expect(branch).toBeTruthy()
+    await expect(repositories.get('50_cvb_lockfile:pr:1234')).resolves.not.toThrow('missing')
     expect(githubMock.isDone()).toBeTruthy()
   })
 
