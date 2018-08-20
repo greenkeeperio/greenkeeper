@@ -1,8 +1,7 @@
 const nock = require('nock')
 
-nock.disableNetConnect()
-
 describe('getNewLockfile', async () => {
+  nock.disableNetConnect()
   const lock = '{"name":"greenkeeper","version":"1.0.0","lockfileVersion":1,"requires":true,"dependencies":{"jest": {"version": "22.4.2"}}}'
   const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
 

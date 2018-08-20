@@ -1010,7 +1010,7 @@ describe('create version branch', () => {
     expect(newJob).toBeFalsy()
   })
 
-  test.only('lockfile: runs if in range, has package-lock.json', async () => {
+  test('lockfile: runs if in range, has package-lock.json', async () => {
     const { repositories } = await dbs()
     await repositories.put({
       _id: '50',
@@ -1030,7 +1030,7 @@ describe('create version branch', () => {
         'yarn.lock': []
       }
     })
-    expect.assertions(7)
+    expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1045,13 +1045,32 @@ describe('create version branch', () => {
       .reply(200, {
         default_branch: 'master'
       })
+      .post(
+        '/repos/espy/test/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201)
       .get('/repos/espy/test/contents/package-lock.json')
       .reply(200, {
         type: 'file',
         path: 'package-lock.json',
         name: 'package-lock.json',
-        content: Buffer.from(JSON.stringify({})).toString('base64')
+        content: Buffer.from(JSON.stringify({devDependencies: {
+          'jest': '1.1.1'
+        }})).toString('base64')
       })
+      .post('/repos/espy/test/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 1234,
+          number: 50,
+          state: 'open'
+        }
+      })
+      .post('/repos/espy/test/issues/50/labels')
+      .reply(201)
 
     nock('http://localhost:1234')
       .post('/', (body) => {
@@ -1120,10 +1139,10 @@ describe('create version branch', () => {
     })
 
     // no new job scheduled
-    expect(newJob).toBeTruthy()
+    expect(newJob).toBeFalsy()
     const branch = await repositories.get('50:branch:1234abcd')
     expect(branch).toBeTruthy()
-    await expect(repositories.get('50:pr:321')).not.toThrow('missing')
+    await expect(repositories.get('50:pr:1234')).resolves.not.toThrow('missing')
     expect(githubMock.isDone()).toBeTruthy()
   })
 
