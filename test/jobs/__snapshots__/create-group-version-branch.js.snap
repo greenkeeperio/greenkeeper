@@ -1,33 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, different dependencyTypes, one has lockfile 1`] = `
-Object {
-  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"frontend/package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiY2F0IjoiMS4wLjAifX0=\\"}",
-  "packageJson": "{\\"dependencies\\":{\\"cat\\":\\"^1.0.0\\"}}",
-  "type": "npm",
-}
-`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, different dependencyTypes, one has lockfile 2`] = `undefined`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, different dependencyTypes, one has lockfile 3`] = `"{\\"dependencies\\":{\\"cat\\": {\\"version\\": \\"2.0.0\\"}}}"`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `
-Object {
-  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"frontend/package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiQGZpbm5wYXVscy9kZXAiOiIxLjAuMCJ9fQ==\\"}",
-  "packageJson": "{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"^1.0.0\\"}}",
-  "type": "npm",
-}
-`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 2`] = `
-Object {
-  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"backend/package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiQGZpbm5wYXVscy9kZXAiOiIxLjAuMCJ9fQ==\\"}",
-  "packageJson": "{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"^1.0.0\\"}}",
-  "type": "npm",
-}
-`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 3`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 4`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\": {\\"version\\": \\"2.0.0\\"}}}"`;
+exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
