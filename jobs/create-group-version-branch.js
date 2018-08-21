@@ -46,12 +46,12 @@ module.exports = async function (
   const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
-  const repository = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'create-group-version-branch'})
+  const repoDoc = await repositories.get(repositoryId)
+  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-group-version-branch'})
   log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
 
-  if (hasTooManyPackageJSONs(repository)) {
-    log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
+  if (hasTooManyPackageJSONs(repoDoc)) {
+    log.warn(`exited: repository has ${Object.keys(repoDoc.packages).length} package.json files`)
     return
   }
 
@@ -66,9 +66,9 @@ module.exports = async function (
 
     relevantDependencies = monorepoGroup.filter(dep => {
       return group[groupName].packages.map((packagePath) => {
-        const hasDependency = !!_.get(repository, `packages['${packagePath}'].dependencies.${dep}`)
-        const hasDevDependency = !!_.get(repository, `packages['${packagePath}'].devDependencies.${dep}`)
-        const hasPeerDependency = !!_.get(repository, `packages['${packagePath}'].peerDependencies.${dep}`)
+        const hasDependency = !!_.get(repoDoc, `packages['${packagePath}'].dependencies.${dep}`)
+        const hasDevDependency = !!_.get(repoDoc, `packages['${packagePath}'].devDependencies.${dep}`)
+        const hasPeerDependency = !!_.get(repoDoc, `packages['${packagePath}'].peerDependencies.${dep}`)
         return hasDependency || hasDevDependency || hasPeerDependency
       }).filter(Boolean).length !== 0
     })
@@ -77,9 +77,9 @@ module.exports = async function (
   }
 
   const satisfies = semver.satisfies(version, oldVersion)
-  const config = getConfig(repository)
+  const config = getConfig(repoDoc)
 
-  if (repository.private && !env.IS_ENTERPRISE) {
+  if (repoDoc.private && !env.IS_ENTERPRISE) {
     const billing = await getActiveBilling(accountId)
     if (!billing || await getAccountNeedsMarketplaceUpgrade(accountId)) {
       log.warn('exited: payment required')
@@ -104,7 +104,7 @@ module.exports = async function (
   let processLockfiles = true
   if (onlyUpdateLockfilesIfOutOfRange && satisfies) processLockfiles = false
 
-  const [owner, repo] = repository.fullName.split('/')
+  const [owner, repo] = repoDoc.fullName.split('/')
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
@@ -154,7 +154,7 @@ module.exports = async function (
         if (!pkg.type) return
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
-        if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
+        if (!_.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
 
         const transforms = []
 
@@ -187,6 +187,7 @@ module.exports = async function (
     installationId,
     owner,
     repoName: repo,
+    repoDoc,
     branch: base,
     newBranch,
     transforms,
@@ -243,7 +244,7 @@ module.exports = async function (
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
-  const compareURL = generateGitHubCompareURL(repository.fullName, base, newBranch)
+  const compareURL = generateGitHubCompareURL(repoDoc.fullName, base, newBranch)
 
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
