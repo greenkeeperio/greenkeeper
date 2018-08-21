@@ -39,7 +39,7 @@ describe('create initial branch', () => {
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'to-many-packages',
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'too-many-packages',
         '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
     ])
   })
@@ -1325,14 +1325,14 @@ describe('create initial branch', () => {
 
     const { repositories } = await dbs()
     await repositories.put({
-      _id: 'to-many-packages',
+      _id: 'too-many-packages',
       accountId: '123',
       fullName: 'finnp/test',
       packages: huuuuuugeMonorepo
     })
 
     const createInitialBranch = require('../../jobs/create-initial-branch')
-    const newJob = await createInitialBranch({repositoryId: 'to-many-packages'})
+    const newJob = await createInitialBranch({repositoryId: 'too-many-packages'})
 
     expect(newJob).toBeFalsy()
   })
