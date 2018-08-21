@@ -180,7 +180,7 @@ module.exports = async function (
       }))
     }))
   }
-  const transforms = _.compact(_.flatten(await createTransformsArray(monorepo)))
+  const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
   const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
 
   const sha = await createBranch({
