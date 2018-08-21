@@ -30,4 +30,4 @@ Object {
 
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 3`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
 
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 4`] = `"{\\"dependencies\\":{\\"@finnpauls/dep\\": {\\"version\\": \\"2.0.0\\"}}}"`;
+exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 4`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\": {\\"version\\": \\"2.0.0\\"}}}"`;

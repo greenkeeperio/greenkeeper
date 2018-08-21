@@ -147,6 +147,25 @@ function createTransformFunction (type, dependency, version, log) {
   }
 }
 
+// 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
+// 'newer' repoDocs have an array (empty or with the paths)
+// packageFilename: path of pckage.json
+const getLockfilePath = function (files, packageFilename) {
+  // sometimes files is an object of Booleans
+  const convertedFiles = _.flatten(Object.keys(files).map(key => {
+    if (files[key] === true) return key
+    else return files[key]
+  }))
+
+  const hasPackageLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'package-lock.json'))
+  if (hasPackageLock) return packageFilename.replace('package.json', 'package-lock.json')
+
+  const hasYarnLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'yarn.lock'))
+  if (hasYarnLock) return packageFilename.replace('package.json', 'yarn.lock')
+
+  return null
+}
+
 const generateGitHubCompareURL = function (fullName, branch, compareWith) {
   // Discussion: https://github.com/greenkeeperio/greenkeeper/issues/682
   // https://github.com/$USER/$REPO/compare/$REV_A...$REV_B
@@ -314,5 +333,6 @@ module.exports = {
   removeNodeVersionFromTravisYML,
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
-  hasTooManyPackageJSONs
+  hasTooManyPackageJSONs,
+  getLockfilePath
 }

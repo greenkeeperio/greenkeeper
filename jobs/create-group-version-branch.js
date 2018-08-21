@@ -18,7 +18,6 @@ const {
   getMonorepoGroup,
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
-const { getNewLockfile } = require('../lib/lockfile')
 const prContent = require('../content/update-pr')
 
 module.exports = async function (
@@ -78,51 +77,7 @@ module.exports = async function (
   }
 
   const satisfies = semver.satisfies(version, oldVersion)
-
-  // Shrinkwrap should behave differently from regular lockfiles:
-  //
-  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue
-  // if not. For the other two types of lockfiles (package-lock and yarn-lock),
-  // we will in future check if gk-lockfile is found in the repo’s dev-dependencies,
-  // if it is, Greenkeeper will continue (and the lockfiles will get updated),
-  // if not, we bail as before and nothing happens (because without gk-lockfile,
-  // the CI build wouldn‘t install anything new anyway).
-  //
-  // Variable name explanations:
-  // - moduleLogFile: Lockfiles that get published to npm and that influence what
-  //   gets installed on a user’s machine, such as `npm-shrinkwrap.json`.
-  // - projectLockFile: lockfiles that don’t get published to npm and have no
-  //   influence on the users’ dependency trees, like package-lock and yarn-lock
-  //
-  // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
-
-  // const moduleLockFiles = ['npm-shrinkwrap.json']
-  // const projectLockFiles = ['package-lock.json', 'yarn.lock']
-  // MONOREPO: returns true if there is at least 1 lockfile in the monorepo
-  // const hasModuleLockFile = _.some(_.pick(repository.files, moduleLockFiles))
-  // const hasProjectLockFile = _.some(_.pick(repository.files, projectLockFiles))
-  // const usesGreenkeeperLockfile = _.some(_.pick(repository.packages['package.json'].devDependencies, 'greenkeeper-lockfile'))
-
-  // Bail if it’s in range and the repo uses shrinkwrap
-  // if (satisfies && hasModuleLockFile) {
-  //   log.info('exited: dependency satisfies semver & repository has a module lockfile (shrinkwrap type)')
-  //   return
-  // }
-
-  // If the repo does not use greenkeeper-lockfile, there’s no point in continuing because the lockfiles
-  // won’t get updated without it
-  // if (satisfies && hasProjectLockFile && !usesGreenkeeperLockfile) {
-  //   log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type), and does not use gk-lockfile')
-  //   return
-  // }
-
-  // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const config = getConfig(repository)
-  // const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
-  // if (satisfies && hasProjectLockFile && onlyUpdateLockfilesIfOutOfRange) {
-  //   log.info('exited: dependency satisfies semver & repository has a project lockfile (*-lock type) & lockfiles.outOfRangeUpdatesOnly is true')
-  //   return
-  // }
 
   if (repository.private && !env.IS_ENTERPRISE) {
     const billing = await getActiveBilling(accountId)
@@ -145,6 +100,9 @@ module.exports = async function (
     log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
     return
   }
+  const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
+  let processLockfiles = true
+  if (onlyUpdateLockfilesIfOutOfRange && satisfies) processLockfiles = false
 
   const [owner, repo] = repository.fullName.split('/')
   const installationId = installation.installation
@@ -190,8 +148,6 @@ module.exports = async function (
   }
 
   async function createTransformsArray (monorepo) {
-    const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
-
     return Promise.all(dependencyGroup.map(async depName => {
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
@@ -201,28 +157,6 @@ module.exports = async function (
         if (!_.get(repository, `packages['${pkg.filename}'].${pkg.type}.${depName}`)) return
 
         const transforms = []
-
-        if (!onlyUpdateLockfilesIfOutOfRange) {
-          const groupHasPackageLock = _.includes(_.get(repository.files, 'package-lock.json', []), pkg.filename.replace('package.json', 'package-lock.json'))
-          const groupHasYarnLock = _.includes(_.get(repository.files, 'yarn.lock', []), pkg.filename.replace('package.json', 'yarn.lock'))
-          const hasLockFile = repository.files && (groupHasPackageLock || groupHasYarnLock)
-          if (hasLockFile) {
-            const path = pkg.filename.replace('package.json', groupHasPackageLock ? 'package-lock.json' : 'yarn.lock')
-            const lockfile = await ghqueue.read(github => github.repos.getContent({ path, owner, repo }))
-            const packageFile = repository.packages[pkg.filename]
-            // send contents to exec server
-            // return new lockfile, or nothing if ok: false
-            const {ok, contents} = await getNewLockfile(JSON.stringify(packageFile), JSON.stringify(lockfile), !!groupHasPackageLock)
-            if (ok) {
-              let commitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
-              transforms.push({
-                transform: () => contents,
-                path,
-                message: commitMessage
-              })
-            }
-          }
-        }
 
         const commitMessageKey = !satisfies && pkg.type === 'dependencies'
           ? 'dependencyUpdate'
@@ -246,14 +180,18 @@ module.exports = async function (
       }))
     }))
   }
-  const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
+  const transforms = _.compact(_.flatten(await createTransformsArray(monorepo)))
+  const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
+
   const sha = await createBranch({
     installationId,
     owner,
     repo,
     branch: base,
     newBranch,
-    transforms
+    transforms,
+    processLockfiles,
+    lockFileCommitMessage
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})

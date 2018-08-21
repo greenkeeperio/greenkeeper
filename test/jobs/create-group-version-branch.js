@@ -1327,7 +1327,7 @@ describe('create-group-version-branch with lockfiles', async () => {
       .reply(200, () => {
         return {
           ok: true,
-          contents: '{"dependencies":{"@finnpauls/dep": {"version": "2.0.0"}}}' // TODO: devDependencies?
+          contents: '{"devDependencies":{"@finnpauls/dep": {"version": "2.0.0"}}}'
         }
       })
       .post('/', (body) => {
@@ -1340,7 +1340,7 @@ describe('create-group-version-branch with lockfiles', async () => {
       .reply(200, () => {
         return {
           ok: true,
-          contents: '{"dependencies":{"@finnpauls/dep": {"version": "2.0.0"}}}' // TODO: devDependencies?
+          contents: '{"devDependencies":{"@finnpauls/dep": {"version": "2.0.0"}}}'
         }
       })
 
