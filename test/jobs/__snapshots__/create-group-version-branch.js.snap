@@ -1,3 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
+
+exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, skip lockfiles because of config 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"1.1.0\\"}}"`;
