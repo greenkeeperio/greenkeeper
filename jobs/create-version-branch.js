@@ -42,7 +42,7 @@ module.exports = async function (
   let monorepoGroup = ''
   let relevantDependencies = []
 
-  const { installations, repositories } = await dbs()
+  const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repository = await repositories.get(repositoryId)
@@ -177,26 +177,30 @@ module.exports = async function (
         return null
       }
 
-      if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-        log.warn(`exited: ${dependency} ${version} would be a downgrade from ${oldPkgVersion}`, {newVersion: version, oldVersion: oldPkgVersion})
+      // get version for each dependency
+      const npmDoc = await npm.get(depName)
+      const latestDependencyVersion = npmDoc['distTags']['latest']
+
+      if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
+        log.warn(`exited: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
         return null
       }
 
       const commitMessageKey = !satisfies && dependencyType === 'dependencies'
         ? 'dependencyUpdate'
         : 'devDependencyUpdate'
-      const commitMessageValues = { dependency: depName, version }
+      const commitMessageValues = { dependency: depName, version: latestDependencyVersion }
       let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
       if (!satisfies && openPR) {
         await upsert(repositories, openPR._id, {
-          comments: [...(openPR.comments || []), version]
+          comments: [...(openPR.comments || []), latestDependencyVersion]
         })
         commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
       log.info('commit message created', {commitMessage})
       return {
-        transform: createTransformFunction(dependencyType, depName, version, log),
+        transform: createTransformFunction(dependencyType, depName, latestDependencyVersion, log),
         path: 'package.json',
         message: commitMessage
       }
