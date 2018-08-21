@@ -1,7 +1,13 @@
 const nock = require('nock')
+const { getNewLockfile } = require('../../lib/lockfile')
 
 describe('getNewLockfile', async () => {
+  beforeEach(() => {
+    jest.resetModules()
+  })
+
   nock.disableNetConnect()
+  nock.enableNetConnect('localhost:5984')
   const lock = '{"name":"greenkeeper","version":"1.0.0","lockfileVersion":1,"requires":true,"dependencies":{"jest": {"version": "22.4.2"}}}'
 
   test('with changed package-lock.json', async () => {
@@ -28,7 +34,6 @@ describe('getNewLockfile', async () => {
   })
 
   test('with package-lock.json', async () => {
-    const { getNewLockfile } = require('../../lib/lockfile')
     const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
 
     nock('http://localhost:1234')
@@ -42,5 +47,34 @@ describe('getNewLockfile', async () => {
       .reply(200, () => ({ok: false}))
 
     await getNewLockfile(packageJson, lock, true)
+  })
+
+  test('with package-lock.json with intermittent 404s', async () => {
+    const httpTraffic = nock('http://localhost:1234')
+      .post('/', (body) => {
+        return true
+      })
+      .reply(404, 'not found')
+      .post('/', (body) => {
+        return true
+      })
+      .reply(200, () => ({ok: false}))
+    const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
+    await getNewLockfile(packageJson, lock, true)
+
+    expect(httpTraffic.isDone()).toBeTruthy()
+    expect(httpTraffic.pendingMocks().length).toEqual(0)
+  })
+
+  test('with package-lock.json with 500', async () => {
+    const httpTraffic = nock('http://localhost:1234')
+      .post('/', (body) => {
+        return true
+      })
+      .reply(500, 'server error')
+    const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
+    await expect(getNewLockfile(packageJson, lock, true)).rejects.toThrow()
+    expect(httpTraffic.isDone()).toBeTruthy()
+    expect(httpTraffic.pendingMocks().length).toEqual(0)
   })
 })
