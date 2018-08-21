@@ -1,23 +1,5 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`create version branch lockfile: runs if in range, has package-lock.json 1`] = `
-Object {
-  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMS4xIn19\\"}",
-  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
-  "type": "npm",
-}
-`;
+exports[`create version branch lockfile: runs if in range, has package-lock.json 1`] = `"{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}"`;
 
-exports[`create version branch lockfile: runs if in range, has package-lock.json 2`] = `"{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}"`;
-
-exports[`create version branch lockfile: runs if in range, has package-lock.json 3`] = `"{\\"dependencies\\":{\\"jest\\": {\\"version\\": \\"1.2.0\\"}}}"`;
-
-exports[`create version branch lockfile: runs if in range, package-lock.json has not changed 1`] = `
-Object {
-  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMi4wIn19\\"}",
-  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
-  "type": "npm",
-}
-`;
-
-exports[`create version branch lockfile: runs if in range, package-lock.json has not changed 2`] = `"{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}"`;
+exports[`create version branch lockfile: runs if in range, package-lock.json has not changed 1`] = `"{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}"`;

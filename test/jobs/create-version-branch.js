@@ -1031,7 +1031,7 @@ describe('create version branch', () => {
         'yarn.lock': []
       }
     })
-    expect.assertions(14)
+    expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1051,15 +1051,6 @@ describe('create version branch', () => {
         ({ state }) => state === 'success'
       )
       .reply(201)
-      .get('/repos/espy/test/contents/package-lock.json')
-      .reply(200, {
-        type: 'file',
-        path: 'package-lock.json',
-        name: 'package-lock.json',
-        content: Buffer.from(JSON.stringify({devDependencies: {
-          'jest': '1.1.1'
-        }})).toString('base64')
-      })
       .post('/repos/espy/test/pulls')
       .reply(200, () => {
         // pull request created
@@ -1072,21 +1063,6 @@ describe('create version branch', () => {
       })
       .post('/repos/espy/test/issues/50/labels')
       .reply(201)
-
-    nock('http://localhost:1234')
-      .post('/', (body) => {
-        expect(typeof body.type).toBe('string')
-        expect(typeof body.packageJson).toBe('string')
-        expect(typeof body.lock).toBe('string')
-        expect(body).toMatchSnapshot()
-        return true
-      })
-      .reply(200, () => {
-        return {
-          ok: true,
-          contents: '{"dependencies":{"jest": {"version": "1.2.0"}}}'
-        }
-      })
 
     jest.mock('../../lib/get-infos', () => () => {
       return {
@@ -1102,23 +1078,18 @@ describe('create version branch', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
-      expect(transforms).toHaveLength(2)
-      let newPackageLock = await transforms[0].transform(JSON.stringify({
-        devDependencies: {
-          'jest': '1.1.1'
-        }
-      }))
-      let newPackageJSON = transforms[1].transform(JSON.stringify({
+    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, lockFileCommitMessage }) => {
+      expect(transforms).toHaveLength(1)
+      expect(processLockfiles).toBeTruthy()
+      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
+      let newPackageJSON = transforms[0].transform(JSON.stringify({
         devDependencies: {
           'jest': '1.1.1'
         }
       }))
 
-      expect(transforms[0].path).toEqual('package-lock.json')
-      expect(transforms[1].path).toEqual('package.json')
+      expect(transforms[0].path).toEqual('package.json')
       expect(newPackageJSON).toMatchSnapshot()
-      expect(newPackageLock).toMatchSnapshot()
 
       return '1234abcd'
     })
@@ -1242,7 +1213,7 @@ describe('create version branch', () => {
         'yarn.lock': []
       }
     })
-    expect.assertions(12)
+    expect.assertions(8)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1262,15 +1233,6 @@ describe('create version branch', () => {
         ({ state }) => state === 'success'
       )
       .reply(201)
-      .get('/repos/espy/test/contents/package-lock.json')
-      .reply(200, {
-        type: 'file',
-        path: 'package-lock.json',
-        name: 'package-lock.json',
-        content: Buffer.from(JSON.stringify({devDependencies: {
-          'jest': '1.2.0'
-        }})).toString('base64')
-      })
       .post('/repos/espy/test/pulls')
       .reply(200, () => {
         // pull request created
@@ -1283,16 +1245,6 @@ describe('create version branch', () => {
       })
       .post('/repos/espy/test/issues/50/labels')
       .reply(201)
-
-    nock('http://localhost:1234')
-      .post('/', (body) => {
-        expect(typeof body.type).toBe('string')
-        expect(typeof body.packageJson).toBe('string')
-        expect(typeof body.lock).toBe('string')
-        expect(body).toMatchSnapshot()
-        return true
-      })
-      .reply(200, { ok: false })
 
     jest.mock('../../lib/get-infos', () => () => {
       return {

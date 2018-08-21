@@ -151,7 +151,6 @@ function createTransformFunction (type, dependency, version, log) {
 // 'newer' repoDocs have an array (empty or with the paths)
 // packageFilename: path of pckage.json
 const getLockfilePath = function (files, packageFilename) {
-  // sometimes files is an object of Booleans
   const convertedFiles = _.flatten(Object.keys(files).map(key => {
     if (files[key] === true) return key
     else return files[key]
