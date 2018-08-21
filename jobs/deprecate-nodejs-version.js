@@ -153,7 +153,7 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
   const sha = await createBranch({ // try/catch
     installationId,
     owner,
-    repo,
+    repoName: repo,
     branch,
     newBranch,
     transforms
