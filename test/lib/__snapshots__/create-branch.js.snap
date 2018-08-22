@@ -23,3 +23,11 @@ Object {
   "type": "npm",
 }
 `;
+
+exports[`create branch with lockfiles handle exec server 500 gracefully 1`] = `
+Object {
+  "lock": "{\\"type\\":\\"file\\",\\"path\\":\\"package-lock.json\\",\\"name\\":\\"package-lock.json\\",\\"content\\":\\"eyJkZXZEZXBlbmRlbmNpZXMiOnsiamVzdCI6IjEuMS4xIn19\\"}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"^1.0.0\\"}}",
+  "type": "npm",
+}
+`;
