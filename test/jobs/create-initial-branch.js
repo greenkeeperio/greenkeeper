@@ -40,7 +40,7 @@ describe('create initial branch', () => {
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
       removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'too-many-packages',
-        '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd')
+        '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd', 'lockfile-42', 'lockfile-42:branch:1234abcd')
     ])
     nock.cleanAll()
   })
@@ -1338,6 +1338,128 @@ describe('create initial branch', () => {
     expect(newJob).toBeFalsy()
   })
 
+  test('create pull request with a lockfile', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: 'lockfile-42',
+      accountId: '123',
+      fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': ['package-lock.json'],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      }
+    })
+    const devDependencies = {
+      '@finnpauls/dep': '1.0.0',
+      '@finnpauls/dep2': '1.0.0'
+    }
+    expect.assertions(13)
+
+    nock('https://api.github.com')
+      .post('/installations/137/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .get('/repos/finnp/test/git/trees/master?recursive=1')
+      .reply(200, {
+        tree: [
+          {
+            'path': 'package.json',
+            'mode': '100644',
+            'type': 'blob',
+            'sha': 'bd086eb684aa91cab4d84390f06d7267af99798e',
+            'size': 1379,
+            'url': 'https://api.github.com/repos/neighbourhoodie/gk-test-lerna-yarn-workspaces/git/blobs/bd086eb684aa91cab4d84390f06d7267af99798e'
+          }
+        ]
+      })
+      .get('/repos/finnp/test/contents/package.json')
+      .reply(200, {
+        path: 'package.json',
+        name: 'package.json',
+        content: encodePkg({ devDependencies })
+      })
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/labels', {
+        name: 'greenkeeper',
+        color: '00c775'
+      })
+      .reply(201)
+
+    nock('https://registry.npmjs.org')
+      .get('/@finnpauls%2Fdep')
+      .reply(200, {
+        'dist-tags': {
+          latest: '2.0.0'
+        }
+      })
+      .get('/@finnpauls%2Fdep2')
+      .reply(200, {
+        'dist-tags': {
+          latest: '3.0.0-rc1'
+        },
+        versions: {
+          '2.0.0-rc1': true,
+          '2.0.0-rc2': true,
+          '2.0.0': true,
+          '3.0.0-rc1': true,
+          '1.0.0': true
+        }
+      })
+
+    // mock relative dependencies
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
+      expect(processLockfiles).toBeTruthy()
+      expect(repoDoc).toHaveProperty('files')
+      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
+      //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
+      const devDependencies = {
+        '@finnpauls/dep': '1.0.0',
+        '@finnpauls/dep2': '1.0.0'
+      }
+
+      const newPkg = JSON.parse(
+        transforms[0].transform(JSON.stringify({ devDependencies }))
+      )
+      transforms[0].created = true
+      expect(newPkg.devDependencies['@finnpauls/dep']).toEqual('2.0.0')
+      expect(newPkg.devDependencies['@finnpauls/dep2']).toEqual('2.0.0')
+
+      const newReadme = transforms[2].transform(
+        'readme-badger\n=============\n',
+        'README.md'
+      )
+      // 'includes badge'
+      expect(newReadme).toMatch(/https:\/\/badges.greenkeeper.io\/finnp\/test.svg/)
+
+      return '1234abcd'
+    })
+    const createInitialBranch = require('../../jobs/create-initial-branch')
+
+    const newJob = await createInitialBranch({ repositoryId: 'lockfile-42' })
+    const newBranch = await repositories.get('lockfile-42:branch:1234abcd')
+
+    expect(newJob).toBeTruthy()
+    expect(newJob.data.name).toEqual('initial-timeout-pr')
+    expect(newJob.data.repositoryId).toBe('lockfile-42')
+    expect(newJob.delay).toBeGreaterThan(10000)
+    expect(newBranch.type).toEqual('branch')
+    expect(newBranch.initial).toBeTruthy()
+    expect(newBranch.badgeUrl).toEqual('https://badges.greenkeeper.io/finnp/test.svg')
+  })
   function encodePkg (pkg) {
     return Buffer.from(JSON.stringify(pkg)).toString('base64')
   }
