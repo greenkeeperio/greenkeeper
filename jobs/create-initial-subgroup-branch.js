@@ -5,6 +5,7 @@ const { promisify } = require('bluebird')
 const RegClient = require('../lib/npm-registry-client')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
+const { getMessage } = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const { updateRepoDoc } = require('../lib/repository-docs')
 const githubQueue = require('../lib/github-queue')
@@ -109,9 +110,12 @@ module.exports = async function ({ repositoryId, groupName }) {
     installationId,
     owner,
     repoName: repo,
+    repoDoc,
     branch,
     newBranch,
-    transforms
+    transforms,
+    processLockfiles: true,
+    lockFileCommitMessage: getMessage(config.commitMessages, 'lockfileUpdate')
   })
 
   if (!depsUpdated) {
