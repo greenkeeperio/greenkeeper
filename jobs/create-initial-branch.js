@@ -276,9 +276,12 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     installationId,
     owner,
     repoName: repo,
+    repoDoc,
     branch,
     newBranch,
-    transforms
+    transforms,
+    processLockfiles: true,
+    lockFileCommitMessage: getMessage(config.commitMessages, 'lockfileUpdate')
   })
 
   if (!sha) {
