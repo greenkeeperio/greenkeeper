@@ -1,3 +1,5 @@
+const nock = require('nock')
+
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
@@ -9,6 +11,8 @@ describe('create initial branch', () => {
   })
 
   beforeAll(async () => {
+    nock.disableNetConnect()
+    nock.enableNetConnect('localhost:5984')
     const { installations, payments } = await dbs()
 
     await installations.put({
