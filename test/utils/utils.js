@@ -22,6 +22,11 @@ beforeEach(() => {
   jest.resetModules()
 })
 
+afterAll(() => {
+  nock.cleanAll()
+  nock.enableNetConnect()
+})
+
 test('seperateNormalAndMonorepos', () => {
   const input = [
     { id: '123-monorepo',
