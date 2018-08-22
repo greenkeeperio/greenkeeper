@@ -1052,7 +1052,7 @@ describe('create version branch', () => {
         latest: '1.2.0'
       }
     })
-    expect.assertions(10)
+    expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1099,10 +1099,11 @@ describe('create version branch', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, lockFileCommitMessage }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
       expect(transforms).toHaveLength(1)
       expect(processLockfiles).toBeTruthy()
       expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
+      expect(repoDoc).toHaveProperty('files')
       let newPackageJSON = transforms[0].transform(JSON.stringify({
         devDependencies: {
           'jest': '1.1.1'

@@ -1485,7 +1485,7 @@ describe('create-group-version-branch with lockfiles', async () => {
   }
 
   test('new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles', async () => {
-    expect.assertions(11)
+    expect.assertions(12)
     const { repositories } = await dbs()
     await repositories.put({
       _id: 'monorepo-with-lockfiles-1',
@@ -1541,9 +1541,10 @@ describe('create-group-version-branch with lockfiles', async () => {
       )
       .reply(201)
 
-    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles }) => {
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, repoDoc }) => {
       expect(transforms).toHaveLength(2)
       expect(processLockfiles).toBeTruthy()
+      expect(repoDoc).toHaveProperty('files')
       let newPackageJSON = transforms[0].transform(JSON.stringify({
         devDependencies: {
           '@finnpauls/dep': '2.0.0'
