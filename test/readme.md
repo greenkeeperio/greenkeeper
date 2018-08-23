@@ -174,6 +174,8 @@ module.exports = {
 
 </details>
 
+[more on jest mocking](https://github.com/yaobinwen/react-box/issues/3#issuecomment-414587212)
+
 ### Debugging Tests
 
 Assuming you’re using a local CouchDB at `127.0.0.1:5984`, insert a `debugger` statement in one of your _test_ files, and run:
