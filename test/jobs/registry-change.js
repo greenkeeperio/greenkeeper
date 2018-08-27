@@ -670,8 +670,8 @@ describe('monorepo-release: registry change create jobs', async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, 'monorepo-release-1'),
-      removeIfExists(repositories, 'mr-1'),
-      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog')
+      removeIfExists(repositories, 'mr-1', 'mono-nuclear-100'),
+      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog', 'enzyme-adapter-utils')
     ])
   })
 
@@ -776,6 +776,96 @@ describe('monorepo-release: registry change create jobs', async () => {
     expect(job.name).toBe('create-version-branch')
     expect(job.repositoryId).toBe('mr-1')
     expect(job.dependency).toBe('pug') // this might have to change?
+  })
+
+  test.only('monorepo-release: package is part of complete monorepoDefinition, but repo is not using this package', async () => {
+    const { repositories, npm } = await dbs()
+    repositories.put({
+      _id: 'mono-nuclear-100',
+      type: 'repository',
+      accountId: 'monorepo-release-1',
+      fullName: 'nukeop/nuclear',
+      enabled: true,
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'enzyme': '^3.3.0',
+            'enzyme-adapter-react-16': '^1.5.0'
+          }
+        }
+      }
+    })
+    npm.put({
+      '_id': 'enzyme-adapter-utils',
+      'distTags': {
+        'next': '1.0.0-beta.7',
+        'latest': '1.5.0'
+      },
+      'versions': {
+        '1.4.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.5.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        }
+      }
+    })
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          enzyme: [
+            'enzyme',
+            'enzyme-adapter-react-13',
+            'enzyme-adapter-react-14',
+            'enzyme-adapter-react-15.4',
+            'enzyme-adapter-react-15',
+            'enzyme-adapter-react-16',
+            'enzyme-adapter-utils',
+            'enzyme-adapter-react-helper'
+          ]
+        })
+        return newDef
+      })
+      const lib = require.requireActual('../../lib/monorepo')
+      return lib
+    })
+
+    const registryChange = require('../../jobs/registry-change.js')
+
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'enzyme-adapter-utils',
+      distTags: {
+        'next': '1.0.0-beta.7',
+        'latest': '1.6.0'
+      },
+      versions: {
+        '1.6.0': {
+          gitHead: 'wau'
+        },
+        '1.5.0': {
+          gitHead: 'woof'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+
+    // a version branch should be created
+    expect(newJobs).toHaveLength(1)
+    const job = newJobs[0].data
+    console.log('job', job)
+    expect(job.name).toBe('create-version-branch')
+    expect(job.repositoryId).toBe('mono-nuclear-100')
+    // ⚠️ We’d want a cvb payload that runs updates for all updated dependencies from this dependency’s monorepo release group, but not for this dep itself.
+    // Every update should use its _actual_ newest version, and each of them also has their own oldVersion
+    expect(job.dependency).toBe('pug')
   })
 
   /*

@@ -1376,9 +1376,9 @@ describe('create version branch for dependencies from monorepos', () => {
       removeIfExists(npm, 'colors', 'colors-blue', 'colors-red', 'colors-green'),
       removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
       removeIfExists(npm, 'numbers', 'numbers-three', 'numbers-four'),
-      removeIfExists(repositories, 'mono-1', 'mono-1-ignored', 'mono-deps-diff', 'mono-2'),
+      removeIfExists(repositories, 'mono-1', 'mono-1-ignored', 'mono-deps-diff', 'mono-2', 'mono-nuclear-100'),
       removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321',
-        'mono-2:branch:1234abcd', 'mono-2:pr:321'),
+        'mono-2:branch:1234abcd', 'mono-2:pr:321', 'mono-nuclear-100:branch:1234abcd', 'mono-nuclear-100:pr:321'),
       removeIfExists(repositories, '1:branch:2222abcd', '1:pr:3210')
     ])
   })
@@ -1939,6 +1939,162 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(branch.head).toEqual('greenkeeper/monorepo.flowers-2.0.0')
 
     expect(pr.number).toBe(77)
+    expect(pr.state).toEqual('open')
+  })
+
+  test.only('unused dep release from used monorepo dep', async () => {
+    /*
+      from faulty PR #100 in nukeop/nuclear
+      package.json:
+      "enzyme": "^3.3.0",
+      "enzyme-adapter-react-16": "^1.5.0",
+
+      release:
+      `enzyme-adapter-utils` to `1.6.0`
+    */
+
+    const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-nuclear-100',
+      accountId: 'mono-123',
+      fullName: 'nukeop/nuclear',
+      enabled: true,
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'enzyme': '^3.3.0',
+            'enzyme-adapter-react-16': '^1.5.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: 'enzyme',
+      distTags: {
+        latest: '3.4.4'
+      }
+    })
+    // This will not update because it looks like a downgrade:
+    // exited: enzyme-adapter-utils 1.2.0 would be a downgrade from ^1.5.0
+    // params:  { newVersion: '1.2.0', oldVersion: '^1.5.0' }
+    await npm.put({
+      _id: 'enzyme-adapter-react-16',
+      distTags: {
+        latest: '1.2.0'
+      }
+    })
+    // This package is updated and should trigger an update for the enzyme group, but shouldn’t
+    // have a commit itself, since it isn’t depended upon
+    await npm.put({
+      _id: 'enzyme-adapter-utils',
+      distTags: {
+        latest: '1.6.0'
+      }
+    })
+
+    expect.assertions(11)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .post('/repos/nukeop/nuclear/pulls')
+      .reply(200, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 321,
+          number: 66,
+          state: 'open'
+        }
+      })
+      .get('/repos/nukeop/nuclear')
+      .reply(200, {
+        default_branch: 'master'
+      })
+      .post('/repos/nukeop/nuclear/issues/66/labels')
+      .reply(201, () => {
+        return {}
+      })
+      .post(
+        '/repos/nukeop/nuclear/statuses/1234abcd',
+        ({ state }) => state === 'success'
+      )
+      .reply(201, () => {
+        // status created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      const transform1 = await transforms[0]
+      const transform2 = await transforms[1]
+      let result = transform1.transform(JSON.stringify({
+        devDependencies: {
+          'enzyme': '^3.3.0',
+          'enzyme-adapter-react-16': '^1.5.0'
+        }
+      }))
+      result = JSON.parse(transform2.transform(result))
+      expect(result.dependencies['colors-blue']).toBe('2.0.0')
+      expect(result.devDependencies['colors']).toBe('2.0.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          enzyme: [
+            'enzyme',
+            'enzyme-adapter-react-13',
+            'enzyme-adapter-react-14',
+            'enzyme-adapter-react-15.4',
+            'enzyme-adapter-react-15',
+            'enzyme-adapter-react-16',
+            'enzyme-adapter-utils',
+            'enzyme-adapter-react-helper'
+          ]
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    // This is what registry-change passes in for this buggy PR
+    const newJob = await createVersionBranch({
+      dependency: 'enzyme-adapter-utils',
+      accountId: 'mono-123',
+      repositoryId: 'mono-nuclear-100',
+      plan: 'free',
+      type: 'devDependencies',
+      version: '1.6.0',
+      oldVersion: '^3.3.0',
+      oldVersionResolved: undefined,
+      versions: {
+        '1.6.0': { gitHead: 'wau' },
+        '1.5.0': { gitHead: 'woof' }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-nuclear-100:branch:1234abcd')
+    const pr = await repositories.get('mono-nuclear-100:pr:321')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-2.0.0')
+
+    expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
   })
 })

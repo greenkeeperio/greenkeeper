@@ -69,6 +69,7 @@ module.exports = async function (
     log.info(`exited: ${dependency} has no distTag`)
     return
   }
+  console.log('!!! Updating npm doc with the latest release')
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
 
   // currently we only handle latest versions
@@ -102,6 +103,8 @@ module.exports = async function (
     dependencies = await getMonorepoGroup(await getMonorepoGroupNameForPackage(dependency)) || dependencies
   }
 
+  console.log('dependencies', dependencies)
+
   /*
   Update: 'by_dependency' handles multiple package.json files, but not in the same result.
 
@@ -131,12 +134,22 @@ module.exports = async function (
     keys: dependencies
   })).rows
 
+  console.log('packageFilesForUpdatedDependency', packageFilesForUpdatedDependency)
+
+  // ⚠️ FIX: dependency !== dependencies
   if (!packageFilesForUpdatedDependency.length) {
-    log.info(`exited: no repoDocs found that depend on ${dependency}`)
+    if (dependencies.length === 1) {
+      log.info(`exited: no repoDocs found that depend on ${dependency}`)
+    } else {
+      log.info(`exited: no repoDocs found that depend on this release group`, dependencies)
+    }
     return
   }
-  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
-
+  if (dependencies.length === 1) {
+    log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
+  } else {
+    log.info(`found ${packageFilesForUpdatedDependency.length} instances of  dependencies from this release group`, dependencies)
+  }
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
@@ -195,14 +208,18 @@ module.exports = async function (
   // https://github.com/greenkeeperio/greenkeeper/issues/409
 
   const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
+  console.log('filteredSortedPackages', filteredSortedPackages)
 
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
       const plan = account.plan
-
+      console.log('mapping over filteredSortedPackages', pkg)
       const satisfyingVersions = getSatisfyingVersions(versions, pkg)
+      console.log('satisfyingVersions', satisfyingVersions)
+      // ⚠️ ^ this is empty because ^3.3.0 never satisfies 1.6.0
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
+      // ⚠️ therefore this ^ is undefined
 
       if (isFromHook && String(account.installation) !== installation) return {}
       if (semver.prerelease(version) && !semver.prerelease(pkg.value.oldVersion)) {
@@ -229,5 +246,6 @@ module.exports = async function (
     }))
   ]
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
+  console.log('jobs', jobs)
   return jobs
 }

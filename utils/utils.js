@@ -52,12 +52,14 @@ function filterAndSortPackages (packageFiles) {
 }
 
 function getSatisfyingVersions (versions, pkg) {
+  console.log('getSatisfyingVersions (versions, pkg)', versions, pkg)
   return Object.keys(versions)
     .filter(version => semver.satisfies(version, pkg.value.oldVersion))
     .sort(semver.rcompare)
 }
 
 function getOldVersionResolved (satisfyingVersions, distTags, distTag) {
+  console.log('getOldVersionResolved (satisfyingVersions, distTags, distTag)', satisfyingVersions, distTags, distTag)
   return satisfyingVersions[0] === distTags[distTag]
     ? satisfyingVersions[1]
     : satisfyingVersions[0]
