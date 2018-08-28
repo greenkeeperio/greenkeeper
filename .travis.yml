@@ -8,7 +8,7 @@ notifications:
   email: false
 node_js: 8
 before_install:
-- npm install -g npm@5.2.0
+- npm install -g npm@6.4.0
 install: npm install
 after_success: npm run deploy
 
