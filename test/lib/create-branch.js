@@ -1129,6 +1129,186 @@ describe('create branch with lockfiles', async () => {
     expect(gitHubNock.isDone()).toBeTruthy()
   })
 
+  test('don’t generate the same lockfile multiple times', async () => {
+    // multiple commits to the same package file should only result in a single lockfile update,
+    // meaning a single exec server request and a single github tree update plus commit
+    expect.assertions(7)
+    const packageFileContents = {devDependencies: {
+      'jest': '1.1.1',
+      'west': '1.1.1'
+    }}
+    const updatedPackageFileContents1 = {devDependencies: {
+      'jest': '1.2.0',
+      'west': '1.1.1'
+    }}
+    const updatedPackageFileContents2 = {devDependencies: {
+      'jest': '1.2.0',
+      'west': '1.5.0'
+    }}
+    const gitHubNock = nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/owner/repo/contents/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(packageFileContents)).toString('base64')
+      })
+      .get('/repos/owner/repo/contents/package-lock.json')
+      .reply(200, {
+        type: 'file',
+        path: 'package-lock.json',
+        name: 'package-lock.json',
+        content: Buffer.from(JSON.stringify(packageFileContents)).toString('base64')
+      })
+      .get('/repos/owner/repo/git/refs/heads/master')
+      .reply(200, {
+        object: {
+          sha: 'root-sha'
+        }
+      })
+      // First tree and commit for package.json
+      .post('/repos/owner/repo/git/trees', {
+        tree: [
+          {
+            path: 'package.json',
+            content: JSON.stringify(updatedPackageFileContents1),
+            mode: '100644',
+            type: 'blob'
+          }
+        ],
+        base_tree: 'root-sha'
+      })
+      .reply(201, {
+        sha: '1-tree'
+      })
+      .post('/repos/owner/repo/git/commits', {
+        message: 'new commit',
+        tree: '1-tree',
+        parents: ['root-sha']
+      })
+      .reply(201, {
+        sha: '1-commit'
+      })
+      // Second tree and commit for package.json
+      .post('/repos/owner/repo/git/trees', {
+        tree: [
+          {
+            path: 'package.json',
+            content: JSON.stringify(updatedPackageFileContents2),
+            mode: '100644',
+            type: 'blob'
+          }
+        ],
+        base_tree: '1-commit'
+      })
+      .reply(201, {
+        sha: '2-tree'
+      })
+      .post('/repos/owner/repo/git/commits', {
+        message: 'new commit',
+        tree: '2-tree',
+        parents: ['1-commit']
+      })
+      .reply(201, {
+        sha: '2-commit'
+      })
+      // Third tree and commit for package-lock.json
+      .post('/repos/owner/repo/git/trees', {
+        tree: [
+          {
+            path: 'package-lock.json',
+            content: '{"devDependencies":{"jest": {"version": "1.2.0"}, "west": {"version": "1.5.0"}}}',
+            mode: '100644',
+            type: 'blob'
+          }
+        ],
+        base_tree: '2-commit'
+      })
+      .reply(201, {
+        sha: '3-tree'
+      })
+      .post('/repos/owner/repo/git/commits', {
+        message: 'Updated lockfile yay',
+        tree: '3-tree',
+        parents: ['2-commit']
+      })
+      .reply(201, {
+        sha: 'finalsha123'
+      })
+      .post('/repos/owner/repo/git/refs', {
+        ref: 'refs/heads/testBranch',
+        sha: 'finalsha123'
+      })
+      .reply(201)
+
+    const execNock = nock('http://localhost:1234')
+      .post('/', (body) => {
+        expect(typeof body.type).toBe('string')
+        expect(typeof body.packageJson).toBe('string')
+        expect(typeof body.lock).toBe('string')
+        expect(body).toMatchSnapshot()
+        return true
+      })
+      .reply(200, () => {
+        return {
+          ok: true,
+          contents: '{"devDependencies":{"jest": {"version": "1.2.0"}, "west": {"version": "1.5.0"}}}'
+        }
+      })
+
+    const sha = await createBranch({
+      installationId: 123,
+      owner: 'owner',
+      repoName: 'repo',
+      branch: 'master',
+      newBranch: 'testBranch',
+      transforms: [
+        {
+          path: 'package.json',
+          transform: oldPkg => JSON.stringify(updatedPackageFileContents1),
+          message: 'new commit'
+        }, {
+          path: 'package.json',
+          transform: oldPkg => JSON.stringify(updatedPackageFileContents2),
+          message: 'new commit'
+        }
+      ],
+      processLockfiles: true,
+      lockFileCommitMessage: 'Updated lockfile yay',
+      repoDoc: {
+        _id: 'one-lockfile-old-syntax',
+        accountId: '124',
+        fullName: 'finnp/one-lockfile-old-syntax',
+        private: false,
+        files: {
+          'package.json': ['package.json'],
+          'package-lock.json': ['package-lock.json'],
+          'npm-shrinkwrap.json': [],
+          'yarn.lock': []
+        },
+        packages: {
+          'package.json': {
+            devDependencies: {
+              'jest': '^1.0.0',
+              'west': '^1.0.0'
+            }
+          }
+        }
+      }
+    })
+
+    expect(sha).toEqual('finalsha123')
+    expect(gitHubNock.isDone()).toBeTruthy()
+    expect(execNock.isDone()).toBeTruthy()
+  })
+
   test('handle exec server 500 gracefully', async () => {
     const packageFileContents = {devDependencies: {
       'jest': '1.1.1'
