@@ -1963,7 +1963,7 @@ describe('create version branch for dependencies from monorepos', () => {
         'package.json': {
           devDependencies: {
             'enzyme': '^3.3.0',
-            'enzyme-adapter-react-16': '^1.5.0'
+            'enzyme-adapter-react-16': '^1.5.0' // this might have been a user error, the current version at the time was 1.2.0
           }
         }
       }
@@ -2033,18 +2033,17 @@ describe('create version branch for dependencies from monorepos', () => {
       })
 
     jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
-      expect(transforms).toHaveLength(2)
-      const transform1 = await transforms[0]
-      const transform2 = await transforms[1]
-      let result = transform1.transform(JSON.stringify({
+      expect(transforms).toHaveLength(1)
+      let result = await JSON.parse(transforms[0].transform(JSON.stringify({
         devDependencies: {
           'enzyme': '^3.3.0',
           'enzyme-adapter-react-16': '^1.5.0'
         }
-      }))
-      result = JSON.parse(transform2.transform(result))
-      expect(result.dependencies['colors-blue']).toBe('2.0.0')
-      expect(result.devDependencies['colors']).toBe('2.0.0')
+      })))
+      console.log('result', result)
+      expect(result.devDependencies['enzyme']).toBe('^3.4.4')
+      // We leave the downgrade untouched
+      expect(result.devDependencies['enzyme-adapter-react-16']).toBe('^1.5.0')
       return '1234abcd'
     })
 
@@ -2070,6 +2069,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     // This is what registry-change passes in for this buggy PR
+    // We might be able to leave this as-is and just handle things in cvb correctly.
     const newJob = await createVersionBranch({
       dependency: 'enzyme-adapter-utils',
       accountId: 'mono-123',

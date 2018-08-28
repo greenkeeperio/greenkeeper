@@ -129,14 +129,15 @@ module.exports = async function (
     "oldVersion": "^4.2.4"
   }
   */
-  // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
+  // packageFilesForUpdatedDependency is a non-deduped list of all package files that have that dependency
+  // If this is a monorepo release or a monorepo repo, it’s likely that there are a lot of duplicate package files
+  // in here, because each file can be returned multiple times, once for each monorepo dep, for example.
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     keys: dependencies
   })).rows
 
   console.log('packageFilesForUpdatedDependency', packageFilesForUpdatedDependency)
 
-  // ⚠️ FIX: dependency !== dependencies
   if (!packageFilesForUpdatedDependency.length) {
     if (dependencies.length === 1) {
       log.info(`exited: no repoDocs found that depend on ${dependency}`)
@@ -148,7 +149,7 @@ module.exports = async function (
   if (dependencies.length === 1) {
     log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
   } else {
-    log.info(`found ${packageFilesForUpdatedDependency.length} instances of  dependencies from this release group`, dependencies)
+    log.info(`found ${packageFilesForUpdatedDependency.length} instances of dependencies from this release group`, dependencies)
   }
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
@@ -245,7 +246,7 @@ module.exports = async function (
       }
     }))
   ]
-  log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
+  log.success(`${jobs.length} jobs created in registry-change for dependency ${dependency}`)
   console.log('jobs', jobs)
   return jobs
 }

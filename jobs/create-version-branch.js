@@ -53,17 +53,24 @@ module.exports = async function (
     log.warn(`exited: repository has ${Object.keys(repository.packages).length} package.json files`)
     return
   }
+  // ⚠️ This doesn’t do what the comment says at all… the comment is old
+
   // if this dependency is part of a monorepo suite that usually gets released
   // all at the same time, check if we have update info for all the other
   // modules as well. If not, stop this update, the job started by the last
   // monorepo module will then update the whole lot.
   if (await isPartOfMonorepo(dependency)) {
     isMonorepo = true
+    // example values:
+    // monorepoGroupName: something like 'enzyme'
+    // monorepoGroup: an array of all of the packages in the 'enzyme' definition
+    // relevantDependencies: the intersection between this repos deps and monorepoGroup,
+    //   so for example ['enzyme', 'enzyme-adapter-utils']
+    //   This may actually _not_ include the `dependency` this job was started with
     monorepoGroupName = await getMonorepoGroupNameForPackage(dependency)
     monorepoGroup = await getMonorepoGroup(monorepoGroupName)
     relevantDependencies = monorepoGroup.filter(dep =>
       !!JSON.stringify(repository.packages['package.json']).match(dep))
-
     log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
 
@@ -153,6 +160,10 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     group = relevantDependencies
+    // ⚠️ FIX: ${version} is wrong here, since the individual packages have different versions.
+    // we still need to differentiate branches, so we need some sort of changing value
+    // the value need no be deterministic, at least not for branch deletes.
+    // getGroupBranchesToDelete uses the branch_by_group view, which also doesn’t care about this
     newBranch = `${config.branchPrefix}monorepo.${monorepoGroupName}-${version}`
   } else {
     dependencyKey = dependency
@@ -180,6 +191,7 @@ module.exports = async function (
       // get version for each dependency
       const npmDoc = await npm.get(depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      console.log(`oldPkgVersion for ${depName} determined as ${oldPkgVersion}, updating to ${latestDependencyVersion}`)
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
         log.warn(`exited: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
@@ -192,6 +204,7 @@ module.exports = async function (
       const commitMessageValues = { dependency: depName, version: latestDependencyVersion }
       let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
+      // ⚠️ This closing message may not be in the right place, since merging a single commit from a group doesn’t really solve the PR
       if (!satisfies && openPR) {
         await upsert(repositories, openPR._id, {
           comments: [...(openPR.comments || []), latestDependencyVersion]
@@ -238,6 +251,8 @@ module.exports = async function (
   // how many unprocessed branches are lying around
   // and create an issue telling the user to enable CI
 
+  // ❓ Why is this an upsert and not a put? The fact that we upsert allows
+  // an already processed branch to be processed again, which triggers multiple comments
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
     type: 'branch',
     sha,
@@ -267,6 +282,9 @@ module.exports = async function (
       : openPR.version
     : oldVersionResolved
 
+  // ⚠️ diffBase is also undefined if oldVersionResolved is undefined
+  console.log('diffBase', diffBase)
+
   const { dependencyLink, release, diffCommits } = await getInfos({
     installationId,
     dependency,
@@ -275,6 +293,10 @@ module.exports = async function (
     diffBase,
     versions
   })
+
+  console.log('{ dependencyLink, release, diffCommits }', { dependencyLink, release, diffCommits })
+  // ⚠️ release: undefined,
+  // ⚠️ diffCommits: undefined
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
 
@@ -285,6 +307,7 @@ module.exports = async function (
       owner,
       repo,
       number: openPR.number,
+      // ⚠️ needs to be different for monorepos
       body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
     }))
 
@@ -308,8 +331,8 @@ module.exports = async function (
     oldVersionResolved,
     version,
     dependency,
-    release,
-    diffCommits,
+    release, // undefined
+    diffCommits, // undefined
     monorepoGroupName,
     type,
     yearlyBillingAd,

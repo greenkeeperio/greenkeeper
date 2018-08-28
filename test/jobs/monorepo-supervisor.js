@@ -62,6 +62,7 @@ describe('monorepo supervisor', async () => {
     const monorepoSupervisor = require('../../jobs/monorepo-supervisor')
     const newJob = await monorepoSupervisor()
     expect(newJob).toBeTruthy()
+    console.log('newJob', JSON.stringify(newJob))
     expect(newJob[0].data.name).toEqual('registry-change')
     expect(newJob[0].data.dependency).toEqual('wobbly')
     expect(newJob[1].data.dependency).toEqual('wibbly')
