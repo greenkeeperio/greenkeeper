@@ -32,11 +32,23 @@ describe('handle-branch-status', async () => {
       }),
       npm.put({
         _id: 'test',
-        versions: {}
+        versions: {
+          '1.0.1': {
+            repository: {
+              url: 'http://github.com/locats/test'
+            }
+          }
+        }
       }),
       npm.put({
         _id: 'test2',
-        versions: {}
+        versions: {
+          '1.0.2': {
+            repository: {
+              url: 'http://github.com/locats/test2'
+            }
+          }
+        }
       }),
       repositories.put({
         _id: '42:branch:deadbeef',
@@ -137,7 +149,7 @@ describe('handle-branch-status', async () => {
     expect(branch.state).toEqual('failure')
   })
 
-  test('with issue', async () => {
+  test.only('with issue', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
 
@@ -162,7 +174,9 @@ describe('handle-branch-status', async () => {
         head: 'branchname3',
         dependency: 'test3',
         version: '1.0.1',
-        base: 'master'
+        base: 'master',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       })
     ])
 
@@ -176,6 +190,7 @@ describe('handle-branch-status', async () => {
       .optionally()
       .reply(200, {})
       .post('/repos/club/mate/issues/5/comments', ({ body }) => {
+        console.log('body', body)
         expect(body).toMatch(/\/club\/mate\/compare\/master...club:branchname3/)
         return true
       })

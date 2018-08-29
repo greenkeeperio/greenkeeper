@@ -4,8 +4,8 @@ const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const {getMessage, getPrTitle} = require('../lib/get-message')
-const getInfos = require('../lib/get-infos')
+const { getMessage, getPrTitle } = require('../lib/get-message')
+const { getInfos, getFormattedDependencyURL } = require('../lib/get-infos')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -20,7 +20,9 @@ const {
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
 const { createTransformFunction,
   generateGitHubCompareURL,
-  hasTooManyPackageJSONs
+  hasTooManyPackageJSONs,
+  getSatisfyingVersions,
+  getOldVersionResolved
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
@@ -31,6 +33,7 @@ module.exports = async function (
     accountId,
     repositoryId,
     type,
+    // The following 4 don’t matter anymore, since we fetch them anew for every dependency anyway
     version,
     oldVersion,
     oldVersionResolved,
@@ -70,47 +73,8 @@ module.exports = async function (
     log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
 
-  // Shrinkwrap should behave differently from regular lockfiles:
-  //
-  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied and continue
-  // if not. For the other two types of lockfiles (package-lock and yarn-lock),
-  // we will in future check if gk-lockfile is found in the repo’s dev-dependencies,
-  // if it is, Greenkeeper will continue (and the lockfiles will get updated),
-  // if not, we bail as before and nothing happens (because without gk-lockfile,
-  // the CI build wouldn‘t install anything new anyway).
-  //
-  // Variable name explanations:
-  // - moduleLockFile: Lockfiles that get published to npm and that influence what
-  //   gets installed on a user’s machine, such as `npm-shrinkwrap.json`.
-  // - projectLockFile: lockfiles that don’t get published to npm and have no
-  //   influence on the users’ dependency trees, like package-lock and yarn-lock
-  //
-  // See this issue for details: https://github.com/greenkeeperio/greenkeeper/issues/506
-
-  // this is a good candidate for a utils function :)
-  function isTrue (x) {
-    if (typeof x === 'object') {
-      return !!x.length
-    }
-    return x
-  }
-
-  const satisfies = semver.satisfies(version, oldVersion)
-  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
-
-  // Bail if it’s in range and the repo uses shrinkwrap
-  if (satisfies && hasModuleLockFile) {
-    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
-    return
-  }
-
-  // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const config = getConfig(repoDoc)
   log.info(`config for ${repoDoc.fullName}`, {config})
-  const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
-
-  let processLockfiles = true
-  if (onlyUpdateLockfilesIfOutOfRange && satisfies) processLockfiles = false
 
   let billing = null
   if (!env.IS_ENTERPRISE) {
@@ -124,23 +88,7 @@ module.exports = async function (
   }
 
   const [owner, repo] = repoDoc.fullName.split('/')
-
-  // Bail if the dependency is ignored in a group (yes, group configs make no sense in a non-monorepo, but we respect it anyway)
-  if (config.groups && isDependencyIgnoredInGroups(config.groups, 'package.json', dependency)) {
-    log.warn(`exited: ${dependency} ${version} ignored by groups config`, { config })
-    return
-  }
-  // Bail if the dependency is ignored globally
-  if (_.includes(config.ignore, dependency) ||
-  (relevantDependencies.length && _.intersection(config.ignore, relevantDependencies).length === relevantDependencies.length)) {
-    log.warn(`exited: ${dependency} ${version} ignored by user config`, { config })
-    return
-  }
-
   const installationId = installation.installation
-  const ghqueue = githubQueue(installationId)
-  const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: using default branch', {defaultBranch: base})
 
   let group, newBranch, dependencyKey
   if (isMonorepo) {
@@ -154,31 +102,46 @@ module.exports = async function (
   }
   log.info(`branch name ${newBranch} created`)
 
+  const ghqueue = githubQueue(installationId)
+  const openPR = await findOpenPR()
+
+  let satisfiesAll = true
   async function createTransformsArray (group, json) {
     return Promise.all(group.map(async depName => {
+      // Bail if the dependency is ignored in a group (yes, group configs make no sense in a non-monorepo, but we respect it anyway)
+      if (config.groups && isDependencyIgnoredInGroups(config.groups, 'package.json', depName)) {
+        log.warn(`exited transform creation: ${depName} ignored by groups config`, { config })
+        return
+      }
+      // Bail if the dependency is ignored globally
+      if (_.includes(config.ignore, depName)) {
+        log.warn(`exited transform creation: ${depName} ignored by user config`, { config })
+        return
+      }
+
       const types = Object.keys(json).filter(type => {
         if (Object.keys(json[type]).includes(depName)) return type
       })
       if (!types.length) return
       const dependencyType = types[0]
 
-      if (_.includes(config.ignore, depName)) return
-
       const oldPkgVersion = _.get(json, [dependencyType, depName])
       if (!oldPkgVersion) {
-        log.warn('exited: could not find old package version', {newVersion: version, json})
+        log.warn('exited transform creation: could not find old package version', {newVersion: version, json})
         return null
       }
 
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
-        log.warn(`exited: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+        log.warn(`exited transform creation: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
         return null
       }
-
+      const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
+      if (!satisfies) satisfiesAll = false
       const commitMessageKey = !satisfies && dependencyType === 'dependencies'
         ? 'dependencyUpdate'
         : 'devDependencyUpdate'
@@ -191,19 +154,59 @@ module.exports = async function (
         })
         commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
       }
-      log.info('commit message created', {commitMessage})
+      log.info(`commit message for ${depName} created`, {commitMessage})
+
+      const satisfyingVersions = getSatisfyingVersions(npmDoc.versions, {
+        value: {oldVersion: oldPkgVersion}
+      })
+      const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
+
+      if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
+        log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+        return null
+      }
 
       return {
         transform: createTransformFunction(dependencyType, depName, latestDependencyVersion, log),
         path: 'package.json',
-        message: commitMessage
+        message: commitMessage,
+        dependency: depName,
+        oldVersion: oldVersionResolved,
+        version: latestDependencyVersion,
+        dependencyType,
+        repoURL
       }
     }))
   }
 
-  const openPR = await findOpenPR()
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
+
+  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfiesAll && hasModuleLockFile) {
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
+    return
+  }
+
+  // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
+  const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
+  let processLockfiles = true
+  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) processLockfiles = false
 
   const transforms = _.compact(_.flatten(await createTransformsArray(group, repoDoc.packages['package.json'])))
+
+  if (transforms.length === 0) return
+
+  const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: using default branch', {defaultBranch: base})
+
   const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
   const sha = await createBranch({
     installationId,
@@ -225,6 +228,14 @@ module.exports = async function (
     log.error('github: no branch was created')
     return
   }
+
+  let packageUpdateList = ''
+  transforms.forEach(async transform => {
+    if (transform.created) {
+      const dependencyURL = getFormattedDependencyURL({repositoryURL: transform.repoURL, dependency: transform.dependency})
+      packageUpdateList += `- The \`${transform.dependencyType.replace('ies', 'y')}\` [${transform.dependency}](${dependencyURL}) was updated from \`${transform.oldVersion}\` to \`${transform.version}\`.\n`
+    }
+  })
 
   // TODO: previously we checked the default_branch's status
   // this failed when users used [ci skip]
@@ -249,12 +260,13 @@ module.exports = async function (
     dependencyType: type,
     repositoryId,
     accountId,
-    processed: !satisfies
+    processed: !satisfiesAll,
+    packageUpdateList
   })
 
   // nothing to do anymore
   // the next action will be triggered by the status event
-  if (satisfies) {
+  if (satisfiesAll) {
     log.info('dependency satisfies version range, no action required')
     return
   }
@@ -265,7 +277,8 @@ module.exports = async function (
       : openPR.version
     : oldVersionResolved
 
-  const { dependencyLink, release, diffCommits } = await getInfos({
+  const dependencyLink = getFormattedDependencyURL({repositoryURL: transforms[0].repoURL})
+  const { release, diffCommits } = await getInfos({
     installationId,
     dependency,
     monorepoGroupName,
@@ -278,12 +291,14 @@ module.exports = async function (
 
   const compareURL = generateGitHubCompareURL(repoDoc.fullName, base, newBranch)
 
+  const commentBody = (packageUpdateList + `\n[Update to ${transforms.length === 1 ? 'this version' : 'these versions'} instead 🚀](${compareURL}) \n ${bodyDetails}`).trim()
+
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
-      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
+      body: commentBody
     }))
 
     statsd.increment('pullrequest_comments')
@@ -296,11 +311,6 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles})
 
-  // Inform monthly paying customers about the new yearly plan
-  const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")
-  const today = Date.now()
-  const yearlyBillingAd = (today <= adExpiredBy) && billing && (billing.plan === 'org' || billing.plan === 'personal')
-
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -310,8 +320,7 @@ module.exports = async function (
     diffCommits,
     monorepoGroupName,
     type,
-    yearlyBillingAd,
-    orgName: owner
+    packageUpdateList
   })
 
   // verify pull requests commit
