@@ -206,10 +206,6 @@ module.exports = async function (
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
-      if (semver.prerelease(version) && !semver.prerelease(pkg.value.oldVersion)) {
-        log.info(`exited: ${dependency} ${version} is a prerelease on latest and user does not use prereleases`)
-        return
-      }
 
       return {
         data: Object.assign(
