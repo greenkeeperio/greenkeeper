@@ -37,7 +37,7 @@ ${showBlogpost(announcementURL)}
 <summary>More information on this issue</summary>
 
 Greenkeeper has checked the \`engines\` key in any \`package.json\` file, the \`.nvmrc\` file, and the \`.travis.yml\` file, if present.
-- In \`engines\`, any occurance of ${nodeVersion} was replaced with ${newLowestVersion}
+- In \`engines\`, any occurrence of ${nodeVersion} was replaced with ${newLowestVersion}
 - \`.nvmrc\` was updated to Node.js ${nodeVersion}
 - \`.travis.yml\` was only changed if there was a root-level \`node_js\` key that specified Node.js ${nodeVersion}. In this case, ${nodeVersion} was replaced with ${newLowestVersion}. We didn’t touch job or matrix configurations because these tend to be quite specific and complex, and it’s difficult to infer what the intentions were.
 

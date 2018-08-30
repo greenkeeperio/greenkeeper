@@ -7,7 +7,7 @@ module.exports = prBody
 const branchFailed = () => md`
 <summary>💥 Tests on this branch are failing. Here’s how to proceed.</summary>
 
-To solve the issue, first find out which of the dependency’s updates is causing the problem. Then fix your code to accomodate the changes in the updated dependency. [next-update](https://www.npmjs.com/package/next-update) is a really handy tool to help you with this.
+To solve the issue, first find out which of the dependency’s updates is causing the problem. Then fix your code to accommodate the changes in the updated dependency. [next-update](https://www.npmjs.com/package/next-update) is a really handy tool to help you with this.
 
 Then push your changes to this branch and merge it.
 `
@@ -184,7 +184,7 @@ const greenkeeperConfigInfoMessage = (info) => {
   if (info.action === 'updated') {
     message += 'Since this repo already has a `greenkeeper.json` config file with defined groups, Greenkeeper has only checked whether they’re still valid. '
     if (info.deletedPackageFiles.length > 0) {
-      message += 'The follwing `package.json` files could no longer be found in the repo and have been removed from your groups config: `' + info.deletedPackageFiles.join(', ') + '`. '
+      message += 'The following `package.json` files could no longer be found in the repo and have been removed from your groups config: `' + info.deletedPackageFiles.join(', ') + '`. '
     }
     if (info.deletedGroups.length > 0) {
       message += 'Also, groups which no longer have any entries have been removed: `' + info.deletedGroups.join(', ') + '`. '
