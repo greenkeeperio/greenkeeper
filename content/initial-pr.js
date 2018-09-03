@@ -12,7 +12,7 @@ To solve the issue, first find out which of the dependency’s updates is causin
 Then push your changes to this branch and merge it.
 `
 
-const enablePrivatePackage = ({installationId, secret}) => `
+const enablePrivatePackage = ({ installationId, secret }) => `
 <summary>📦 How to enable private scoped packages</summary>
 
 Public scoped packages (\`@scope/name\`) work out of the box, but private scoped packages require an additional setup step:
@@ -33,7 +33,7 @@ wombat hook add --type owner substack https://${env.HOOKS_HOST}/npm/${installati
 \`\`\`
 `
 
-const badgeAddedText = ({badgeUrl}) => md`
+const badgeAddedText = ({ badgeUrl }) => md`
 <summary>🏷 How to check the status of this repository</summary>
 
 Greenkeeper adds a badge to your README which indicates the status of this repository.
@@ -64,7 +64,7 @@ const updatePullRequestText = ({ ghRepo, newBranch }) => md`
 \`\`\`
 `
 
-const howToIgnoreDependencies = ({ghRepo, newBranch}) => md`
+const howToIgnoreDependencies = ({ ghRepo, newBranch }) => md`
 <summary>🙈 How to ignore certain dependencies</summary>
 
 You may have good reasons for not wanting to update to a certain dependency right now. In this case, you can [change the dependency’s version string in the \`package.json\` file back to whatever you prefer](${ghRepo.html_url}/edit/${newBranch}/package.json).
@@ -85,7 +85,7 @@ To make sure Greenkeeper doesn’t nag you again on the next update, add a \`gre
 \`\`\`
 `
 
-const howToIgnoreDependenciesInGroup = ({ghRepo, newBranch}) => md`
+const howToIgnoreDependenciesInGroup = ({ ghRepo, newBranch }) => md`
 <summary>🙈 How to ignore certain dependencies for this group</summary>
 
 You may have good reasons for not wanting to update to a certain dependency right now. In this case, you can [change the dependency’s version string in the \`package.json\` file back to whatever you prefer](${ghRepo.html_url}/edit/${newBranch}/package.json).
@@ -165,7 +165,7 @@ function hasLockFileText (files) {
   return md`⚠️ Greenkeeper has found a ${md.code(lockFile)} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
 }
 
-const mainMessage = ({enabled, depsUpdated, groupName}) => {
+const mainMessage = ({ enabled, depsUpdated, groupName }) => {
   if (groupName && depsUpdated) return md`This pull request **updates all your dependencies in the group \`${groupName}\` to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. As long as you have the group defined in your \`greenkeeper.json\`, Greenkeeper will look out for further dependency updates relevant to this group and make sure to always handle them together and in real-time.`
   if (enabled) return 'All of your dependencies are already up-to-date, so this repository was enabled right away. Good job :thumbsup:'
   if (depsUpdated) return 'This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.'
@@ -202,13 +202,13 @@ const closeMessages = (issueNumbers) => {
   }
 }
 
-function prBody ({ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName, closes}) {
+function prBody ({ ghRepo, success, secret, installationId, newBranch, badgeUrl, travisModified, enabled, depsUpdated, accountTokenUrl, files, greenkeeperConfigInfo, groupName, closes }) {
   return md`
 ${!groupName && `Let’s get started with automated dependency management for ${ghRepo.name} :muscle:`}
 
 ${!groupName && hasLockFileText(files)}
 
-${mainMessage({enabled, depsUpdated, groupName})}
+${mainMessage({ enabled, depsUpdated, groupName })}
 
 ${!groupName && !enabled && '**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.'}
 
@@ -220,11 +220,11 @@ ${!groupName && greenkeeperConfigInfoMessage(greenkeeperConfigInfo)}
 ${
   _.compact([
     depsUpdated && !success && branchFailed(),
-    secret && enablePrivatePackage({secret, installationId}),
-    badgeUrl && badgeAddedText({badgeUrl}),
+    secret && enablePrivatePackage({ secret, installationId }),
+    badgeUrl && badgeAddedText({ badgeUrl }),
     travisModified && travisModifiedText(),
-    groupName ? howToIgnoreDependenciesInGroup({ghRepo, newBranch}) : howToIgnoreDependencies({ghRepo, newBranch}),
-    updatePullRequestText({ghRepo, newBranch}),
+    groupName ? howToIgnoreDependenciesInGroup({ ghRepo, newBranch }) : howToIgnoreDependencies({ ghRepo, newBranch }),
+    updatePullRequestText({ ghRepo, newBranch }),
     howTheUpdatesWillLookLike(),
     faqText()
   ]).map(text => `<details>${text}</details>`)

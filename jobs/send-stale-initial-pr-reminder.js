@@ -18,7 +18,7 @@ module.exports = async function (
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
 
-  const log = Log({logsDb: logs, accountId, repoSlug: repository.fullName, context: 'send-stale-initial-pr-reminder'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repository.fullName, context: 'send-stale-initial-pr-reminder' })
 
   log.info('started')
 

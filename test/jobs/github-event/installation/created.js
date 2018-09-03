@@ -34,7 +34,7 @@ test('github-event installation created', async () => {
           full_name: 'bar/repo',
           private: true
         }
-      ]}, {
+      ] }, {
       Link: '<https://api.github.com/installation/repositories?per_page=100&page=2>; rel="next"'
     })
     .get('/installation/repositories?per_page=100&page=2')
@@ -45,7 +45,7 @@ test('github-event installation created', async () => {
           full_name: 'bar/repo2',
           private: false
         }
-      ]})
+      ] })
 
   const newJobs = await createInstallation({
     installation: {

@@ -149,7 +149,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: '1111', groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: '1111', groupName: 'frontend' })
     const newBranch = await repositories.get('1111:branch:1234abcd')
 
     expect(httpRequests.isDone()).toBeTruthy()
@@ -291,7 +291,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: '11112', groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: '11112', groupName: 'frontend' })
     const oldBranch = await repositories.get('11112:branch:initialGroup')
     expect(oldBranch.referenceDeleted).toBeTruthy()
     const newBranch = await repositories.get('11112:branch:1234abcd')
@@ -423,7 +423,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: 1112, groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: 1112, groupName: 'frontend' })
     // All deps are ignored, so no new branch!
     // Syntax for expecting throws on async/await: https://facebook.github.io/jest/docs/en/expect.html#rejects
     await expect(repositories.get('1112:branch:1234abcd')).rejects.toThrow('missing')
@@ -551,7 +551,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: 'initialSubgroupBranch3', groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: 'initialSubgroupBranch3', groupName: 'frontend' })
     const newBranch = await repositories.get('initialSubgroupBranch3:branch:1234abcd')
 
     expect(httpRequests.isDone()).toBeTruthy()
@@ -581,7 +581,7 @@ describe('create initial subgroup branch', () => {
     })
 
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: 'to-many-packages'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: 'to-many-packages' })
 
     expect(newJob).toBeFalsy()
   })
@@ -713,7 +713,7 @@ describe('create initial subgroup branch', () => {
       return '1234abcd'
     })
     const createInitialSubgroupBranch = require('../../jobs/create-initial-subgroup-branch')
-    const newJob = await createInitialSubgroupBranch({repositoryId: '1111-lockfiles', groupName: 'frontend'})
+    const newJob = await createInitialSubgroupBranch({ repositoryId: '1111-lockfiles', groupName: 'frontend' })
     const newBranch = await repositories.get('1111-lockfiles:branch:1234abcd')
 
     expect(httpRequests.isDone()).toBeTruthy()

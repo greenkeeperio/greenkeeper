@@ -10,7 +10,7 @@ const pathToWorker = require.resolve('../../../../jobs/github-event/pull_request
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
-const pullRequestPayLoad = ({prId, branchName, user, repositoryId}) => {
+const pullRequestPayLoad = ({ prId, branchName, user, repositoryId }) => {
   return {
     installation: {
       id: 37

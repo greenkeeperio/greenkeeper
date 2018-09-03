@@ -40,7 +40,7 @@ describe('create initial branch', () => {
   test('create pull request for monorepo with one non-root package.json', async () => {
     const ignore = ['eslint', 'lodash']
     const packagePaths = ['package.json', 'frontend/package.json']
-    const packageJsonContents = [{ devDependencies: {'@finnpauls/dep': '1.0.0'} }]
+    const packageJsonContents = [{ devDependencies: { '@finnpauls/dep': '1.0.0' } }]
     const registryGet = () => {}
     const log = console
 
@@ -83,7 +83,7 @@ describe('create initial branch', () => {
       return utils
     })
     const initialBranchUtils = require.requireMock('../../utils/initial-branch-utils')
-    const updatedDependencies = await initialBranchUtils.getUpdatedDependenciesForFiles({ignore, log, packagePaths, packageJsonContents, registryGet})
+    const updatedDependencies = await initialBranchUtils.getUpdatedDependenciesForFiles({ ignore, log, packagePaths, packageJsonContents, registryGet })
     expect(updatedDependencies[0].newVersion).toEqual('2.0.0')
   })
 })

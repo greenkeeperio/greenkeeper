@@ -34,7 +34,7 @@ test('updateRepoDoc with package.json', async () => {
   const args = {
     installationId: '123',
     doc,
-    log: {info: () => {}, warn: () => {}, error: () => {}}
+    log: { info: () => {}, warn: () => {}, error: () => {} }
   }
   await updateRepoDoc(args)
   expect(doc.packages['package.json'].name).toEqual('test')
@@ -72,7 +72,7 @@ test('get invalid package.json', async () => {
   const args = {
     installationId: '123',
     doc,
-    log: {info: () => {}, warn: () => {}, error: () => {}}
+    log: { info: () => {}, warn: () => {}, error: () => {} }
   }
   await updateRepoDoc(args)
 
@@ -142,7 +142,7 @@ test('updateRepoDoc with greenkeeper.json present', async () => {
   const args = {
     installationId: '123',
     doc,
-    log: {info: () => {}, warn: () => {}, error: () => {}}
+    log: { info: () => {}, warn: () => {}, error: () => {} }
   }
   await updateRepoDoc(args)
   expect(Object.keys(doc.packages)).toHaveLength(3)

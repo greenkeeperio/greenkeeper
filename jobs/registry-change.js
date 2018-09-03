@@ -27,8 +27,8 @@ module.exports = async function (
 ) {
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
-  const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change'})
-  log.info(`started registry-change for dependency ${dependency}`, {dependency, versions})
+  const log = Log({ logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change' })
+  log.info(`started registry-change for dependency ${dependency}`, { dependency, versions })
 
   const isFromHook = _.isString(installation)
   let npmDoc = {
@@ -186,7 +186,7 @@ module.exports = async function (
         account,
         repositoryId: repoDoc.id,
         plan,
-        log}))
+        log }))
     })
   }
   // ******** Monorepos end

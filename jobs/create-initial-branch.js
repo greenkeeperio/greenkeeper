@@ -31,7 +31,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-branch' })
 
   log.info('started')
   if (hasTooManyPackageJSONs(repoDoc)) {
@@ -45,7 +45,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   }
 
   let config = getConfig(repoDoc)
-  log.info(`config for ${repoDoc.fullName}`, {config})
+  log.info(`config for ${repoDoc.fullName}`, { config })
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
@@ -54,12 +54,12 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   const [owner, repo] = repoDoc.fullName.split('/')
   const { default_branch: base } = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
   // find all package.json files on the default branch
-  const packageFilePaths = await discoverPackageFilePaths({installationId, fullName: repoDoc.fullName, defaultBranch: base, log})
+  const packageFilePaths = await discoverPackageFilePaths({ installationId, fullName: repoDoc.fullName, defaultBranch: base, log })
   try {
     // This mutates repoDoc!
     // Also, this might fail, for example because of a `greenkeeper.json` validation issue, but all errors are handled
     // and the rest of this file will run anyway.
-    await updateRepoDoc({installationId, doc: repoDoc, filePaths: packageFilePaths, log})
+    await updateRepoDoc({ installationId, doc: repoDoc, filePaths: packageFilePaths, log })
   } catch (e) {
     // If the config file is invalid, we open an issue instead of the initial PR
     if (e.name && e.name === 'GKConfigFileParseError') {
@@ -112,7 +112,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
   })
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
-  log.info('github: repository info', {repositoryInfo: ghRepo})
+  log.info('github: repository info', { repositoryInfo: ghRepo })
 
   const branch = ghRepo.default_branch
 
@@ -127,7 +127,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     ? `?token=${tokenHash}&ts=${Date.now()}`
     : ''
   const badgeUrl = `https://${env.BADGES_HOST}/${slug}.svg${badgesTokenMaybe}`
-  log.info('badge: url', {badgeUrl})
+  log.info('badge: url', { badgeUrl })
 
   const privateBadgeRegex = new RegExp(`https://${env.BADGES_HOST}.+?.svg\\?token=\\w+(&ts=\\d+)?`)
 
@@ -201,8 +201,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     // TODO: this should probably update an existing greenkeeper.json too, though.
     log.info('Not generating or updating greenkeeper.json: No package files in repo, or no monorepo.')
   } else {
-    Object.assign(greenkeeperConfigInfo, {isMonorepo: true})
-    log.info('Monorepo detected, generating greenkeeper config', {packageFilePaths})
+    Object.assign(greenkeeperConfigInfo, { isMonorepo: true })
+    log.info('Monorepo detected, generating greenkeeper config', { packageFilePaths })
     const greenkeeperConfigFile = repoDoc.greenkeeper || {}
     // Generate a default group with all the autodiscovered package.json files
     const defaultGroups = {
@@ -241,7 +241,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
       })
       greenkeeperConfigInfo = updatedGreenkeeperConfigMeta.greenkeeperConfigInfo
       const updatedGreenkeeperConfigFile = updatedGreenkeeperConfigMeta.greenkeeperConfigFile
-      log.info('updating existing greenkeeper config', {oldGreekeeperJson: oldGreenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile})
+      log.info('updating existing greenkeeper config', { oldGreekeeperJson: oldGreenkeeperConfigFile, updatedGreenkeeperJson: updatedGreenkeeperConfigFile })
       // Replace the transform that generates the default group with one that updates existing groups
       greenkeeperJSONTransform.message = getMessage(config.commitMessages, 'updateConfigFile')
       greenkeeperJSONTransform.transform = () => {
@@ -254,7 +254,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
       // set the updated greenkeeper config in the repoDoc
       await upsert(repositories, repoDoc._id, Object.assign(
         repoDoc,
-        {greenkeeper: updatedGreenkeeperConfigFile}
+        { greenkeeper: updatedGreenkeeperConfigFile }
       ))
     } else {
       // set the generated greenkeeper config in the repoDoc
@@ -375,7 +375,7 @@ async function travisTransform (config, travisyml) {
   )
 }
 
-function generateUpdatedGreenkeeperConfig ({greenkeeperConfigFile, defaultGroups, packageFilePaths, greenkeeperConfigInfo}) {
+function generateUpdatedGreenkeeperConfig ({ greenkeeperConfigFile, defaultGroups, packageFilePaths, greenkeeperConfigInfo }) {
   greenkeeperConfigInfo.deletedGroups = []
   greenkeeperConfigInfo.deletedPackageFiles = []
   const oldGroups = _.get(greenkeeperConfigFile, 'groups')
@@ -410,5 +410,5 @@ function generateUpdatedGreenkeeperConfig ({greenkeeperConfigFile, defaultGroups
   } else {
     greenkeeperConfigFile.groups = newGroups
   }
-  return {greenkeeperConfigFile, greenkeeperConfigInfo}
+  return { greenkeeperConfigFile, greenkeeperConfigInfo }
 }

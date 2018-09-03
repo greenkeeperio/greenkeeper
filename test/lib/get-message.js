@@ -1,5 +1,5 @@
-const {getMessage, getPrTitle} = require('../../lib/get-message')
-const {defaultPrTitles} = require('../../lib/default-pr-titles')
+const { getMessage, getPrTitle } = require('../../lib/get-message')
+const { defaultPrTitles } = require('../../lib/default-pr-titles')
 
 /* eslint-disable no-template-curly-in-string */
 
@@ -95,31 +95,31 @@ describe('custom pr titles', () => {
 
     expect(getPrTitle({
       version: 'initialPR',
-      prTitles: defaultPrTitles})).toEqual(expected.initialPR)
+      prTitles: defaultPrTitles })).toEqual(expected.initialPR)
 
     expect(getPrTitle({
       version: 'initialPrBadge',
-      prTitles: defaultPrTitles})).toEqual(expected.initialPrBadge)
+      prTitles: defaultPrTitles })).toEqual(expected.initialPrBadge)
 
     expect(getPrTitle({
       version: 'initialPrBadgeOnly',
-      prTitles: defaultPrTitles})).toEqual(expected.initialPrBadgeOnly)
+      prTitles: defaultPrTitles })).toEqual(expected.initialPrBadgeOnly)
 
     expect(getPrTitle({
       version: 'initialSubgroupPR',
       group,
-      prTitles: defaultPrTitles})).toEqual(expected.initialSubgroupPR)
+      prTitles: defaultPrTitles })).toEqual(expected.initialSubgroupPR)
 
     expect(getPrTitle({
       version: 'basicPR',
       dependency,
-      prTitles: defaultPrTitles})).toEqual(expected.basicPR)
+      prTitles: defaultPrTitles })).toEqual(expected.basicPR)
 
     expect(getPrTitle({
       version: 'groupPR',
       dependency,
       group,
-      prTitles: defaultPrTitles})).toEqual(expected.groupPR)
+      prTitles: defaultPrTitles })).toEqual(expected.groupPR)
   })
 
   test("throws when it doesn't know a pr title", () => {
@@ -132,7 +132,7 @@ describe('custom pr titles', () => {
       getPrTitle({
         version: 'basicPR',
         dependency,
-        prTitles})
+        prTitles })
     }).toThrowError('exited: Unknown PR key')
   })
 
@@ -151,12 +151,12 @@ describe('custom pr titles', () => {
     expect(getPrTitle({
       version: 'basicPR',
       dependency,
-      prTitles: wrongPRTitles})).toEqual(expected.basicPR)
+      prTitles: wrongPRTitles })).toEqual(expected.basicPR)
 
     expect(getPrTitle({
       version: 'groupPR',
       group,
       dependency,
-      prTitles: wrongPRTitles})).toEqual(expected.groupPR)
+      prTitles: wrongPRTitles })).toEqual(expected.groupPR)
   })
 })

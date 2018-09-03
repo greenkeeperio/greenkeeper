@@ -105,7 +105,7 @@ describe('create-initial-pr-comment', async () => {
       branchDoc,
       prDocId: '42:pr:1234',
       repository,
-      combined: {state: 'success'},
+      combined: { state: 'success' },
       installationId: '123'
     })
 
@@ -118,7 +118,7 @@ describe('create-initial-pr-comment', async () => {
     expect.assertions(1)
 
     const { repositories } = await dbs()
-    await upsert(repositories, '42:pr:1234', {initialPrCommentSent: true})
+    await upsert(repositories, '42:pr:1234', { initialPrCommentSent: true })
 
     nock('https://api.github.com') // eslint-disable-line
       .post('/installations/123/access_tokens')
@@ -156,7 +156,7 @@ describe('create-initial-pr-comment', async () => {
       branchDoc,
       prDocId: '42:pr:1234',
       repository,
-      combined: {state: 'success'},
+      combined: { state: 'success' },
       installationId: '123'
     })
 
@@ -203,7 +203,7 @@ describe('create-initial-pr-comment', async () => {
       branchDoc,
       prDocId: '42:pr:1234',
       repository,
-      combined: {state: 'success'},
+      combined: { state: 'success' },
       installationId: '123'
     })
 
@@ -250,7 +250,7 @@ describe('create-initial-pr-comment', async () => {
       branchDoc,
       prDocId: '42:pr:1234',
       repository,
-      combined: {state: 'success'},
+      combined: { state: 'success' },
       installationId: '123'
     })
 

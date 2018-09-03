@@ -22,10 +22,10 @@ module.exports = async function (
   const repositoryId = String(repository.id)
   let repodoc = await repositories.get(repositoryId)
   const config = getConfig(repodoc)
-  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-pr' })
 
   log.info('started')
-  log.info(`config for ${repodoc.fullName}`, {config})
+  log.info(`config for ${repodoc.fullName}`, { config })
 
   const [owner, repo] = repodoc.fullName.split('/')
   const {
@@ -55,7 +55,7 @@ module.exports = async function (
     processed: true,
     state: combined.state
   })
-  log.info('branchDoc: updated to `processed: true`', {branchDoc})
+  log.info('branchDoc: updated to `processed: true`', { branchDoc })
 
   const ghqueue = githubQueue(installationId)
 
@@ -76,7 +76,7 @@ module.exports = async function (
     const accountNeedsMarketplaceUpgrade = await getAccountNeedsMarketplaceUpgrade(accountId)
 
     if (!hasBillingAccount || accountNeedsMarketplaceUpgrade) {
-      log.warn('payment required', {stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade})
+      log.warn('payment required', { stripeAccount: billingAccount, accountNeedsMarketplaceUpgrade })
       const targetUrl = accountNeedsMarketplaceUpgrade ? 'https://github.com/marketplace/greenkeeper/' : 'https://account.greenkeeper.io/'
 
       await ghqueue.write(github => github.repos.createStatus({
@@ -93,7 +93,7 @@ module.exports = async function (
   }
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: repository info', {repositoryInfo: ghRepo})
+  log.info('github: repository info', { repositoryInfo: ghRepo })
 
   const secret = repodoc.private &&
     crypto
@@ -149,7 +149,7 @@ module.exports = async function (
     }
   } catch (err) {
     if (err.code !== 422) {
-      log.error('Could not create initial pr', {err})
+      log.error('Could not create initial pr', { err })
       throw err
     }
 
@@ -161,7 +161,7 @@ module.exports = async function (
       base,
       head: `${owner}:${head}`
     })))[0]
-    log.warn('pr was already created', {pullRequestInfo: pr})
+    log.warn('pr was already created', { pullRequestInfo: pr })
     id = pr.id
     number = pr.number
   }

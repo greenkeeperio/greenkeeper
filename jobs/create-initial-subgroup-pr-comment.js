@@ -20,7 +20,7 @@ module.exports = async function (
   if (prDoc.initialPrCommentSent) return
 
   const repodoc = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-subgroup-pr-comment'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repodoc.fullName, context: 'create-initial-subgroup-pr-comment' })
   log.info('started')
 
   const [owner, repo] = repodoc.fullName.split('/')
@@ -37,18 +37,18 @@ module.exports = async function (
     processed: true,
     state: combined.state
   })
-  log.info('branchDoc: updated to `processed: true`', {branchDoc})
+  log.info('branchDoc: updated to `processed: true`', { branchDoc })
 
   const ghqueue = githubQueue(installationId)
 
   const ghRepo = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: repository info', {repositoryInfo: ghRepo})
+  log.info('github: repository info', { repositoryInfo: ghRepo })
   const issue = await ghqueue.read(github => github.issues.get({
     owner,
     repo,
     number: prDoc.number
   }))
-  log.info('github: pull request info', {pullRequestInfo: issue})
+  log.info('github: pull request info', { pullRequestInfo: issue })
 
   if (issue.state !== 'open') {
     log.warn('exited: pr is closed')

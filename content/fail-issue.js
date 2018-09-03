@@ -2,11 +2,11 @@ const _ = require('lodash')
 const md = require('./template')
 const { generateGitHubCompareURL } = require('../utils/utils')
 
-const notDevDependency = ({dependency}) => md`
+const notDevDependency = ({ dependency }) => md`
 ${dependency} is a direct dependency of this project, and **it is very likely causing it to break**. If other packages depend on yours, this update is probably also breaking those in turn.
 `
 
-const devDependency = ({dependency, dependencyType}) => md`
+const devDependency = ({ dependency, dependencyType }) => md`
 ${dependency} is a ${dependencyType.replace(/ies$/, 'y')} of this project. It **might not break your production code or affect downstream projects**, but probably breaks your build or test tools, which may **prevent deploying or publishing**.
 `
 
@@ -28,7 +28,7 @@ const individualStatusOrCheck = (status) => {
   return output
 }
 
-const ciStatuses = ({statuses}) => md`
+const ciStatuses = ({ statuses }) => md`
 <details>
 <summary>Status Details</summary>
 
@@ -36,7 +36,7 @@ ${statuses.map(status => individualStatusOrCheck(status))}
 </details>
 `
 
-module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName}) => {
+module.exports = ({ version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName }) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ${_.isEmpty(monorepoGroupName)
@@ -88,11 +88,11 @@ ${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of on
 
 ${
   dependencyType === 'dependencies'
-    ? notDevDependency({dependency})
-    : devDependency({dependency, dependencyType})
+    ? notDevDependency({ dependency })
+    : devDependency({ dependency, dependencyType })
 }
 
-${_.get(statuses, 'length') && ciStatuses({statuses})}
+${_.get(statuses, 'length') && ciStatuses({ statuses })}
 
 ---
 
