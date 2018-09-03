@@ -857,6 +857,7 @@ describe('create branch with lockfiles', async () => {
 
     nock('http://localhost:1234')
       .post('/', (body) => {
+        expect(body.packageJson).toEqual('{"devDependencies":{"jest":"1.2.0"}}')
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
@@ -895,7 +896,7 @@ describe('create branch with lockfiles', async () => {
         packages: {
           'package.json': {
             devDependencies: {
-              'jest': '^1.0.0'
+              'jest': '1.0.0'
             }
           }
         }
@@ -906,7 +907,7 @@ describe('create branch with lockfiles', async () => {
     expect(gitHubNock.isDone()).toBeTruthy()
   })
 
-  test('change two file (package.json, frontend/package.json) and generate their lockfiles', async () => {
+  test('change two files (package.json, frontend/package.json) and generate their lockfiles', async () => {
     const packageFileContents = {devDependencies: {
       'jest': '1.1.1'
     }}
@@ -1000,11 +1001,11 @@ describe('create branch with lockfiles', async () => {
       .reply(201, {
         sha: '2-commit'
       })
-      // Third tree and commit for package-lock.json
+      // Third tree and commit for frontend/package-lock.json
       .post('/repos/owner/repo/git/trees', {
         tree: [
           {
-            path: 'package-lock.json',
+            path: 'frontend/package-lock.json',
             content: '{"devDependencies":{"jest": {"version": "1.2.0"}}}',
             mode: '100644',
             type: 'blob'
@@ -1023,11 +1024,11 @@ describe('create branch with lockfiles', async () => {
       .reply(201, {
         sha: '3-commit'
       })
-      // Fourth tree and commit for frontend/package-lock.json
+      // Fourth tree and commit for package-lock.json
       .post('/repos/owner/repo/git/trees', {
         tree: [
           {
-            path: 'frontend/package-lock.json',
+            path: 'package-lock.json',
             content: '{"devDependencies":{"jest": {"version": "1.2.0"}}}',
             mode: '100644',
             type: 'blob'
@@ -1054,6 +1055,7 @@ describe('create branch with lockfiles', async () => {
 
     nock('http://localhost:1234')
       .post('/', (body) => {
+        expect(body.packageJson).toEqual(JSON.stringify(updatedPackageFileContents))
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
@@ -1067,6 +1069,7 @@ describe('create branch with lockfiles', async () => {
         }
       })
       .post('/', (body) => {
+        expect(body.packageJson).toEqual(JSON.stringify(updatedPackageFileContents))
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
@@ -1113,12 +1116,12 @@ describe('create branch with lockfiles', async () => {
         packages: {
           'package.json': {
             devDependencies: {
-              'jest': '^1.0.0'
+              'jest': '1.0.0'
             }
           },
           'frontend/package.json': {
             devDependencies: {
-              'jest': '^1.0.0'
+              'jest': '1.0.0'
             }
           }
         }
@@ -1132,7 +1135,7 @@ describe('create branch with lockfiles', async () => {
   test('don’t generate the same lockfile multiple times', async () => {
     // multiple commits to the same package file should only result in a single lockfile update,
     // meaning a single exec server request and a single github tree update plus commit
-    expect.assertions(7)
+    expect.assertions(8)
     const packageFileContents = {devDependencies: {
       'jest': '1.1.1',
       'west': '1.1.1'
@@ -1250,6 +1253,7 @@ describe('create branch with lockfiles', async () => {
 
     const execNock = nock('http://localhost:1234')
       .post('/', (body) => {
+        expect(body.packageJson).toEqual(JSON.stringify(updatedPackageFileContents2))
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
@@ -1296,8 +1300,8 @@ describe('create branch with lockfiles', async () => {
         packages: {
           'package.json': {
             devDependencies: {
-              'jest': '^1.0.0',
-              'west': '^1.0.0'
+              'jest': '1.0.0',
+              'west': '1.0.0'
             }
           }
         }
@@ -1376,6 +1380,7 @@ describe('create branch with lockfiles', async () => {
 
     nock('http://localhost:1234')
       .post('/', (body) => {
+        expect(body.packageJson).toEqual(JSON.stringify(updatedPackageFileContents))
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
