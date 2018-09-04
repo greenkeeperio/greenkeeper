@@ -5,7 +5,7 @@ describe('get-infos', () => {
     jest.mock('../../lib/get-diff-commits', () => () => {
       return 'diff commits'
     })
-    const getInfos = require('../../lib/get-infos')
+    const { getInfos } = require('../../lib/get-infos')
 
     nock('https://api.github.com')
       .post('/installations/123/access_tokens')
@@ -42,7 +42,6 @@ describe('get-infos', () => {
       }
     })
 
-    expect(infos.dependencyLink).toEqual('https://github.com/finnp/test')
     expect(infos.diffCommits).toEqual('diff commits')
     expect(infos.release).toMatch(/Cool new features/)
     expect(infos.release).toMatch(/thename/)
@@ -53,7 +52,7 @@ describe('get-infos', () => {
     jest.mock('../../lib/get-diff-commits', () => () => {
       return 'diff commits'
     })
-    const getInfos = require('../../lib/get-infos')
+    const { getInfos } = require('../../lib/get-infos')
 
     nock('https://api.github.com')
       .post('/installations/123/access_tokens')
@@ -90,7 +89,6 @@ describe('get-infos', () => {
       }
     })
 
-    expect(infos.dependencyLink).toEqual('https://github.com/pouchdb/pouchdb')
     expect(infos.diffCommits).toEqual('diff commits')
     expect(infos.release).toMatch(/Cool new features/)
     expect(infos.release).toMatch(/thename/)
