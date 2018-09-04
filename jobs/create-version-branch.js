@@ -207,7 +207,6 @@ module.exports = async function (
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})
 
-  const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
   const sha = await createBranch({
     installationId,
     owner,
@@ -218,7 +217,7 @@ module.exports = async function (
     path: 'package.json',
     transforms,
     processLockfiles,
-    lockFileCommitMessage
+    commitMessageTemplates: config.commitMessages
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})

@@ -56,7 +56,9 @@ describe('handle-branch-status', async () => {
         sha: 'deadbeef',
         head: 'branchname',
         dependency: 'test',
-        version: '1.0.1'
+        version: '1.0.1',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       }),
       repositories.put({
         _id: '42:branch:deadbeef2',
@@ -64,7 +66,9 @@ describe('handle-branch-status', async () => {
         sha: 'deadbeef2',
         head: 'branchname2',
         dependency: 'test2',
-        version: '1.0.2'
+        version: '1.0.2',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       })
     ])
   })
@@ -149,11 +153,11 @@ describe('handle-branch-status', async () => {
     expect(branch.state).toEqual('failure')
   })
 
-  test.only('with issue', async () => {
+  test('with issue', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
 
-    expect.assertions(6)
+    expect.assertions(7)
     await Promise.all([
       repositories.put({
         _id: '43:issue:5',
@@ -190,7 +194,7 @@ describe('handle-branch-status', async () => {
       .optionally()
       .reply(200, {})
       .post('/repos/club/mate/issues/5/comments', ({ body }) => {
-        console.log('body', body)
+        expect(body).toMatch('The `devDependency` **test3** was updated from `1.0.0` to `1.0.1`.')
         expect(body).toMatch(/\/club\/mate\/compare\/master...club:branchname3/)
         return true
       })
@@ -245,7 +249,9 @@ describe('handle-branch-status', async () => {
         head: 'branchname3',
         dependency: 'test4',
         version: '1.0.1',
-        group: 'one'
+        group: 'one',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       })
     ])
 
@@ -286,7 +292,7 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
 
-    expect.assertions(8)
+    expect.assertions(9)
     await Promise.all([
       repositories.put({
         _id: 'monorepo:issue:10',
@@ -309,7 +315,9 @@ describe('handle-branch-status', async () => {
         base: 'master',
         dependency: 'test5',
         version: '1.0.2',
-        group: 'one'
+        group: 'one',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       })
     ])
 
@@ -323,6 +331,7 @@ describe('handle-branch-status', async () => {
       .optionally()
       .reply(200, {})
       .post('/repos/ilse/monorepo/issues/9/comments', ({ body }) => {
+        expect(body).toMatch('The `devDependency` **test5** was updated from `1.0.0` to `1.0.2`')
         expect(body).toMatch(/\/ilse\/monorepo\/compare\/master...ilse:branchname4/)
         return true
       })
@@ -358,7 +367,8 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories } = await dbs()
 
-    expect.assertions(8)
+    expect.assertions(9)
+
     await Promise.all([
       repositories.put({
         _id: 'monorepo:issue:11',
@@ -377,7 +387,9 @@ describe('handle-branch-status', async () => {
         base: 'master',
         dependency: 'test5',
         version: '1.0.2',
-        group: 'one'
+        group: 'one',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
       })
     ])
 
@@ -389,9 +401,10 @@ describe('handle-branch-status', async () => {
       })
       .get('/rate_limit')
       .optionally()
-      .reply(200, {})
+      .reply(200)
       .post('/repos/ilse/monorepo/issues/9/comments', ({ body }) => {
-        expect(body).toMatch('Your tests for group **one** are passing again with this version. [Explicitly upgrade **one** to this version 🚀]')
+        expect(body).toMatch('The `devDependency` **test5** was updated from `1.0.0` to `1.0.2`.')
+        expect(body).toMatch('Your tests for group **one** are passing again with this update. [Explicitly upgrade **one** to this version 🚀]')
         return true
       })
       .reply(201, () => {

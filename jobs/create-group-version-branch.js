@@ -188,7 +188,6 @@ module.exports = async function (
     }))
   }
   const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
-  const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
 
   const sha = await createBranch({
     installationId,
@@ -199,7 +198,7 @@ module.exports = async function (
     newBranch,
     transforms,
     processLockfiles,
-    lockFileCommitMessage
+    commitMessageTemplates: config.commitMessages
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})

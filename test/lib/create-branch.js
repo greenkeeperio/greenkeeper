@@ -769,10 +769,10 @@ describe('create branch', async () => {
 
 describe('create branch with lockfiles', async () => {
   test('change one file (package.json) and generate its lockfile (old syntax)', async () => {
-    const packageFileContents = {devDependencies: {
+    const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
     }}
-    const updatedPackageFileContents = {devDependencies: {
+    const updatedPackageFileContents = { devDependencies: {
       'jest': '1.2.0'
     }}
     const gitHubNock = nock('https://api.github.com')
@@ -851,7 +851,8 @@ describe('create branch with lockfiles', async () => {
       })
       .post('/repos/owner/repo/git/refs', {
         ref: 'refs/heads/testBranch',
-        sha: 'finalsha123'
+        sha: 'finalsha123',
+        owner: 'owner'
       })
       .reply(201)
 
@@ -881,7 +882,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1101,7 +1102,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1285,7 +1286,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1399,7 +1400,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
