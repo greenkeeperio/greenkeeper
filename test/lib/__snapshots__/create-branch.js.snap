@@ -2,7 +2,7 @@
 
 exports[`create branch with lockfiles change one file (package.json) and generate its lockfile (old syntax) 1`] = `
 Object {
-  "lock": "{\\"type\\":\\"Buffer\\",\\"data\\":[123,34,100,101,118,68,101,112,101,110,100,101,110,99,105,101,115,34,58,123,34,106,101,115,116,34,58,34,49,46,49,46,49,34,125,125]}",
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
   "type": "npm",
 }
@@ -10,7 +10,7 @@ Object {
 
 exports[`create branch with lockfiles change two files (package.json, frontend/package.json) and generate their lockfiles 1`] = `
 Object {
-  "lock": "{\\"type\\":\\"Buffer\\",\\"data\\":[123,34,100,101,118,68,101,112,101,110,100,101,110,99,105,101,115,34,58,123,34,106,101,115,116,34,58,34,49,46,49,46,49,34,125,125]}",
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
   "type": "npm",
 }
@@ -18,7 +18,7 @@ Object {
 
 exports[`create branch with lockfiles change two files (package.json, frontend/package.json) and generate their lockfiles 2`] = `
 Object {
-  "lock": "{\\"type\\":\\"Buffer\\",\\"data\\":[123,34,100,101,118,68,101,112,101,110,100,101,110,99,105,101,115,34,58,123,34,106,101,115,116,34,58,34,49,46,49,46,49,34,125,125]}",
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
   "type": "npm",
 }
@@ -26,7 +26,7 @@ Object {
 
 exports[`create branch with lockfiles don’t generate the same lockfile multiple times 1`] = `
 Object {
-  "lock": "{\\"type\\":\\"Buffer\\",\\"data\\":[123,34,100,101,118,68,101,112,101,110,100,101,110,99,105,101,115,34,58,123,34,106,101,115,116,34,58,34,49,46,49,46,49,34,44,34,119,101,115,116,34,58,34,49,46,49,46,49,34,125,125]}",
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\",\\"west\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\",\\"west\\":\\"1.5.0\\"}}",
   "type": "npm",
 }
@@ -34,7 +34,7 @@ Object {
 
 exports[`create branch with lockfiles handle exec server 500 gracefully 1`] = `
 Object {
-  "lock": "{\\"type\\":\\"Buffer\\",\\"data\\":[123,34,100,101,118,68,101,112,101,110,100,101,110,99,105,101,115,34,58,123,34,106,101,115,116,34,58,34,49,46,49,46,49,34,125,125]}",
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
   "type": "npm",
 }
