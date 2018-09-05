@@ -1,5 +1,197 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`create-initial-pr create pr for account with \`free\` plan & shrinkwrap lockfile 1`] = `"Update dependencies to enable Greenkeeper 🌴"`;
+
+exports[`create-initial-pr create pr for account with \`free\` plan & shrinkwrap lockfile 2`] = `
+"
+Let’s get started with automated dependency management for undefined :muscle:
+
+⚠️ Greenkeeper has found a \`npm-shrinkwrap.json\` file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.
+
+This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.
+
+**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.
+
+
+
+
+
+---
+<details>
+<summary>🙈 How to ignore certain dependencies</summary>
+
+You may have good reasons for not wanting to update to a certain dependency right now. In this case, you can [change the dependency’s version string in the \`package.json\` file back to whatever you prefer](/edit/greenkeeper/initial/package.json).
+
+To make sure Greenkeeper doesn’t nag you again on the next update, add a \`greenkeeper.ignore\` field to your \`package.json\`, containing a list of dependencies you don’t want to update.
+
+\`\`\`js
+// package.json
+{
+  …
+  \\"greenkeeper\\": {
+    \\"ignore\\": [
+      \\"package-names\\",
+      \\"you-want-me-to-ignore\\"
+    ]
+  }
+}
+\`\`\`
+</details>
+<details>
+<summary>👩‍💻 How to update this pull request</summary>
+
+\`\`\`bash
+  # Change into your repository’s directory
+  git fetch --all
+  git checkout greenkeeper/initial
+  npm install-test
+  # Adapt your code until everything works again
+  git commit -m 'chore: adapt code to updated dependencies'
+  git push  greenkeeper/initial
+\`\`\`
+</details>
+<details>
+<summary>✨ How do dependency updates work with Greenkeeper?</summary>
+
+After you merge this pull request, **Greenkeeper will create a new branch whenever a  dependency is updated**, with the new version applied. The branch creation should trigger your testing services and check whether your code still works with the new dependency version. Depending on the the results of these tests Greenkeeper will try to open meaningful and helpful pull requests and issues, so your dependencies remain working and up-to-date.
+
+\`\`\`diff
+-  \\"underscore\\": \\"^1.6.0\\"
++  \\"underscore\\": \\"^1.7.0\\"
+\`\`\`
+
+The above example shows an in-range update. \`1.7.0\` is included in the old \`^1.6.0\` range, because of the [caret \`^\` character ](https://docs.npmjs.com/misc/semver#ranges).
+When the test services report success Greenkeeper will silently delete the branch again, because no action needs to be taken – everything is fine.
+
+However, should the tests fail, Greenkeeper will create an issue to inform you about the problem immediately.
+
+This way, you’ll never be surprised by a dependency breaking your code. As long as everything still works, Greenkeeper will stay out of your way, and as soon as something goes wrong, you’ll be the first to know.
+
+\`\`\`diff
+-  \\"lodash\\": \\"^3.0.0\\"
++  \\"lodash\\": \\"^4.0.0\\"
+\`\`\`
+
+In this example, the new version \`4.0.0\` is _not_ included in the old \`^3.0.0\` range.
+For version updates like these – let’s call them “out of range” updates – you’ll receive a pull request.
+
+This means that **you no longer need to check for new versions manually** – Greenkeeper will keep you up to date automatically.
+
+These pull requests not only serve as reminders to update: If you have solid tests and good coverage, and the pull requests passes those tests, you can very likely just merge it and release a new version of your software straight away :shipit:
+
+To get a better idea of which ranges apply to which releases, check out the extremely useful [semver calculator](https://semver.npmjs.com/) provided by npm.
+</details>
+<details>
+<summary>FAQ and help</summary>
+
+There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+
+---
+
+Good luck with your project and see you soon :sparkles:
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+"
+`;
+
+exports[`create-initial-pr create pr for account with \`free\` plan & yarn lockfile 1`] = `"Update dependencies to enable Greenkeeper 🌴"`;
+
+exports[`create-initial-pr create pr for account with \`free\` plan & yarn lockfile 2`] = `
+"
+Let’s get started with automated dependency management for undefined :muscle:
+
+🔒 Greenkeeper has found a \`yarn.lock\` file in this repository. Greenkeeper supports lockfile updates for public packages. If you use private packages in your repository, please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure these can get updated as well.
+
+This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.
+
+**Important: Greenkeeper will only start watching this repository’s dependency updates after you merge this initial pull request**.
+
+
+
+
+
+---
+<details>
+<summary>🙈 How to ignore certain dependencies</summary>
+
+You may have good reasons for not wanting to update to a certain dependency right now. In this case, you can [change the dependency’s version string in the \`package.json\` file back to whatever you prefer](/edit/greenkeeper/initial/package.json).
+
+To make sure Greenkeeper doesn’t nag you again on the next update, add a \`greenkeeper.ignore\` field to your \`package.json\`, containing a list of dependencies you don’t want to update.
+
+\`\`\`js
+// package.json
+{
+  …
+  \\"greenkeeper\\": {
+    \\"ignore\\": [
+      \\"package-names\\",
+      \\"you-want-me-to-ignore\\"
+    ]
+  }
+}
+\`\`\`
+</details>
+<details>
+<summary>👩‍💻 How to update this pull request</summary>
+
+\`\`\`bash
+  # Change into your repository’s directory
+  git fetch --all
+  git checkout greenkeeper/initial
+  npm install-test
+  # Adapt your code until everything works again
+  git commit -m 'chore: adapt code to updated dependencies'
+  git push  greenkeeper/initial
+\`\`\`
+</details>
+<details>
+<summary>✨ How do dependency updates work with Greenkeeper?</summary>
+
+After you merge this pull request, **Greenkeeper will create a new branch whenever a  dependency is updated**, with the new version applied. The branch creation should trigger your testing services and check whether your code still works with the new dependency version. Depending on the the results of these tests Greenkeeper will try to open meaningful and helpful pull requests and issues, so your dependencies remain working and up-to-date.
+
+\`\`\`diff
+-  \\"underscore\\": \\"^1.6.0\\"
++  \\"underscore\\": \\"^1.7.0\\"
+\`\`\`
+
+The above example shows an in-range update. \`1.7.0\` is included in the old \`^1.6.0\` range, because of the [caret \`^\` character ](https://docs.npmjs.com/misc/semver#ranges).
+When the test services report success Greenkeeper will silently delete the branch again, because no action needs to be taken – everything is fine.
+
+However, should the tests fail, Greenkeeper will create an issue to inform you about the problem immediately.
+
+This way, you’ll never be surprised by a dependency breaking your code. As long as everything still works, Greenkeeper will stay out of your way, and as soon as something goes wrong, you’ll be the first to know.
+
+\`\`\`diff
+-  \\"lodash\\": \\"^3.0.0\\"
++  \\"lodash\\": \\"^4.0.0\\"
+\`\`\`
+
+In this example, the new version \`4.0.0\` is _not_ included in the old \`^3.0.0\` range.
+For version updates like these – let’s call them “out of range” updates – you’ll receive a pull request.
+
+This means that **you no longer need to check for new versions manually** – Greenkeeper will keep you up to date automatically.
+
+These pull requests not only serve as reminders to update: If you have solid tests and good coverage, and the pull requests passes those tests, you can very likely just merge it and release a new version of your software straight away :shipit:
+
+To get a better idea of which ranges apply to which releases, check out the extremely useful [semver calculator](https://semver.npmjs.com/) provided by npm.
+</details>
+<details>
+<summary>FAQ and help</summary>
+
+There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+
+---
+
+Good luck with your project and see you soon :sparkles:
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+"
+`;
+
 exports[`create-initial-pr create pr for account with \`free\` plan 1`] = `"Update dependencies to enable Greenkeeper 🌴"`;
 
 exports[`create-initial-pr create pr for account with \`free\` plan 2`] = `
