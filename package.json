@@ -43,7 +43,7 @@
     "nock": "^9.0.0",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
     "simple-mock": "^0.8.0",
-    "standard": "^11.0.1",
+    "standard": "^12.0.1",
     "weak": "^1.0.1"
   },
   "engines": {

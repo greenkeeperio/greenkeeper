@@ -19,7 +19,7 @@ const updatedAt = require('../../../lib/updated-at')
 module.exports = async function ({ repository }) {
   const { repositories } = await dbs()
   const logs = dbs.getLogsDb()
-  const log = Log({logsDb: logs, accountId: repository.owner.id, repoSlug: repository.full_name, context: 'repo-archived'})
+  const log = Log({ logsDb: logs, accountId: repository.owner.id, repoSlug: repository.full_name, context: 'repo-archived' })
   log.info(`disabling ${repository.full_name}`)
 
   const repositoryId = String(repository.id)

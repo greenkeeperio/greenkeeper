@@ -148,7 +148,7 @@ describe('worker', () => {
     expect.assertions(2)
 
     const invalidConfigJob = {
-      fields: {redelivered: false},
+      fields: { redelivered: false },
       content: Buffer.from(JSON.stringify({
         name: 'invalid-config-file',
         repositoryId: 'worker_111',
@@ -177,7 +177,7 @@ describe('worker', () => {
     expect.assertions(3)
 
     const installationJob = {
-      fields: {redelivered: false},
+      fields: { redelivered: false },
       content: Buffer.from(JSON.stringify({
         name: 'create-version-branch',
         repositoryId: '222',
@@ -224,7 +224,7 @@ describe('worker', () => {
   test('worker schedules further monorepo-supervisor jobs on success', async () => {
     expect.assertions(7)
 
-    const monorepoSupervisorJobData = { content: Buffer.from(JSON.stringify({name: 'monorepo-supervisor'})) }
+    const monorepoSupervisorJobData = { content: Buffer.from(JSON.stringify({ name: 'monorepo-supervisor' })) }
 
     jest.mock('../../jobs/monorepo-supervisor', () => {
       return async () => [
@@ -385,6 +385,6 @@ describe('worker', () => {
     )
     expect(statsd.gauge).toHaveBeenCalled()
     expect(statsd.gauge).toHaveBeenCalledTimes(1)
-    expect(statsd.gauge).toHaveBeenCalledWith('job_runtime', expect.any(Number), {tag: 'update-payments'})
+    expect(statsd.gauge).toHaveBeenCalledWith('job_runtime', expect.any(Number), { tag: 'update-payments' })
   })
 })

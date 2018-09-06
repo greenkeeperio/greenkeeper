@@ -1333,7 +1333,7 @@ describe('create initial branch', () => {
     })
 
     const createInitialBranch = require('../../jobs/create-initial-branch')
-    const newJob = await createInitialBranch({repositoryId: 'too-many-packages'})
+    const newJob = await createInitialBranch({ repositoryId: 'too-many-packages' })
 
     expect(newJob).toBeFalsy()
   })

@@ -5,7 +5,7 @@ const Log = require('gk-log')
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
 const getInfos = require('../lib/get-infos')
-const {getMessage, getPrTitle} = require('../lib/get-message')
+const { getMessage, getPrTitle } = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
@@ -47,8 +47,8 @@ module.exports = async function (
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repoDoc = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-group-version-branch'})
-  log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-group-version-branch' })
+  log.info(`started for ${dependency} ${version}`, { dependency, version, oldVersion, oldVersionResolved })
 
   if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: repository has ${Object.keys(repoDoc.packages).length} package.json files`)
@@ -108,7 +108,7 @@ module.exports = async function (
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: using default branch', {defaultBranch: base})
+  log.info('github: using default branch', { defaultBranch: base })
 
   let dependencyGroup, newBranch, dependencyKey
   if (isMonorepo) {
@@ -134,7 +134,7 @@ module.exports = async function (
     )
 
     if (!openPR) return false
-    log.info(`database: found open PR for ${dependencyKey}`, {openPR})
+    log.info(`database: found open PR for ${dependencyKey}`, { openPR })
 
     const pr = await ghqueue.read(github => github.pullRequests.get({
       owner,
@@ -174,9 +174,9 @@ module.exports = async function (
           await upsert(repositories, openPR._id, {
             comments: [...(openPR.comments || []), latestDependencyVersion]
           })
-          commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
+          commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
         }
-        log.info('commit message created', {commitMessage})
+        log.info('commit message created', { commitMessage })
         transforms.push({
           transform: createTransformFunction(pkg.type, depName, latestDependencyVersion, log),
           path: pkg.filename,
@@ -201,7 +201,7 @@ module.exports = async function (
     lockFileCommitMessage
   })
   if (sha) {
-    log.success(`github: branch ${newBranch} created`, {sha})
+    log.success(`github: branch ${newBranch} created`, { sha })
   }
 
   if (!sha) { // no branch was created
@@ -261,7 +261,7 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-    log.info(`github: commented on already open PR for ${dependency} in group ${groupName}`, {openPR})
+    log.info(`github: commented on already open PR for ${dependency} in group ${groupName}`, { openPR })
     return
   }
 
@@ -269,7 +269,7 @@ module.exports = async function (
     version: 'groupPR',
     dependency: dependencyKey,
     group: groupName,
-    prTitles: config.prTitles})
+    prTitles: config.prTitles })
 
   // maybe adapt PR body
   const body = prContent({
@@ -307,7 +307,7 @@ module.exports = async function (
   })
 
   if (createdPr) {
-    log.success(`github: pull request for ${dependency} ${version} created`, {pullRequest: createdPr})
+    log.success(`github: pull request for ${dependency} ${version} created`, { pullRequest: createdPr })
   } else {
     log.error(`github: pull request for ${dependency} ${version} could not be created`)
     return

@@ -4,7 +4,7 @@ const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const {getMessage, getPrTitle} = require('../lib/get-message')
+const { getMessage, getPrTitle } = require('../lib/get-message')
 const getInfos = require('../lib/get-infos')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
@@ -48,8 +48,8 @@ module.exports = async function (
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repoDoc = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-version-branch'})
-  log.info(`started for ${dependency} ${version}`, {dependency, type, version, oldVersion})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-version-branch' })
+  log.info(`started for ${dependency} ${version}`, { dependency, type, version, oldVersion })
 
   if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: repository has ${Object.keys(repoDoc.packages).length} package.json files`)
@@ -105,7 +105,7 @@ module.exports = async function (
 
   // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const config = getConfig(repoDoc)
-  log.info(`config for ${repoDoc.fullName}`, {config})
+  log.info(`config for ${repoDoc.fullName}`, { config })
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
 
   let processLockfiles = true
@@ -139,7 +139,7 @@ module.exports = async function (
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: using default branch', {defaultBranch: base})
+  log.info('github: using default branch', { defaultBranch: base })
 
   let group, newBranch, dependencyKey
   if (isMonorepo) {
@@ -165,7 +165,7 @@ module.exports = async function (
 
       const oldPkgVersion = _.get(json, [dependencyType, depName])
       if (!oldPkgVersion) {
-        log.warn('exited: could not find old package version', {newVersion: version, json})
+        log.warn('exited: could not find old package version', { newVersion: version, json })
         return null
       }
 
@@ -174,7 +174,7 @@ module.exports = async function (
       const latestDependencyVersion = npmDoc['distTags']['latest']
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
-        log.warn(`exited: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+        log.warn(`exited: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
         return null
       }
 
@@ -188,9 +188,9 @@ module.exports = async function (
         await upsert(repositories, openPR._id, {
           comments: [...(openPR.comments || []), latestDependencyVersion]
         })
-        commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
+        commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
       }
-      log.info('commit message created', {commitMessage})
+      log.info('commit message created', { commitMessage })
 
       return {
         transform: createTransformFunction(dependencyType, depName, latestDependencyVersion, log),
@@ -217,7 +217,7 @@ module.exports = async function (
     lockFileCommitMessage
   })
   if (sha) {
-    log.success(`github: branch ${newBranch} created`, {sha})
+    log.success(`github: branch ${newBranch} created`, { sha })
   }
 
   if (!sha) { // no branch was created
@@ -286,14 +286,14 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-    log.info(`github: commented on already open PR for ${dependency}`, {openPR})
+    log.info(`github: commented on already open PR for ${dependency}`, { openPR })
     return
   }
 
   const title = getPrTitle({
     version: 'basicPR',
     dependency: dependencyKey,
-    prTitles: config.prTitles})
+    prTitles: config.prTitles })
 
   // Inform monthly paying customers about the new yearly plan
   const adExpiredBy = 1530741600000 // Date.parse("July 5, 2018")
@@ -337,7 +337,7 @@ module.exports = async function (
   })
 
   if (createdPr) {
-    log.success(`github: pull request for ${dependency} ${version} created`, {pullRequest: createdPr})
+    log.success(`github: pull request for ${dependency} ${version} created`, { pullRequest: createdPr })
   } else {
     log.error(`github: pull request for ${dependency} ${version} could not be created`)
     return
@@ -377,7 +377,7 @@ module.exports = async function (
     )
 
     if (!openPR) return false
-    log.info(`database: found open PR for ${dependencyKey}`, {openPR})
+    log.info(`database: found open PR for ${dependencyKey}`, { openPR })
 
     const pr = await ghqueue.read(github => github.pullRequests.get({
       owner,

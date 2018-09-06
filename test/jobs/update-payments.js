@@ -74,7 +74,7 @@ describe('update-payments', async () => {
     jest.mock('stripe', key => key => {
       return {
         subscriptionItems: {
-          update: (stripeItemId, {quantity}) => {
+          update: (stripeItemId, { quantity }) => {
             expect(quantity).toBe(2)
             expect(stripeItemId).toEqual('si123')
           }
@@ -103,7 +103,7 @@ describe('update-payments', async () => {
     jest.mock('stripe', key => key => {
       return {
         subscriptionItems: {
-          update: (stripeItemId, {quantity}) => {
+          update: (stripeItemId, { quantity }) => {
             console.log('fail: stripe was called')
             expect(false).toBeFalsy()
           }

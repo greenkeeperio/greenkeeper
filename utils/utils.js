@@ -77,7 +77,7 @@ function getJobsPerGroup ({
 }) {
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
   const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
-  const types = monorepo.map((x) => { return {type: x.value.type, filename: x.value.filename} })
+  const types = monorepo.map((x) => { return { type: x.value.type, filename: x.value.filename } })
 
   if (_.isEmpty(config) || _.isEmpty(config.groups)) return []
 
@@ -133,12 +133,12 @@ function createTransformFunction (type, dependency, version, log) {
     }
     const oldPkgVersion = _.get(json, [type, dependency])
     if (!oldPkgVersion) {
-      log.warn(`exited: could not find old package version for dependency ${dependency}`, {newVersion: version, packageJson: json})
+      log.warn(`exited: could not find old package version for dependency ${dependency}`, { newVersion: version, packageJson: json })
       return
     }
 
     if (semver.ltr(version, oldPkgVersion)) { // no downgrades
-      log.warn('exited: would be a downgrade', {dependency, newVersion: version, oldVersion: oldPkgVersion})
+      log.warn('exited: would be a downgrade', { dependency, newVersion: version, oldVersion: oldPkgVersion })
       return
     }
 

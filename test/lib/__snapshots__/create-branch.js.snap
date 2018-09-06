@@ -8,7 +8,7 @@ Object {
 }
 `;
 
-exports[`create branch with lockfiles change two files (package.json, frontend/package.json) and generate their lockfiles 1`] = `
+exports[`create branch with lockfiles change two file (package.json, frontend/package.json) and generate their lockfiles 1`] = `
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
@@ -16,7 +16,7 @@ Object {
 }
 `;
 
-exports[`create branch with lockfiles change two files (package.json, frontend/package.json) and generate their lockfiles 2`] = `
+exports[`create branch with lockfiles change two file (package.json, frontend/package.json) and generate their lockfiles 2`] = `
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",

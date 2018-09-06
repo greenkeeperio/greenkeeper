@@ -35,11 +35,11 @@ async function sendSlackNotification (dependency) {
 
 module.exports = async function () {
   const logs = dbs.getLogsDb()
-  const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'monorepo-supervisor'})
+  const log = Log({ logsDb: logs, accountId: null, repoSlug: null, context: 'monorepo-supervisor' })
 
   const releases = await pendingMonorepoReleases()
 
-  log.info(`starting ${releases.length} monorepo releases`, {releases})
+  log.info(`starting ${releases.length} monorepo releases`, { releases })
 
   const jobs = releases.map((release) => {
     // We don't want ths for now
@@ -58,7 +58,7 @@ module.exports = async function () {
     }
   })
 
-  log.info(`created ${jobs.length} jobs`, {jobs})
+  log.info(`created ${jobs.length} jobs`, { jobs })
 
   return jobs
 }

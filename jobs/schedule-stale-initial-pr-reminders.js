@@ -1,7 +1,7 @@
 const dbs = require('../lib/dbs')
 
 module.exports = async function () {
-  const {repositories} = await dbs()
+  const { repositories } = await dbs()
   const minAgeInDays = 7
   const maxAgeInDays = 14
   const startDate = new Date(Date.now() - maxAgeInDays * 24 * 60 * 60 * 1000).toJSON()

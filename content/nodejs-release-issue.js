@@ -20,7 +20,7 @@ const showTravisMessage = function (travisModified) {
   if (travisModified) return '- Added the new Node.js version to your `.travis.yml`\n'
 }
 
-module.exports = ({owner, repo, base, head, nodeVersion, codeName, travisModified, nvmrcModified, engineTransformMessages}) => {
+module.exports = ({ owner, repo, base, head, nodeVersion, codeName, travisModified, nvmrcModified, engineTransformMessages }) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ## Version ${nodeVersion} of Node.js (code name ${codeName}) has been released! 🎊

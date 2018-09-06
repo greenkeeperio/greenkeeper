@@ -12,7 +12,7 @@ describe('timeout issue content', async () => {
     process.env.GITHUB_HOST = 'https://enterprise.github/api/v3/'
     const content = requireFresh('../../content/timeout-issue')
 
-    const issueContent = content({fullName: 'finnp/abc'})
+    const issueContent = content({ fullName: 'finnp/abc' })
     // includes the link to the repo at the custom host
     expect(issueContent).toMatch(/enterprise\.github\/finnp\/abc/)
   })
@@ -20,7 +20,7 @@ describe('timeout issue content', async () => {
   test('includes the link to the initial branch on the regular github host', async () => {
     const content = requireFresh('../../content/timeout-issue')
 
-    const issueContent = content({fullName: 'finnp/abc'})
+    const issueContent = content({ fullName: 'finnp/abc' })
     // includes the link to the repo at github.com
     expect(issueContent).toMatch(/github\.com\/finnp\/abc/)
   })

@@ -38,7 +38,7 @@ module.exports = async function (data) {
 
   const repositoryId = String(repository.id)
   let repoDoc = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'push'})
+  const log = Log({ logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'push' })
   log.info('started')
 
   if (hasTooManyPackageJSONs(repoDoc)) {
@@ -65,7 +65,7 @@ module.exports = async function (data) {
   // if remove event: delete key of package.json
   const oldPkg = _.get(repoDoc, ['packages'])
   try {
-    await updateRepoDoc({installationId: installation.id, doc: repoDoc, log})
+    await updateRepoDoc({ installationId: installation.id, doc: repoDoc, log })
   } catch (e) {
     if (e.name && e.name === 'GKConfigFileParseError') {
       log.warn('updateRepoDoc failed because of an invalid config file')
@@ -79,7 +79,7 @@ module.exports = async function (data) {
         log
       })
     }
-    log.warn('updateRepoDoc failed, we do not know why', {exception: e})
+    log.warn('updateRepoDoc failed, we do not know why', { exception: e })
     throw e
   }
   const pkg = _.get(repoDoc, ['packages'])
@@ -157,17 +157,17 @@ module.exports = async function (data) {
   // Delete all branches for modified or deleted dependencies
   // Do diff + getBranchesToDelete per file for each group
   // Get all dependency branches, grouped or not
-  const dependencyBranches = await getDependencyBranchesForAllGroups({pkg, oldPkg, config, repositories, repositoryId})
+  const dependencyBranches = await getDependencyBranchesForAllGroups({ pkg, oldPkg, config, repositories, repositoryId })
   const configChanges = diffGreenkeeperJson(config, repoDoc.greenkeeper)
   // If groups have been deleted or modified, find the branches we need to delete
-  const groupBranchesToDelete = await getGroupBranchesToDelete({configChanges, repositories, repositoryId})
+  const groupBranchesToDelete = await getGroupBranchesToDelete({ configChanges, repositories, repositoryId })
   // Mash everything together
   const allBranchesToDelete = dependencyBranches.concat(groupBranchesToDelete)
   // De-dupe and flatten branches
   const actualBranchesToDelete = _.uniqWith(_.flattenDeep(allBranchesToDelete), _.isEqual)
 
   if (actualBranchesToDelete.length > 0) {
-    log.info('starting to delete branches', {branches: actualBranchesToDelete.map(branch => branch.head)})
+    log.info('starting to delete branches', { branches: actualBranchesToDelete.map(branch => branch.head) })
   } else {
     log.info('no branches to delete')
   }
@@ -188,7 +188,7 @@ module.exports = async function (data) {
       }
     })
     const groupsToReceiveInitialBranch = configChanges.added.concat(relevantModifiedGroups)
-    log.success(`${groupsToReceiveInitialBranch.length} groups to receive initial subgroup branch`, {groupsToReceiveInitialBranch})
+    log.success(`${groupsToReceiveInitialBranch.length} groups to receive initial subgroup branch`, { groupsToReceiveInitialBranch })
     if (_.isEmpty(groupsToReceiveInitialBranch)) return
     // create subgroup initial pr
     return _(groupsToReceiveInitialBranch)
@@ -248,7 +248,7 @@ async function disableRepo ({ repositories, repoDoc, repository }) {
   }
 }
 
-async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, repositories, repositoryId}) {
+async function getDependencyBranchesForAllGroups ({ pkg, oldPkg, config, repositories, repositoryId }) {
   return Promise.all(Object.keys(pkg).map(async (path) => {
     // Find the group name for the current package json
     let groupName = null
@@ -262,7 +262,7 @@ async function getDependencyBranchesForAllGroups ({pkg, oldPkg, config, reposito
     const dependencyDiff = diff(oldPkg[path], pkg[path], groupName)
     if (!_.isEmpty(dependencyDiff)) {
       // If the package.json has changes, find the proper (group) branches to delete
-      return getDependencyBranchesToDelete({changes: dependencyDiff, repositories, repositoryId, config})
+      return getDependencyBranchesToDelete({ changes: dependencyDiff, repositories, repositoryId, config })
     }
     return []
   }))

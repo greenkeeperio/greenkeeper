@@ -92,7 +92,7 @@ describe('create-initial-pr', async () => {
         deletedPackageFiles: [
           'this-file-no-longer-exists/package.json',
           'this-whole-group-should-disappear/package.json'
-        ]}
+        ] }
     })
 
     await repositories.put({
@@ -115,7 +115,7 @@ describe('create-initial-pr', async () => {
         deletedPackageFiles: [
           'this-file-no-longer-exists/package.json',
           'this-whole-group-should-disappear/package.json'
-        ]}
+        ] }
     })
   })
 
