@@ -34,7 +34,8 @@ module.exports = async function (
     version,
     oldVersion,
     oldVersionResolved,
-    versions
+    versions,
+    isFromHook
   }
 ) {
   // do not upgrade invalid versions
@@ -170,7 +171,7 @@ module.exports = async function (
       }
 
       // get version for each dependency
-      const npmDoc = await npm.get(depName)
+      const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
