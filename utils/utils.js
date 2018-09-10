@@ -73,6 +73,7 @@ function getJobsPerGroup ({
   account,
   repositoryId,
   plan,
+  isFromHook,
   log
 }) {
   const satisfyingVersions = getSatisfyingVersions(versions, monorepo[0])
@@ -116,7 +117,8 @@ function getJobsPerGroup ({
         accountId: account.id || account._id,
         types,
         oldVersion: monorepo[0].value.oldVersion,
-        monorepo: relevantMonorepoChangeFiles
+        monorepo: relevantMonorepoChangeFiles,
+        isFromHook
       }),
       plan
     }
