@@ -186,6 +186,7 @@ module.exports = async function (
         account,
         repositoryId: repoDoc.id,
         plan,
+        isFromHook,
         log}))
     })
   }
@@ -220,7 +221,8 @@ module.exports = async function (
             oldVersionResolved,
             repositoryId: pkg.id,
             installation: account.installation,
-            plan
+            plan,
+            isFromHook
           },
           pkg.value
         ),
