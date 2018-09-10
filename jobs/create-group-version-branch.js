@@ -31,7 +31,8 @@ module.exports = async function (
     oldVersionResolved,
     versions,
     group,
-    monorepo
+    monorepo,
+    isFromHook
   }
 ) {
   // do not upgrade invalid versions
@@ -150,7 +151,7 @@ module.exports = async function (
   async function createTransformsArray (monorepo) {
     return Promise.all(dependencyGroup.map(async depName => {
       // get version for each dependency
-      const npmDoc = await npm.get(depName)
+      const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
 
       return Promise.all(monorepo.map(async pkgRow => {

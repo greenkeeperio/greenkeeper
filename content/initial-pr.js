@@ -161,8 +161,11 @@ function hasLockFileText (files) {
     return false
   })
   if (lockFiles.length === 0) return
+  if (lockFiles.includes('npm-shrinkwrap.json')) {
+    return md`⚠️ Greenkeeper has found a ${md.code('npm-shrinkwrap.json')} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
+  }
   const lockFile = lockFiles[0]
-  return md`⚠️ Greenkeeper has found a ${md.code(lockFile)} file in this repository. Please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure this gets updated as well.`
+  return md`🔒 Greenkeeper has found a ${md.code(lockFile)} file in this repository. Greenkeeper supports lockfile updates for public packages. If you use private packages in your repository, please use [greenkeeper-lockfile](https://github.com/greenkeeperio/greenkeeper-lockfile) to make sure these can get updated as well.`
 }
 
 const mainMessage = ({enabled, depsUpdated, groupName}) => {
