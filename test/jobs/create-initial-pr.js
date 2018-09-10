@@ -124,7 +124,7 @@ describe('create-initial-pr', async () => {
 
     await Promise.all([
       removeIfExists(payments, '123free', '123opensource', '123stripe', '123team', '123business'),
-      removeIfExists(repositories, '42', ' 42b', '43', '44', '44b', '45', '46',
+      removeIfExists(repositories, '42', '42-yarn-lockfile', '42-shrinkwrap-lockfile', '42b', '43', '44', '44b', '45', '46',
         'repoId:branch:1234abcd', '47', '48', '49', 'repoId:branch:monorepo1', 'repoId:branch:monorepo2', 'repoId:branch:closes-issues')
     ])
   })
@@ -139,7 +139,7 @@ describe('create-initial-pr', async () => {
       fullName: 'finnp/test'
     })
 
-    expect.assertions(3)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -162,7 +162,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -195,6 +199,168 @@ describe('create-initial-pr', async () => {
     })
   })
 
+  test('create pr for account with `free` plan & yarn lockfile', async () => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+    const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '42-yarn-lockfile',
+      accountId: '123free',
+      fullName: 'finnp/test',
+      files: {
+        'package.json': [
+          'package.json'
+        ],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': [
+          'yarn.lock'
+        ]
+      }
+    })
+
+    expect.assertions(5)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/statuses/1234abcd')
+      .reply(201, () => {
+        // verify status added
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/pulls',
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
+      )
+      .reply(201, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 333,
+          number: 3
+        }
+      })
+      .post(
+        '/repos/finnp/test/issues/3/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    const branchDoc = await repositories.get('repoId:branch:1234abcd')
+    await createInitial({
+      repository: { id: '42-yarn-lockfile' },
+      branchDoc: branchDoc,
+      combined: {
+        state: 'success',
+        combined: []
+      },
+      installationId: 11,
+      accountId: '123free'
+    })
+  })
+
+  test('create pr for account with `free` plan & shrinkwrap lockfile', async () => {
+    const createInitial = requireFresh('../../jobs/create-initial-pr')
+    const { repositories } = await dbs()
+
+    await repositories.put({
+      _id: '42-shrinkwrap-lockfile',
+      accountId: '123free',
+      fullName: 'finnp/test',
+      files: {
+        'package.json': [
+          'package.json'
+        ],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [
+          'npm-shrinkwrap.json'
+        ],
+        'yarn.lock': [
+          'yarn.lock'
+        ]
+      }
+    })
+
+    expect.assertions(5)
+
+    nock('https://api.github.com')
+      .post('/installations/11/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test')
+      .reply(200, {
+        default_branch: 'custom'
+      })
+      .post('/repos/finnp/test/statuses/1234abcd')
+      .reply(201, () => {
+        // verify status added
+        expect(true).toBeTruthy()
+        return {}
+      })
+      .post(
+        '/repos/finnp/test/pulls',
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
+      )
+      .reply(201, () => {
+        // pull request created
+        expect(true).toBeTruthy()
+        return {
+          id: 333,
+          number: 3
+        }
+      })
+      .post(
+        '/repos/finnp/test/issues/3/labels',
+        body => body[0] === 'greenkeeper'
+      )
+      .reply(201, () => {
+        // label created
+        expect(true).toBeTruthy()
+        return {}
+      })
+
+    const branchDoc = await repositories.get('repoId:branch:1234abcd')
+    await createInitial({
+      repository: { id: '42-shrinkwrap-lockfile' },
+      branchDoc: branchDoc,
+      combined: {
+        state: 'success',
+        combined: []
+      },
+      installationId: 11,
+      accountId: '123free'
+    })
+  })
+
   test('create pr for private repo for account with `free` plan', async () => {
     const createInitial = requireFresh('../../jobs/create-initial-pr')
     const { repositories } = await dbs()
@@ -206,7 +372,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(4)
+    expect.assertions(6)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -235,7 +401,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -279,7 +449,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(4)
+    expect.assertions(6)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -308,7 +478,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -354,7 +528,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(3)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -375,7 +549,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -419,7 +597,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(3)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -440,7 +618,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -484,7 +666,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(3)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -505,7 +687,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -550,7 +736,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(4)
+    expect.assertions(6)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -577,7 +763,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -624,7 +814,7 @@ describe('create-initial-pr', async () => {
       private: true
     })
 
-    expect.assertions(3)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -645,7 +835,11 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, () => {
         // pull request created
@@ -688,7 +882,7 @@ describe('create-initial-pr', async () => {
       fullName: 'finnp/test'
     })
 
-    expect.assertions(4)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -711,12 +905,15 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, (uri, requestBody) => {
         // pull request created
         expect(true).toBeTruthy()
-        expect(JSON.parse(requestBody).body).toMatch('Greenkeeper has detected multiple `package.json` files. They have all been added to a new `greenkeeper.json` config file.')
         return {
           id: 333,
           number: 3
@@ -755,7 +952,7 @@ describe('create-initial-pr', async () => {
       fullName: 'finnp/test'
     })
 
-    expect.assertions(4)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -778,12 +975,15 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, (uri, requestBody) => {
         // pull request created
         expect(true).toBeTruthy()
-        expect(JSON.parse(requestBody).body).toMatch('Greenkeeper has detected multiple `package.json` files. Since this repo already has a `greenkeeper.json` config file with defined groups, Greenkeeper has only checked whether they’re still valid. The follwing `package.json` files could no longer be found in the repo and have been removed from your groups config: `this-file-no-longer-exists/package.json, this-whole-group-should-disappear/package.json`. Also, groups which no longer have any entries have been removed: `empty`.')
         return {
           id: 333,
           number: 3
@@ -822,7 +1022,7 @@ describe('create-initial-pr', async () => {
       fullName: 'finnp/test'
     })
 
-    expect.assertions(4)
+    expect.assertions(5)
 
     nock('https://api.github.com')
       .post('/installations/11/access_tokens')
@@ -845,12 +1045,15 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/pulls',
-        ({ head }) => head === 'greenkeeper/initial'
+        ({ head, title, body }) => {
+          expect(title).toMatchSnapshot()
+          expect(body).toMatchSnapshot()
+          return head === 'greenkeeper/initial'
+        }
       )
       .reply(201, (uri, requestBody) => {
         // pull request created
         expect(true).toBeTruthy()
-        expect(JSON.parse(requestBody).body).toMatch('Closes: #5, #6')
         return {
           id: 333,
           number: 3

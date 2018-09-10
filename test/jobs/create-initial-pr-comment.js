@@ -67,7 +67,7 @@ describe('create-initial-pr-comment', async () => {
   })
 
   test('create comment for initial pr created by user', async () => {
-    expect.assertions(2)
+    expect.assertions(3)
 
     nock('https://api.github.com')
       .post('/installations/123/access_tokens')
@@ -89,7 +89,10 @@ describe('create-initial-pr-comment', async () => {
         state: 'open',
         locked: false
       })
-      .post('/repos/finnp/test/issues/1234/comments')
+      .post('/repos/finnp/test/issues/1234/comments', ({ body }) => {
+        expect(body).toMatchSnapshot()
+        return true
+      })
       .reply(201, () => {
         // comment added
         expect(true).toBeTruthy()
