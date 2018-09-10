@@ -170,6 +170,11 @@ module.exports = async function (
           return
         }
 
+        if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
+          log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+          return null
+        }
+
         const transforms = []
         if (!satisfies) satisfiesAll = false
 
@@ -230,10 +235,12 @@ module.exports = async function (
   }
 
   let packageUpdateList = ''
+  let reportedDependencies = []
   transforms.forEach(async transform => {
-    if (transform.created) {
+    if (transform.created && !reportedDependencies.includes(transform.dependency)) {
       const dependencyURL = getFormattedDependencyURL({repositoryURL: transform.repoURL, dependency: transform.dependency})
       packageUpdateList += `- The \`${transform.dependencyType.replace('ies', 'y')}\` [${transform.dependency}](${dependencyURL}) was updated from \`${transform.oldVersion}\` to \`${transform.version}\`.\n`
+      reportedDependencies.push(transform.dependency)
     }
   })
 
