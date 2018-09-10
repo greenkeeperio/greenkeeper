@@ -1,5 +1,228 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`create-group-version-branch monorepo release: new pull request, 1 group, 2 packages, same dependencyType 1`] = `
+Object {
+  "base": "master",
+  "body": "
+## There have been updates to the *pouchdb* monorepo: 
+
+- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`devDependency\` [pouchdb-core](https://www.npmjs.com/package/pouchdb-core) was updated from \`1.0.0\` to \`2.0.0\`.
+
+
+These versions are **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [pouchdb group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "title": "Update pouchdb in group default to the latest version 🚀",
+}
+`;
+
+exports[`create-group-version-branch monorepo release: new pull request, 1 group, 2 packages, same dependencyType with ignored dependency 1`] = `
+Object {
+  "base": "master",
+  "body": "
+## There have been updates to the *pouchdb* monorepo: 
+
+- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
+
+
+These versions are **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [pouchdb group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "title": "Update pouchdb in group default to the latest version 🚀",
+}
+`;
+
+exports[`create-group-version-branch monorepo release: new pull request, 1 group, 2 packages, same dependencyType, different versions 1`] = `
+Object {
+  "base": "master",
+  "body": "
+## There have been updates to the *pouchdb* monorepo: 
+
+- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`devDependency\` [pouchdb-browser](https://www.npmjs.com/package/pouchdb-browser) was updated from \`1.0.0\` to \`1.8.0\`.
+
+
+These versions are **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [pouchdb group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "title": "Update pouchdb in group default to the latest version 🚀",
+}
+`;
+
+exports[`create-group-version-branch new pull request, 1 group, 2 packages, different dependencyType 1`] = `
+Object {
+  "base": "master",
+  "body": "
+## There have been updates to the *react* monorepo: 
+
+- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+
+
+These versions are **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [react group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/monorepo.react-2.0.0",
+  "title": "Update react in group default to the latest version 🚀",
+}
+`;
+
+exports[`create-group-version-branch new pull request, 1 group, 2 packages, same dependencyType 1`] = `
+Object {
+  "base": "master",
+  "body": "
+## There have been updates to the *react* monorepo: 
+
+- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+
+
+These versions are **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [react group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/monorepo.react-2.0.0",
+  "title": "Update react in group default to the latest version 🚀",
+}
+`;
+
+exports[`create-group-version-branch new pull request, 1 group, 2 packages, same dependencyType, old PR exists 1`] = `
+"- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+
+[Update to these versions instead 🚀](https://github.com/hans/monorepo/compare/master...hans:greenkeeper%2Fdefault%2Fmonorepo.react-2.0.0)"
+`;
+
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
+
+exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 2`] = `
+Object {
+  "base": "master",
+  "body": "
+## The devDependency [@finnpauls/dep]() was updated from \`1.0.0\` to \`2.0.0\`.
+
+This version is **not covered** by your **current version range**.
+
+If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
+
+
+
+---
+
+[Find out more about this release]().
+
+<details>
+  <summary>FAQ and help</summary>
+
+  There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
+
+",
+  "head": "greenkeeper/default/@finnpauls/dep-2.0.0",
+  "title": "Update @finnpauls/dep in group default to the latest version 🚀",
+}
+`;
 
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, skip lockfiles because of config 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/depp\\":\\"1.1.0\\"}}"`;
