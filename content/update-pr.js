@@ -8,7 +8,6 @@ ${monorepoGroupName
     ? `## There have been updates to the *${monorepoGroupName}* monorepo: \n\n${packageUpdateList}`
     : `## The ${type.replace('ies', 'y')} [${dependency}](${dependencyLink}) was updated from \`${oldVersionResolved}\` to \`${version}\`.`
 }
-
 ${monorepoGroupName ? 'These versions are' : 'This version is'} **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
