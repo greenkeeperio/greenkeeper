@@ -209,7 +209,10 @@ module.exports = async function (
   const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
   if (transforms.length === 0) return
 
-  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) processLockfiles = false
+  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
+    log.info('exiting: user wants out-of-range lockfile updates only', {config})
+    return
+  }
 
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})

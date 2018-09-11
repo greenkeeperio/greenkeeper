@@ -1496,7 +1496,7 @@ describe('create-group-version-branch with lockfiles', async () => {
   })
 
   test('no pull request, 2 groups, 1 package, same dependencyType, skip lockfiles because of config', async () => {
-    expect.assertions(10)
+    expect.assertions(2)
     const { repositories } = await dbs()
     await repositories.put({
       _id: 'monorepo-with-lockfiles-2',
@@ -1536,30 +1536,6 @@ describe('create-group-version-branch with lockfiles', async () => {
       }
     })
 
-    const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
-      .get('/rate_limit').optionally().reply(200)
-      .get('/repos/finnp/monorepo-with-lockfiles-skip')
-      .reply(200, {
-        default_branch: 'master'
-      })
-
-    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles }) => {
-      expect(transforms).toHaveLength(2)
-      expect(processLockfiles).toBeFalsy()
-      let newPackageJSON = transforms[0].transform(JSON.stringify({
-        devDependencies: {
-          '@finnpauls/depp': '1.1.0'
-        }
-      }))
-
-      expect(transforms[0].path).toEqual('frontend/package.json')
-      expect(transforms[1].path).toEqual('backend/package.json')
-      expect(newPackageJSON).toMatchSnapshot()
-      transforms[0].created = true
-      transforms[1].created = true
-      return '1234abcd'
-    })
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
 
     const newJob = await createGroupVersionBranch({
@@ -1603,11 +1579,7 @@ describe('create-group-version-branch with lockfiles', async () => {
             oldVersion: '1.0.0' } } ]
     })
 
-    expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
-    const branch = await repositories.get('monorepo-with-lockfiles-2:branch:1234abcd')
-    expect(branch.head).toEqual('greenkeeper/default/@finnpauls/depp-1.1.0')
-    expect(branch.repositoryId).toEqual('monorepo-with-lockfiles-2')
-    expect(branch.dependencyType).toEqual('devDependencies')
+    await expect(repositories.get('monorepo-with-lockfiles-2:branch:1234abcd')).rejects.toThrow('missing')
   })
 })

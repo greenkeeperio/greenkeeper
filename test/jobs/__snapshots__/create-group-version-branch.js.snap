@@ -10,7 +10,6 @@ Object {
 - The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
 - The \`devDependency\` [pouchdb-core](https://www.npmjs.com/package/pouchdb-core) was updated from \`1.0.0\` to \`2.0.0\`.
 
-
 These versions are **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
@@ -45,7 +44,6 @@ Object {
 ## There have been updates to the *pouchdb* monorepo: 
 
 - The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
-
 
 These versions are **not covered** by your **current version range**.
 
@@ -84,7 +82,6 @@ Object {
 - The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
 - The \`devDependency\` [pouchdb-browser](https://www.npmjs.com/package/pouchdb-browser) was updated from \`1.0.0\` to \`1.8.0\`.
 
-
 These versions are **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
@@ -120,7 +117,6 @@ Object {
 
 - The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
 
-
 These versions are **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
@@ -155,7 +151,6 @@ Object {
 ## There have been updates to the *react* monorepo: 
 
 - The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
-
 
 These versions are **not covered** by your **current version range**.
 
@@ -197,7 +192,6 @@ Object {
   "base": "master",
   "body": "
 ## The devDependency [@finnpauls/dep]() was updated from \`1.0.0\` to \`2.0.0\`.
-
 This version is **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
@@ -224,5 +218,3 @@ Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
   "title": "Update @finnpauls/dep in group default to the latest version 🚀",
 }
 `;
-
-exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, skip lockfiles because of config 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/depp\\":\\"1.1.0\\"}}"`;
