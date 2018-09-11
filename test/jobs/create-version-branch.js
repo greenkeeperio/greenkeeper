@@ -133,8 +133,7 @@ describe('create version branch', () => {
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, (req, res) => {
-        const PRBody = JSON.parse(res).body
-        expect(PRBody).toMatch('## The devDependency [@finnpauls/dep](https://github.com/finnpauls/dep) was updated from `1.0.0` to `2.0.0`.')
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -252,9 +251,9 @@ describe('create version branch', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -372,9 +371,9 @@ describe('create version branch', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -700,9 +699,9 @@ describe('create version branch', () => {
         merged: false
       })
       .post('/repos/finnp/test2/issues/5/comments')
-      .reply(201, () => {
-        // comment created
-        expect(true).toBeTruthy()
+      .reply(201, (uri, req) => {
+        // pull request created
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {}
       })
 
@@ -1020,7 +1019,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(11)
+    expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1041,9 +1040,9 @@ describe('create version branch', () => {
       )
       .reply(201)
       .post('/repos/espy/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 1234,
           number: 50,
@@ -1059,10 +1058,9 @@ describe('create version branch', () => {
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, repoDoc }) => {
       expect(transforms).toHaveLength(1)
       expect(processLockfiles).toBeTruthy()
-      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
       expect(repoDoc).toHaveProperty('files')
       let newPackageJSON = transforms[0].transform(JSON.stringify({
         devDependencies: {
@@ -1266,9 +1264,9 @@ describe('create version branch', () => {
       )
       .reply(201)
       .post('/repos/espy/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 1234,
           number: 50,
@@ -1520,9 +1518,9 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1635,7 +1633,7 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
-    expect.assertions(13)
+    expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/1/access_tokens')
@@ -1648,10 +1646,7 @@ describe('create version branch for dependencies from monorepos', () => {
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, (req, res) => {
-        const body = JSON.parse(res).body
-        expect(body).toMatch('## There have been updates to the *colors* monorepo:')
-        expect(body).toMatch('- The `devDependency` [colors](https://github.com/orgname/colors) was updated from `1.0.0` to `2.0.0`.')
-        expect(body).toMatch('- The `dependency` [colors-blue](https://www.npmjs.com/package/colors-blue) was updated from `1.0.0` to `2.0.0`.')
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1746,7 +1741,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.state).toEqual('open')
   })
 
-  test('new pull request with different versions', async () => {
+  test('new pull request with different versions, skipping one unchanged package', async () => {
     const { repositories, npm } = await dbs()
     await repositories.put({
       _id: 'mono-deps-diff',
@@ -1758,7 +1753,8 @@ describe('create version branch for dependencies from monorepos', () => {
           dependencies: {
             pouchdb: '1.0.0',
             'pouchdb-core': '1.0.0',
-            'numbers-three': '1.5.0',
+            'numbers-three': '1.5.0', // should be skipped, as it did not change
+            'numbers-four': '1.2.0',
             bulldog: '1.0.0'
           },
           devDependencies: {
@@ -1784,6 +1780,9 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '1.5.0'
       },
       versions: {
+        '1.2.0': {},
+        '1.3.0': {},
+        '1.4.0': {},
         '1.5.0': {}
       }
     })
@@ -1793,6 +1792,7 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '1.3.0'
       },
       versions: {
+        '1.2.0': {},
         '1.3.0': {}
       }
     })
@@ -1808,9 +1808,10 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/numbers/pulls')
-      .reply(200, () => {
+      .reply(200, (req, res) => {
         // pull request created
-        expect(true).toBeTruthy()
+        console.log('JSON.parse(res).body', JSON.parse(res).body)
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1839,11 +1840,13 @@ describe('create version branch for dependencies from monorepos', () => {
       expect(transforms).toHaveLength(2)
       const transform1 = await transforms[0]
       const transform2 = await transforms[1]
+      console.log('transform2', transform2)
       let result = transform1.transform(JSON.stringify({
         dependencies: {
           pouchdb: '1.0.0',
           'pouchdb-core': '1.0.0',
           'numbers-three': '1.5.0',
+          'numbers-four': '1.2.0',
           bulldog: '1.0.0'
         },
         devDependencies: {
@@ -1927,7 +1930,7 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
-    expect.assertions(21)
+    expect.assertions(17)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/1/access_tokens')
@@ -1941,11 +1944,7 @@ describe('create version branch for dependencies from monorepos', () => {
       .post('/repos/finnp/test/pulls')
       .reply(200, (url, payload) => {
         const PRBody = JSON.parse(payload).body
-        expect(PRBody).toMatch('## There have been updates to the *flowers* monorepo:')
-        expect(PRBody).toMatch('- The `devDependency` [flowers](https://github.com/orgname/flowers) was updated from `1.0.0` to `2.0.0`.')
-        expect(PRBody).toMatch('- The `dependency` [flowers-blue](https://github.com/orgname/flowers-blue) was updated from `1.0.0` to `2.0.0`.')
-        expect(PRBody).toMatch('- The `dependency` [flowers-red](https://github.com/orgname/flowers-red) was updated from `1.0.0` to `2.0.0`.')
-        expect(PRBody).toMatch('- The `dependency` [flowers-green](https://github.com/orgname/flowers-green) was updated from `1.0.0` to `2.0.0`.')
+        expect(PRBody).toMatchSnapshot()
         return {
           id: 321,
           number: 77,
