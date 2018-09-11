@@ -1355,7 +1355,7 @@ describe('create initial branch', () => {
       '@finnpauls/dep': '1.0.0',
       '@finnpauls/dep2': '1.0.0'
     }
-    expect.assertions(13)
+    expect.assertions(12)
 
     nock('https://api.github.com')
       .post('/installations/137/access_tokens')
@@ -1421,10 +1421,9 @@ describe('create initial branch', () => {
       })
 
     // mock relative dependencies
-    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, repoDoc }) => {
       expect(processLockfiles).toBeTruthy()
       expect(repoDoc).toHaveProperty('files')
-      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
       //  The module factory of `jest.mock()` is not allowed to reference any out-of-scope variables.
       const devDependencies = {
         '@finnpauls/dep': '1.0.0',
