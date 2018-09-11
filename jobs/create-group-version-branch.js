@@ -304,7 +304,6 @@ module.exports = async function (
   })
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
-  console.log('### packageUpdateList', {packageUpdateList})
   const compareURL = generateGitHubCompareURL(repoDoc.fullName, base, newBranch)
   const commentBody = (packageUpdateList + `\n[Update to ${transforms.length === 1 ? 'this version' : 'these versions'} instead 🚀](${compareURL}) \n ${bodyDetails}`).trim()
 
