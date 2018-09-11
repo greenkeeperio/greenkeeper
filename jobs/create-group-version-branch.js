@@ -12,7 +12,14 @@ const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
+const {
+  createTransformFunction,
+  getHighestPriorityDependency,
+  generateGitHubCompareURL,
+  hasTooManyPackageJSONs,
+  getSatisfyingVersions,
+  getOldVersionResolved
+} = require('../utils/utils')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
@@ -170,11 +177,6 @@ module.exports = async function (
           return
         }
 
-        if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
-          log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
-          return null
-        }
-
         const transforms = []
         if (!satisfies) satisfiesAll = false
 
@@ -191,6 +193,20 @@ module.exports = async function (
           commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
         }
         log.info(`commit message for ${depName} created`, {commitMessage})
+
+        const satisfyingVersions = getSatisfyingVersions(npmDoc.versions, {
+          value: {oldVersion: oldPkgVersion}
+        })
+        const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
+        if (!oldVersionResolved) {
+          log.warn('exited transform creation: could not resolve old version (no update?)', {newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+          return null
+        }
+
+        if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
+          log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+          return null
+        }
 
         transforms.push({
           transform: createTransformFunction(pkg.type, depName, latestDependencyVersion, log),
