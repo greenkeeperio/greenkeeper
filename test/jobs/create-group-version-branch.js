@@ -18,30 +18,50 @@ describe('create-group-version-branch', async () => {
       _id: 'react',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
     await npm.put({
       _id: 'pouchdb-core',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
     await npm.put({
       _id: 'pouchdb',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
     await npm.put({
       _id: 'pouchdb-adapter-utils',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
     await npm.put({
       _id: 'pouchdb-browser',
       distTags: {
         latest: '1.8.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '1.8.0': {}
       }
     })
 
@@ -680,6 +700,10 @@ describe('create-group-version-branch', async () => {
       _id: 'react-with-pre',
       distTags: {
         latest: '2.0.0-prerelease'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0-prerelease': {}
       }
     })
     const githubMock = nock('https://api.github.com')
@@ -1336,6 +1360,10 @@ describe('create-group-version-branch with lockfiles', async () => {
       _id: '@finnpauls/dep',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
 
@@ -1343,6 +1371,10 @@ describe('create-group-version-branch with lockfiles', async () => {
       _id: '@finnpauls/depp',
       distTags: {
         latest: '1.1.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
   })
