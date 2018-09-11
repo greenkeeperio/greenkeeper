@@ -842,7 +842,7 @@ describe('create branch with lockfiles', async () => {
         sha: 'lol999'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: 'lol999',
         parents: ['789beef']
       })
@@ -851,8 +851,7 @@ describe('create branch with lockfiles', async () => {
       })
       .post('/repos/owner/repo/git/refs', {
         ref: 'refs/heads/testBranch',
-        sha: 'finalsha123',
-        owner: 'owner'
+        sha: 'finalsha123'
       })
       .reply(201)
 
@@ -1018,7 +1017,7 @@ describe('create branch with lockfiles', async () => {
         sha: '3-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile frontend/package-lock.json, yay',
         tree: '3-tree',
         parents: ['2-commit']
       })
@@ -1041,7 +1040,7 @@ describe('create branch with lockfiles', async () => {
         sha: '4-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: '4-tree',
         parents: ['3-commit']
       })
@@ -1239,7 +1238,7 @@ describe('create branch with lockfiles', async () => {
         sha: '3-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: '3-tree',
         parents: ['2-commit']
       })
