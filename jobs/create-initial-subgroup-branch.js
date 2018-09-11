@@ -114,8 +114,7 @@ module.exports = async function ({ repositoryId, groupName }) {
     branch,
     newBranch,
     transforms,
-    processLockfiles: true,
-    lockFileCommitMessage: getMessage(config.commitMessages, 'lockfileUpdate')
+    processLockfiles: true
   })
 
   if (!depsUpdated) {
