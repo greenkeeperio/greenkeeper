@@ -11,10 +11,8 @@ ${monorepoGroupName
 ${monorepoGroupName ? 'These versions are' : 'This version is'} **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
-
-${monorepoGroupName && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
+${monorepoGroupName && `\nThis monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).\n`
 }
-
 ---
 
 ${hasReleaseInfo
