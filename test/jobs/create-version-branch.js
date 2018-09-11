@@ -1810,7 +1810,6 @@ describe('create version branch for dependencies from monorepos', () => {
       .post('/repos/finnp/numbers/pulls')
       .reply(200, (req, res) => {
         // pull request created
-        console.log('JSON.parse(res).body', JSON.parse(res).body)
         expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
@@ -1840,7 +1839,6 @@ describe('create version branch for dependencies from monorepos', () => {
       expect(transforms).toHaveLength(2)
       const transform1 = await transforms[0]
       const transform2 = await transforms[1]
-      console.log('transform2', transform2)
       let result = transform1.transform(JSON.stringify({
         dependencies: {
           pouchdb: '1.0.0',
