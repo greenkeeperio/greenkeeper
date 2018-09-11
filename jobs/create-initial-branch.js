@@ -280,7 +280,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     branch,
     newBranch,
     transforms,
-    processLockfiles: true
+    processLockfiles: true,
+    commitMessageTemplates: config.commitMessages
   })
 
   if (!sha) {

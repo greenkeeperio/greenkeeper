@@ -113,7 +113,8 @@ module.exports = async function ({ repositoryId, groupName }) {
     branch,
     newBranch,
     transforms,
-    processLockfiles: true
+    processLockfiles: true,
+    commitMessageTemplates: config.commitMessages
   })
 
   if (!depsUpdated) {
