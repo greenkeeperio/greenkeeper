@@ -160,6 +160,10 @@ module.exports = async function (
         value: {oldVersion: oldPkgVersion}
       })
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
+      if (!oldVersionResolved) {
+        log.warn('exited transform creation: could not resolve old version (no update?)', {newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+        return null
+      }
 
       if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
         log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
@@ -198,7 +202,10 @@ module.exports = async function (
   // Some users may want to keep the legacy behaviour where all lockfiles are only ever updated on out-of-range updates.
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
   let processLockfiles = true
-  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) processLockfiles = false
+  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
+    log.info('exiting: user wants out-of-range lockfile updates only', {config})
+    return
+  }
 
   const transforms = _.compact(_.flatten(await createTransformsArray(group, repoDoc.packages['package.json'])))
 
