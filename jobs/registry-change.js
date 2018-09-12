@@ -126,16 +126,17 @@ module.exports = async function (
     "oldVersion": "^4.2.4"
   }
   */
-  // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
+  // packageFilesForUpdatedDependency are a list of all package files across all repoDocs that have that dependency
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     keys: dependencies
   })).rows
 
   if (!packageFilesForUpdatedDependency.length) {
-    // log.info(`exited: no repoDocs found that depend on ${dependency}`)
+    // log.info(`exited: no package files found that depend on ${dependency}`)
     return
   }
   log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
+  statsd.gauge('package_files_with_dependency', packageFilesForUpdatedDependency.length, { tag: dependency })
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
