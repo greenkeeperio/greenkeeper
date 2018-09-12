@@ -230,6 +230,22 @@ module.exports = async function (
     return
   }
 
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
+
+  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfiesAll && hasModuleLockFile) {
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
+    return
+  }
+
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', {defaultBranch: base})
 
