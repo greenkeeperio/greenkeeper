@@ -127,7 +127,7 @@ module.exports = async function (
 
       const oldPkgVersion = _.get(json, [dependencyType, depName])
       if (!oldPkgVersion) {
-        log.warn('exited transform creation: could not find old package version', {newVersion: version, json})
+        log.warn(`exited transform creation: could not find old package version for ${depName}`, {newVersion: version, dependencyType, packageFile: _.get(json, [dependencyType])})
         return null
       }
 
@@ -137,7 +137,7 @@ module.exports = async function (
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
-        log.warn(`exited transform creation: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+        log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
         return null
       }
       const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
@@ -161,12 +161,12 @@ module.exports = async function (
       })
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
       if (!oldVersionResolved) {
-        log.warn('exited transform creation: could not resolve old version (no update?)', {newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+        log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, {newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
         return null
       }
 
       if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
-        log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+        log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
         return null
       }
 
