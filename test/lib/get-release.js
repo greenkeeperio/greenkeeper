@@ -14,7 +14,8 @@ test('get-release from tag with v prefix', async () => {
     .reply(200, {})
     .get('/repos/finnp/test/releases/tags/v1.33.7')
     .reply(200, {
-      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">'
+      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">',
+      name: 'v1.33.7'
     })
 
   const notes = await getRelease({
@@ -23,8 +24,7 @@ test('get-release from tag with v prefix', async () => {
     repo: 'test',
     version: '1.33.7'
   })
-
-  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/<summary>Release Notes for v1.33.7<\/summary>/)
   expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })
 
@@ -42,7 +42,8 @@ test('get-release from tag with version as name', async () => {
     .reply(404)
     .get('/repos/finnp/test/releases/tags/1.33.7')
     .reply(200, {
-      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">'
+      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">',
+      name: '1.33.7'
     })
 
   const notes = await getRelease({
@@ -52,7 +53,7 @@ test('get-release from tag with version as name', async () => {
     version: '1.33.7'
   })
 
-  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/<summary>Release Notes for 1.33.7<\/summary>/)
   expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })
 
@@ -76,7 +77,8 @@ test('get-release from tag at sha', async () => {
     })
     .get('/repos/finnp/test/releases/tags/lolwat')
     .reply(200, {
-      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">'
+      body_html: 'body <a href="https://github.com/greenkeeperio/greenkeeper">',
+      tag_name: '1.33.7'
     })
 
   const notes = await getRelease({
@@ -87,6 +89,6 @@ test('get-release from tag at sha', async () => {
     sha: 'deadbeef'
   })
 
-  expect(notes).toMatch(/<summary>Release Notes<\/summary>/)
+  expect(notes).toMatch(/<summary>Release Notes for 1.33.7<\/summary>/)
   expect(notes).toMatch(/https:\/\/urls.greenkeeper.io/)
 })

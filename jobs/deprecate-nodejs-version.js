@@ -156,7 +156,8 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
     repoName: repo,
     branch,
     newBranch,
-    transforms
+    transforms,
+    commitMessageTemplates: config.commitMessages
   })
 
   if (sha) {

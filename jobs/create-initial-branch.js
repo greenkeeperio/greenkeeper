@@ -281,7 +281,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     newBranch,
     transforms,
     processLockfiles: true,
-    lockFileCommitMessage: getMessage(config.commitMessages, 'lockfileUpdate')
+    commitMessageTemplates: config.commitMessages
   })
 
   if (!sha) {

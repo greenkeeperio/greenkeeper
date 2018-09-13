@@ -638,7 +638,7 @@ describe('create initial subgroup branch', () => {
       }
     })
 
-    expect.assertions(12)
+    expect.assertions(11)
 
     const httpRequests = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -699,10 +699,9 @@ describe('create initial subgroup branch', () => {
       })
 
     // mock relative dependencies
-    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles, repoDoc }) => {
       expect(processLockfiles).toBeTruthy()
       expect(repoDoc).toHaveProperty('files')
-      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
       transforms.forEach(t => {
         const newPkg = JSON.parse(
           t.transform(JSON.stringify({ dependencies: { lodash: '^1.0.0' } }))
