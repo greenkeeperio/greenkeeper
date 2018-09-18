@@ -167,13 +167,13 @@ module.exports = async function (
 
         const oldPkgVersion = _.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
         if (!oldPkgVersion) {
-          log.warn('exited transform creation: could not find old package version', {newVersion: version})
+          log.warn(`exited transform creation: could not find old package version for ${depName}`, {newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`)})
           return
         }
         const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
         // no downgrades
         if (semver.ltr(latestDependencyVersion, oldPkgVersion)) {
-          log.warn(`exited transform creation: ${dependency} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+          log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
           return
         }
 
@@ -199,12 +199,12 @@ module.exports = async function (
         })
         const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
         if (!oldVersionResolved) {
-          log.warn('exited transform creation: could not resolve old version (no update?)', {newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+          log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, {newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
           return null
         }
 
         if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
-          log.info(`exited transform creation: ${dependency} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+          log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
           return null
         }
 
@@ -227,6 +227,22 @@ module.exports = async function (
 
   if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
     log.info('exiting: user wants out-of-range lockfile updates only', {config})
+    return
+  }
+
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
+
+  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfiesAll && hasModuleLockFile) {
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
     return
   }
 
