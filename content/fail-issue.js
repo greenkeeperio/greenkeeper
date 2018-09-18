@@ -28,6 +28,17 @@ const individualStatusOrCheck = (status) => {
   return output
 }
 
+const headline = ({monorepoGroupName, packageUpdateList, dependencyType, dependency, dependencyLink, oldVersionResolved, version}) => {
+  if (monorepoGroupName) {
+    if (packageUpdateList) {
+      return `## There have been updates to the *${monorepoGroupName}* monorepo:\n\n + ${packageUpdateList}`
+    } else {
+      return `## There have been updates to the *${monorepoGroupName}* monorepo`
+    }
+  } else {
+    return `## The ${dependencyType.replace('ies', 'y')} [${dependency}](${dependencyLink}) was updated from \`${oldVersionResolved}\` to \`${version}\`.`
+  }
+}
 const ciStatuses = ({statuses}) => md`
 <details>
 <summary>Status Details</summary>
@@ -39,10 +50,7 @@ ${statuses.map(status => individualStatusOrCheck(status))}
 module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName, packageUpdateList}) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
-${monorepoGroupName
-    ? `## There have been updates to the *${monorepoGroupName}* monorepo${packageUpdateList && ':\n\n' + packageUpdateList}`
-    : `## The ${dependencyType.replace('ies', 'y')} [${dependency}](${dependencyLink}) was updated from \`${oldVersionResolved}\` to \`${version}\`.`
-}
+${headline({monorepoGroupName, packageUpdateList, dependencyType, dependency, dependencyLink, oldVersionResolved, version})}
 
 🚨 [View failing branch](${compareURL}).
 

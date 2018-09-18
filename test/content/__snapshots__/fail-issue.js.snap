@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Fails issue content Displays monorepo issue correctly 1`] = `
+"
+## There have been updates to the *babel7* monorepo
+
+🚨 [View failing branch](https://github.com/gilliam/brazil/compare/master...gilliam:feat%2Fwings).
+
+This version is **covered** by your **current version range** and after updating it in your project **the build failed**.
+
+This monorepo update includes releases of one or more dependencies which all belong to the [babel7 group definition](https://github.com/greenkeeperio/monorepo-definitions).
+
+
+tuttle is a direct dependency of this project, and **it is very likely causing it to break**. If other packages depend on yours, this update is probably also breaking those in turn.
+
+
+
+<details>
+<summary>Status Details</summary>
+
+- ✅ **continuous-integration/travis-ci/pr:** <a href=\\"https://travis-ci.com/club/mate/builds/77480025\\"><img src=\\"https://travis-ci.com/images/stroke-icons/icon-passed.png\\" height=\\"11\\"> The build</a> **passed**. 
+</details>
+
+
+---
+
+14.2.0
+<details>
+      <summary>Commits</summary>
+      A list of commits
+    </details>
+
+
+<details>
+<summary>FAQ and help</summary>
+
+There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) Bot :palm_tree:
+"
+`;
+
+exports[`Fails issue content Displays statuses and checks correctly 1`] = `
+"
+## The dependency [tuttle](http://lol.cat) was updated from \`14.0.0\` to \`14.2.0\`.
+
+🚨 [View failing branch](https://github.com/gilliam/brazil/compare/master...gilliam:feat%2Fwings).
+
+This version is **covered** by your **current version range** and after updating it in your project **the build failed**.
+
+
+
+
+tuttle is a direct dependency of this project, and **it is very likely causing it to break**. If other packages depend on yours, this update is probably also breaking those in turn.
+
+
+
+<details>
+<summary>Status Details</summary>
+
+- ✅ **continuous-integration/travis-ci/push:** The Travis CI build passed ([Details](http://lol.cat)).
+- ❌ **continuous-integration/travis-ci/pr:** The Travis CI build failed ([Details](http://lol.cat)).
+- ✅ **continuous-integration/travis-ci/pr:** <a href=\\"https://travis-ci.com/club/mate/builds/77480025\\"><img src=\\"https://travis-ci.com/images/stroke-icons/icon-passed.png\\" height=\\"11\\"> The build</a> **passed**. 
+</details>
+
+
+---
+
+14.2.0
+<details>
+      <summary>Commits</summary>
+      A list of commits
+    </details>
+
+
+<details>
+<summary>FAQ and help</summary>
+
+There is a collection of [frequently asked questions](https://greenkeeper.io/faq.html). If those don’t help, you can always [ask the humans behind Greenkeeper](https://github.com/greenkeeperio/greenkeeper/issues/new).
+</details>
+
+---
+
+
+Your [Greenkeeper](https://greenkeeper.io) Bot :palm_tree:
+"
+`;
