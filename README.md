@@ -120,7 +120,7 @@ If you find any, **don’t share security vulnerabilities publicly** (in a GitHu
 
     | **Screenshot - Greenkeeper’s initial pull request** |
     |---|
-    | ![Inital pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
+    | ![Initial pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
 
     **Important:** If all dependencies are already up-to-date, we *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the app on the repos you actually need it on, using step 1. Again, we highly recommend taking the time to whitelist repos individually.
 

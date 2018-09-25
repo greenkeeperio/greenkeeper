@@ -769,10 +769,10 @@ describe('create branch', async () => {
 
 describe('create branch with lockfiles', async () => {
   test('change one file (package.json) and generate its lockfile (old syntax)', async () => {
-    const packageFileContents = {devDependencies: {
+    const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
     }}
-    const updatedPackageFileContents = {devDependencies: {
+    const updatedPackageFileContents = { devDependencies: {
       'jest': '1.2.0'
     }}
     const gitHubNock = nock('https://api.github.com')
@@ -842,7 +842,7 @@ describe('create branch with lockfiles', async () => {
         sha: 'lol999'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: 'lol999',
         parents: ['789beef']
       })
@@ -881,7 +881,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1017,7 +1017,7 @@ describe('create branch with lockfiles', async () => {
         sha: '3-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile frontend/package-lock.json, yay',
         tree: '3-tree',
         parents: ['2-commit']
       })
@@ -1040,7 +1040,7 @@ describe('create branch with lockfiles', async () => {
         sha: '4-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: '4-tree',
         parents: ['3-commit']
       })
@@ -1101,7 +1101,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1238,7 +1238,7 @@ describe('create branch with lockfiles', async () => {
         sha: '3-tree'
       })
       .post('/repos/owner/repo/git/commits', {
-        message: 'Updated lockfile yay',
+        message: 'Updated lockfile package-lock.json, yay',
         tree: '3-tree',
         parents: ['2-commit']
       })
@@ -1285,7 +1285,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1399,7 +1399,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      lockFileCommitMessage: 'Updated lockfile yay',
+      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',

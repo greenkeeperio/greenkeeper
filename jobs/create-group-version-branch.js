@@ -4,15 +4,22 @@ const Log = require('gk-log')
 
 const dbs = require('../lib/dbs')
 const getConfig = require('../lib/get-config')
-const getInfos = require('../lib/get-infos')
-const {getMessage, getPrTitle} = require('../lib/get-message')
+const { getInfos, getFormattedDependencyURL } = require('../lib/get-infos')
+const { getMessage, getPrTitle } = require('../lib/get-message')
 const createBranch = require('../lib/create-branch')
 const statsd = require('../lib/statsd')
 const env = require('../lib/env')
 const githubQueue = require('../lib/github-queue')
 const upsert = require('../lib/upsert')
 const { getActiveBilling, getAccountNeedsMarketplaceUpgrade } = require('../lib/payments')
-const { createTransformFunction, getHighestPriorityDependency, generateGitHubCompareURL, hasTooManyPackageJSONs } = require('../utils/utils')
+const {
+  createTransformFunction,
+  getHighestPriorityDependency,
+  generateGitHubCompareURL,
+  hasTooManyPackageJSONs,
+  getSatisfyingVersions,
+  getOldVersionResolved
+} = require('../utils/utils')
 const {
   isPartOfMonorepo,
   getMonorepoGroup,
@@ -77,7 +84,6 @@ module.exports = async function (
     log.info(`last of a monorepo publish, starting the full update for ${monorepoGroupName}`)
   }
 
-  const satisfies = semver.satisfies(version, oldVersion)
   const config = getConfig(repoDoc)
 
   if (repoDoc.private && !env.IS_ENTERPRISE) {
@@ -103,13 +109,10 @@ module.exports = async function (
   }
   const onlyUpdateLockfilesIfOutOfRange = _.get(config, 'lockfiles.outOfRangeUpdatesOnly') === true
   let processLockfiles = true
-  if (onlyUpdateLockfilesIfOutOfRange && satisfies) processLockfiles = false
 
   const [owner, repo] = repoDoc.fullName.split('/')
   const installationId = installation.installation
   const ghqueue = githubQueue(installationId)
-  const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: using default branch', {defaultBranch: base})
 
   let dependencyGroup, newBranch, dependencyKey
   if (isMonorepo) {
@@ -148,22 +151,34 @@ module.exports = async function (
     return false
   }
 
+  let satisfiesAll = true
   async function createTransformsArray (monorepo) {
     return Promise.all(dependencyGroup.map(async depName => {
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       return Promise.all(monorepo.map(async pkgRow => {
         const pkg = pkgRow.value
         if (!pkg.type) return
         if (_.includes(config.ignore, depName)) return
         if (_.includes(config.groups[groupName].ignore, depName)) return
+
         const oldPkgVersion = _.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
-        if (!oldPkgVersion) return
-        if (semver.ltr(latestDependencyVersion, oldPkgVersion)) return // no downgrades
+        if (!oldPkgVersion) {
+          log.warn(`exited transform creation: could not find old package version for ${depName}`, {newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`)})
+          return
+        }
+        const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
+        // no downgrades
+        if (semver.ltr(latestDependencyVersion, oldPkgVersion)) {
+          log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+          return
+        }
 
         const transforms = []
+        if (!satisfies) satisfiesAll = false
 
         const commitMessageKey = !satisfies && pkg.type === 'dependencies'
           ? 'dependencyUpdate'
@@ -177,18 +192,62 @@ module.exports = async function (
           })
           commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
         }
-        log.info('commit message created', {commitMessage})
+        log.info(`commit message for ${depName} created`, {commitMessage})
+
+        const satisfyingVersions = getSatisfyingVersions(npmDoc.versions, {
+          value: {oldVersion: oldPkgVersion}
+        })
+        const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
+        if (!oldVersionResolved) {
+          log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, {newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+          return null
+        }
+
+        if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
+          log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+          return null
+        }
+
         transforms.push({
           transform: createTransformFunction(pkg.type, depName, latestDependencyVersion, log),
           path: pkg.filename,
-          message: commitMessage
+          message: commitMessage,
+          dependency: depName,
+          oldVersion: oldVersionResolved,
+          version: latestDependencyVersion,
+          dependencyType: pkg.type,
+          repoURL
         })
         return transforms
       }))
     }))
   }
   const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
-  const lockFileCommitMessage = getMessage(config.commitMessages, 'lockfileUpdate')
+  if (transforms.length === 0) return
+
+  if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
+    log.info('exiting: user wants out-of-range lockfile updates only', {config})
+    return
+  }
+
+  // If an npm-shrinkwrap.json exists, we bail if semver is satisfied
+  function isTrue (x) {
+    if (typeof x === 'object') {
+      return !!x.length
+    }
+    return x
+  }
+
+  const hasModuleLockFile = repoDoc.files && isTrue(repoDoc.files['npm-shrinkwrap.json'])
+
+  // Bail if it’s in range and the repo uses shrinkwrap
+  if (satisfiesAll && hasModuleLockFile) {
+    log.info(`exited: ${dependency} ${version} satisfies semver & repository has a module lockfile (shrinkwrap type)`)
+    return
+  }
+
+  const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  log.info('github: using default branch', {defaultBranch: base})
 
   const sha = await createBranch({
     installationId,
@@ -199,7 +258,7 @@ module.exports = async function (
     newBranch,
     transforms,
     processLockfiles,
-    lockFileCommitMessage
+    commitMessageTemplates: config.commitMessages
   })
   if (sha) {
     log.success(`github: branch ${newBranch} created`, {sha})
@@ -209,6 +268,16 @@ module.exports = async function (
     log.error('github: no branch was created')
     return
   }
+
+  let packageUpdateList = ''
+  let reportedDependencies = []
+  transforms.forEach(async transform => {
+    if (transform.created && !reportedDependencies.includes(transform.dependency)) {
+      const dependencyURL = getFormattedDependencyURL({repositoryURL: transform.repoURL, dependency: transform.dependency})
+      packageUpdateList += `- The \`${transform.dependencyType.replace('ies', 'y')}\` [${transform.dependency}](${dependencyURL}) was updated from \`${transform.oldVersion}\` to \`${transform.version}\`.\n`
+      reportedDependencies.push(transform.dependency)
+    }
+  })
 
   const highestPriorityDependency = getHighestPriorityDependency(types)
   await upsert(repositories, `${repositoryId}:branch:${sha}`, {
@@ -224,12 +293,13 @@ module.exports = async function (
     dependencyType: highestPriorityDependency,
     repositoryId,
     accountId,
-    processed: !satisfies,
+    processed: !satisfiesAll,
+    packageUpdateList,
     group: groupName
   })
   // nothing to do anymore
   // the next action will be triggered by the status event
-  if (satisfies) {
+  if (satisfiesAll) {
     log.info('dependency satisfies version range, no action required')
     return
   }
@@ -240,7 +310,7 @@ module.exports = async function (
       : openPR.version
     : oldVersionResolved
 
-  const { dependencyLink, release, diffCommits } = await getInfos({
+  const { release, diffCommits } = await getInfos({
     installationId,
     dependency,
     monorepoGroupName,
@@ -250,15 +320,15 @@ module.exports = async function (
   })
 
   const bodyDetails = _.compact(['\n', release, diffCommits]).join('\n')
-
   const compareURL = generateGitHubCompareURL(repoDoc.fullName, base, newBranch)
+  const commentBody = (packageUpdateList + `\n[Update to ${transforms.length === 1 ? 'this version' : 'these versions'} instead 🚀](${compareURL}) \n ${bodyDetails}`).trim()
 
   if (openPR) {
     await ghqueue.write(github => github.issues.createComment({
       owner,
       repo,
       number: openPR.number,
-      body: `## Version **${version}** just got published. \n[Update to this version instead 🚀](${compareURL}) ${bodyDetails}`
+      body: commentBody
     }))
 
     statsd.increment('pullrequest_comments')
@@ -272,6 +342,7 @@ module.exports = async function (
     group: groupName,
     prTitles: config.prTitles})
 
+  const dependencyLink = getFormattedDependencyURL({repositoryURL: transforms[0].repoURL})
   // maybe adapt PR body
   const body = prContent({
     dependencyLink,
@@ -281,7 +352,8 @@ module.exports = async function (
     monorepoGroupName,
     type: highestPriorityDependency,
     release,
-    diffCommits
+    diffCommits,
+    packageUpdateList
   })
 
   // verify pull requests commit

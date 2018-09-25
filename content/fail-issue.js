@@ -28,6 +28,17 @@ const individualStatusOrCheck = (status) => {
   return output
 }
 
+const headline = ({monorepoGroupName, packageUpdateList, dependencyType, dependency, dependencyLink, oldVersionResolved, version}) => {
+  if (monorepoGroupName) {
+    if (packageUpdateList) {
+      return `## There have been updates to the *${monorepoGroupName}* monorepo:\n\n + ${packageUpdateList}`
+    } else {
+      return `## There have been updates to the *${monorepoGroupName}* monorepo`
+    }
+  } else {
+    return `## The ${dependencyType.replace('ies', 'y')} [${dependency}](${dependencyLink}) was updated from \`${oldVersionResolved}\` to \`${version}\`.`
+  }
+}
 const ciStatuses = ({statuses}) => md`
 <details>
 <summary>Status Details</summary>
@@ -36,54 +47,16 @@ ${statuses.map(status => individualStatusOrCheck(status))}
 </details>
 `
 
-module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName}) => {
+module.exports = ({version, dependencyLink, owner, repo, base, head, dependency, oldVersionResolved, dependencyType, statuses, release, diffCommits, monorepoGroupName, packageUpdateList}) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
-${_.isEmpty(monorepoGroupName)
-    ? `## Version **${version}** of **${dependency}** was just published.`
-    : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
+${headline({monorepoGroupName, packageUpdateList, dependencyType, dependency, dependencyLink, oldVersionResolved, version})}
 
-<table>
-  <tr>
-    <th align=left>
-      Branch
-    </th>
-    <td>
-      <a href="${compareURL}">Build failing 🚨</a>
-    </td>
-  </tr>
-  <tr>
-    <th align=left>
-      ${_.isEmpty(monorepoGroupName)
-    ? 'Dependency'
-    : 'Monorepo release group'
-}
-    </th>
-    <td>
-      <a target=_blank href=${dependencyLink}>${monorepoGroupName || dependency}</a>
-    </td>
-  </tr>
-  <tr>
-    <th align=left>
-      Current Version
-    </td>
-    <td>
-      ${oldVersionResolved}
-    </td>
-  </tr>
-  <tr>
-    <th align=left>
-      Type
-    </td>
-    <td>
-      ${dependencyType.replace(/ies$/, 'y')}
-    </td>
-  </tr>
-</table>
+🚨 [View failing branch](${compareURL}).
 
 This version is **covered** by your **current version range** and after updating it in your project **the build failed**.
 
-${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
+${monorepoGroupName && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
 }
 
 ${

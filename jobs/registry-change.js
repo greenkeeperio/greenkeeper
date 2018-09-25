@@ -28,7 +28,7 @@ module.exports = async function (
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
   const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change'})
-  log.info(`started registry-change for dependency ${dependency}`, {dependency, versions})
+  // log.info(`started registry-change for dependency ${dependency}`, {dependency, versions})
 
   const isFromHook = _.isString(installation)
   let npmDoc = {
@@ -44,7 +44,7 @@ module.exports = async function (
     var npmDbDoc = await npm.get(npmDoc._id)
   } catch (err) {
     if (err.status !== 404) throw err
-    log.warn(`Warning: failed to load npmDoc for ${dependency} (Is probably new).`)
+    // log.warn(`Warning: failed to load npmDoc for ${dependency} (Is probably new).`)
     npmDbDoc = {}
   }
 
@@ -58,7 +58,7 @@ module.exports = async function (
     distTag = _.findKey(distTags, (version, tag) => {
       const oldVersion = oldDistTags[tag]
       if (!oldVersion) {
-        log.info(`exited: nothing to update, is first release of ${dependency}`)
+        // log.info(`exited: nothing to update, is first release of ${dependency}`)
         return true
       }
       return semver.lt(oldVersion, version)
@@ -66,7 +66,7 @@ module.exports = async function (
   }
 
   if (!distTag) {
-    log.info(`exited: ${dependency} has no distTag`)
+    // log.info(`exited: ${dependency} has no distTag`)
     return
   }
   await npm.put(updatedAt(Object.assign(npmDbDoc, npmDoc)))
@@ -75,7 +75,7 @@ module.exports = async function (
   // so we can heavily optimise by exiting here
   // we want to handle different distTags in the future
   if (distTag !== 'latest') {
-    log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
+    // log.info(`exited: ${dependency} distTag is ${distTag} (not latest)`)
     return
   }
 
@@ -126,16 +126,17 @@ module.exports = async function (
     "oldVersion": "^4.2.4"
   }
   */
-  // packageFilesForUpdatedDependency are a list of all repoDocs that have that dependency (should rename that)
+  // packageFilesForUpdatedDependency are a list of all package files across all repoDocs that have that dependency
   const packageFilesForUpdatedDependency = (await repositories.query('by_dependency', {
     keys: dependencies
   })).rows
 
   if (!packageFilesForUpdatedDependency.length) {
-    log.info(`exited: no repoDocs found that depend on ${dependency}`)
+    // log.info(`exited: no package files found that depend on ${dependency}`)
     return
   }
   log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
+  statsd.gauge('package_files_with_dependency', packageFilesForUpdatedDependency.length, { tag: dependency })
 
   if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
@@ -206,10 +207,6 @@ module.exports = async function (
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
       if (isFromHook && String(account.installation) !== installation) return {}
-      if (semver.prerelease(version) && !semver.prerelease(pkg.value.oldVersion)) {
-        log.info(`exited: ${dependency} ${version} is a prerelease on latest and user does not use prereleases`)
-        return
-      }
 
       return {
         data: Object.assign(

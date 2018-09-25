@@ -53,6 +53,20 @@ describe('create version branch', () => {
       _id: '@finnpauls/dep',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep.git'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep.git'
+          }
+        }
       }
     })
 
@@ -60,6 +74,20 @@ describe('create version branch', () => {
       _id: '@finnpauls/dep2',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        }
       }
     })
   })
@@ -92,7 +120,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(14)
+    expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/37/access_tokens')
@@ -104,9 +132,8 @@ describe('create version branch', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
-      .reply(200, () => {
-        // pull request created
-        expect(true).toBeTruthy()
+      .reply(200, (req, res) => {
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -136,26 +163,6 @@ describe('create version branch', () => {
         return {}
       })
 
-    jest.mock('../../lib/get-infos', () => ({
-      installationId, dependency, version, diffBase, versions
-    }) => {
-      // used get-infos
-      expect(true).toBeTruthy()
-
-      expect(versions).toEqual({
-        '1.0.0': {},
-        '2.0.0': {}
-      })
-
-      expect(version).toEqual('2.0.0')
-      expect(installationId).toBe(37)
-      expect(dependency).toEqual('@finnpauls/dep')
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
@@ -173,6 +180,7 @@ describe('create version branch', () => {
           })
         )
       )
+      transforms[0].created = true
       const devDependency = newPkg.devDependencies['@finnpauls/dep']
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
@@ -231,7 +239,7 @@ describe('create version branch', () => {
       _id: '124',
       plan: 'personal'
     })
-    expect.assertions(13)
+    expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/38/access_tokens')
@@ -243,9 +251,9 @@ describe('create version branch', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -275,21 +283,6 @@ describe('create version branch', () => {
         return {}
       })
 
-    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
-      expect(versions).toEqual({
-        '1.0.0': {},
-        '2.0.0': {}
-      })
-
-      expect(version).toEqual('2.0.0')
-      expect(installationId).toBe(38)
-      expect(dependency).toEqual('@finnpauls/dep')
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
@@ -307,6 +300,7 @@ describe('create version branch', () => {
           })
         )
       )
+      transforms[0].created = true
       const devDependency = newPkg.devDependencies['@finnpauls/dep']
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
@@ -365,7 +359,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(14)
+    expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/124/access_tokens')
@@ -377,9 +371,9 @@ describe('create version branch', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/testtest/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -409,25 +403,6 @@ describe('create version branch', () => {
         return {}
       })
 
-    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
-      // used get-infos
-      expect(true).toBeTruthy()
-
-      expect(versions).toEqual({
-        '1.0.0': {},
-        '2.0.0': {}
-      })
-
-      expect(version).toEqual('2.0.0')
-      expect(installationId).toBe(124)
-      expect(dependency).toEqual('@finnpauls/dep')
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
-
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
@@ -446,6 +421,7 @@ describe('create version branch', () => {
           })
         )
       )
+      transforms[0].created = true
       const devDependency = newPkg.devDependencies['@finnpauls/dep']
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
@@ -511,20 +487,15 @@ describe('create version branch', () => {
         return { token: 'secret' }
       })
 
-    jest.mock('../../lib/get-infos', () => () => {
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      return '1234abcd'
+    })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
@@ -707,7 +678,7 @@ describe('create version branch', () => {
       })
     ])
 
-    expect.assertions(10)
+    expect.assertions(5)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/41/access_tokens')
@@ -728,30 +699,11 @@ describe('create version branch', () => {
         merged: false
       })
       .post('/repos/finnp/test2/issues/5/comments')
-      .reply(201, () => {
-        // comment created
-        expect(true).toBeTruthy()
+      .reply(201, (uri, req) => {
+        // pull request created
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {}
       })
-
-    jest.mock('../../lib/get-infos', () => ({ installationId, dependency, version, diffBase, versions }) => {
-      // used get-infos
-      expect(true).toBeTruthy()
-
-      expect(versions).toEqual({
-        '1.0.0': {},
-        '2.0.0': {}
-      })
-
-      expect(version).toEqual('2.0.0')
-      expect(installationId).toBe(41)
-      expect(dependency).toEqual('@finnpauls/dep2')
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
 
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
@@ -771,6 +723,7 @@ describe('create version branch', () => {
           })
         )
       )
+      transforms[0].created = true
       const devDependency = newPkg.devDependencies['@finnpauls/dep2']
       expect(devDependency).toEqual('^2.0.0')
       return '1234abcd'
@@ -821,9 +774,9 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(3)
+    expect.assertions(1)
 
-    const githubMock = nock('https://api.github.com')
+    nock('https://api.github.com')
       .post('/installations/42/access_tokens')
       .optionally()
       .reply(200, {
@@ -832,14 +785,10 @@ describe('create version branch', () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/finnp/test')
-      .reply(200, {
-        default_branch: 'master'
-      })
 
     jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
-      const transformFunc = await transforms[0]
-      expect(transformFunc).toBeFalsy()
+      // this should never be called, cvb should stop before calling it
+      expect(true).toBeFalsy()
     })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
@@ -856,8 +805,6 @@ describe('create version branch', () => {
         '2.0.1': {}
       }
     })
-
-    expect(githubMock.isDone()).toBeTruthy()
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
@@ -1050,9 +997,29 @@ describe('create version branch', () => {
       _id: 'jest',
       distTags: {
         latest: '1.2.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/jest/jest.git'
+          }
+        },
+        '1.1.1': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/jest/jest.git'
+          }
+        },
+        '1.2.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/jest/jest.git'
+          }
+        }
       }
     })
-    expect.assertions(11)
+    expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
       .post('/installations/40/access_tokens')
@@ -1073,9 +1040,9 @@ describe('create version branch', () => {
       )
       .reply(201)
       .post('/repos/espy/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 1234,
           number: 50,
@@ -1085,31 +1052,22 @@ describe('create version branch', () => {
       .post('/repos/espy/test/issues/50/labels')
       .reply(201)
 
-    jest.mock('../../lib/get-infos', () => () => {
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
-
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, lockFileCommitMessage, repoDoc }) => {
+    jest.mock('../../lib/create-branch', () => async ({ transforms, processLockfiles, repoDoc }) => {
       expect(transforms).toHaveLength(1)
       expect(processLockfiles).toBeTruthy()
-      expect(lockFileCommitMessage).toEqual('chore(package): update lockfile')
       expect(repoDoc).toHaveProperty('files')
       let newPackageJSON = transforms[0].transform(JSON.stringify({
         devDependencies: {
           'jest': '1.1.1'
         }
       }))
-
+      transforms[0].created = true
       expect(transforms[0].path).toEqual('package.json')
       expect(newPackageJSON).toMatchSnapshot()
 
@@ -1141,7 +1099,7 @@ describe('create version branch', () => {
   })
 
   test('lockfile: runs if in range, has package-lock.json, with old files object format', async () => {
-    const { repositories } = await dbs()
+    const { repositories, npm } = await dbs()
     await repositories.put({
       _id: '86',
       accountId: '2323',
@@ -1155,7 +1113,35 @@ describe('create version branch', () => {
       packages: {
         'package.json': {
           devDependencies: {
-            'greenkeeper-lockfile': '1.1.1'
+            'greenkeeper-lockfile': '1.1.1',
+            '@finnpauls/dep3': '^2.0.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: '@finnpauls/dep3',
+      distTags: {
+        latest: '2.1.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep3.git'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep3.git'
+          }
+        },
+        '2.1.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep3.git'
           }
         }
       }
@@ -1176,34 +1162,30 @@ describe('create version branch', () => {
         default_branch: 'master'
       })
 
-    jest.mock('../../lib/get-infos', () => () => {
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
-
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
       total_commits: 0,
       behind_by: 0,
       commits: []
     }))
-    jest.mock('../../lib/create-branch', () => ({ transform }) => '1234abcd')
+    jest.mock('../../lib/create-branch', () => ({ transforms }) => {
+      transforms[0].created = true
+      return '1234abcd'
+    })
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
-      dependency: '@finnpauls/dep',
+      dependency: '@finnpauls/dep3',
       accountId: '2323',
       repositoryId: '86',
       type: 'devDependencies',
-      version: '1.1.0',
-      oldVersion: '^1.0.0',
-      oldVersionResolved: '1.0.0',
+      version: '2.1.0',
+      oldVersion: '^2.0.0',
+      oldVersionResolved: '2.0.0',
       versions: {
         '1.0.0': {},
-        '1.1.0': {}
+        '1.1.0': {},
+        '2.0.0': {}
       }
     })
 
@@ -1239,6 +1221,26 @@ describe('create version branch', () => {
       _id: 'best',
       distTags: {
         latest: '1.2.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/best/best.git'
+          }
+        },
+        '1.1.1': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/best/best.git'
+          }
+        },
+        '1.2.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/best/best.git'
+          }
+        }
       }
     })
     expect.assertions(8)
@@ -1262,9 +1264,9 @@ describe('create version branch', () => {
       )
       .reply(201)
       .post('/repos/espy/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 1234,
           number: 50,
@@ -1273,14 +1275,6 @@ describe('create version branch', () => {
       })
       .post('/repos/espy/test/issues/50/labels')
       .reply(201)
-
-    jest.mock('../../lib/get-infos', () => () => {
-      return {
-        dependencyLink: '[]()',
-        release: 'the release',
-        diffCommits: 'commits...'
-      }
-    })
 
     jest.mock('../../lib/get-diff-commits', () => () => ({
       html_url: 'https://github.com/lkjlsgfj/',
@@ -1296,7 +1290,7 @@ describe('create version branch', () => {
           'best': '1.1.1'
         }
       }))
-
+      transforms[0].created = true
       expect(transforms[0].path).toEqual('package.json')
       expect(newPackageJSON).toMatchSnapshot()
 
@@ -1405,18 +1399,32 @@ describe('create version branch for dependencies from monorepos', () => {
       _id: 'colors',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/colors'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/colors'}}
       }
     })
+    // There is no repo URL in here to test whether the dependencyURL gets created correctly
+    // should be an npm url for this package
     await npm.put({
       _id: 'colors-blue',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
       }
     })
     await npm.put({
       _id: 'colors-red',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/colors-red'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/colors-red'}}
       }
     })
 
@@ -1424,24 +1432,40 @@ describe('create version branch for dependencies from monorepos', () => {
       _id: 'flowers',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers'}}
       }
     })
     await npm.put({
       _id: 'flowers-blue',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-blue'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-blue'}}
       }
     })
     await npm.put({
       _id: 'flowers-red',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-red'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-red'}}
       }
     })
     await npm.put({
       _id: 'flowers-green',
       distTags: {
         latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-green'}},
+        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-green'}}
       }
     })
   })
@@ -1454,8 +1478,7 @@ describe('create version branch for dependencies from monorepos', () => {
       removeIfExists(npm, 'flowers', 'flowers-blue', 'flowers-red', 'flowers-green'),
       removeIfExists(npm, 'numbers', 'numbers-three', 'numbers-four'),
       removeIfExists(repositories, 'mono-1', 'mono-1-ignored', 'mono-deps-diff', 'mono-2'),
-      removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321',
-        'mono-2:branch:1234abcd', 'mono-2:pr:321'),
+      removeIfExists(repositories, 'mono-1:branch:1234abcd', 'mono-1:pr:321', 'mono-1-ignored:branch:1234abcd', 'mono-1-ignored:pr:321', 'mono-2:branch:1234abcd', 'mono-2:pr:321', 'mono-nuclear-100', 'mono-nuclear-100:branch:1234abcd', 'mono-nuclear-babel', 'mono-nuclear-babel:branch:superSha'),
       removeIfExists(repositories, '1:branch:2222abcd', '1:pr:3210')
     ])
   })
@@ -1495,9 +1518,9 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
-      .reply(200, () => {
+      .reply(200, (uri, req) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(req).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1536,6 +1559,7 @@ describe('create version branch for dependencies from monorepos', () => {
           colors: '1.0.0'
         }
       })))
+      transforms[0].created = true
       expect(result.dependencies['colors-blue']).toBe('1.0.0')
       expect(result.devDependencies['colors']).toBe('2.0.0')
       return '1234abcd'
@@ -1621,9 +1645,8 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
-      .reply(200, () => {
-        // pull request created
-        expect(true).toBeTruthy()
+      .reply(200, (req, res) => {
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1663,6 +1686,8 @@ describe('create version branch for dependencies from monorepos', () => {
           colors: '1.0.0'
         }
       }))
+      transforms[0].created = true
+      transforms[1].created = true
       result = JSON.parse(transform2.transform(result))
       expect(result.dependencies['colors-blue']).toBe('2.0.0')
       expect(result.devDependencies['colors']).toBe('2.0.0')
@@ -1716,7 +1741,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect(pr.state).toEqual('open')
   })
 
-  test('new pull request with different versions', async () => {
+  test('new pull request with different versions, skipping one unchanged package', async () => {
     const { repositories, npm } = await dbs()
     await repositories.put({
       _id: 'mono-deps-diff',
@@ -1728,7 +1753,8 @@ describe('create version branch for dependencies from monorepos', () => {
           dependencies: {
             pouchdb: '1.0.0',
             'pouchdb-core': '1.0.0',
-            'numbers-three': '1.5.0',
+            'numbers-three': '1.5.0', // should be skipped, as it did not change
+            'numbers-four': '1.2.0',
             bulldog: '1.0.0'
           },
           devDependencies: {
@@ -1742,18 +1768,32 @@ describe('create version branch for dependencies from monorepos', () => {
       _id: 'numbers',
       distTags: {
         latest: '2.2.0'
+      },
+      versions: {
+        '2.1.0': {},
+        '2.2.0': {}
       }
     })
     await npm.put({
       _id: 'numbers-three',
       distTags: {
         latest: '1.5.0'
+      },
+      versions: {
+        '1.2.0': {},
+        '1.3.0': {},
+        '1.4.0': {},
+        '1.5.0': {}
       }
     })
     await npm.put({
       _id: 'numbers-four',
       distTags: {
         latest: '1.3.0'
+      },
+      versions: {
+        '1.2.0': {},
+        '1.3.0': {}
       }
     })
     expect.assertions(11)
@@ -1768,9 +1808,9 @@ describe('create version branch for dependencies from monorepos', () => {
       .optionally()
       .reply(200, {})
       .post('/repos/finnp/numbers/pulls')
-      .reply(200, () => {
+      .reply(200, (req, res) => {
         // pull request created
-        expect(true).toBeTruthy()
+        expect(JSON.parse(res).body).toMatchSnapshot()
         return {
           id: 321,
           number: 66,
@@ -1804,12 +1844,15 @@ describe('create version branch for dependencies from monorepos', () => {
           pouchdb: '1.0.0',
           'pouchdb-core': '1.0.0',
           'numbers-three': '1.5.0',
+          'numbers-four': '1.2.0',
           bulldog: '1.0.0'
         },
         devDependencies: {
           numbers: '2.1.0'
         }
       }))
+      transforms[0].created = true
+      transforms[1].created = true
       result = JSON.parse(transform2.transform(result))
       expect(result.dependencies['numbers-three']).toBe('1.5.0')
       expect(result.devDependencies['numbers']).toBe('2.2.0')
@@ -1885,6 +1928,8 @@ describe('create version branch for dependencies from monorepos', () => {
       }
     })
 
+    expect.assertions(17)
+
     const githubMock = nock('https://api.github.com')
       .post('/installations/1/access_tokens')
       .optionally()
@@ -1897,10 +1942,7 @@ describe('create version branch for dependencies from monorepos', () => {
       .post('/repos/finnp/test/pulls')
       .reply(200, (url, payload) => {
         const PRBody = JSON.parse(payload).body
-        // pull request created
-        expect(PRBody).toMatch('## Version **2.0.0** of the **flowers** packages was just published')
-        expect(PRBody).toMatch('This monorepo update includes releases of one or more dependencies which all belong to the [flowers group definition](https://github.com/greenkeeperio/monorepo-definitions).')
-        expect(true).toBeTruthy()
+        expect(PRBody).toMatchSnapshot()
         return {
           id: 321,
           number: 77,
@@ -1959,6 +2001,10 @@ describe('create version branch for dependencies from monorepos', () => {
       result = transform3.transform(result)
 
       result = JSON.parse(result)
+      transforms[0].created = true
+      transforms[1].created = true
+      transforms[2].created = true
+      transforms[3].created = true
       expect(result.dependencies['flowers-blue']).toBe('2.0.0')
       expect(result.dependencies['flowers-red']).toBe('2.0.0')
       expect(result.dependencies['flowers-green']).toBe('2.0.0')
@@ -2017,5 +2063,319 @@ describe('create version branch for dependencies from monorepos', () => {
 
     expect(pr.number).toBe(77)
     expect(pr.state).toEqual('open')
+  })
+
+  test('unused dep release from used monorepo dep, no PR because all updates are in-range', async () => {
+    const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-nuclear-100',
+      accountId: 'mono-123',
+      fullName: 'nukeop/nuclear',
+      enabled: true,
+      packages: {
+        'package.json': {
+          devDependencies: {
+            'enzyme': '^3.4.2',
+            'enzyme-adapter-react-16': '^1.1.0'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: 'enzyme',
+      distTags: {
+        latest: '3.4.4'
+      },
+      versions: {
+        '3.4.2': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '3.4.3': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '3.4.4': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        }
+      }
+    })
+    await npm.put({
+      _id: 'enzyme-adapter-react-16',
+      distTags: {
+        latest: '1.2.0'
+      },
+      versions: {
+        '1.1.1': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.2.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        }
+      }
+    })
+    // This package is updated and should trigger an update for the enzyme group, but shouldn’t
+    // have a commit itself, since it isn’t depended upon
+    await npm.put({
+      _id: 'enzyme-adapter-utils',
+      distTags: {
+        latest: '1.6.0'
+      },
+      versions: {
+        '1.2.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.3.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.4.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.5.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        },
+        '1.6.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/airbnb/enzyme.git'
+          }
+        }
+      }
+    })
+
+    expect.assertions(8)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/nukeop/nuclear')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      let result = await transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          'enzyme': '^3.4.2',
+          'enzyme-adapter-react-16': '^1.1.0'
+        }
+      }))
+      transforms[0].created = true
+      result = await JSON.parse(transforms[1].transform(result))
+      transforms[1].created = true
+      expect(result.devDependencies['enzyme']).toBe('^3.4.4')
+      expect(result.devDependencies['enzyme-adapter-react-16']).toBe('^1.2.0')
+      return '1234abcd'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          enzyme: [
+            'enzyme',
+            'enzyme-adapter-react-13',
+            'enzyme-adapter-react-14',
+            'enzyme-adapter-react-15.4',
+            'enzyme-adapter-react-15',
+            'enzyme-adapter-react-16',
+            'enzyme-adapter-utils',
+            'enzyme-adapter-react-helper'
+          ]
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    // This is what registry-change passes in for this buggy PR
+    // We might be able to leave this as-is and just handle things in cvb correctly.
+    const newJob = await createVersionBranch({
+      dependency: 'enzyme-adapter-utils',
+      accountId: 'mono-123',
+      repositoryId: 'mono-nuclear-100',
+      plan: 'free',
+      type: 'devDependencies',
+      version: '1.6.0',
+      oldVersion: '^3.3.0',
+      oldVersionResolved: undefined,
+      versions: {
+        '1.6.0': { gitHead: 'wau' },
+        '1.5.0': { gitHead: 'woof' }
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-nuclear-100:branch:1234abcd')
+    await expect(repositories.get('mono-nuclear-100:pr:321')).rejects.toThrow('missing')
+
+    expect(branch.processed).toBeFalsy() // I think
+    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme-1.6.0')
+  })
+
+  test('create branch name with prerelease suffix if user had prerelases in package.json', async () => {
+    const { repositories, npm } = await dbs()
+    await repositories.put({
+      _id: 'mono-nuclear-babel',
+      accountId: 'mono-123',
+      fullName: 'nukeop/nuclear',
+      enabled: true,
+      packages: {
+        'package.json': {
+          devDependencies: {
+            '@babel/core': '^7.0.0-rc.1',
+            '@babel/preset-env': '^7.0.0-rc.1'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: '@babel/core',
+      distTags: {
+        latest: '7.0.0-rc.2'
+      },
+      versions: {
+        '7.0.0-rc.1': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/babel/babel.git'
+          }
+        },
+        '7.0.0-rc.2': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/babel/babel.git'
+          }
+        }
+      }
+    })
+
+    await npm.put({
+      _id: '@babel/preset-env',
+      distTags: {
+        latest: '7.0.0-rc.2'
+      },
+      versions: {
+        '7.0.0-rc.1': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/babel/babel.git'
+          }
+        },
+        '7.0.0-rc.2': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/babel/babel.git'
+          }
+        }
+      }
+    })
+
+    expect.assertions(8)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/installations/1/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/nukeop/nuclear')
+      .reply(200, {
+        default_branch: 'master'
+      })
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      expect(transforms).toHaveLength(2)
+      let result = await transforms[0].transform(JSON.stringify({
+        devDependencies: {
+          '@babel/core': '^7.0.0-rc.1',
+          '@babel/preset-env': '^7.0.0-rc.1'
+        }
+      }))
+      transforms[0].created = true
+      result = await JSON.parse(transforms[1].transform(result))
+      transforms[1].created = true
+      expect(result.devDependencies['@babel/core']).toBe('^7.0.0-rc.2')
+      expect(result.devDependencies['@babel/preset-env']).toBe('^7.0.0-rc.2')
+      return 'superSha'
+    })
+
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        let monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+        const newDef = Object.assign(monorepoDefinitions, {
+          babel7: [
+            '@babel/core',
+            '@babel/preset-env',
+            '@babel/tower-of'
+          ]
+        })
+        return newDef
+      })
+      return require.requireActual('../../lib/monorepo')
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    // This is what registry-change passes in for this buggy PR
+    // We might be able to leave this as-is and just handle things in cvb correctly.
+    const newJob = await createVersionBranch({
+      dependency: '@babel/core',
+      accountId: 'mono-123',
+      repositoryId: 'mono-nuclear-babel',
+      plan: 'free',
+      type: 'devDependencies',
+      version: '7.0.0-rc.2',
+      oldVersion: '^7.0.0-rc.1',
+      oldVersionResolved: undefined
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('mono-nuclear-babel:branch:superSha')
+    await expect(repositories.get('mono-nuclear-babel:pr:321')).rejects.toThrow('missing')
+
+    expect(branch.processed).toBeFalsy() // I think
+    expect(branch.head).toEqual('greenkeeper/monorepo.babel7-7.0.0-rc.2')
   })
 })

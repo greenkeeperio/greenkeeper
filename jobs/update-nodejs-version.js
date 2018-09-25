@@ -163,7 +163,8 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName }) 
     repoName: repo,
     branch,
     newBranch,
-    transforms
+    transforms,
+    commitMessageTemplates: config.commitMessages
   })
 
   if (sha) {

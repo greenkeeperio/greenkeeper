@@ -1,64 +1,24 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, yearlyBillingAd, orgName}) => md`
-${yearlyBillingAd
-    ? `👛 Save 16% on your Greenkeeper invoice by switching to yearly billing in the [account dashboard](https://account.greenkeeper.io/account/${orgName}#plans-and-billing).\n`
-    : ''}
-
-${_.isEmpty(monorepoGroupName)
-    ? `## Version **${version}** of **${dependency}** was just published.`
-    : `## Version **${version}** of the **${monorepoGroupName}** packages was just published.`}
-
-<table>
-  <tr>
-    <th align=left>
-      ${_.isEmpty(monorepoGroupName)
-    ? 'Dependency'
-    : 'Monorepo release group'
+module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, packageUpdateList}) => {
+  const hasReleaseInfo = release && diffCommits
+  return md`
+${monorepoGroupName
+    ? `## There have been updates to the *${monorepoGroupName}* monorepo: \n\n${packageUpdateList}`
+    : `## The ${type.replace('ies', 'y')} [${dependency}](${dependencyLink}) was updated from \`${oldVersionResolved}\` to \`${version}\`.`
 }
-    </th>
-    <td>
-      <a target=_blank href=${dependencyLink}>${monorepoGroupName || dependency}</a>
-    </td>
-  </tr>
-  ${oldVersionResolved
-    ? `<tr>
-      <th align=left>
-       Current Version
-      </th>
-      <td>
-        ${oldVersionResolved}
-      </td>
-    </tr>`
-    : ''
-}
-  <tr>
-    <th align=left>
-      Type
-    </th>
-    <td>
-      ${type.replace(/ies$/, 'y')}
-    </td>
-  </tr>
-</table>
-
-${!_.isEmpty(monorepoGroupName) && `This monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).`
-}
-
-The version **${version}** is **not covered** by your **current version range**.
+${monorepoGroupName ? 'These versions are' : 'This version is'} **not covered** by your **current version range**.
 
 If you don’t accept this pull request, your project will work just like it did before. However, you might be missing out on a bunch of new features, fixes and/or performance improvements from the dependency update.
-
-It might be worth looking into these changes and trying to get this project onto the latest version of ${monorepoGroupName || dependency}.
-
-If you have a solid test suite and good coverage, a passing build is a strong indicator that you can take advantage of these changes directly by merging the proposed change into your project. If the build fails or you don’t have such unconditional trust in your tests, this branch is a great starting point for you to work on the update.
-
-
+${monorepoGroupName && `\nThis monorepo update includes releases of one or more dependencies which all belong to the [${monorepoGroupName} group definition](https://github.com/greenkeeperio/monorepo-definitions).\n`
+}
 ---
 
-
-${_.compact([release, diffCommits])}
+${hasReleaseInfo
+    ? _.compact([release, diffCommits])
+    : `[Find out more about this release](${dependencyLink}).`
+}
 
 <details>
   <summary>FAQ and help</summary>
@@ -72,3 +32,4 @@ ${_.compact([release, diffCommits])}
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 `
+}
