@@ -49,23 +49,6 @@ describe('getNewLockfile', async () => {
     await getNewLockfile(packageJson, lock, true)
   })
 
-  test('with package-lock.json with intermittent 500s', async () => {
-    const httpTraffic = nock('http://localhost:1234')
-      .post('/', (body) => {
-        return true
-      })
-      .reply(500)
-      .post('/', (body) => {
-        return true
-      })
-      .reply(200, () => ({ok: false}))
-    const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
-    await getNewLockfile(packageJson, lock, true)
-
-    expect(httpTraffic.isDone()).toBeTruthy()
-    expect(httpTraffic.pendingMocks().length).toEqual(0)
-  })
-
   test('with package-lock.json with Network Error', async () => {
     const httpTraffic = nock('http://localhost:1234')
       .post('/', (body) => {
@@ -78,19 +61,6 @@ describe('getNewLockfile', async () => {
       .reply(200, () => ({ok: false}))
     const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
     await getNewLockfile(packageJson, lock, true)
-    expect(httpTraffic.isDone()).toBeTruthy()
-    expect(httpTraffic.pendingMocks().length).toEqual(0)
-  })
-
-  test('with package-lock.json with 404', async () => {
-    const httpTraffic = nock('http://localhost:1234')
-      .post('/', (body) => {
-        return true
-      })
-      .reply(404)
-
-    const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
-    await expect(getNewLockfile(packageJson, lock, true)).rejects.toThrow()
     expect(httpTraffic.isDone()).toBeTruthy()
     expect(httpTraffic.pendingMocks().length).toEqual(0)
   })
