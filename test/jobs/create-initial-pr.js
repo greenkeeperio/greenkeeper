@@ -787,7 +787,7 @@ describe('create-initial-pr', async () => {
         return {}
       })
 
-    simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').returnWith(15)
+    simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').returnWith(16)
 
     const branchDoc = await repositories.get('repoId:branch:1234abcd')
     await createInitial({
