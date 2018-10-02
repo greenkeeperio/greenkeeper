@@ -256,7 +256,7 @@ describe('payments', async () => {
 
     test('getAccountNeedsMarketplaceUpgrade with `team` plan and reached repo limit', async () => {
       const payments = require('../../lib/payments')
-      simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').resolveWith(15)
+      simple.mock(payments, 'getAmountOfCurrentlyPrivateAndEnabledRepos').resolveWith(16)
       const result = await getAccountNeedsMarketplaceUpgrade('123team')
       simple.restore()
 
