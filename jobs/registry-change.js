@@ -148,7 +148,7 @@ module.exports = async function (
   const withOnlyRootPackageJSON = _.flatten(seperatedResults[1])
   const withMultiplePackageJSON = seperatedResults[0]
 
-  const limit = 2
+  const limit = 200
   let skip = 0
   let allAccounts = []
 
@@ -165,6 +165,7 @@ module.exports = async function (
 
     skip += limit
     allAccounts = [...allAccounts, ...partialAccounts]
+    console.log('### allAccounts', {skip})
   }
 
   const accounts = _.keyBy(
