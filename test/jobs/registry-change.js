@@ -1,5 +1,3 @@
-const simple = require('simple-mock')
-
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
@@ -569,9 +567,8 @@ describe('monorepo-release: registry change create jobs', async () => {
       removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog', 'huge-1')
     ])
   })
-  // const _ = require('lodash')
 
-  test('create job with multiple (2) db requests', async () => {
+  test.skip('create job with multiple (2) db requests', async () => {
     jest.mock('../../lib/monorepo', () => {
       jest.mock('greenkeeper-monorepo-definitions', () => {
         const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
@@ -590,23 +587,26 @@ describe('monorepo-release: registry change create jobs', async () => {
       return lib
     })
 
-    // jest.mock('../../lib/dbs', () => () => {
-    //   const dbs = require.requireActual('../../lib/dbs')
-    //   // dbs.getDb = () => {
-    //     return {
-    //       installations: {
-    //         allDocs: jest.fn()
-    //       }
-    //     }
-    //   }
-    //   return dbs
-    // })
-    // const dbs = require('../../lib/dbs')
-    const { installations } = await dbs()
-    var allDocs = simple.spy(installations.allDocs())
-    console.log('### allDocs', {allDocs})
-    console.log('### installations.callCount', allDocs.callCount)
-    console.log('### installations.callCount', allDocs.calls)
+    // const { installations } = await dbs()
+    // const spy = jest.spyOn(installations, 'allDocs')
+
+    jest.mock('../../lib/dbs', () => {
+      const dbs = require.requireActual('../../lib/dbs')
+      // dbs.getDb = () => {
+      // return {
+      dbs.getDb = () => {
+        return {
+          installations: {
+            allDocs: jest.spy()
+          }
+        }
+      }
+      // dbs.getLogsDb = jest.fn()
+      // }
+      // }
+      return dbs
+    })
+    const dbs = require('../../lib/dbs')
 
     const registryChange = require('../../jobs/registry-change.js')
     const newJobs = await registryChange({
@@ -627,11 +627,9 @@ describe('monorepo-release: registry change create jobs', async () => {
     })
     expect(newJobs).toHaveLength(1)
 
-    // console.log(installations.allDocs)
-    // expect(installations.allDocs).toHaveBeenCalledTimes(2)
-
-    const job = newJobs[0].data
-    console.log('### job', {job})
+    // expect(spy).toHaveBeenCalled()
+    const { installations } = await dbs()
+    expect(installations.allDocs).toHaveBeenCalledTimes(2)
   })
 
   test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
