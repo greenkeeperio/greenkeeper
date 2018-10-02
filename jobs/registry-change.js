@@ -148,30 +148,7 @@ module.exports = async function (
   const withOnlyRootPackageJSON = _.flatten(seperatedResults[1])
   const withMultiplePackageJSON = seperatedResults[0]
 
-  const limit = 200
-  let skip = 0
-  let allAccounts = []
-
-  // send multiple smaller allDocs requests and paginate them.
-  while (true) {
-    const partialAccounts = (await installations.allDocs({
-      keys: _.compact(_.map(_.flattenDeep(seperatedResults), 'value.accountId')),
-      limit,
-      skip,
-      include_docs: true
-    })).rows
-
-    if (partialAccounts.length === 0) break
-
-    skip += limit
-    allAccounts = [...allAccounts, ...partialAccounts]
-    console.log('### allAccounts', {skip})
-  }
-
-  const accounts = _.keyBy(
-    _.map(allAccounts, 'doc'),
-    '_id'
-  )
+  const accounts = await getAllAccounts(installations, seperatedResults)
 
   // ******** Monorepos begin
   // get config
@@ -243,4 +220,31 @@ module.exports = async function (
   ]
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
+}
+
+async function getAllAccounts (installations, results) {
+  const limit = 200
+  let skip = 0
+  let allAccounts = []
+  const accountIDs = _.compact(_.map(_.flattenDeep(results), 'value.accountId'))
+
+  // send multiple smaller allDocs requests and paginate them.
+  while (true) {
+    const partialAccounts = (await installations.allDocs({
+      keys: accountIDs,
+      limit,
+      skip,
+      include_docs: true
+    })).rows
+
+    if (partialAccounts.length === 0) break
+
+    skip += limit
+    allAccounts = [...allAccounts, ...partialAccounts]
+  }
+
+  return _.keyBy(
+    _.map(allAccounts, 'doc'),
+    '_id'
+  )
 }
