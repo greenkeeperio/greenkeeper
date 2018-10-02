@@ -148,14 +148,27 @@ module.exports = async function (
   const withOnlyRootPackageJSON = _.flatten(seperatedResults[1])
   const withMultiplePackageJSON = seperatedResults[0]
 
+  const limit = 2
+  let skip = 0
+  let allAccounts = []
+
+  // send multiple smaller allDocs requests and paginate them.
+  while (true) {
+    const partialAccounts = (await installations.allDocs({
+      keys: _.compact(_.map(_.flattenDeep(seperatedResults), 'value.accountId')),
+      limit,
+      skip,
+      include_docs: true
+    })).rows
+
+    if (partialAccounts.length === 0) break
+
+    skip += limit
+    allAccounts = [...allAccounts, ...partialAccounts]
+  }
+
   const accounts = _.keyBy(
-    _.map(
-      (await installations.allDocs({
-        keys: _.compact(_.map(_.flattenDeep(seperatedResults), 'value.accountId')),
-        include_docs: true
-      })).rows,
-      'doc'
-    ),
+    _.map(allAccounts, 'doc'),
     '_id'
   )
 
