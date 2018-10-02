@@ -1,3 +1,5 @@
+const simple = require('simple-mock')
+
 const dbs = require('../../lib/dbs')
 const removeIfExists = require('../helpers/remove-if-exists')
 
@@ -468,6 +470,11 @@ describe('registry change create jobs', async () => {
 
 describe('monorepo-release: registry change create jobs', async () => {
   beforeAll(async () => {
+    const maaaaaanyDependencies = {}
+    for (let i = 0; i <= 333; i++) {
+      maaaaaanyDependencies[`huge-${i}`] = '1.0.0'
+    }
+
     const { installations, repositories, npm } = await dbs()
 
     await Promise.all([
@@ -492,6 +499,24 @@ describe('monorepo-release: registry change create jobs', async () => {
               'bulldog': '1.0.0'
             }
           }
+        }
+      }),
+      repositories.put({
+        _id: 'mr-2',
+        type: 'repository',
+        fullName: 'owner/another',
+        accountId: 'monorepo-release-1',
+        enabled: true,
+        packages: {
+          'package.json': {
+            dependencies: maaaaaanyDependencies
+          }
+        }
+      }),
+      npm.put({
+        _id: 'huge-1',
+        distTags: {
+          latest: '1.0.0'
         }
       }),
       npm.put({
@@ -540,9 +565,73 @@ describe('monorepo-release: registry change create jobs', async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, 'monorepo-release-1'),
-      removeIfExists(repositories, 'mr-1'),
-      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog')
+      removeIfExists(repositories, 'mr-1', 'mr-2'),
+      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog', 'huge-1')
     ])
+  })
+  // const _ = require('lodash')
+
+  test('create job with multiple (2) db requests', async () => {
+    jest.mock('../../lib/monorepo', () => {
+      jest.mock('greenkeeper-monorepo-definitions', () => {
+        const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
+
+        const huuuuuugeMonorepoDefinitions = []
+        for (let i = 0; i <= 333; i++) {
+          huuuuuugeMonorepoDefinitions.push(`huge-${i}`)
+        }
+
+        const newDef = Object.assign(monorepoDefinitions, {
+          huge: huuuuuugeMonorepoDefinitions
+        })
+        return newDef
+      })
+      const lib = require.requireActual('../../lib/monorepo')
+      return lib
+    })
+
+    // jest.mock('../../lib/dbs', () => () => {
+    //   const dbs = require.requireActual('../../lib/dbs')
+    //   // dbs.getDb = () => {
+    //     return {
+    //       installations: {
+    //         allDocs: jest.fn()
+    //       }
+    //     }
+    //   }
+    //   return dbs
+    // })
+    // const dbs = require('../../lib/dbs')
+    const { installations } = await dbs()
+    var allDocs = simple.spy(installations.allDocs())
+    console.log('### allDocs', {allDocs})
+    console.log('### installations.callCount', allDocs.callCount)
+    console.log('### installations.callCount', allDocs.calls)
+
+    const registryChange = require('../../jobs/registry-change.js')
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'huge-1',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'smurf'
+        },
+        '1.0.0': {
+          gitHead: 'sky'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+    expect(newJobs).toHaveLength(1)
+
+    // console.log(installations.allDocs)
+    // expect(installations.allDocs).toHaveBeenCalledTimes(2)
+
+    const job = newJobs[0].data
+    console.log('### job', {job})
   })
 
   test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
