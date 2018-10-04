@@ -10,12 +10,12 @@ afterAll(async () => {
   const { repositories } = await dbs()
 
   await Promise.all([
-    removeIfExists(repositories, '42_oi', '42_oi:branch:deadbeef', '42_oi:issue:10')
+    removeIfExists(repositories, '42_oi', '42_oi:branch:deadbeef', '42_oi:issue:10', 'oi-no-branch')
   ])
 })
 
 test('open-issue', async () => {
-  expect.assertions(31)
+  expect.assertions(32)
   const { repositories } = await dbs()
 
   await repositories.put({
@@ -57,7 +57,7 @@ test('open-issue', async () => {
   })
   const openIssue = require('../../lib/open-issue')
 
-  nock('https://api.github.com')
+  const gitHubNock = nock('https://api.github.com')
     .post('/installations/123/access_tokens')
     .optionally()
     .reply(200, {
@@ -120,4 +120,66 @@ test('open-issue', async () => {
   expect(issue.state).toEqual('open')
   expect(issue.dependency).toEqual('standard')
   expect(issue.repositoryId).toEqual('42_oi')
+
+  expect(gitHubNock.isDone()).toBeTruthy()
+})
+
+test('open-issue: do not create a branch if versions are undefined', async () => {
+  expect.assertions(6)
+  const { repositories } = await dbs()
+
+  await repositories.put({
+    _id: 'oi-no-branch',
+    packages: {
+      'package.json': {
+        greenkeeper: {
+          label: 'customlabel'
+        }
+      }
+    }
+  })
+
+  jest.mock('../../lib/create-branch', () => () => 'summer')
+  const openIssue = require('../../lib/open-issue')
+
+  const gitHubNock = nock('https://api.github.com')
+    .post('/installations/123/access_tokens')
+    .optionally()
+    .reply(200, {
+      token: 'secret'
+    })
+    .get('/rate_limit')
+    .optionally()
+    .reply(200)
+    .post('/repos/finnp/testrepo/issues', ({ title, body, labels }) => {
+      expect(title).toEqual('An in-range update of standard is breaking the build 🚨')
+      expect(body).toMatch(/\/finnp\/testrepo\/compare\/master...finnp:greenkeeper-standard-2.0.0/)
+      expect(labels).toContain('customlabel')
+      return true
+    })
+    .reply(201, () => {
+      return { number: 11 }
+    })
+
+  await openIssue({
+    installationId: '123',
+    repositoryId: 'oi-no-branch',
+    accountId: '1010',
+    owner: 'finnp',
+    repo: 'testrepo',
+    version: 'undefined', // <-- undefined version
+    dependency: 'standard',
+    dependencyType: 'devDependencies',
+    oldVersionResolved: 'undefined', // <-- undefined version
+    base: 'master',
+    head: 'greenkeeper-standard-2.0.0',
+    dependencyLink: 'somelink',
+    release: 'therelease',
+    diffCommits: 'thecommits',
+    statuses: []
+  })
+
+  expect(gitHubNock.isDone()).toBeTruthy()
+  await expect(repositories.get('oi-no-branch:branch:summer')).rejects.toThrow('missing')
+  await expect(repositories.get('oi-no-branch:issue:11')).rejects.toThrow('missing')
 })
