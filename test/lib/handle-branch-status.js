@@ -13,7 +13,8 @@ describe('handle-branch-status', async () => {
       removeIfExists(repositories, '42:branch:deadbeef', '42:branch:deadbeef2', '43:branch:deadbeef3', '43:issue:5',
         'monorepo:branch:deadbeef3', 'monorepo:issue:9',
         'monorepo:branch:deadbeef4', 'monorepo:issue:10',
-        'monorepo:branch:deadbeef5', 'monorepo:issue:11'),
+        'monorepo:branch:deadbeef5', 'monorepo:issue:11',
+        'issue-pin', 'issue-pin:issue:10', 'issue-pin:branch:happycow'),
       removeIfExists(installations, '10'),
       removeIfExists(npm, 'test', 'test2', 'test3', 'test4', 'test5')
     ])
@@ -81,7 +82,7 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -185,7 +186,7 @@ describe('handle-branch-status', async () => {
     ])
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -223,6 +224,78 @@ describe('handle-branch-status', async () => {
     expect(branch.state).toEqual('success')
   })
 
+  test('with issue getting the "After pinning to version" comment', async () => {
+    const handleBranchStatus = require('../../lib/handle-branch-status')
+    const { repositories } = await dbs()
+    expect.assertions(8)
+
+    await Promise.all([
+      repositories.put({
+        _id: 'issue-pin:issue:10',
+        type: 'issue',
+        state: 'open',
+        dependency: 'test',
+        version: '1.0.1',
+        repositoryId: 'issue-pin',
+        number: 10
+      }),
+      repositories.put({
+        _id: 'issue-pin:branch:happycow',
+        type: 'branch',
+        sha: 'happycow',
+        head: 'branchname5',
+        purpose: 'pin',
+        base: 'master',
+        dependency: 'test',
+        version: '1.0.2',
+        dependencyType: 'devDependencies',
+        oldVersionResolved: '1.0.0'
+      })
+    ])
+
+    const github = nock('https://api.github.com')
+      .post('/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200)
+      .post('/repos/ilse/pin/issues/10/comments', ({ body }) => {
+        expect(body).toMatch('After pinning to **1.0.2** your tests are still failing.')
+        expect(body).toMatch('The reported issue _might_ not affect your project. These imprecisions are caused by inconsistent test results.')
+        return true
+      })
+      .reply(201, (path) => {
+        // commented on right issue
+        expect(path).toEqual('/repos/ilse/pin/issues/10/comments')
+      })
+
+    const newJob = await handleBranchStatus({
+      installationId: '123',
+      accountId: 10,
+      combined: { state: 'failure', statuses: [] },
+      branchDoc: await repositories.get('issue-pin:branch:happycow'),
+      repository: {
+        id: 'issue-pin',
+        full_name: 'ilse/pin',
+        owner: {
+          id: 10
+        }
+      }
+    })
+    expect(github.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+
+    const branch = await repositories.get('issue-pin:branch:happycow')
+    const issue = await repositories.get('issue-pin:issue:10')
+
+    expect(branch.processed).toBeTruthy()
+    expect(branch.referenceDeleted).toBeFalsy()
+    expect(issue.state).toEqual('open')
+  })
+
   test('Monorepo: with issue, do not comment for the same version', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
     const { repositories, npm } = await dbs()
@@ -256,7 +329,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -322,7 +395,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -394,7 +467,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

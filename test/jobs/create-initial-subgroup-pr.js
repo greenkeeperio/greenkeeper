@@ -36,7 +36,7 @@ describe('create-initial-subgroup-pr', async () => {
     expect.assertions(8)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

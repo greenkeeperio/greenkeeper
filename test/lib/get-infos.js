@@ -8,7 +8,7 @@ describe('get-infos', () => {
     const { getInfos } = require('../../lib/get-infos')
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -55,7 +55,7 @@ describe('get-infos', () => {
     const { getInfos } = require('../../lib/get-infos')
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

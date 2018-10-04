@@ -62,7 +62,7 @@ describe('deprecate and update nodejs version', () => {
     expect.assertions(26)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -196,7 +196,7 @@ after_success: npm run deploy`
     expect.assertions(9)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -261,7 +261,7 @@ after_success: npm run deploy`
     expect.assertions(11)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -336,7 +336,7 @@ after_success: npm run deploy`
     expect.assertions(3)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -403,7 +403,7 @@ branches:
     - /^greenkeeper.*$/`
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -502,7 +502,7 @@ branches:
     expect.assertions(4)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -559,7 +559,7 @@ branches:
     expect.assertions(3)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

@@ -80,7 +80,7 @@ describe('create initial subgroup branch', () => {
     expect.assertions(9)
 
     const httpRequests = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -220,7 +220,7 @@ describe('create initial subgroup branch', () => {
     expect.assertions(10)
 
     const httpRequests = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -356,7 +356,7 @@ describe('create initial subgroup branch', () => {
     })
 
     const httpRequests = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -480,7 +480,7 @@ describe('create initial subgroup branch', () => {
     })
 
     const httpRequests = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -641,7 +641,7 @@ describe('create initial subgroup branch', () => {
     expect.assertions(11)
 
     const httpRequests = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

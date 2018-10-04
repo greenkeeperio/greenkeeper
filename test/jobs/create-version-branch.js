@@ -123,7 +123,7 @@ describe('create version branch', () => {
     expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -242,7 +242,7 @@ describe('create version branch', () => {
     expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/38/access_tokens')
+      .post('/app/installations/38/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -362,7 +362,7 @@ describe('create version branch', () => {
     expect.assertions(9)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/124/access_tokens')
+      .post('/app/installations/124/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -481,7 +481,7 @@ describe('create version branch', () => {
     expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/38/access_tokens')
+      .post('/app/installations/38/access_tokens')
       .optionally()
       .reply(200, () => {
         return { token: 'secret' }
@@ -540,7 +540,7 @@ describe('create version branch', () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -602,7 +602,7 @@ describe('create version branch', () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -681,7 +681,7 @@ describe('create version branch', () => {
     expect.assertions(5)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/41/access_tokens')
+      .post('/app/installations/41/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -777,7 +777,7 @@ describe('create version branch', () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/42/access_tokens')
+      .post('/app/installations/42/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -915,7 +915,7 @@ describe('create version branch', () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1022,7 +1022,7 @@ describe('create version branch', () => {
     expect.assertions(10)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/40/access_tokens')
+      .post('/app/installations/40/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1149,7 +1149,7 @@ describe('create version branch', () => {
     expect.assertions(4)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/40/access_tokens')
+      .post('/app/installations/40/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1246,7 +1246,7 @@ describe('create version branch', () => {
     expect.assertions(8)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/40/access_tokens')
+      .post('/app/installations/40/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1509,7 +1509,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1636,7 +1636,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1799,7 +1799,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1931,7 +1931,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect.assertions(17)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2172,7 +2172,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect.assertions(8)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2311,7 +2311,7 @@ describe('create version branch for dependencies from monorepos', () => {
     expect.assertions(8)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/1/access_tokens')
+      .post('/app/installations/1/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

@@ -98,7 +98,7 @@ describe('github-event pull_request opened', async () => {
     expect.assertions(2)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -134,7 +134,7 @@ describe('github-event pull_request opened', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

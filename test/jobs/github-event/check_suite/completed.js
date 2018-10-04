@@ -34,7 +34,7 @@ describe('github-event checksuite_completed', async () => {
     const githubStatus = require('../../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/7331/access_tokens')
+      .post('/app/installations/7331/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -110,7 +110,7 @@ describe('github-event checksuite_completed', async () => {
     const githubStatus = require('../../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/7331/access_tokens')
+      .post('/app/installations/7331/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
