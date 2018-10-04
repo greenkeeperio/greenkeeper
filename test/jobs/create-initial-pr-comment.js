@@ -70,7 +70,7 @@ describe('create-initial-pr-comment', async () => {
     expect.assertions(3)
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -124,7 +124,7 @@ describe('create-initial-pr-comment', async () => {
     await upsert(repositories, '42:pr:1234', {initialPrCommentSent: true})
 
     nock('https://api.github.com') // eslint-disable-line
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -171,7 +171,7 @@ describe('create-initial-pr-comment', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com') // eslint-disable-line
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -218,7 +218,7 @@ describe('create-initial-pr-comment', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com') // eslint-disable-line
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

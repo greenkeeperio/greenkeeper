@@ -7,7 +7,7 @@ nock.enableNetConnect('localhost')
 
 test('updateRepoDoc with package.json', async () => {
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -45,7 +45,7 @@ test('updateRepoDoc with package.json', async () => {
 
 test('get invalid package.json', async () => {
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -101,7 +101,7 @@ test('updateRepoDoc with greenkeeper.json present', async () => {
   }
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

@@ -28,7 +28,7 @@ describe('initial-timeout-pr', async () => {
 
   test('create', async () => {
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .reply(200, {
         token: 'secret'
       })

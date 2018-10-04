@@ -42,7 +42,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     expect.assertions(3)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -80,7 +80,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     await upsert(repositories, '42', {enabled: true})
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -117,7 +117,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     await upsert(repositories, '42', {staleInitialPRReminder: true})
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -152,7 +152,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -186,7 +186,7 @@ describe('send-stale-initial-pr-reminder', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

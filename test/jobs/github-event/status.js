@@ -34,7 +34,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -88,7 +88,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -165,7 +165,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -242,7 +242,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -306,7 +306,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -367,7 +367,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1336/access_tokens')
+      .post('/app/installations/1336/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -445,7 +445,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1337/access_tokens')
+      .post('/app/installations/1337/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -503,7 +503,7 @@ describe('github-event status', async () => {
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
-      .post('/installations/1337/access_tokens')
+      .post('/app/installations/1337/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

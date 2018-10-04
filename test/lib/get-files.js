@@ -9,7 +9,7 @@ test('getFiles: with no fileList provided', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -28,7 +28,7 @@ test('getFiles: 2 package.json files', async () => {
   expect.assertions(7)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -79,7 +79,7 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
   expect.assertions(7)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -190,7 +190,7 @@ test('getGreenkeeperConfigFile', async () => {
   }
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -216,7 +216,7 @@ test('getGreenkeeperConfigFile: when no config file is present', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -273,7 +273,7 @@ test('discoverPackageFiles: regular repo', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -318,7 +318,7 @@ test('discoverPackageFiles: monorepo', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -413,7 +413,7 @@ test('discoverPackageFilePaths: regular repo', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -452,7 +452,7 @@ test('discoverPackageFilePaths: monorepo', async () => {
   expect.assertions(1)
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

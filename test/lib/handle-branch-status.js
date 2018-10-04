@@ -82,7 +82,7 @@ describe('handle-branch-status', async () => {
     const handleBranchStatus = require('../../lib/handle-branch-status')
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -186,7 +186,7 @@ describe('handle-branch-status', async () => {
     ])
 
     nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -329,7 +329,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -395,7 +395,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -467,7 +467,7 @@ describe('handle-branch-status', async () => {
     ])
 
     const github = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

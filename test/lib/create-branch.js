@@ -9,7 +9,7 @@ nock.enableNetConnect('localhost')
 describe('create branch', async () => {
   test('change one file (package.json)', async () => {
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -74,7 +74,7 @@ describe('create branch', async () => {
 
   test('change multiple files (package.json, readme.md)', async () => {
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -190,7 +190,7 @@ describe('create branch', async () => {
     expect.assertions(13)
 
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -288,7 +288,7 @@ describe('create branch', async () => {
     expect.assertions(18)
 
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -410,7 +410,7 @@ describe('create branch', async () => {
     expect.assertions(15)
 
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -567,7 +567,7 @@ describe('create branch', async () => {
     expect.assertions(33)
 
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -776,7 +776,7 @@ describe('create branch with lockfiles', async () => {
       'jest': '1.2.0'
     }}
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -915,7 +915,7 @@ describe('create branch with lockfiles', async () => {
       'jest': '1.2.0'
     }}
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1149,7 +1149,7 @@ describe('create branch with lockfiles', async () => {
       'west': '1.5.0'
     }}
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1321,7 +1321,7 @@ describe('create branch with lockfiles', async () => {
       'jest': '1.2.0'
     }}
     const gitHubNock = nock('https://api.github.com')
-      .post('/installations/123/access_tokens')
+      .post('/app/installations/123/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

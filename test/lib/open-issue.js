@@ -58,7 +58,7 @@ test('open-issue', async () => {
   const openIssue = require('../../lib/open-issue')
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

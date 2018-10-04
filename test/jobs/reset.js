@@ -86,7 +86,7 @@ describe('reset repo', async () => {
   test('delete all prdocs of the repo', async () => {
     expect.assertions(1)
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -120,7 +120,7 @@ describe('reset repo', async () => {
     expect.assertions(2)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -148,7 +148,7 @@ describe('reset repo', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -179,7 +179,7 @@ describe('reset repo', async () => {
       head: 'greenkeeper/initial'
     })
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -217,7 +217,7 @@ describe('reset repo', async () => {
       head: 'greenkeeper/initial'
     })
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -247,7 +247,7 @@ describe('reset repo', async () => {
   test('delete all branchdocs of the repo', async () => {
     expect.assertions(1)
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -281,7 +281,7 @@ describe('reset repo', async () => {
   test('delete the repodoc and create a fresh one', async () => {
     expect.assertions(1)
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -307,7 +307,7 @@ describe('reset repo', async () => {
   test('schedule create inital branch job', async () => {
     expect.assertions(2)
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -351,7 +351,7 @@ describe('reset repo', async () => {
     })
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -414,7 +414,7 @@ describe('reset repo', async () => {
       state: 'open'
     })
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -442,7 +442,7 @@ describe('reset repo', async () => {
   test('Do not mind about case sensivity in the repository name', async () => {
     expect.assertions(2)
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

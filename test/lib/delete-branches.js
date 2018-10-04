@@ -29,7 +29,7 @@ test('deleteBranches', async () => {
   })
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -63,7 +63,7 @@ test('deleteBranches failed to delete', async () => {
   })
 
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
