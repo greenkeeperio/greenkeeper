@@ -60,7 +60,7 @@ describe('handle-branch-status', async () => {
         version: '1.0.1',
         dependencyType: 'devDependencies',
         oldVersionResolved: '1.0.0'
-      }),gitqqq
+      }),
       repositories.put({
         _id: '42:branch:deadbeef2',
         type: 'branch',
