@@ -568,7 +568,7 @@ describe('monorepo-release: registry change create jobs', async () => {
     ])
   })
 
-  test.skip('create job with multiple (2) db requests', async () => {
+  test('create job with multiple (2) db requests', async () => {
     jest.mock('../../lib/monorepo', () => {
       jest.mock('greenkeeper-monorepo-definitions', () => {
         const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
@@ -587,26 +587,8 @@ describe('monorepo-release: registry change create jobs', async () => {
       return lib
     })
 
-    // const { installations } = await dbs()
-    // const spy = jest.spyOn(installations, 'allDocs')
-
-    jest.mock('../../lib/dbs', () => {
-      const dbs = require.requireActual('../../lib/dbs')
-      // dbs.getDb = () => {
-      // return {
-      dbs.getDb = () => {
-        return {
-          installations: {
-            allDocs: jest.spy()
-          }
-        }
-      }
-      // dbs.getLogsDb = jest.fn()
-      // }
-      // }
-      return dbs
-    })
-    const dbs = require('../../lib/dbs')
+    const utils = require('../../utils/registry-change-utils')
+    const spy = jest.spyOn(utils, 'getAllDocs')
 
     const registryChange = require('../../jobs/registry-change.js')
     const newJobs = await registryChange({
@@ -627,9 +609,10 @@ describe('monorepo-release: registry change create jobs', async () => {
     })
     expect(newJobs).toHaveLength(1)
 
-    // expect(spy).toHaveBeenCalled()
-    const { installations } = await dbs()
-    expect(installations.allDocs).toHaveBeenCalledTimes(2)
+    expect(spy).toHaveBeenCalled()
+    expect(spy).toHaveBeenCalledTimes(3)
+
+    spy.mockRestore()
   })
 
   test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
