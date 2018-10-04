@@ -13,6 +13,7 @@ const {
   getSatisfyingVersions,
   getOldVersionResolved
 } = require('../utils/utils')
+const { getAllAccounts } = require('../utils/registry-change-utils')
 const {
   isPartOfMonorepo,
   hasAllMonorepoUdates,
@@ -27,7 +28,7 @@ module.exports = async function (
 ) {
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
-  const log = Log({logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change'})
+  const log = Log({ logsDb: logs, accountId: null, repoSlug: null, context: 'registry-change' })
   // log.info(`started registry-change for dependency ${dependency}`, {dependency, versions})
 
   const isFromHook = _.isString(installation)
@@ -179,7 +180,7 @@ module.exports = async function (
         repositoryId: repoDoc.id,
         plan,
         isFromHook,
-        log}))
+        log }))
     })
   }
   // ******** Monorepos end
@@ -220,31 +221,4 @@ module.exports = async function (
   ]
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
-}
-
-async function getAllAccounts (installations, results) {
-  const limit = 200
-  let skip = 0
-  let allAccounts = []
-  const accountIDs = _.compact(_.map(_.flattenDeep(results), 'value.accountId'))
-
-  // send multiple smaller allDocs requests and paginate them.
-  while (true) {
-    const partialAccounts = (await installations.allDocs({
-      keys: accountIDs,
-      limit,
-      skip,
-      include_docs: true
-    })).rows
-
-    if (partialAccounts.length === 0) break
-
-    skip += limit
-    allAccounts = [...allAccounts, ...partialAccounts]
-  }
-
-  return _.keyBy(
-    _.map(allAccounts, 'doc'),
-    '_id'
-  )
 }
