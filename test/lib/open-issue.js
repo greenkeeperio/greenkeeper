@@ -143,7 +143,7 @@ test('open-issue: do not create a branch if versions are undefined', async () =>
   const openIssue = require('../../lib/open-issue')
 
   const gitHubNock = nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
