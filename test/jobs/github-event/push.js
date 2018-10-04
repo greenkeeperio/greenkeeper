@@ -58,7 +58,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -182,7 +182,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -280,7 +280,7 @@ describe('github-event push', async () => {
       }
     }
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -401,7 +401,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/38/access_tokens')
+      .post('/app/installations/38/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -517,7 +517,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/39/access_tokens')
+      .post('/app/installations/39/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -600,7 +600,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/40/access_tokens')
+      .post('/app/installations/40/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -661,7 +661,7 @@ describe('github-event push', async () => {
     expect.assertions(1)
 
     nock('https://api.github.com')
-      .post('/installations/41/access_tokens')
+      .post('/app/installations/41/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -721,7 +721,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -787,7 +787,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -853,7 +853,7 @@ describe('github-event push', async () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -967,7 +967,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1088,7 +1088,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1240,7 +1240,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1429,7 +1429,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1631,7 +1631,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1857,7 +1857,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2054,7 +2054,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2219,7 +2219,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2417,7 +2417,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2611,7 +2611,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2804,7 +2804,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -2996,7 +2996,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3196,7 +3196,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3373,7 +3373,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3495,7 +3495,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3608,7 +3608,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3717,7 +3717,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3829,7 +3829,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -3946,7 +3946,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -4064,7 +4064,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -4185,7 +4185,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -4315,7 +4315,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -4421,7 +4421,7 @@ describe('github-event push: monorepo', () => {
     const githubPush = requireFresh(pathToWorker)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

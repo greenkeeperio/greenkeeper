@@ -142,7 +142,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -222,7 +222,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -304,7 +304,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -375,7 +375,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(6)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -452,7 +452,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(6)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -531,7 +531,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -600,7 +600,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -669,7 +669,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -739,7 +739,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(6)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -817,7 +817,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -885,7 +885,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -955,7 +955,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1025,7 +1025,7 @@ describe('create-initial-pr', async () => {
     expect.assertions(5)
 
     nock('https://api.github.com')
-      .post('/installations/11/access_tokens')
+      .post('/app/installations/11/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

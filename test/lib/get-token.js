@@ -7,7 +7,7 @@ test('get token', async () => {
   nock('https://api.github.com', {
     reqheaders: { Authorization: 'Bearer jwtToken' }
   })
-    .post('/installations/1337/access_tokens')
+    .post('/app/installations/1337/access_tokens')
     .reply(200, { token: 'the-token' })
 
   nock('https://api.github.com', {

@@ -4,7 +4,7 @@ const getRelease = require('../../lib/get-release')
 
 test('get-release from tag with v prefix', async () => {
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -30,7 +30,7 @@ test('get-release from tag with v prefix', async () => {
 
 test('get-release from tag with version as name', async () => {
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -59,7 +59,7 @@ test('get-release from tag with version as name', async () => {
 
 test('get-release from tag at sha', async () => {
   nock('https://api.github.com')
-    .post('/installations/123/access_tokens')
+    .post('/app/installations/123/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

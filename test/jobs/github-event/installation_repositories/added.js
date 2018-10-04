@@ -35,7 +35,7 @@ test('github-event installation_repositories added', async () => {
   const { repositories } = await dbs()
 
   const httpTraffic = nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
+    .post('/app/installations/1/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -101,7 +101,7 @@ test('github-event installation_repositories added with intermittent 404s', asyn
   const { repositories } = await dbs()
 
   const httpTraffic = nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
+    .post('/app/installations/1/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -168,7 +168,7 @@ test('github-event installation_repositories added with too many 404s', async ()
   expect.assertions(2)
 
   const httpTraffic = nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
+    .post('/app/installations/1/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'
@@ -218,7 +218,7 @@ test('github-event installation_repositories added with a non 404 error', async 
   expect.assertions(3)
 
   const httpTraffic = nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
+    .post('/app/installations/1/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

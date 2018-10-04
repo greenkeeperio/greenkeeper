@@ -36,7 +36,7 @@ describe('invalid-config-file', async () => {
   test('create new issue', async () => {
     expect.assertions(12)
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -139,7 +139,7 @@ describe('invalid-config-file', async () => {
     })
 
     nock('https://api.github.com')
-      .post('/installations/39/access_tokens')
+      .post('/app/installations/39/access_tokens')
       .reply(200, {
         token: 'secret'
       })
@@ -185,7 +185,7 @@ describe('invalid-config-file', async () => {
   test('create new issue with reference to delayed initial PR', async () => {
     expect.assertions(14)
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

@@ -80,7 +80,7 @@ describe('github-event pull_request closed', async () => {
 
     expect.assertions(6)
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -129,7 +129,7 @@ describe('github-event pull_request closed', async () => {
     expect.assertions(2)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -170,7 +170,7 @@ describe('github-event pull_request closed', async () => {
 
     expect.assertions(1)
     const githubMock = nock('https://api.github.com')
-      .post('/installations/37/access_tokens')
+      .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

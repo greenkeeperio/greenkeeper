@@ -18,7 +18,7 @@ afterAll(async () => {
 test('github-event installation created', async () => {
   const { installations, repositories } = await dbs()
   nock('https://api.github.com')
-    .post('/installations/1/access_tokens')
+    .post('/app/installations/1/access_tokens')
     .optionally()
     .reply(200, {
       token: 'secret'

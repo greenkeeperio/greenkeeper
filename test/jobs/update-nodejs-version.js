@@ -53,7 +53,7 @@ describe('update nodejs version in .travis.yml only', () => {
     expect.assertions(27)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -217,7 +217,7 @@ branches:
     expect.assertions(11)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -299,7 +299,7 @@ branches:
     expect.assertions(3)
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -364,7 +364,7 @@ branches:
     - /^greenkeeper.*$/`
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -457,7 +457,7 @@ stages:
     if: branch = master AND type IN (push)`
 
     const ghNock = nock('https://api.github.com')
-      .post('/installations/137/access_tokens')
+      .post('/app/installations/137/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'

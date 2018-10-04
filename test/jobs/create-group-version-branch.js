@@ -298,7 +298,7 @@ describe('create-group-version-branch', async () => {
     expect.assertions(16)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -414,7 +414,7 @@ describe('create-group-version-branch', async () => {
     expect.assertions(15)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/88/access_tokens')
+      .post('/app/installations/88/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -570,7 +570,7 @@ describe('create-group-version-branch', async () => {
     })
 
     nock('https://api.github.com')
-      .post('/installations/2332/access_tokens')
+      .post('/app/installations/2332/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -627,7 +627,7 @@ describe('create-group-version-branch', async () => {
 
   test('no pull request, too many package.jsons', async () => {
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -707,7 +707,7 @@ describe('create-group-version-branch', async () => {
       }
     })
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -790,7 +790,7 @@ describe('create-group-version-branch', async () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -885,7 +885,7 @@ describe('create-group-version-branch', async () => {
     expect.assertions(26)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1053,7 +1053,7 @@ describe('create-group-version-branch', async () => {
     expect.assertions(30)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1235,7 +1235,7 @@ describe('create-group-version-branch', async () => {
     expect.assertions(14)
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens')
+      .post('/app/installations/87/access_tokens')
       .optionally()
       .reply(200, {
         token: 'secret'
@@ -1430,7 +1430,7 @@ describe('create-group-version-branch with lockfiles', async () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
+      .post('/app/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
       .get('/rate_limit').optionally().reply(200)
       .get('/repos/finnp/monorepo-with-lockfiles')
       .reply(200, {
