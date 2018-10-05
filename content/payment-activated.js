@@ -1,7 +1,7 @@
 const md = require('./template')
 const env = require('../lib/env')
 
-module.exports = ({accountToken}) => {
+module.exports = ({ accountToken }) => {
   if (env.IS_ENTERPRISE) {
     return ''
   }

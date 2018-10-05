@@ -1,7 +1,7 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, packageUpdateList}) => {
+module.exports = ({ version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, packageUpdateList }) => {
   const hasReleaseInfo = release && diffCommits
   return md`
 ${monorepoGroupName

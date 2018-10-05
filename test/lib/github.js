@@ -19,7 +19,7 @@ test('parse github host', async () => {
   const github = Github()
 
   try {
-    await github.repos.get({owner: 'greenkeeperio', repo: 'greenkeeper'})
+    await github.repos.get({ owner: 'greenkeeperio', repo: 'greenkeeper' })
   } catch (error) {
     expect(error).toBeFalsy()
   }

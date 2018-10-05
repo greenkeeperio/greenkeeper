@@ -1,4 +1,4 @@
-const {validate} = require('../../lib/validate-greenkeeper-json')
+const { validate } = require('../../lib/validate-greenkeeper-json')
 
 test('valid package paths', () => {
   const file = {

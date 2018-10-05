@@ -44,7 +44,7 @@ describe('getNewLockfile', async () => {
         expect(body).toMatchSnapshot()
         return true
       })
-      .reply(200, () => ({ok: false}))
+      .reply(200, () => ({ ok: false }))
 
     await getNewLockfile(packageJson, lock, true)
   })
@@ -54,11 +54,11 @@ describe('getNewLockfile', async () => {
       .post('/', (body) => {
         return true
       })
-      .replyWithError({code: 'ETIMEDOUT'})
+      .replyWithError({ code: 'ETIMEDOUT' })
       .post('/', (body) => {
         return true
       })
-      .reply(200, () => ({ok: false}))
+      .reply(200, () => ({ ok: false }))
     const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
     await getNewLockfile(packageJson, lock, true)
     expect(httpTraffic.isDone()).toBeTruthy()

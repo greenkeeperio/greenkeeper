@@ -257,7 +257,7 @@ describe('getDependencyBranchesToDelete', () => {
               before: '^8.0.0',
               after: '^11.0.0',
               groupName: 'hulahoop',
-              monorepoGroupName: 'pouchdb'} } },
+              monorepoGroupName: 'pouchdb' } } },
         repositories,
         config
       }

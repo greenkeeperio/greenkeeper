@@ -212,7 +212,7 @@ describe('github-event push', async () => {
       .reply(200, {
         path: 'packages/frontend/package-lock.json',
         name: 'package-lock.json',
-        content: encodePkg({name: 'hallo'})
+        content: encodePkg({ name: 'hallo' })
       })
 
     const newJob = await githubPush({
@@ -310,7 +310,7 @@ describe('github-event push', async () => {
       .reply(200, {
         path: 'packages/frontend/package-lock.json',
         name: 'package-lock.json',
-        content: encodePkg({name: 'hallo'})
+        content: encodePkg({ name: 'hallo' })
       })
 
     const newJob = await githubPush({

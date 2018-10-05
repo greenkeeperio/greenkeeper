@@ -311,7 +311,7 @@ test('discoverPackageFiles: regular repo', async () => {
       error: () => {}
     }
   })
-  expect(result).toEqual([{'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'}])
+  expect(result).toEqual([{ 'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file' }])
 })
 
 test('discoverPackageFiles: monorepo', async () => {
@@ -403,9 +403,9 @@ test('discoverPackageFiles: monorepo', async () => {
     }
   })
   expect(result).toEqual([
-    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file'},
-    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'frontend/package.json', 'type': 'file'},
-    {'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'backend/package.json', 'type': 'file'}
+    { 'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'package.json', 'type': 'file' },
+    { 'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'frontend/package.json', 'type': 'file' },
+    { 'content': 'eyJuYW1lIjoidGVzdCJ9', 'name': 'package.json', 'path': 'backend/package.json', 'type': 'file' }
   ])
 })
 

@@ -1401,8 +1401,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/colors'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/colors'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/colors' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/colors' } }
       }
     })
     // There is no repo URL in here to test whether the dependencyURL gets created correctly
@@ -1423,8 +1423,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/colors-red'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/colors-red'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/colors-red' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/colors-red' } }
       }
     })
 
@@ -1434,8 +1434,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/flowers' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/flowers' } }
       }
     })
     await npm.put({
@@ -1444,8 +1444,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-blue'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-blue'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-blue' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-blue' } }
       }
     })
     await npm.put({
@@ -1454,8 +1454,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-red'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-red'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-red' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-red' } }
       }
     })
     await npm.put({
@@ -1464,8 +1464,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-green'}},
-        '2.0.0': {repository: {url: 'git+https://github.com/orgname/flowers-green'}}
+        '1.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-green' } },
+        '2.0.0': { repository: { url: 'git+https://github.com/orgname/flowers-green' } }
       }
     })
   })

@@ -44,7 +44,7 @@ async function addNPMPackageData (dependencyInfo, registryGet, log) {
       })
       return dep
     } catch (err) {
-      log.error('npm: Could not get package data', {dependency: dep, error: err})
+      log.error('npm: Could not get package data', { dependency: dep, error: err })
     }
   })
 }
@@ -73,7 +73,7 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
   const dependencyInfo = module.exports.getDependenciesFromPackageFiles(packagePaths, packageJsonContents, log)
   // Filter out ignored dependencies
   const unignoredDependencyInfo = dependencyInfo.filter((dep) => !ignore.includes(dep.name))
-  log.info('dependencies found', {parsedDependencies: unignoredDependencyInfo, ignoredDependencies: ignore, packageJsonContents: packageJsonContents})
+  log.info('dependencies found', { parsedDependencies: unignoredDependencyInfo, ignoredDependencies: ignore, packageJsonContents: packageJsonContents })
   let dependencies = await module.exports.addNPMPackageData(unignoredDependencyInfo, registryGet, log)
   let dependencyActionsLog = {}
   // add `newVersion` to each dependency object in the array
@@ -125,7 +125,7 @@ async function getUpdatedDependenciesForFiles ({ packagePaths, packageJsonConten
     .filter(Boolean) // remove falsy values from output array
     .value() // run lodash chain
 
-  log.info('parsed dependency actions', {dependencyActionsLog})
+  log.info('parsed dependency actions', { dependencyActionsLog })
   return outputDependencies
 }
 
