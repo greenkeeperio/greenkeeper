@@ -220,27 +220,27 @@ describe('create branch', async () => {
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree[0].path).toEqual('package.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"react":"2.0.0"}}')
-        return {sha: 'def457'}
+        return { sha: 'def457' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"react":"2.0.0"}}')
-        return {sha: 'def458'}
+        return { sha: 'def458' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def457')
         expect(JSON.parse(requestBody).parents[0]).toEqual('123abc2')
         expect(JSON.parse(requestBody).message).toEqual('pkg')
-        return {sha: '789beef1'}
+        return { sha: '789beef1' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def458')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef1')
         expect(JSON.parse(requestBody).message).toEqual('pkg2')
-        return {sha: '789beef2'}
+        return { sha: '789beef2' }
       })
       .post('/repos/owner/repo/git/refs')
       .reply(201, (uri, requestBody) => {
@@ -323,40 +323,40 @@ describe('create branch', async () => {
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree[0].path).toEqual('greenkeeper.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"lol":"wat"}')
-        return {sha: 'def456'}
+        return { sha: 'def456' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree[0].path).toEqual('package.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"standard":"2.0.0"}}')
-        return {sha: 'def457'}
+        return { sha: 'def457' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree[0].path).toEqual('backend/package.json')
         expect(JSON.parse(requestBody).tree[0].content).toEqual('{"dependencies":{"standard":"2.0.0"}}')
-        return {sha: 'def458'}
+        return { sha: 'def458' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def456')
         expect(JSON.parse(requestBody).parents[0]).toEqual('123abc2')
         expect(JSON.parse(requestBody).message).toEqual('config')
-        return {sha: '789beef0'}
+        return { sha: '789beef0' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def457')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef0')
         expect(JSON.parse(requestBody).message).toEqual('pkg')
-        return {sha: '789beef1'}
+        return { sha: '789beef1' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def458')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef1')
         expect(JSON.parse(requestBody).message).toEqual('pkg2')
-        return {sha: '789beef2'}
+        return { sha: '789beef2' }
       })
       .post('/repos/owner/repo/git/refs')
       .reply(201, (uri, requestBody) => {
@@ -441,7 +441,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def456'}
+        return { sha: 'def456' }
       })
       .post('/repos/bee/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -455,7 +455,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def457'}
+        return { sha: 'def457' }
       })
       .post('/repos/bee/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -469,7 +469,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def458'}
+        return { sha: 'def458' }
       })
       .post('/repos/bee/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -483,27 +483,27 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def459'}
+        return { sha: 'def459' }
       })
       .post('/repos/bee/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).message).toEqual('flowers')
-        return {sha: '789beef0'}
+        return { sha: '789beef0' }
       })
       .post('/repos/bee/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).message).toEqual('flowers-pink')
-        return {sha: '789beef1'}
+        return { sha: '789beef1' }
       })
       .post('/repos/bee/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).message).toEqual('flowers-yellow')
-        return {sha: '789beef2'}
+        return { sha: '789beef2' }
       })
       .post('/repos/bee/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).message).toEqual('flowers-purple')
-        return {sha: '789beef3'}
+        return { sha: '789beef3' }
       })
       .post('/repos/bee/repo/git/refs')
       .reply(201, (uri, requestBody) => {
@@ -603,7 +603,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def450'}
+        return { sha: 'def450' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -615,7 +615,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def451'}
+        return { sha: 'def451' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -629,7 +629,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def452'}
+        return { sha: 'def452' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -643,7 +643,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def453'}
+        return { sha: 'def453' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -657,7 +657,7 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def454'}
+        return { sha: 'def454' }
       })
       .post('/repos/owner/repo/git/trees')
       .reply(201, (uri, requestBody) => {
@@ -671,49 +671,49 @@ describe('create branch', async () => {
           }
         }
         expect(JSON.parse(requestBody).tree[0].content).toEqual(JSON.stringify(expectedContent))
-        return {sha: 'def455'}
+        return { sha: 'def455' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def450')
         expect(JSON.parse(requestBody).parents[0]).toEqual('123abc2')
         expect(JSON.parse(requestBody).message).toEqual('flowers-pink')
-        return {sha: '789beef0'}
+        return { sha: '789beef0' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def451')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef0')
         expect(JSON.parse(requestBody).message).toEqual('flowers-purple')
-        return {sha: '789beef1'}
+        return { sha: '789beef1' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def452')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef1')
         expect(JSON.parse(requestBody).message).toEqual('flowers')
-        return {sha: '789beef2'}
+        return { sha: '789beef2' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def453')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef2')
         expect(JSON.parse(requestBody).message).toEqual('flowers-pink')
-        return {sha: '789beef3'}
+        return { sha: '789beef3' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def454')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef3')
         expect(JSON.parse(requestBody).message).toEqual('flowers-yellow')
-        return {sha: '789beef4'}
+        return { sha: '789beef4' }
       })
       .post('/repos/owner/repo/git/commits')
       .reply(201, (uri, requestBody) => {
         expect(JSON.parse(requestBody).tree).toEqual('def455')
         expect(JSON.parse(requestBody).parents[0]).toEqual('789beef4')
         expect(JSON.parse(requestBody).message).toEqual('flowers-purple')
-        return {sha: '789beef5'}
+        return { sha: '789beef5' }
       })
       .post('/repos/owner/repo/git/refs')
       .reply(201, (uri, requestBody) => {
@@ -771,10 +771,10 @@ describe('create branch with lockfiles', async () => {
   test('change one file (package.json) and generate its lockfile (old syntax)', async () => {
     const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
-    }}
+    } }
     const updatedPackageFileContents = { devDependencies: {
       'jest': '1.2.0'
-    }}
+    } }
     const gitHubNock = nock('https://api.github.com')
       .post('/app/installations/123/access_tokens')
       .optionally()
@@ -881,7 +881,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
+      commitMessageTemplates: { 'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay' }, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -908,12 +908,12 @@ describe('create branch with lockfiles', async () => {
   })
 
   test('change two files (package.json, frontend/package.json) and generate their lockfiles', async () => {
-    const packageFileContents = {devDependencies: {
+    const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
-    }}
-    const updatedPackageFileContents = {devDependencies: {
+    } }
+    const updatedPackageFileContents = { devDependencies: {
       'jest': '1.2.0'
-    }}
+    } }
     const gitHubNock = nock('https://api.github.com')
       .post('/app/installations/123/access_tokens')
       .optionally()
@@ -1101,7 +1101,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
+      commitMessageTemplates: { 'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay' }, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1136,18 +1136,18 @@ describe('create branch with lockfiles', async () => {
     // multiple commits to the same package file should only result in a single lockfile update,
     // meaning a single exec server request and a single github tree update plus commit
     expect.assertions(8)
-    const packageFileContents = {devDependencies: {
+    const packageFileContents = { devDependencies: {
       'jest': '1.1.1',
       'west': '1.1.1'
-    }}
-    const updatedPackageFileContents1 = {devDependencies: {
+    } }
+    const updatedPackageFileContents1 = { devDependencies: {
       'jest': '1.2.0',
       'west': '1.1.1'
-    }}
-    const updatedPackageFileContents2 = {devDependencies: {
+    } }
+    const updatedPackageFileContents2 = { devDependencies: {
       'jest': '1.2.0',
       'west': '1.5.0'
-    }}
+    } }
     const gitHubNock = nock('https://api.github.com')
       .post('/app/installations/123/access_tokens')
       .optionally()
@@ -1285,7 +1285,7 @@ describe('create branch with lockfiles', async () => {
         }
       ],
       processLockfiles: true,
-      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
+      commitMessageTemplates: { 'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay' }, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',
@@ -1314,12 +1314,12 @@ describe('create branch with lockfiles', async () => {
   })
 
   test('handle exec server 500 gracefully', async () => {
-    const packageFileContents = {devDependencies: {
+    const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
-    }}
-    const updatedPackageFileContents = {devDependencies: {
+    } }
+    const updatedPackageFileContents = { devDependencies: {
       'jest': '1.2.0'
-    }}
+    } }
     const gitHubNock = nock('https://api.github.com')
       .post('/app/installations/123/access_tokens')
       .optionally()
@@ -1399,7 +1399,7 @@ describe('create branch with lockfiles', async () => {
       transform: oldPkg => JSON.stringify(updatedPackageFileContents),
       message: 'new commit',
       processLockfiles: true,
-      commitMessageTemplates: {'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay'}, // eslint-disable-line no-template-curly-in-string
+      commitMessageTemplates: { 'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay' }, // eslint-disable-line no-template-curly-in-string
       repoDoc: {
         _id: 'one-lockfile-old-syntax',
         accountId: '124',

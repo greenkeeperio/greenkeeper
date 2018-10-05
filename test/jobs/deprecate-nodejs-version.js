@@ -151,8 +151,8 @@ after_success: npm run deploy`
       const updatedEngines = transforms[2].transform(packageJSON)
       const updatedFrontendEngines = transforms[3].transform(frontendPackageJSON)
       const updatedBackendEngines = transforms[4].transform(backendPackageJSON)
-      expect(JSON.parse(updatedEngines)).toEqual({engines: {node: 'v6'}})
-      expect(JSON.parse(updatedFrontendEngines)).toEqual({engines: {node: '>6'}})
+      expect(JSON.parse(updatedEngines)).toEqual({ engines: { node: 'v6' } })
+      expect(JSON.parse(updatedFrontendEngines)).toEqual({ engines: { node: '>6' } })
       expect(updatedBackendEngines).toBeFalsy()
       return '1234abcd'
     })
@@ -517,7 +517,7 @@ branches:
 
     // mock relative dependencies
     jest.mock('../../lib/create-branch', () => ({ transforms }) => {
-      const packageJSON = JSON.stringify({name: 'uhu'})
+      const packageJSON = JSON.stringify({ name: 'uhu' })
       const updatedEngines = transforms[2].transform(packageJSON)
       expect(updatedEngines).toBeFalsy()
     })

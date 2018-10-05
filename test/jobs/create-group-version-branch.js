@@ -358,8 +358,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo',
       types: [
-        {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'}],
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -474,8 +474,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages-different-types',
       repositoryId: '123-monorepo-different-types',
       types: [
-        {type: 'devDependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'}],
+        { type: 'devDependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -591,7 +591,7 @@ describe('create-group-version-branch', async () => {
       accountId: '123-dep-ignored-on-group-level',
       repositoryId: '123-monorepo-dep-ignored-on-group-level',
       types: [
-        {type: 'devDependencies', filename: 'backend/package.json'}
+        { type: 'devDependencies', filename: 'backend/package.json' }
       ],
       version: '2.0.0',
       oldVersion: '^1.0.0',
@@ -650,8 +650,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: 'too-many-packages',
       types: [
-        {type: 'dependencies', filename: '22/package.json'},
-        {type: 'dependencies', filename: '11/package.json'}],
+        { type: 'dependencies', filename: '22/package.json' },
+        { type: 'dependencies', filename: '11/package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -730,8 +730,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: 'prerelease',
       types: [
-        {type: 'dependencies', filename: '22/package.json'},
-        {type: 'dependencies', filename: '11/package.json'}],
+        { type: 'dependencies', filename: '22/package.json' },
+        { type: 'dependencies', filename: '11/package.json' }],
       distTag: 'latest',
       distTags: {
         latest: '2.0.0-prerelease'
@@ -835,8 +835,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo',
       types: [
-        {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'}],
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -983,9 +983,9 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release',
       types: [
-        {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'},
-        {type: 'devDependencies', filename: 'package.json'}
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' },
+        { type: 'devDependencies', filename: 'package.json' }
       ],
       version: '2.0.0',
       oldVersion: '^1.0.0',
@@ -1165,9 +1165,9 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release-different',
       types: [
-        {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'},
-        {type: 'devDependencies', filename: 'package.json'}
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' },
+        { type: 'devDependencies', filename: 'package.json' }
       ],
       version: '2.0.0',
       oldVersion: '^1.0.0',
@@ -1288,8 +1288,8 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release-ignore',
       types: [
-        {type: 'dependencies', filename: 'backend/package.json'},
-        {type: 'dependencies', filename: 'package.json'}],
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -1430,7 +1430,7 @@ describe('create-group-version-branch with lockfiles', async () => {
     })
 
     const githubMock = nock('https://api.github.com')
-      .post('/app/installations/87/access_tokens').optionally().reply(200, {token: 'secret'})
+      .post('/app/installations/87/access_tokens').optionally().reply(200, { token: 'secret' })
       .get('/rate_limit').optionally().reply(200)
       .get('/repos/finnp/monorepo-with-lockfiles')
       .reply(200, {
@@ -1483,8 +1483,8 @@ describe('create-group-version-branch with lockfiles', async () => {
       accountId: '123-lockfiles',
       repositoryId: 'monorepo-with-lockfiles-1',
       types: [
-        {type: 'devDependencies', filename: 'backend/package.json'},
-        {type: 'devDependencies', filename: 'frontend/package.json'}],
+        { type: 'devDependencies', filename: 'backend/package.json' },
+        { type: 'devDependencies', filename: 'frontend/package.json' }],
       version: '2.0.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
@@ -1575,8 +1575,8 @@ describe('create-group-version-branch with lockfiles', async () => {
       accountId: '123-lockfiles',
       repositoryId: 'monorepo-with-lockfiles-2',
       types: [
-        {type: 'devDependencies', filename: 'backend/package.json'},
-        {type: 'devDependencies', filename: 'frontend/package.json'}],
+        { type: 'devDependencies', filename: 'backend/package.json' },
+        { type: 'devDependencies', filename: 'frontend/package.json' }],
       version: '1.1.0',
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',

@@ -77,7 +77,7 @@ describe('send-stale-initial-pr-reminder', async () => {
   test('does nothing if the repo is already enabled', async () => {
     expect.assertions(1)
     const { repositories } = await dbs()
-    await upsert(repositories, '42', {enabled: true})
+    await upsert(repositories, '42', { enabled: true })
 
     nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
@@ -114,7 +114,7 @@ describe('send-stale-initial-pr-reminder', async () => {
   test('does nothing if the repo has already received the reminder', async () => {
     expect.assertions(1)
     const { repositories } = await dbs()
-    await upsert(repositories, '42', {staleInitialPRReminder: true})
+    await upsert(repositories, '42', { staleInitialPRReminder: true })
 
     nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')

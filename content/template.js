@@ -1,4 +1,4 @@
-const {flatten, zip} = require('lodash')
+const { flatten, zip } = require('lodash')
 
 function template (strings, ...keys) {
   keys = keys.map(key => {

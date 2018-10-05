@@ -155,7 +155,7 @@ branches:
       const updatedEngines = transforms[2].transform(packageJSON)
       const updatedFrontendEngines = transforms[3].transform(frontendPackageJSON)
       const updatedBackendEngines = transforms[4].transform(backendPackageJSON)
-      expect(JSON.parse(updatedEngines)).toEqual({engines: {node: '10'}})
+      expect(JSON.parse(updatedEngines)).toEqual({ engines: { node: '10' } })
       expect(updatedFrontendEngines).toBeFalsy()
       expect(updatedBackendEngines).toBeFalsy()
       return '1234abcd'

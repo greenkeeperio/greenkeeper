@@ -36,7 +36,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '123-two-packages',
         filename: 'package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '123-monorepo',
       key: 'react',
       value: {
@@ -44,7 +44,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '123-two-packages',
         filename: 'backend/package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '456-monorepo',
       key: 'react',
       value: {
@@ -52,7 +52,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '123-two-packages',
         filename: 'packages/package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '775',
       key: 'eslint',
       value: {
@@ -60,7 +60,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '999',
         filename: 'package.json',
         type: 'devDependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '775',
       key: 'eslint',
       value: {
@@ -68,7 +68,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '999',
         filename: 'package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '776',
       key: 'eslint',
       value: {
@@ -76,7 +76,7 @@ test('seperateNormalAndMonorepos', () => {
         accountId: '999',
         filename: 'package.json',
         type: 'peerDependencies',
-        oldVersion: '1.0.0' }}
+        oldVersion: '1.0.0' } }
   ]
 
   const output = seperateNormalAndMonorepos(input)
@@ -101,7 +101,7 @@ test('getJobsPerGroup', () => {
         accountId: '123-two-packages',
         filename: 'package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: '123-monorepo',
       key: 'react',
       value: {
@@ -109,7 +109,7 @@ test('getJobsPerGroup', () => {
         accountId: '123-two-packages',
         filename: 'backend/package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }}
+        oldVersion: '1.0.0' } }
   ]
 
   const config = {
@@ -174,7 +174,7 @@ test('getJobsPerGroup', () => {
     versions,
     account,
     repositoryId,
-    plan})).toHaveLength(2)
+    plan })).toHaveLength(2)
 })
 
 test('filterAndSortPackages', () => {
@@ -186,7 +186,7 @@ test('filterAndSortPackages', () => {
         accountId: '123-two-packages',
         filename: 'package.json',
         type: 'devDependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: 'optionalDependencies',
       key: 'react',
       value: {
@@ -194,7 +194,7 @@ test('filterAndSortPackages', () => {
         accountId: '123-two-packages',
         filename: 'package.json',
         type: 'optionalDependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: 'dependencies',
       key: 'react',
       value: {
@@ -202,7 +202,7 @@ test('filterAndSortPackages', () => {
         accountId: '123-two-packages',
         filename: 'backend/package.json',
         type: 'dependencies',
-        oldVersion: '1.0.0' }},
+        oldVersion: '1.0.0' } },
     { id: 'peerDependencies',
       key: 'react',
       value: {
@@ -210,7 +210,7 @@ test('filterAndSortPackages', () => {
         accountId: '999',
         filename: 'package.json',
         type: 'peerDependencies',
-        oldVersion: '1.0.0' }}
+        oldVersion: '1.0.0' } }
   ]
 
   const output = filterAndSortPackages(packages)
@@ -235,7 +235,7 @@ test('getSatisfyingVersions', () => {
         accountId: '123-two-packages',
         filename: 'package.json',
         type: 'devDependencies',
-        oldVersion: '^1.0.0' }}
+        oldVersion: '^1.0.0' } }
 
   const versions = {
     '2.0.0': { gitHead: 'b75aeb5' },
@@ -472,7 +472,7 @@ branches:
     - master
     - /^greenkeeper.*$/`
   const versions = getNodeVersionsFromTravisYML(travisYML)
-  expect(versions).toEqual({startIndex: 3, endIndex: 6, versions: ['- 7', '- 8', '- 9']})
+  expect(versions).toEqual({ startIndex: 3, endIndex: 6, versions: ['- 7', '- 8', '- 9'] })
 })
 
 test('update travisYML when new version not present', () => {

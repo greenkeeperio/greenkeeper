@@ -42,7 +42,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
   const installation = await installations.get(accountId)
   const installationId = installation.installation
   const logs = dbs.getLogsDb()
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'deprecate-nodejs-version'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'deprecate-nodejs-version' })
 
   const existingBranches = await repositories.query('branch_by_dependency', {
     key: [repositoryId, `node-${nodeVersion}`, 'node-deprecation'],
@@ -56,7 +56,7 @@ module.exports = async function ({ repositoryFullName, nodeVersion, codeName, ne
 
   const config = getConfig(repoDoc)
   const { branchPrefix, label } = config
-  log.info(`config for ${repoDoc.fullName}`, {config})
+  log.info(`config for ${repoDoc.fullName}`, { config })
   if (config.disabled) {
     log.warn('exited: Greenkeeper is disabled for this repo in package.json')
     return
@@ -145,7 +145,7 @@ BREAKING CHANGE: This module no longer supports Node.js ${nodeVersion}`,
   const [owner, repo] = repoDoc.fullName.split('/')
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
-  log.info('github: repository info', {repositoryInfo: ghRepo})
+  log.info('github: repository info', { repositoryInfo: ghRepo })
 
   const branch = ghRepo.default_branch
   const newBranch = branchPrefix + 'deprecate-node-' + nodeVersion

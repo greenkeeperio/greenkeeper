@@ -22,7 +22,7 @@ const showBlogpost = function (announcementURL) {
   if (announcementURL) return `\nYou can find out more about the deprecation and possible update strategies [in this Node.js foundation announcement](${announcementURL}).`
 }
 
-module.exports = ({owner, repo, base, head, nodeVersion, codeName, newLowestVersion, newLowestCodeName, travisModified, nvmrcModified, engineTransformMessages, announcementURL}) => {
+module.exports = ({ owner, repo, base, head, nodeVersion, codeName, newLowestVersion, newLowestCodeName, travisModified, nvmrcModified, engineTransformMessages, announcementURL }) => {
   const compareURL = generateGitHubCompareURL(`${owner}/${repo}`, base, head)
   return md`
 ## Version ${nodeVersion} of Node.js (code name ${codeName}) has been deprecated! 🚑

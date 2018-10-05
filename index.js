@@ -75,19 +75,19 @@ require('./lib/rollbar')
     await enterpriseSetup()
   }
 
-  const scheduleRemindersJobData = Buffer.from(JSON.stringify({name: 'schedule-stale-initial-pr-reminders'}))
+  const scheduleRemindersJobData = Buffer.from(JSON.stringify({ name: 'schedule-stale-initial-pr-reminders' }))
   async function scheduleReminders () {
     try {
-      await scheduleJob(scheduleRemindersJobData, {priority: 1})
+      await scheduleJob(scheduleRemindersJobData, { priority: 1 })
     } catch (e) {
       console.log(e)
     }
   }
 
-  const monorepoSupervisorJobData = Buffer.from(JSON.stringify({name: 'monorepo-supervisor'}))
+  const monorepoSupervisorJobData = Buffer.from(JSON.stringify({ name: 'monorepo-supervisor' }))
   async function scheduleMonorepoReleaseSupervisor () {
     try {
-      await scheduleJob(monorepoSupervisorJobData, {priority: 1})
+      await scheduleJob(monorepoSupervisorJobData, { priority: 1 })
     } catch (e) {
       console.log(e)
     }
@@ -113,7 +113,7 @@ require('./lib/rollbar')
       try {
         if (!login) throw new Error(`can not identify job owner of ${data.name}`)
 
-        const {installations} = await dbs()
+        const { installations } = await dbs()
         queueId = _.get(await installations.query('by_login', {
           key: login
         }), 'rows[0].id')

@@ -23,7 +23,7 @@ module.exports = async function ({ repositoryId, groupName }) {
   const accountId = repoDoc.accountId
   const installation = await installations.get(accountId)
   const installationId = installation.installation
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch'})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-initial-subgroup-branch' })
 
   log.info('started')
   if (hasTooManyPackageJSONs(repoDoc)) {
@@ -33,7 +33,7 @@ module.exports = async function ({ repositoryId, groupName }) {
 
   // delete existing initial subgroup branches
   const configChanges = { added: [], removed: [], modified: [groupName] }
-  const groupBranchesToDelete = _.flatten(await getGroupBranchesToDelete({configChanges, repositories, repositoryId}))
+  const groupBranchesToDelete = _.flatten(await getGroupBranchesToDelete({ configChanges, repositories, repositoryId }))
   if (groupBranchesToDelete && groupBranchesToDelete.length) {
     await Promise.mapSeries(
       groupBranchesToDelete,
@@ -45,7 +45,7 @@ module.exports = async function ({ repositoryId, groupName }) {
     )
   }
 
-  await updateRepoDoc({installationId, doc: repoDoc, log})
+  await updateRepoDoc({ installationId, doc: repoDoc, log })
   const config = getConfig(repoDoc)
   const pathsForGroup = config.groups[groupName].packages
   if (_.isEmpty(pathsForGroup)) {
@@ -79,7 +79,7 @@ module.exports = async function ({ repositoryId, groupName }) {
   if (dependencies.length === 0) return
 
   const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
-  log.info('github: repository info', {repositoryInfo: ghRepo})
+  log.info('github: repository info', { repositoryInfo: ghRepo })
 
   const branch = ghRepo.default_branch
 

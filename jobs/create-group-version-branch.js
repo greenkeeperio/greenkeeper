@@ -55,8 +55,8 @@ module.exports = async function (
   const logs = dbs.getLogsDb()
   const installation = await installations.get(accountId)
   const repoDoc = await repositories.get(repositoryId)
-  const log = Log({logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-group-version-branch'})
-  log.info(`started for ${dependency} ${version}`, {dependency, version, oldVersion, oldVersionResolved})
+  const log = Log({ logsDb: logs, accountId, repoSlug: repoDoc.fullName, context: 'create-group-version-branch' })
+  log.info(`started for ${dependency} ${version}`, { dependency, version, oldVersion, oldVersionResolved })
 
   if (hasTooManyPackageJSONs(repoDoc)) {
     log.warn(`exited: repository has ${Object.keys(repoDoc.packages).length} package.json files`)
@@ -138,7 +138,7 @@ module.exports = async function (
     )
 
     if (!openPR) return false
-    log.info(`database: found open PR for ${dependencyKey}`, {openPR})
+    log.info(`database: found open PR for ${dependencyKey}`, { openPR })
 
     const pr = await ghqueue.read(github => github.pullRequests.get({
       owner,
@@ -167,13 +167,13 @@ module.exports = async function (
 
         const oldPkgVersion = _.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
         if (!oldPkgVersion) {
-          log.warn(`exited transform creation: could not find old package version for ${depName}`, {newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`)})
+          log.warn(`exited transform creation: could not find old package version for ${depName}`, { newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`) })
           return
         }
         const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
         // no downgrades
         if (semver.ltr(latestDependencyVersion, oldPkgVersion)) {
-          log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, {newVersion: latestDependencyVersion, oldVersion: oldPkgVersion})
+          log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
           return
         }
 
@@ -190,21 +190,21 @@ module.exports = async function (
           await upsert(repositories, openPR._id, {
             comments: [...(openPR.comments || []), latestDependencyVersion]
           })
-          commitMessage += getMessage(config.commitMessages, 'closes', {number: openPR.number})
+          commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
         }
-        log.info(`commit message for ${depName} created`, {commitMessage})
+        log.info(`commit message for ${depName} created`, { commitMessage })
 
         const satisfyingVersions = getSatisfyingVersions(npmDoc.versions, {
-          value: {oldVersion: oldPkgVersion}
+          value: { oldVersion: oldPkgVersion }
         })
         const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
         if (!oldVersionResolved) {
-          log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, {newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion})
+          log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, { newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
           return null
         }
 
         if (semver.prerelease(latestDependencyVersion) && !semver.prerelease(oldVersionResolved)) {
-          log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, {latestDependencyVersion, oldPkgVersion})
+          log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is a prerelease on latest and user does not use prereleases for this dependency`, { latestDependencyVersion, oldPkgVersion })
           return null
         }
 
@@ -226,7 +226,7 @@ module.exports = async function (
   if (transforms.length === 0) return
 
   if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
-    log.info('exiting: user wants out-of-range lockfile updates only', {config})
+    log.info('exiting: user wants out-of-range lockfile updates only', { config })
     return
   }
 
@@ -247,7 +247,7 @@ module.exports = async function (
   }
 
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  log.info('github: using default branch', {defaultBranch: base})
+  log.info('github: using default branch', { defaultBranch: base })
 
   const sha = await createBranch({
     installationId,
@@ -261,7 +261,7 @@ module.exports = async function (
     commitMessageTemplates: config.commitMessages
   })
   if (sha) {
-    log.success(`github: branch ${newBranch} created`, {sha})
+    log.success(`github: branch ${newBranch} created`, { sha })
   }
 
   if (!sha) { // no branch was created
@@ -273,7 +273,7 @@ module.exports = async function (
   let reportedDependencies = []
   transforms.forEach(async transform => {
     if (transform.created && !reportedDependencies.includes(transform.dependency)) {
-      const dependencyURL = getFormattedDependencyURL({repositoryURL: transform.repoURL, dependency: transform.dependency})
+      const dependencyURL = getFormattedDependencyURL({ repositoryURL: transform.repoURL, dependency: transform.dependency })
       packageUpdateList += `- The \`${transform.dependencyType.replace('ies', 'y')}\` [${transform.dependency}](${dependencyURL}) was updated from \`${transform.oldVersion}\` to \`${transform.version}\`.\n`
       reportedDependencies.push(transform.dependency)
     }
@@ -332,7 +332,7 @@ module.exports = async function (
     }))
 
     statsd.increment('pullrequest_comments')
-    log.info(`github: commented on already open PR for ${dependency} in group ${groupName}`, {openPR})
+    log.info(`github: commented on already open PR for ${dependency} in group ${groupName}`, { openPR })
     return
   }
 
@@ -340,9 +340,9 @@ module.exports = async function (
     version: 'groupPR',
     dependency: dependencyKey,
     group: groupName,
-    prTitles: config.prTitles})
+    prTitles: config.prTitles })
 
-  const dependencyLink = getFormattedDependencyURL({repositoryURL: transforms[0].repoURL})
+  const dependencyLink = getFormattedDependencyURL({ repositoryURL: transforms[0].repoURL })
   // maybe adapt PR body
   const body = prContent({
     dependencyLink,
@@ -380,7 +380,7 @@ module.exports = async function (
   })
 
   if (createdPr) {
-    log.success(`github: pull request for ${dependency} ${version} created`, {pullRequest: createdPr})
+    log.success(`github: pull request for ${dependency} ${version} created`, { pullRequest: createdPr })
   } else {
     log.error(`github: pull request for ${dependency} ${version} could not be created`)
     return
