@@ -153,8 +153,7 @@ module.exports = async function (
 
   // ******** Monorepos begin
   // get config
-  const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName))
-
+  const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
     const monorepoDocs = (await repositories.query('by_full_name', {
       keys: keysToFindMonorepoDocs,
@@ -166,7 +165,7 @@ module.exports = async function (
       if (isFromHook && String(account.installation) !== installation) return {}
 
       const plan = account.plan
-      const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName)
+      const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName.toLowerCase())
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
       jobs = jobs.concat(getJobsPerGroup({
