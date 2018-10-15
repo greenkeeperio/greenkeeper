@@ -227,7 +227,7 @@ describe('registry change create jobs', async () => {
         _id: '123-monorepo',
         enabled: true,
         type: 'repository',
-        fullName: 'hans/monorepo',
+        fullName: 'hAnS/monorepo',
         accountId: '123-two-packages',
         packages: {
           'package.json': {
@@ -295,7 +295,7 @@ describe('registry change create jobs', async () => {
         _id: '123-monorepo-two-groups',
         enabled: true,
         type: 'repository',
-        fullName: 'ilse/monorepo',
+        fullName: 'ilse/Monorepo',
         accountId: '123-two-groups',
         packages: {
           'package.json': {
