@@ -111,11 +111,6 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     log
   })
 
-  const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo })) // wrap in try/catch
-  log.info('github: repository info', { repositoryInfo: ghRepo })
-
-  const branch = ghRepo.default_branch
-
   const newBranch = config.branchPrefix + 'initial'
 
   const slug = `${owner}/${repo}`
@@ -272,17 +267,27 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     transforms.unshift(greenkeeperJSONTransform)
   }
 
-  const sha = await createBranch({ // try/catch
-    installationId,
-    owner,
-    repoName: repo,
-    repoDoc,
-    branch,
-    newBranch,
-    transforms,
-    processLockfiles: true,
-    commitMessageTemplates: config.commitMessages
-  })
+  let sha = null
+  let branch = ''
+  try {
+    const ghRepo = await githubQueue(installationId).read(github => github.repos.get({ owner, repo }))
+    log.info('github: repository info', { repositoryInfo: ghRepo })
+    branch = ghRepo.default_branch
+
+    sha = await createBranch({
+      installationId,
+      owner,
+      repoName: repo,
+      repoDoc,
+      branch,
+      newBranch,
+      transforms,
+      processLockfiles: true,
+      commitMessageTemplates: config.commitMessages
+    })
+  } catch (error) {
+    log.error('Could not create initial branch.', { error })
+  }
 
   if (!sha) {
     // When there are no changes and the badge already exists we can enable right away
