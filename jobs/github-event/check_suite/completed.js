@@ -9,14 +9,14 @@ This is the handler for the`completed` action.
 
 */
 
-const _ = require('lodash')
 const onBranchStatus = require('../../../lib/on-branch-status')
 
-module.exports = async function ({ status, conclusion, head_sha, repository, installation }) { // eslint-disable-line
+module.exports = async function ({ check_suite, repository, installation }) { // eslint-disable-line
+  const { status, conclusion, head_sha } = check_suite // eslint-disable-line
   // This shouldn’t be possible, since this is the completed event handler, but hey.
   if (status !== 'completed') return
   // The status of this particular check_suite is inconclusive (we can’t say whether the
   // build is passing or failing), so there’s no point in continuing
-  if (_.includes(['cancelled', 'timed_out', 'action_required'], status)) return
+  if (['cancelled', 'timed_out', 'action_required'].includes(conclusion)) return
   return onBranchStatus(repository, head_sha, installation)
 }
