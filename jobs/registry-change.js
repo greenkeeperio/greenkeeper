@@ -136,10 +136,11 @@ module.exports = async function (
     // log.info(`exited: no package files found that depend on ${dependency}`)
     return
   }
-  log.info(`found ${packageFilesForUpdatedDependency.length} repoDocs that use ${dependency}`)
-  statsd.gauge('package_files_with_dependency', packageFilesForUpdatedDependency.length, { tag: dependency })
+  const repoDocsCount = packageFilesForUpdatedDependency.length
+  log.info(`found ${repoDocsCount} repoDocs that use ${dependency}`)
+  statsd.gauge('package_files_with_dependency', repoDocsCount, { tag: dependency })
 
-  if (packageFilesForUpdatedDependency.length > 100) statsd.event('popular_package')
+  if (repoDocsCount > 100) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
 
@@ -151,6 +152,8 @@ module.exports = async function (
 
   const accounts = await getAllAccounts(installations, seperatedResults)
 
+  if (repoDocsCount >= 4000) logs.info(`got ${accounts.length} accounts`)
+
   // ******** Monorepos begin
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
@@ -159,6 +162,8 @@ module.exports = async function (
       keys: keysToFindMonorepoDocs,
       include_docs: true
     })).rows
+
+    if (repoDocsCount >= 4000) logs.info(`got ${monorepoDocs.length} monorepoDocs`)
 
     _.forEach(withMultiplePackageJSON, monorepo => {
       const account = accounts[monorepo[0].value.accountId]
@@ -188,6 +193,7 @@ module.exports = async function (
   // https://github.com/greenkeeperio/greenkeeper/issues/409
 
   const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
+  if (repoDocsCount >= 4000) logs.info(`got ${filteredSortedPackages.length} filtered and sorted packages`)
 
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
@@ -218,6 +224,8 @@ module.exports = async function (
       }
     }))
   ]
+  if (repoDocsCount >= 4000) logs.info(`going to start ${jobs.length} jobs`, { jobs })
+
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
 }
