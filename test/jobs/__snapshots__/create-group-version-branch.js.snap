@@ -32,7 +32,7 @@ This monorepo update includes releases of one or more dependencies which all bel
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 ",
-  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "head": "greenkeeper/default/monorepo.pouchdb",
   "title": "Update pouchdb in group default to the latest version 🚀",
 }
 `;
@@ -67,7 +67,7 @@ This monorepo update includes releases of one or more dependencies which all bel
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 ",
-  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "head": "greenkeeper/default/monorepo.pouchdb",
   "title": "Update pouchdb in group default to the latest version 🚀",
 }
 `;
@@ -104,7 +104,7 @@ This monorepo update includes releases of one or more dependencies which all bel
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 ",
-  "head": "greenkeeper/default/monorepo.pouchdb-2.0.0",
+  "head": "greenkeeper/default/monorepo.pouchdb",
   "title": "Update pouchdb in group default to the latest version 🚀",
 }
 `;
@@ -139,7 +139,7 @@ This monorepo update includes releases of one or more dependencies which all bel
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 ",
-  "head": "greenkeeper/default/monorepo.react-2.0.0",
+  "head": "greenkeeper/default/monorepo.react",
   "title": "Update react in group default to the latest version 🚀",
 }
 `;
@@ -174,7 +174,7 @@ This monorepo update includes releases of one or more dependencies which all bel
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 ",
-  "head": "greenkeeper/default/monorepo.react-2.0.0",
+  "head": "greenkeeper/default/monorepo.react",
   "title": "Update react in group default to the latest version 🚀",
 }
 `;
@@ -182,7 +182,7 @@ Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 exports[`create-group-version-branch new pull request, 1 group, 2 packages, same dependencyType, old PR exists 1`] = `
 "- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
 
-[Update to these versions instead 🚀](https://github.com/hans/monorepo/compare/master...hans:greenkeeper%2Fdefault%2Fmonorepo.react-2.0.0)"
+[Update to these versions instead 🚀](https://github.com/hans/monorepo/compare/master...hans:greenkeeper%2Fdefault%2Fmonorepo.react)"
 `;
 
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;

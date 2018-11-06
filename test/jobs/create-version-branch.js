@@ -1532,9 +1532,7 @@ describe('create version branch for dependencies from monorepos', () => {
         default_branch: 'master'
       })
       .post('/repos/finnp/test/issues/66/labels')
-      .reply(201, () => {
-        return {}
-      })
+      .reply(201, {})
       .post(
         '/repos/finnp/test/statuses/1234abcd',
         ({ state }) => state === 'success'
@@ -1605,7 +1603,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1-ignored:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1735,7 +1733,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1900,7 +1898,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-deps-diff:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.numbers-2.2.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.numbers')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -2059,7 +2057,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-2:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.flowers-2.0.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.flowers')
 
     expect(pr.number).toBe(77)
     expect(pr.state).toEqual('open')
@@ -2246,7 +2244,7 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-100:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme-1.6.0')
+    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme')
   })
 
   test('create branch name with prerelease suffix if user had prerelases in package.json', async () => {
@@ -2376,6 +2374,6 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-babel:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.babel7-7.0.0-rc.2')
+    expect(branch.head).toEqual('greenkeeper/monorepo.babel7')
   })
 })
