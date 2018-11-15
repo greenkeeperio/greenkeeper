@@ -15,22 +15,34 @@ Then push your changes to this branch and merge it.
 const enablePrivatePackage = ({ installationId, secret }) => `
 <summary>📦 How to enable private scoped packages</summary>
 
-Public scoped packages (\`@scope/name\`) work out of the box, but private scoped packages require an additional setup step:
+Public scoped packages (\`@scope/name\`) work out of the box, but private scoped packages require an additional setup step in which you tell npm to alert Greenkeeper every time the package or scope you specify is updated.
+
+This step only needs to be run once per Greenkeeper _installation_, meaning once per GitHub organisation or user account. You will need to run it again if you ever remove and re-add the Greenkeeper installation on org or user account level, but _not_ if you’re just adding, removing or resetting repositories.
+
+- These commands can be run on your local machine
+- You must be authenticated for the npm registry in the terminal session you’re using (see [npm login](https://docs.npmjs.com/creating-a-new-npm-user-account#testing-your-new-account-with-npm-login))
+- This is a one-time operation, once you’ve registered the hook with npm, Greenkeeper will get updates until you tell npm to stop sending them, or you uninstall Greenkeeper on your org or user account.
+- Make sure you replace the placeholders below with the actual values you need:
+  - \`SCOPED_PACKAGE_NAME\`: A full scoped package name, such as \`@megacorp/widget\`
+  - \`SCOPE_NAME\`: Just the scope name: \`@megacorp\`
+  - \`OWNER_NAME\`: An npm username: \`substack\`
 
 \`\`\`bash
-# Install npm's wombat CLI to create npm hooks
+# First, install npm's wombat CLI to be able to create npm hooks
 npm install --global wombat
 
-# Adding a single private scoped package
-wombat hook add @scope/name https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
+# Some of the things you can do now:
+# Add a single private scoped package
+wombat hook add SCOPED_PACKAGE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
-# Adding all packages of a scope
-wombat hook add @scope https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
+# Add all private packages in a scope
+wombat hook add SCOPE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
-# Adding all packages by a specific owner
-wombat hook add --type owner substack https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
-
+# Add all private packages by a specific owner
+wombat hook add --type owner OWNER_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 \`\`\`
+
+For additional options and information, please consult the [Wombat docs](https://www.npmjs.com/package/wombat).
 `
 
 const badgeAddedText = ({ badgeUrl }) => md`
