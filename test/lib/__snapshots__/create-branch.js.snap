@@ -8,6 +8,14 @@ Object {
 }
 `;
 
+exports[`create branch with lockfiles change one file (package.json) and generate its lockfile with tokens 1`] = `
+Object {
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
+  "type": "npm",
+}
+`;
+
 exports[`create branch with lockfiles change two files (package.json, frontend/package.json) and generate their lockfiles 1`] = `
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
