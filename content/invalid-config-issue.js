@@ -17,23 +17,23 @@ Here’s an example of a valid \`greenkeeper.json\`:
 
 \`\`\`javascript
 {
-  groups: {
-    frontend: {
-      packages: [
-        'webapp/package.json',
-        'cms/package.json',
-        'analytics/package.json'
+  "groups": {
+    "frontend": {
+      "packages": [
+        "webapp/package.json",
+        "cms/package.json",
+        "analytics/package.json"
       ]
     },
-    build: {
-      packages: [
-        'package.json'
+    "build": {
+      "packages": [
+        "package.json"
       ]
     }
   },
-  ignore: [
-    'standard',
-    'eslint'
+  "ignore": [
+    "standard",
+    "eslint"
   ]
 }
 \`\`\`
