@@ -30,7 +30,7 @@ describe('getNewLockfile', async () => {
         }
       })
 
-    await getNewLockfile(packageJson, lock, true)
+    await getNewLockfile({ packageJson, lock, isNpm: true })
   })
 
   test('with package-lock.json', async () => {
@@ -46,7 +46,7 @@ describe('getNewLockfile', async () => {
       })
       .reply(200, () => ({ ok: false }))
 
-    await getNewLockfile(packageJson, lock, true)
+    await getNewLockfile({ packageJson, lock, isNpm: true })
   })
 
   test('with package-lock.json with Network Error', async () => {
@@ -60,7 +60,7 @@ describe('getNewLockfile', async () => {
       })
       .reply(200, () => ({ ok: false }))
     const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
-    await getNewLockfile(packageJson, lock, true)
+    await getNewLockfile({ packageJson, lock, isNpm: true })
     expect(httpTraffic.isDone()).toBeTruthy()
     expect(httpTraffic.pendingMocks().length).toEqual(0)
   })

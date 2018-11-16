@@ -1530,6 +1530,7 @@ describe('create branch with lockfiles', async () => {
         expect(typeof body.type).toBe('string')
         expect(typeof body.packageJson).toBe('string')
         expect(typeof body.lock).toBe('string')
+        expect(typeof body.repositoryTokens).toBe('string')
 
         expect(body).toMatchSnapshot()
         return true
@@ -1580,5 +1581,7 @@ describe('create branch with lockfiles', async () => {
     expect(audit.rows).toHaveLength(1)
     expect(audit.rows[0].id).toMatch(/123:one-lockfile-with-token:/)
     expect(audit.rows[0].id).toMatch(/read/)
+
+    tokens_audit.remove(audit.rows[0].id)
   })
 })
