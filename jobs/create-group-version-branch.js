@@ -118,7 +118,8 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     dependencyGroup = relevantDependencies
-    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}`
+    const datetime = new Date().toISOString().substr(0, 19).replace(/[^0-9]/g, '')
+    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}-${datetime}`
   } else {
     dependencyKey = dependency
     dependencyGroup = [dependency]
