@@ -1388,7 +1388,14 @@ describe('create version branch for dependencies from monorepos', () => {
     jest.clearAllMocks()
     nock.cleanAll()
   })
+  const constantDate = new Date('2018-11-19T11:11:11')
   beforeAll(async () => {
+    global.Date = class extends Date {
+      constructor () {
+        super()
+        return constantDate
+      }
+    }
     const { installations, npm } = await dbs()
     await installations.put({
       _id: 'mono-123',
@@ -1603,7 +1610,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1-ignored:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20181119101111')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1733,7 +1740,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20181119101111')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1898,7 +1905,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-deps-diff:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.numbers')
+    expect(branch.head).toEqual('greenkeeper/monorepo.numbers-20181119101111')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -2057,7 +2064,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-2:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.flowers')
+    expect(branch.head).toEqual('greenkeeper/monorepo.flowers-20181119101111')
 
     expect(pr.number).toBe(77)
     expect(pr.state).toEqual('open')
@@ -2244,7 +2251,7 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-100:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme')
+    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme-20181119101111')
   })
 
   test('create branch name with prerelease suffix if user had prerelases in package.json', async () => {
@@ -2374,6 +2381,6 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-babel:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.babel7')
+    expect(branch.head).toEqual('greenkeeper/monorepo.babel7-20181119101111')
   })
 })

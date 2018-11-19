@@ -12,7 +12,14 @@ describe('create-group-version-branch', async () => {
     nock.cleanAll()
   })
 
+  const constantDate = new Date('2018-11-19T11:11:11')
   beforeAll(async () => {
+    global.Date = class extends Date {
+      constructor () {
+        super()
+        return constantDate
+      }
+    }
     const { installations, repositories, npm } = await dbs()
     await npm.put({
       _id: 'react',
@@ -295,7 +302,7 @@ describe('create-group-version-branch', async () => {
   })
 
   test('new pull request, 1 group, 2 packages, same dependencyType', async () => {
-    expect.assertions(16)
+    expect.assertions(15)
 
     const githubMock = nock('https://api.github.com')
       .post('/app/installations/87/access_tokens')
@@ -309,8 +316,8 @@ describe('create-group-version-branch', async () => {
       .post('/repos/hans/monorepo/pulls')
       .reply(200, (uri, requestBody) => {
         // pull request created
-        expect(true).toBeTruthy()
         expect(JSON.parse(requestBody)).toMatchSnapshot()
+
         return {
           id: 321,
           number: 66,
@@ -400,7 +407,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     const pr = await repositories.get('123-monorepo:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -516,7 +523,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-different-types:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-different-types:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo-different-types')
     expect(branch.accountId).toEqual('123-two-packages-different-types')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -875,7 +882,7 @@ describe('create-group-version-branch', async () => {
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1039,7 +1046,7 @@ describe('create-group-version-branch', async () => {
     const pr = await repositories.get('123-monorepo-monorepo-release:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1221,7 +1228,7 @@ describe('create-group-version-branch', async () => {
     const pr = await repositories.get('123-monorepo-monorepo-release-different:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release-different')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1330,7 +1337,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-monorepo-release-ignore:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-monorepo-release-ignore:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119101111')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release-ignore')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
