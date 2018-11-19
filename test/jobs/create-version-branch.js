@@ -1378,6 +1378,7 @@ describe('create version branch', () => {
   Monorepo section
 */
 describe('create version branch for dependencies from monorepos', () => {
+  const constantDate = new Date('2018-11-19T11:11:11.000Z')
   afterEach(() => {
     jest.resetModules()
     jest.clearAllMocks()
@@ -1387,15 +1388,14 @@ describe('create version branch for dependencies from monorepos', () => {
     jest.resetModules()
     jest.clearAllMocks()
     nock.cleanAll()
-  })
-  const constantDate = new Date('2018-11-19T11:11:11')
-  beforeAll(async () => {
     global.Date = class extends Date {
       constructor () {
         super()
         return constantDate
       }
     }
+  })
+  beforeAll(async () => {
     const { installations, npm } = await dbs()
     await installations.put({
       _id: 'mono-123',
@@ -1526,8 +1526,6 @@ describe('create version branch for dependencies from monorepos', () => {
       .reply(200, {})
       .post('/repos/finnp/test/pulls')
       .reply(200, (uri, req) => {
-        console.log(uri)
-        console.log(JSON.parse(req).body)
         // pull request created
         expect(JSON.parse(req).body).toMatchSnapshot()
         return {

@@ -4,7 +4,7 @@ exports[`create-group-version-branch monorepo release: new pull request, 1 group
 Object {
   "base": "master",
   "body": "
-## There have been updates to the *pouchdb* monorepo:
+## There have been updates to the *pouchdb* monorepo: 
 
 - The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
 - The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
@@ -41,7 +41,7 @@ exports[`create-group-version-branch monorepo release: new pull request, 1 group
 Object {
   "base": "master",
   "body": "
-## There have been updates to the *pouchdb* monorepo:
+## There have been updates to the *pouchdb* monorepo: 
 
 - The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
 
@@ -76,7 +76,7 @@ exports[`create-group-version-branch monorepo release: new pull request, 1 group
 Object {
   "base": "master",
   "body": "
-## There have been updates to the *pouchdb* monorepo:
+## There have been updates to the *pouchdb* monorepo: 
 
 - The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
 - The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
@@ -113,7 +113,7 @@ exports[`create-group-version-branch new pull request, 1 group, 2 packages, diff
 Object {
   "base": "master",
   "body": "
-## There have been updates to the *react* monorepo:
+## There have been updates to the *react* monorepo: 
 
 - The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
 
@@ -148,7 +148,7 @@ exports[`create-group-version-branch new pull request, 1 group, 2 packages, same
 Object {
   "base": "master",
   "body": "
-## There have been updates to the *react* monorepo:
+## There have been updates to the *react* monorepo: 
 
 - The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
 

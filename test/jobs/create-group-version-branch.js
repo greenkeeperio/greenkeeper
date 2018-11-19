@@ -12,7 +12,7 @@ describe('create-group-version-branch', async () => {
     nock.cleanAll()
   })
 
-  const constantDate = new Date('2018-11-19T11:11:11')
+  const constantDate = new Date('2018-11-19T11:11:11.000Z')
   beforeAll(async () => {
     global.Date = class extends Date {
       constructor () {
