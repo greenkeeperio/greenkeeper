@@ -4,7 +4,7 @@ exports[`create branch with lockfiles change one file (package.json) and generat
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
-  "repositoryTokens": "\\"\\"",
+  "repositoryTokens": "",
   "type": "npm",
 }
 `;
@@ -13,7 +13,7 @@ exports[`create branch with lockfiles change one file (package.json) and generat
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
-  "repositoryTokens": "{\\"_id\\":\\"123\\",\\"_rev\\":\\"1-596cc8e8ce706384d3156bd581320e82\\",\\"tokens\\":{\\"one-lockfile-with-token\\":{\\"npm\\":\\"12345\\",\\"github\\":\\"54321\\"}}}",
+  "repositoryTokens": "{\\"npm\\":\\"12345\\",\\"github\\":\\"54321\\"}",
   "type": "npm",
 }
 `;
@@ -22,7 +22,7 @@ exports[`create branch with lockfiles change two files (package.json, frontend/p
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
-  "repositoryTokens": "\\"\\"",
+  "repositoryTokens": "",
   "type": "npm",
 }
 `;
@@ -31,7 +31,7 @@ exports[`create branch with lockfiles change two files (package.json, frontend/p
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
-  "repositoryTokens": "\\"\\"",
+  "repositoryTokens": "",
   "type": "npm",
 }
 `;
@@ -40,7 +40,7 @@ exports[`create branch with lockfiles don’t generate the same lockfile multipl
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\",\\"west\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\",\\"west\\":\\"1.5.0\\"}}",
-  "repositoryTokens": "\\"\\"",
+  "repositoryTokens": "",
   "type": "npm",
 }
 `;
@@ -49,7 +49,7 @@ exports[`create branch with lockfiles handle exec server 500 gracefully 1`] = `
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
   "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
-  "repositoryTokens": "\\"\\"",
+  "repositoryTokens": "",
   "type": "npm",
 }
 `;
