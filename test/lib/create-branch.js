@@ -1427,7 +1427,7 @@ describe('create branch with lockfiles', async () => {
   })
 
   test('change one file (package.json) and generate its lockfile with tokens', async () => {
-    const { tokens, tokens_audit } = await dbs() // eslint-disable-line
+    const { tokens, 'token-audits': tokenAudits } = await dbs() // eslint-disable-line
     await tokens.put({
       _id: '123',
       tokens: {
@@ -1577,11 +1577,11 @@ describe('create branch with lockfiles', async () => {
     expect(sha).toEqual('finalsha123')
     expect(gitHubNock.isDone()).toBeTruthy()
 
-    const audit = await tokens_audit.allDocs()
+    const audit = await tokenAudits.allDocs()
     expect(audit.rows).toHaveLength(1)
     expect(audit.rows[0].id).toMatch(/123:one-lockfile-with-token:/)
     expect(audit.rows[0].id).toMatch(/read/)
 
-    tokens_audit.remove(audit.rows[0].id)
+    tokenAudits.remove(audit.rows[0].id)
   })
 })
