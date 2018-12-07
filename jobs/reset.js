@@ -54,7 +54,7 @@ module.exports = async function ({ repositoryFullName }) {
   for (let row of branches.rows) {
     const branch = row.doc
     try {
-      await ghqueue.write(github => github.gitdata.deleteReference({
+      await ghqueue.write(github => github.gitdata.deleteRef({
         owner,
         repo,
         ref: `heads/${branch.head}`
@@ -92,7 +92,7 @@ module.exports = async function ({ repositoryFullName }) {
 
   for (let issue of openIssues) {
     try {
-      await ghqueue.write(github => github.issues.edit({
+      await ghqueue.write(github => github.issues.update({
         owner,
         repo,
         number: issue.doc.number,

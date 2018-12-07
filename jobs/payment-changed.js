@@ -51,7 +51,7 @@ async function paymentAdded ({ repositories, accountId, ghqueue }) {
     const accountToken = repoDoc.accountToken
     const [owner, repo] = repoDoc.fullName.split('/')
     const sha = _.get(
-      await ghqueue.write(github => github.gitdata.getReference({ owner, repo, ref: `heads/${head}` })),
+      await ghqueue.write(github => github.gitdata.getRef({ owner, repo, ref: `heads/${head}` })),
       'object.sha'
     )
 
