@@ -347,7 +347,7 @@ async function createDefaultLabel ({ installationId, name, owner, repo }) {
         name,
         color: '00c775'
       }))
-    } catch (e) {}
+    } catch (error) {}
   }
 }
 

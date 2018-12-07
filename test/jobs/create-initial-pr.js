@@ -178,7 +178,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -258,7 +258,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -340,7 +340,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -417,7 +417,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -494,7 +494,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -565,7 +565,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -634,7 +634,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -703,7 +703,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -779,7 +779,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -851,7 +851,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/private/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -921,7 +921,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -991,7 +991,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
@@ -1061,7 +1061,7 @@ describe('create-initial-pr', async () => {
       })
       .post(
         '/repos/finnp/test/issues/3/labels',
-        body => body[0] === 'greenkeeper'
+        body => body.labels[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created

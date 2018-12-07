@@ -34,7 +34,7 @@ module.exports = async function (data) {
     enabled: true
   })
   try {
-    await githubQueue(installation.id).write(github => github.gitdata.deleteReference({
+    await githubQueue(installation.id).write(github => github.gitdata.deleteRef({
       owner,
       repo,
       ref: `heads/${prdoc.head}`
