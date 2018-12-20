@@ -332,7 +332,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     data: {
       name: 'initial-timeout-pr',
       repositoryId,
-      accountId
+      accountId,
+      repoSlug: repoDoc.fullName
     }
   }
 }
