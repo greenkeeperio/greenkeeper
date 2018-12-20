@@ -1,3 +1,4 @@
+const Log = require('gk-log')
 const _ = require('lodash')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
@@ -21,6 +22,10 @@ module.exports = async function ({ repositoryFullName }) {
     throw error
   }
 
+  const logs = dbs.getLogsDb()
+  const log = Log({ logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'reset' })
+  log.info(`started reset`)
+
   // delete all prdocs
   const prdocs = await repositories.allDocs({
     include_docs: true,
@@ -29,6 +34,7 @@ module.exports = async function ({ repositoryFullName }) {
     inclusive_end: true
   })
 
+  log.info(`started deleting ${prdocs.rows.length} PR docs`)
   const deletePrDocs = prdocs.rows.map(row => repositories.remove(row.doc))
   await Promise.all(deletePrDocs)
 
@@ -44,6 +50,7 @@ module.exports = async function ({ repositoryFullName }) {
   const accountDoc = await installations.get(accountId)
   const installationId = accountDoc.installation
   const ghqueue = githubQueue(installationId)
+  log.info(`started deleting ${branches.rows.length} branches`)
   for (let row of branches.rows) {
     const branch = row.doc
     try {
@@ -64,6 +71,7 @@ module.exports = async function ({ repositoryFullName }) {
     }
   }
 
+  log.info(`started deleting ${branches.rows.length} branch docs`)
   const deleteBranchDocs = branches.rows.map(row => repositories.remove(row.doc))
   await Promise.all(deleteBranchDocs)
 
@@ -75,6 +83,7 @@ module.exports = async function ({ repositoryFullName }) {
     inclusive_end: true
   })
 
+  log.info(`started closing ${issues.rows.length} issues`)
   for (let row of issues.rows) {
     const issue = row.doc
     if (issue.state === 'closed') {
@@ -94,6 +103,7 @@ module.exports = async function ({ repositoryFullName }) {
     }
   }
 
+  log.info(`started deleting ${issues.rows.length} issue docs`)
   const deleteIssueDocs = issues.rows.map(row => repositories.remove(row.doc))
   await Promise.all(deleteIssueDocs)
 
@@ -109,6 +119,11 @@ module.exports = async function ({ repositoryFullName }) {
 
   // enqueue create initial branch job
   const newRepoDoc = await repositories.get(githubRepository.id)
+  log.success(`Clean-up and new repoDoc complete, queuing up create-initial-branch…`, {
+    name: 'create-initial-branch',
+    repositoryId: newRepoDoc._id,
+    accountId
+  })
   return {
     data: {
       name: 'create-initial-branch',
