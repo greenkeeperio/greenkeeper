@@ -39,8 +39,8 @@ describe('create initial branch', () => {
     await Promise.all([
       removeIfExists(installations, '123'),
       removeIfExists(payments, '123'),
-      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', 'too-many-packages',
-        '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd', 'lockfile-42', 'lockfile-42:branch:1234abcd')
+      removeIfExists(repositories, '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', 'too-many-packages',
+        '42:branch:1234abcd', '47:branch:1234abcd', '48:branch:1234abcd', '49:branch:1234abcd', '50:branch:1234abcd', '51:branch:1234abcd', '52:branch:1234abcd', 'lockfile-42', 'lockfile-42:branch:1234abcd')
     ])
     nock.cleanAll()
   })
