@@ -76,11 +76,12 @@
     "deploy": "./deploy",
     "pretest": "standard && npm run db:start",
     "start": "node index.js",
-    "test": "npm run test:lib && npm run test:jobs && npm run test:rest",
+    "test": "npm run test:lib && npm run test:jobs && npm run test:github && npm run test:rest",
     "test:sequential": "NODE_ENV=testing jest -i",
     "test:parallel": "NODE_ENV=testing jest",
     "test:lib": "NODE_ENV=testing jest lib --logHeapUsage -i",
-    "test:jobs": "NODE_ENV=testing jest jobs --logHeapUsage -i",
+    "test:jobs": "NODE_ENV=testing jest jobs/* --logHeapUsage -i",
+    "test:github": "NODE_ENV=testing jest github-event --logHeapUsage -i",
     "test:rest": "NODE_ENV=testing jest content utils --logHeapUsage -i"
   },
   "standard": {
