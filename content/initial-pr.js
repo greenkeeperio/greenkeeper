@@ -22,27 +22,27 @@ This step only needs to be run once per Greenkeeper _installation_, meaning once
 - These commands can be run on your local machine
 - You must be authenticated for the npm registry in the terminal session you’re using (see [npm login](https://docs.npmjs.com/creating-a-new-npm-user-account#testing-your-new-account-with-npm-login))
 - This is a one-time operation, once you’ve registered the hook with npm, Greenkeeper will get updates until you tell npm to stop sending them, or you uninstall Greenkeeper on your org or user account.
-- Make sure you replace the placeholders below with the actual values you need:
+- ⚠️ Make sure you replace the placeholders below with the actual values you need:
   - \`SCOPED_PACKAGE_NAME\`: A full scoped package name, such as \`@megacorp/widget\`
   - \`SCOPE_NAME\`: Just the scope name: \`@megacorp\`
   - \`OWNER_NAME\`: An npm username: \`substack\`
 
 \`\`\`bash
-# First, install npm's wombat CLI to be able to create npm hooks
-npm install --global wombat
-
-# Some of the things you can do now:
+# Some of the things you can do with npm hooks:
 # Add a single private scoped package
-wombat hook add SCOPED_PACKAGE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
+npm hook add SCOPED_PACKAGE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Add all private packages in a scope
-wombat hook add SCOPE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
+npm hook add SCOPE_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 
 # Add all private packages by a specific owner
-wombat hook add --type owner OWNER_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
+npm hook add --type owner OWNER_NAME https://${env.HOOKS_HOST}/npm/${installationId} ${secret}
 \`\`\`
 
-For additional options and information, please consult the [Wombat docs](https://www.npmjs.com/package/wombat).
+For additional options and information, please consult the [npm CLI docs](
+https://docs.npmjs.com/cli/hook.html).
+
+If you are using npm version 5 or below, you need a separate tool called wombat to do this. Globally install wombat via npm and then use the same commands as above, but with \`wombat\` instead of \`npm\`. More in the [Wombat docs](https://www.npmjs.com/package/wombat).
 `
 
 const badgeAddedText = ({ badgeUrl }) => md`
@@ -184,6 +184,7 @@ const mainMessage = ({ enabled, depsUpdated, groupName }) => {
   if (groupName && depsUpdated) return md`This pull request **updates all your dependencies in the group \`${groupName}\` to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. As long as you have the group defined in your \`greenkeeper.json\`, Greenkeeper will look out for further dependency updates relevant to this group and make sure to always handle them together and in real-time.`
   if (enabled) return 'All of your dependencies are already up-to-date, so this repository was enabled right away. Good job :thumbsup:'
   if (depsUpdated) return 'This pull request **updates all your dependencies to their latest version**. Having them all up to date really is the best starting point for keeping up with new releases. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.'
+  if (!enabled && !depsUpdated) return 'This pull request only adds the Greenkeeper badge to your readme file, since all of the dependencies were already up to date. Greenkeeper will look out for further dependency updates and make sure to handle them in isolation and in real-time, but only after **you merge this pull request**.'
   return '' // no updates, but private repository
 }
 
