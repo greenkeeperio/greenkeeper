@@ -46,8 +46,11 @@ describe('github-event checksuite_completed', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/deadbeef/statuses')
-      .reply(200, [])
+      .get('/repos/club/mate/commits/deadbeef/status')
+      .reply(200, {
+        state: 'pending',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/deadbeef/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -122,8 +125,11 @@ describe('github-event checksuite_completed', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/catbus/statuses')
-      .reply(200, [])
+      .get('/repos/club/mate/commits/catbus/status')
+      .reply(200, {
+        state: 'pending',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/catbus/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -191,41 +197,11 @@ describe('github-event checksuite_completed', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/busdog/statuses')
-      .reply(200, [
-        {
-          'url': 'https://api.github.com/repos/octocat/Hello-World/statuses/6dcb09b5b57875f334f61aebed695e2e4193db5e',
-          'avatar_url': 'https://github.com/images/error/hubot_happy.gif',
-          'id': 1,
-          'node_id': 'MDY6U3RhdHVzMQ==',
-          'state': 'success',
-          'description': 'Build has completed successfully',
-          'target_url': 'https://ci.example.com/1000/output',
-          'context': 'continuous-integration/jenkins',
-          'created_at': '2012-07-20T01:19:13Z',
-          'updated_at': '2012-07-20T01:19:13Z',
-          'creator': {
-            'login': 'octocat',
-            'id': 1,
-            'node_id': 'MDQ6VXNlcjE=',
-            'avatar_url': 'https://github.com/images/error/octocat_happy.gif',
-            'gravatar_id': '',
-            'url': 'https://api.github.com/users/octocat',
-            'html_url': 'https://github.com/octocat',
-            'followers_url': 'https://api.github.com/users/octocat/followers',
-            'following_url': 'https://api.github.com/users/octocat/following{/other_user}',
-            'gists_url': 'https://api.github.com/users/octocat/gists{/gist_id}',
-            'starred_url': 'https://api.github.com/users/octocat/starred{/owner}{/repo}',
-            'subscriptions_url': 'https://api.github.com/users/octocat/subscriptions',
-            'organizations_url': 'https://api.github.com/users/octocat/orgs',
-            'repos_url': 'https://api.github.com/users/octocat/repos',
-            'events_url': 'https://api.github.com/users/octocat/events{/privacy}',
-            'received_events_url': 'https://api.github.com/users/octocat/received_events',
-            'type': 'User',
-            'site_admin': false
-          }
-        }
-      ])
+      .get('/repos/club/mate/commits/busdog/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/busdog/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -290,8 +266,11 @@ describe('github-event checksuite_completed', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/pelicanballoon/statuses')
-      .reply(200, [])
+      .get('/repos/club/mate/commits/pelicanballoon/status')
+      .reply(200, {
+        state: 'pending',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/pelicanballoon/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -344,7 +323,7 @@ describe('github-event checksuite_completed', async () => {
 
   test('no initial pr, one successful status, two successful checks', async () => {
     const { repositories } = await dbs()
-    expect.assertions(4)
+    expect.assertions(3)
     const githubStatus = require('../../../../jobs/github-event/status')
 
     nock('https://api.github.com')
@@ -356,41 +335,11 @@ describe('github-event checksuite_completed', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/giraffeplane/statuses')
-      .reply(200, [
-        {
-          'url': 'https://api.github.com/repos/octocat/Hello-World/statuses/6dcb09b5b57875f334f61aebed695e2e4193db5e',
-          'avatar_url': 'https://github.com/images/error/hubot_happy.gif',
-          'id': 1,
-          'node_id': 'MDY6U3RhdHVzMQ==',
-          'state': 'success',
-          'description': 'Build has completed successfully',
-          'target_url': 'https://ci.example.com/1000/output',
-          'context': 'continuous-integration/jenkins',
-          'created_at': '2012-07-20T01:19:13Z',
-          'updated_at': '2012-07-20T01:19:13Z',
-          'creator': {
-            'login': 'octocat',
-            'id': 1,
-            'node_id': 'MDQ6VXNlcjE=',
-            'avatar_url': 'https://github.com/images/error/octocat_happy.gif',
-            'gravatar_id': '',
-            'url': 'https://api.github.com/users/octocat',
-            'html_url': 'https://github.com/octocat',
-            'followers_url': 'https://api.github.com/users/octocat/followers',
-            'following_url': 'https://api.github.com/users/octocat/following{/other_user}',
-            'gists_url': 'https://api.github.com/users/octocat/gists{/gist_id}',
-            'starred_url': 'https://api.github.com/users/octocat/starred{/owner}{/repo}',
-            'subscriptions_url': 'https://api.github.com/users/octocat/subscriptions',
-            'organizations_url': 'https://api.github.com/users/octocat/orgs',
-            'repos_url': 'https://api.github.com/users/octocat/repos',
-            'events_url': 'https://api.github.com/users/octocat/events{/privacy}',
-            'received_events_url': 'https://api.github.com/users/octocat/received_events',
-            'type': 'User',
-            'site_admin': false
-          }
-        }
-      ])
+      .get('/repos/club/mate/commits/giraffeplane/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/giraffeplane/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -441,8 +390,6 @@ describe('github-event checksuite_completed', async () => {
 
     expect(newJob).toBeTruthy()
     expect(newJob.data.combined.state).toEqual('success')
-    // Checks are also added to the combined.statuses array, so 2 checks + 1 status = 3
-    expect(newJob.data.combined.statuses).toHaveLength(3)
     expect(newJob.data.name).toEqual('create-initial-pr')
   })
 })
