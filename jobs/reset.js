@@ -26,7 +26,7 @@ module.exports = async function ({ repositoryFullName }) {
   const log = Log({ logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'reset' })
   log.info(`started reset`)
 
-  // delete all prdocs
+  // delete all prDocs
   const prdocs = await repositories.allDocs({
     include_docs: true,
     startkey: `${repoDoc._id}:pr:`,
@@ -73,7 +73,12 @@ module.exports = async function ({ repositoryFullName }) {
 
   log.info(`started deleting ${branches.rows.length} branch docs`)
   const deleteBranchDocs = branches.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteBranchDocs)
+
+  try {
+    await Promise.all(deleteBranchDocs)
+  } catch (error) {
+    log.warn('failed to delete branchDocs', { error: error.message })
+  }
 
   // close all greenkeeper issues in the repository and delete all issues in the database
   const issues = await repositories.allDocs({
@@ -82,40 +87,46 @@ module.exports = async function ({ repositoryFullName }) {
     endkey: `${repoDoc._id}:issue:\ufff0`,
     inclusive_end: true
   })
+  const openIssues = issues.rows.filter(issue => issue.doc.state !== 'closed')
+  log.info(`Started closing ${openIssues} open issues`)
 
-  log.info(`started closing ${issues.rows.length} issues`)
-  for (let row of issues.rows) {
-    const issue = row.doc
-    if (issue.state === 'closed') {
-      continue
-    }
+  for (let issue of openIssues) {
     try {
       await ghqueue.write(github => github.issues.edit({
         owner,
         repo,
-        number: issue.number,
+        number: issue.doc.number,
         state: 'closed'
       }))
-    } catch (e) {
-      if (e.code !== 404) {
-        throw e
+    } catch (error) {
+      if (error.code !== 404) {
+        throw error
       }
+      log.warn('Could not close issues', { error: error.message })
     }
   }
 
-  log.info(`started deleting ${issues.rows.length} issue docs`)
+  log.info(`Started deleting ${issues.rows.length} issue docs`)
   const deleteIssueDocs = issues.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deleteIssueDocs)
+  try {
+    await Promise.all(deleteIssueDocs)
+  } catch (error) {
+    log.warn('Failed to delete issueDocs', { error: error.message })
+  }
 
   // get the current repository state from github
   // to get the newest repo settings (e.g. user enabled issues in the mean time)
   const githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
 
-  await repositories.remove(repoDoc)
-  await repositories.bulkDocs(createDocs({
-    repositories: [githubRepository],
-    accountId
-  }))
+  try {
+    await repositories.remove(repoDoc)
+    await repositories.bulkDocs(createDocs({
+      repositories: [githubRepository],
+      accountId
+    }))
+  } catch (error) {
+    log.warn('Failed to remove or create a repoDoc', { error: error.message })
+  }
 
   // enqueue create initial branch job
   const newRepoDoc = await repositories.get(githubRepository.id)
