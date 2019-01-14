@@ -1455,7 +1455,7 @@ describe('create-group-version-branch with lockfiles', async () => {
       })
       .post(
         '/repos/finnp/monorepo-with-lockfiles/issues/71/labels',
-        body => body.labels[0] === 'greenkeeper'
+        body => body[0] === 'greenkeeper'
       )
       .reply(201)
       .post(

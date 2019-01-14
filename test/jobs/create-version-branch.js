@@ -146,7 +146,7 @@ describe('create version branch', () => {
       })
       .post(
         '/repos/finnp/test/issues/66/labels',
-        body => body.labels[0] === 'customlabel'
+        body => body[0] === 'customlabel'
       )
       .reply(201, () => {
         // label created
@@ -266,7 +266,7 @@ describe('create version branch', () => {
       })
       .post(
         '/repos/finnp/testtest/issues/66/labels',
-        body => body.labels[0] === 'customlabel'
+        body => body[0] === 'customlabel'
       )
       .reply(201, () => {
         // label created
@@ -386,7 +386,7 @@ describe('create version branch', () => {
       })
       .post(
         '/repos/finnp/testtest/issues/66/labels',
-        body => body.labels[0] === 'customlabel'
+        body => body[0] === 'customlabel'
       )
       .reply(201, () => {
         // label created
