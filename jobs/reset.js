@@ -88,7 +88,7 @@ module.exports = async function ({ repositoryFullName }) {
     inclusive_end: true
   })
   const openIssues = issues.rows.filter(issue => issue.doc.state !== 'closed')
-  log.info(`Started closing ${openIssues} open issues`)
+  log.info(`Started closing ${openIssues.length} open issues`, { issues: openIssues })
 
   for (let issue of openIssues) {
     try {
