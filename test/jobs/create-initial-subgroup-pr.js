@@ -74,7 +74,7 @@ describe('create-initial-subgroup-pr', async () => {
       })
       .post(
         '/repos/petra/monorepo/issues/3/labels',
-        body => body.labels[0] === 'greenkeeper'
+        body => body[0] === 'greenkeeper'
       )
       .reply(201, () => {
         // label created
