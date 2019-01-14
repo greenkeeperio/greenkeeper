@@ -45,7 +45,7 @@ module.exports = async function ({ installation, repositories_added }) { // esli
         */
         return github.repos.get({ owner, repo })
           .catch(error => {
-            if (error.code === 404) {
+            if (error.status === 404) {
               if (number === max404Retries) {
                 // ignore and log failure here
                 log.warn(`repo not found on attempt #${number}: gving up`)

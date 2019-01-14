@@ -62,7 +62,7 @@ module.exports = async function ({ repositoryFullName }) {
     } catch (e) {
       // branch was deleted already and since we wanted to delete it anyway, we're cool
       // with this error
-      if (e.code === 422) {
+      if (e.status === 422) {
         continue
       }
       if (branch.head === 'greenkeeper/initial' || branch.head === 'greenkeeper-initial') {
@@ -99,7 +99,7 @@ module.exports = async function ({ repositoryFullName }) {
         state: 'closed'
       }))
     } catch (error) {
-      if (error.code !== 404) {
+      if (error.status !== 404) {
         throw error
       }
       log.warn('Could not close issues', { error: error.message })

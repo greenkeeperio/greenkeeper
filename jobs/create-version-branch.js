@@ -419,8 +419,8 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo, log })
       repo
     }))
   } catch (err) {
-    log.warn('Could not create PR', { err })
-    if (err.code !== 422) throw err
+    log.warn('Could not create PR', { err: err.message })
+    if (err.status !== 422) throw err
 
     const allPrs = await ghqueue.read(github => github.pullRequests.getAll({
       base,

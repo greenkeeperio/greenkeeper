@@ -249,6 +249,6 @@ test('github-event installation_repositories added with a non 404 error', async 
   } catch (e) {
     expect(httpTraffic.isDone()).toBeTruthy()
     expect(httpTraffic.pendingMocks().length).toEqual(0)
-    expect(e.code).toEqual(500)
+    expect(e.status).toEqual(500)
   }
 })
