@@ -15,10 +15,7 @@ async function getAllAccounts (installations, results) {
     allAccounts = [...allAccounts, ...partialAccounts]
   }
 
-  return _.keyBy(
-    _.map(allAccounts, 'doc'),
-    '_id'
-  )
+  return _.keyBy(_.compact(_.map(allAccounts, 'doc')), '_id')
 }
 
 async function getAllDocs (db, skip, limit, accountIds) {
