@@ -50,7 +50,8 @@ describe('initial-timeout-pr', async () => {
 
     const newJobs = await initTimeoutPr({
       repositoryId: 666,
-      accountId: 10101
+      accountId: 10101,
+      repoSlug: 'finnp/test'
     })
     expect(newJobs).toBeFalsy()
 
@@ -76,12 +77,14 @@ describe('initial-timeout-pr', async () => {
       _id: '6666:pr:11',
       type: 'pr',
       repositoryId: '6666',
-      head: 'greenkeeper/initial'
+      head: 'greenkeeper/initial',
+      fullName: 'giraffe/spaceship'
     })
 
     const newJobs = await initTimeoutPr({
       repositoryId: 6666,
-      accountId: 1338
+      accountId: 1338,
+      repoSlug: 'giraffe/spaceship'
     })
 
     expect(newJobs).toBeFalsy()

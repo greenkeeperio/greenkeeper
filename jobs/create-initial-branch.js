@@ -286,7 +286,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
       commitMessageTemplates: config.commitMessages
     })
   } catch (error) {
-    log.error('Could not create initial branch.', { error })
+    log.error('Could not create initial branch.', { error: error.message })
   }
 
   if (!sha) {
@@ -332,7 +332,8 @@ module.exports = async function ({ repositoryId, closes = [] }) {
     data: {
       name: 'initial-timeout-pr',
       repositoryId,
-      accountId
+      accountId,
+      repoSlug: repoDoc.fullName
     }
   }
 }
@@ -346,7 +347,7 @@ async function createDefaultLabel ({ installationId, name, owner, repo }) {
         name,
         color: '00c775'
       }))
-    } catch (e) {}
+    } catch (error) {}
   }
 }
 

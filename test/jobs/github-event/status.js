@@ -28,7 +28,7 @@ describe('github-event status', async () => {
     ])
   })
 
-  test('initial pr', async () => {
+  test('initial pr with 1 successful status', async () => {
     const { repositories } = await dbs()
     expect.assertions(6)
     const githubStatus = require('../../../jobs/github-event/status')
@@ -82,9 +82,9 @@ describe('github-event status', async () => {
     expect(job.installationId).toEqual(1336)
   })
 
-  test('initial pr with checks', async () => {
+  test('initial pr with 2 checks, 1 status', async () => {
     const { repositories } = await dbs()
-    expect.assertions(7)
+    expect.assertions(6)
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
@@ -156,12 +156,11 @@ describe('github-event status', async () => {
     expect(job.combined.state).toEqual('success')
     expect(job.repository.id).toBe(42)
     expect(job.installationId).toEqual(1336)
-    expect(job.combined.statuses).toHaveLength(2)
   })
 
-  test('initial pr fails with a failed check', async () => {
+  test('initial pr fails with a failed check, two successful statuses', async () => {
     const { repositories } = await dbs()
-    expect.assertions(7)
+    expect.assertions(6)
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
@@ -176,7 +175,7 @@ describe('github-event status', async () => {
       .get('/repos/club/mate/commits/hats/status')
       .reply(200, {
         state: 'success',
-        statuses: [{ 'state': 'success' }, { 'state': 'success' }]
+        statuses: []
       })
       .get('/repos/club/mate/commits/hats/check-runs')
       .reply(200, {
@@ -233,9 +232,9 @@ describe('github-event status', async () => {
     expect(job.combined.state).toEqual('failure')
     expect(job.repository.id).toBe(42)
     expect(job.installationId).toEqual(1336)
-    expect(job.combined.statuses).toHaveLength(4)
   })
-  test('initial pr by user', async () => {
+
+  test('initial pr by user, 1 status, no checks', async () => {
     const { repositories } = await dbs()
     expect.assertions(8)
 
@@ -300,7 +299,7 @@ describe('github-event status', async () => {
     expect(job.installationId).toEqual(1336)
   })
 
-  test('initial subgroup pr', async () => {
+  test('initial subgroup pr, 1 status, no checks', async () => {
     const { repositories } = await dbs()
     expect.assertions(7)
     const githubStatus = require('../../../jobs/github-event/status')
@@ -360,7 +359,7 @@ describe('github-event status', async () => {
     expect(job.groupName).toEqual('frontend')
   })
 
-  test('initial subgroup pr by user', async () => {
+  test('initial subgroup pr by user, 1 status, no checks', async () => {
     const { repositories } = await dbs()
     expect.assertions(9)
 
@@ -431,7 +430,7 @@ describe('github-event status', async () => {
     expect(job.groupName).toEqual('frontend')
   })
 
-  test('version branch', async () => {
+  test('version branch, 1 status, no checks', async () => {
     const { repositories } = await dbs()
     expect.assertions(6)
 

@@ -111,8 +111,8 @@ module.exports = async function (
       }))
     }
   } catch (err) {
-    if (err.code !== 422) {
-      log.error('Could not create initial subgroup pr', { err })
+    if (err.status !== 422) {
+      log.error('Could not create initial subgroup pr', { err: err.message })
       throw err
     }
 

@@ -197,11 +197,11 @@ describe('reset repo', async () => {
         repositoryFullName: 'finnp/abc'
       })
     } catch (e) {
-      if (e.code !== 409) {
+      if (e.status !== 409) {
         throw e
       }
       // error thrown
-      expect(e.code).toBe(409)
+      expect(e.status).toBe(409)
     } finally {
       await waitFor(timeToWaitAfterTests)
     }
