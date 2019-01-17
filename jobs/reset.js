@@ -4,11 +4,13 @@ const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const { createDocs } = require('../lib/repository-docs')
 
-module.exports = async function ({ repositoryFullName }) {
+module.exports = async function ({ repositoryFullName, accountId }) {
   repositoryFullName = repositoryFullName.toLowerCase()
   // find the repository in the database
   const { repositories, installations } = await dbs()
-  const repoDoc = _.get(
+  const logs = dbs.getLogsDb()
+
+  let repoDoc = _.get(
     await repositories.query('by_full_name', {
       key: repositoryFullName,
       include_docs: true
@@ -16,15 +18,40 @@ module.exports = async function ({ repositoryFullName }) {
     'rows[0].doc'
   )
 
-  if (!repoDoc) {
-    const error = new Error(`The repository ${repositoryFullName} does not exist in the database`)
-    error.status = 404
-    throw error
-  }
-
-  const logs = dbs.getLogsDb()
-  const log = Log({ logsDb: logs, accountId: repoDoc.accountId, repoSlug: repoDoc.fullName, context: 'reset' })
+  const log = Log({ logsDb: logs, accountId: undefined, repoSlug: repositoryFullName, context: 'reset' })
   log.info(`started reset`)
+
+  const [owner, repo] = repositoryFullName.split('/')
+  if (!repoDoc) {
+    log.warn(`The repository ${repositoryFullName} does not exist in the database`)
+
+    let eventuallyAccountId
+    if (!accountId) {
+      const exampleRepo = _.get(await repositories.query('repo-by-org', {
+        key: owner,
+        limit: 1,
+        include_docs: true
+      }),
+      'rows[0].doc')
+      eventuallyAccountId = exampleRepo.accountId
+    }
+    eventuallyAccountId = accountId
+
+    // create temporary repo
+    repoDoc = await repositories.put({
+      repositories: [{
+        '_id': `tmp-${owner}-${repo}`,
+        'type': 'repository',
+        'accountId': eventuallyAccountId,
+        'fullName': repositoryFullName,
+        'enabled': false
+      }]
+    })
+    try {
+    } catch (error) {
+      log.warn(`Failed to create temporary repo for ${repositoryFullName}`, { error: error.message })
+    }
+  }
 
   // delete all prDocs
   const prdocs = await repositories.allDocs({
@@ -45,9 +72,7 @@ module.exports = async function ({ repositoryFullName }) {
     endkey: `${repoDoc._id}:branch:\ufff0`,
     inclusive_end: true
   })
-  const [owner, repo] = repositoryFullName.split('/')
-  const accountId = String(repoDoc.accountId)
-  const accountDoc = await installations.get(accountId)
+  const accountDoc = await installations.get(String(repoDoc.accountId))
   const installationId = accountDoc.installation
   const ghqueue = githubQueue(installationId)
   log.info(`started deleting ${branches.rows.length} branches`)
