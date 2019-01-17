@@ -140,7 +140,7 @@ module.exports = async function (
   log.info(`found ${repoDocsCount} repoDocs that use ${dependency}`)
   statsd.gauge('package_files_with_dependency', repoDocsCount, { tag: dependency })
 
-  if (repoDocsCount > 100) statsd.event('popular_package')
+  if (repoDocsCount > 4000) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
 
@@ -151,7 +151,7 @@ module.exports = async function (
   const withMultiplePackageJSON = seperatedResults[0]
 
   const accounts = await getAllAccounts(installations, seperatedResults)
-  if (repoDocsCount >= 4000) log.info(`got ${accounts.length} accounts`)
+  if (repoDocsCount >= 4000) log.info(`got ${Object.keys(accounts).length} accounts`)
 
   // ******** Monorepos begin
   // get config
@@ -197,12 +197,13 @@ module.exports = async function (
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
+      if (!account.plan) { return {} }
       const plan = account.plan
 
       const satisfyingVersions = getSatisfyingVersions(versions, pkg)
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
-      if (isFromHook && String(account.installation) !== installation) return {}
+      if (isFromHook && String(account.installation) !== installation) { return {} }
 
       return {
         data: Object.assign(
