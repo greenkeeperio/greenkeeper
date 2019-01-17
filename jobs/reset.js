@@ -116,7 +116,12 @@ module.exports = async function ({ repositoryFullName }) {
 
   // get the current repository state from github
   // to get the newest repo settings (e.g. user enabled issues in the mean time)
-  const githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  let githubRepository
+  try {
+    githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  } catch (error) {
+    log.warn('Failed to get repo from GitHub', { error: error.message })
+  }
 
   try {
     await repositories.remove(repoDoc)
@@ -128,18 +133,20 @@ module.exports = async function ({ repositoryFullName }) {
     log.warn('Failed to remove or create a repoDoc', { error: error.message })
   }
 
-  // enqueue create initial branch job
-  const newRepoDoc = await repositories.get(githubRepository.id)
-  log.success(`Clean-up and new repoDoc complete, queuing up create-initial-branch…`, {
-    name: 'create-initial-branch',
-    repositoryId: newRepoDoc._id,
-    accountId
-  })
-  return {
-    data: {
+  if (githubRepository) {
+    // enqueue create initial branch job
+    const newRepoDoc = await repositories.get(githubRepository.id)
+    log.success(`Clean-up and new repoDoc complete, queuing up create-initial-branch…`, {
       name: 'create-initial-branch',
       repositoryId: newRepoDoc._id,
       accountId
+    })
+    return {
+      data: {
+        name: 'create-initial-branch',
+        repositoryId: newRepoDoc._id,
+        accountId
+      }
     }
   }
 }
