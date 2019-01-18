@@ -63,19 +63,20 @@ module.exports = async function ({ installation }) {
     return
   }
 
-  log.info(`github: fetched ${repositories.length} installation repositories`, { repositories })
+  log.info(`github: fetched ${repositories.length} installation repositories`)
   statsd.increment('repositories', repositories.length)
 
   let repoDocs = []
   try {
-    repoDocs = await createDocs({
+    repoDocs = createDocs({
       repositories,
       accountId: doc._id
     })
     // saving installation repos to db
+    log.info(`Preparing to write ${repoDocs.length} repoDocs to the DB`)
     await reposDb.bulkDocs(repoDocs)
   } catch (error) {
-    log.error('error: could not write repoDoc', { error })
+    log.error('error: could not write repoDocs', { error })
   }
   statsd.increment('installs')
   statsd.event('install')
