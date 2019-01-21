@@ -6,53 +6,105 @@ const { createDocs } = require('../lib/repository-docs')
 
 module.exports = async function ({ repositoryFullName, accountId }) {
   repositoryFullName = repositoryFullName.toLowerCase()
-  // find the repository in the database
   const { repositories, installations } = await dbs()
   const logs = dbs.getLogsDb()
-
-  let repoDoc = _.get(
-    await repositories.query('by_full_name', {
-      key: repositoryFullName,
-      include_docs: true
-    }),
-    'rows[0].doc'
-  )
-
-  const log = Log({ logsDb: logs, accountId: undefined, repoSlug: repositoryFullName, context: 'reset' })
+  const log = Log({ logsDb: logs, accountId: accountId, repoSlug: repositoryFullName, context: 'reset' })
   log.info(`started reset`)
+
+  let repoDoc = ''
+  let eventuallyAccountId
+  try {
+    // find the repository in the database
+    repoDoc = _.get(
+      await repositories.query('by_full_name', {
+        key: repositoryFullName,
+        include_docs: true
+      }),
+      'rows[0].doc'
+    )
+    eventuallyAccountId = repoDoc.accountId
+  } catch (error) {
+    log.info(`The repository ${repositoryFullName} does not exist in the database`)
+  }
 
   const [owner, repo] = repositoryFullName.split('/')
   if (!repoDoc) {
-    log.warn(`The repository ${repositoryFullName} does not exist in the database`)
-
-    let eventuallyAccountId
-    if (!accountId) {
-      const exampleRepo = _.get(await repositories.query('repo-by-org', {
+    let exampleRepo = ''
+    try {
+      exampleRepo = (await repositories.query('repo-by-org', {
         key: owner,
         limit: 1,
         include_docs: true
-      }),
-      'rows[0].doc')
-      eventuallyAccountId = exampleRepo.accountId
+      })).rows[0].doc
+    } catch (error) {
+      log.warn('Could not get repo for user', error)
     }
-    eventuallyAccountId = accountId
 
-    // create temporary repo
-    repoDoc = await repositories.put({
-      repositories: [{
+    eventuallyAccountId = exampleRepo.accountId || accountId
+
+    if (!eventuallyAccountId) {
+      log.warn('exited: Cannot create temporary repository. Missing accountId')
+      return
+    }
+    try {
+      // create temporary repo
+      await repositories.put({
         '_id': `tmp-${owner}-${repo}`,
         'type': 'repository',
         'accountId': eventuallyAccountId,
         'fullName': repositoryFullName,
         'enabled': false
-      }]
-    })
-    try {
+      })
+      repoDoc = await repositories.get(`tmp-${owner}-${repo}`)
     } catch (error) {
-      log.warn(`Failed to create temporary repo for ${repositoryFullName}`, { error: error.message })
+      console.warn(`Failed to create temporary repo for ${repositoryFullName}`, { error: error.message })
     }
+  } else {
+    // found an existing RepoDoc and delete all the stuff
+    await deleteAllTheThings({ repositories, installations, repoDoc, log, owner, repo })
   }
 
+  // get the current repository state from github
+  // to get the newest repo settings (e.g. user enabled issues in the mean time)
+  let githubRepository
+  const accountDoc = await installations.get(String(eventuallyAccountId))
+  const installationId = accountDoc.installation
+  const ghqueue = githubQueue(installationId)
+  try {
+    githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
+  } catch (error) {
+    log.warn('Failed to get repo from GitHub', { error: error.message })
+  }
+
+  try {
+    await repositories.remove(repoDoc)
+    await repositories.bulkDocs(createDocs({
+      repositories: [githubRepository],
+      accountId: eventuallyAccountId
+    }))
+  } catch (error) {
+    log.warn('Failed to remove or create a repoDoc', { error: error.message })
+  }
+
+  if (githubRepository) {
+    // enqueue create initial branch job
+    const newRepoDoc = await repositories.get(githubRepository.id)
+    log.success(`Clean-up and new repoDoc complete, queuing up create-initial-branch…`, {
+      name: 'create-initial-branch',
+      repositoryId: newRepoDoc._id,
+      accountId: eventuallyAccountId
+    })
+    return {
+      data: {
+        name: 'create-initial-branch',
+        repositoryId: newRepoDoc._id,
+        accountId: eventuallyAccountId
+      }
+    }
+  }
+}
+
+const deleteAllTheThings = async ({ repositories, installations, repoDoc, owner, repo, log }) => {
   // delete all prDocs
   const prdocs = await repositories.allDocs({
     include_docs: true,
@@ -85,8 +137,8 @@ module.exports = async function ({ repositoryFullName, accountId }) {
         ref: `heads/${branch.head}`
       }))
     } catch (e) {
-      // branch was deleted already and since we wanted to delete it anyway, we're cool
-      // with this error
+    // branch was deleted already and since we wanted to delete it anyway, we're cool
+    // with this error
       if (e.status === 422) {
         continue
       }
@@ -137,41 +189,5 @@ module.exports = async function ({ repositoryFullName, accountId }) {
     await Promise.all(deleteIssueDocs)
   } catch (error) {
     log.warn('Failed to delete issueDocs', { error: error.message })
-  }
-
-  // get the current repository state from github
-  // to get the newest repo settings (e.g. user enabled issues in the mean time)
-  let githubRepository
-  try {
-    githubRepository = await ghqueue.read(github => github.repos.get({ owner, repo }))
-  } catch (error) {
-    log.warn('Failed to get repo from GitHub', { error: error.message })
-  }
-
-  try {
-    await repositories.remove(repoDoc)
-    await repositories.bulkDocs(createDocs({
-      repositories: [githubRepository],
-      accountId
-    }))
-  } catch (error) {
-    log.warn('Failed to remove or create a repoDoc', { error: error.message })
-  }
-
-  if (githubRepository) {
-    // enqueue create initial branch job
-    const newRepoDoc = await repositories.get(githubRepository.id)
-    log.success(`Clean-up and new repoDoc complete, queuing up create-initial-branch…`, {
-      name: 'create-initial-branch',
-      repositoryId: newRepoDoc._id,
-      accountId
-    })
-    return {
-      data: {
-        name: 'create-initial-branch',
-        repositoryId: newRepoDoc._id,
-        accountId
-      }
-    }
   }
 }
