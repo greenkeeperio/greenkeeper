@@ -224,7 +224,6 @@ module.exports = async function (
       }
     }))
   ]
-  if (repoDocsCount >= 4000) log.info(`going to start ${jobs.length} jobs`, { jobs })
 
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
