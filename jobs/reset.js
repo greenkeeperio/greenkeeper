@@ -37,10 +37,14 @@ module.exports = async function ({ repositoryFullName, accountId }) {
         include_docs: true
       })).rows[0].doc
     } catch (error) {
-      log.warn('Could not get repo for user', error)
+      log.warn('Could not get repo for user. Org does not exist in database?', { error: error.message })
     }
 
-    eventuallyAccountId = exampleRepo.accountId || accountId
+    if (exampleRepo) {
+      eventuallyAccountId = exampleRepo.accountId
+    } else {
+      eventuallyAccountId = accountId
+    }
 
     if (!eventuallyAccountId) {
       log.warn('exited: Cannot create temporary repository. Missing accountId')
