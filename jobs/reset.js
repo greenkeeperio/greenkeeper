@@ -11,7 +11,7 @@ module.exports = async function ({ repositoryFullName, accountId }) {
   const log = Log({ logsDb: logs, accountId: accountId, repoSlug: repositoryFullName, context: 'reset' })
   log.info(`started reset`)
 
-  let repoDoc = ''
+  let repoDoc
   let eventuallyAccountId
   try {
     // find the repository in the database
@@ -29,7 +29,7 @@ module.exports = async function ({ repositoryFullName, accountId }) {
 
   const [owner, repo] = repositoryFullName.split('/')
   if (!repoDoc) {
-    let exampleRepo = ''
+    let exampleRepo
     try {
       exampleRepo = (await repositories.query('repo-by-org', {
         key: owner,
