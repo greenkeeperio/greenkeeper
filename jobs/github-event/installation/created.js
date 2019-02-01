@@ -33,8 +33,7 @@ module.exports = async function ({ installation }) {
   log.info('Installation Document created', { installation: doc })
 
   const { token } = await getToken(doc.installation)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
+  const github = GitHub({ auth: `token ${token}` })
 
   let repositories
   // getting installation repos from github
