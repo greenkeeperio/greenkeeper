@@ -5,7 +5,7 @@ nock.enableNetConnect('localhost')
 
 test('get token', async () => {
   nock('https://api.github.com', {
-    reqheaders: { Authorization: 'Bearer jwtToken' }
+    reqheaders: { Authorization: 'app jwtToken' }
   })
     .post('/app/installations/1337/access_tokens')
     .reply(200, { token: 'the-token' })
