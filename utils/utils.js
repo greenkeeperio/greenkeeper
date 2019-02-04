@@ -72,7 +72,6 @@ function getJobsPerGroup ({
   versions,
   account,
   repositoryId,
-  plan,
   isFromHook,
   log
 }) {
@@ -111,7 +110,6 @@ function getJobsPerGroup ({
         dependency,
         versions,
         repositoryId,
-        plan,
         oldVersionResolved,
         installation: account.installation,
         accountId: account.id || account._id,
@@ -119,8 +117,7 @@ function getJobsPerGroup ({
         oldVersion: monorepo[0].value.oldVersion,
         monorepo: relevantMonorepoChangeFiles,
         isFromHook
-      }),
-      plan
+      })
     }
   })
 }
