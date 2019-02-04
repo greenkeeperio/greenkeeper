@@ -168,7 +168,6 @@ module.exports = async function (
       const account = accounts[monorepo[0].value.accountId]
       if (isFromHook && String(account.installation) !== installation) return {}
 
-      const plan = account.plan
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName.toLowerCase())
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
@@ -181,7 +180,6 @@ module.exports = async function (
         versions,
         account,
         repositoryId: repoDoc.id,
-        plan,
         isFromHook,
         log }))
     })
@@ -197,8 +195,6 @@ module.exports = async function (
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
-      if (!account.plan) { return {} }
-      const plan = account.plan
 
       const satisfyingVersions = getSatisfyingVersions(versions, pkg)
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
@@ -215,12 +211,10 @@ module.exports = async function (
             oldVersionResolved,
             repositoryId: pkg.id,
             installation: account.installation,
-            plan,
             isFromHook
           },
           pkg.value
-        ),
-        plan
+        )
       }
     }))
   ]
