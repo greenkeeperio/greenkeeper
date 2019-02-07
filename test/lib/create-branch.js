@@ -1429,7 +1429,7 @@ describe('create branch with lockfiles', async () => {
   test('change one file (package.json) and generate its lockfile with tokens', async () => {
     const { tokens, 'token-audits': tokenAudits } = await dbs() // eslint-disable-line
     await tokens.put({
-      _id: '123',
+      _id: '124',
       tokens: {
         'one-lockfile-with-token': {
           npm: '12345',
