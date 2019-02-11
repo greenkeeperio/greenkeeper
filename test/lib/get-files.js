@@ -5,6 +5,8 @@ const { getFiles, formatPackageJson, discoverPackageFiles, discoverPackageFilePa
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+const log = console
+
 test('getFiles: with no fileList provided', async () => {
   expect.assertions(1)
 
@@ -18,7 +20,7 @@ test('getFiles: with no fileList provided', async () => {
     .optionally()
     .reply(200, {})
 
-  const files = await getFiles('123', 'owner/repo')
+  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', log })
 
   // returns an Object with the 4 standard files
   expect(Object.keys(files)).toHaveLength(4)
@@ -63,7 +65,7 @@ test('getFiles: 2 package.json files', async () => {
     'backend/package.json'
   ]
 
-  const files = await getFiles('123', 'owner/repo', fileList)
+  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, log })
   // returns an Object with the 4 file types
   expect(Object.keys(files)).toHaveLength(4)
   // The Object has 2 files at the `package.json` key
@@ -100,7 +102,7 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
     'backend/package.json'
   ]
 
-  const files = await getFiles('123', 'owner/repo', fileList)
+  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, log })
 
   expect(Object.keys(files)).toHaveLength(4)
   // returns an Object with the key `package.json`
@@ -112,6 +114,60 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
   expect(files['package.json'][0].content).toEqual(false)
   expect(files['package.json'][1].path).toEqual('backend/package.json')
   expect(files['package.json'][1].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
+})
+
+test('getFiles: too large package-lock.json', async () => {
+  expect.assertions(5)
+
+  nock('https://api.github.com')
+    .post('/app/installations/123/access_tokens')
+    .optionally()
+    .reply(200, { token: 'secret' })
+    .get('/rate_limit')
+    .optionally()
+    .reply(200)
+    .get('/repos/owner/repo/contents/package.json')
+    .reply(200, {
+      type: 'file',
+      path: 'package.json',
+      name: 'package.json',
+      content: Buffer.from(JSON.stringify({ name: 'test' })).toString('base64')
+    })
+    .get('/repos/owner/repo/contents/package-lock.json')
+    .reply(403, {
+      message: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
+      status: 'too_large',
+      code: 'too_large'
+    })
+    .get('/repos/owner/repo/git/trees/1312')
+    .reply(200, {
+      'sha': 'db6dbefcd2e2dfc46c3169dacd3472c06ac1c1a2',
+      'tree': [{
+        'path': 'package-lock.json',
+        'type': 'blob',
+        'sha': 'allcatsarebeautiful',
+        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsarebeautiful'
+      },
+      {
+        'path': 'package.json',
+        'type': 'blob',
+        'sha': 'allcatsarebeautifulcats',
+        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsarebeautifulcats'
+      }]
+    })
+    .get('/repos/owner/repo/git/blobs/allcatsarebeautiful')
+    .reply(200, {
+      content: Buffer.from(JSON.stringify({ name: 'all cats are beautiful' })).toString('base64')
+    })
+
+  const fileList = [ 'package.json' ]
+
+  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, sha: '1312', log })
+  expect(files['package.json']).toHaveLength(1)
+  expect(files['package.json'][0].path).toEqual('package.json')
+  expect(files['package.json'][0].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
+  expect(files['package-lock.json'][0].path).toEqual('package-lock.json')
+  expect(files['package-lock.json'][0].content).toEqual('eyJuYW1lIjoiYWxsIGNhdHMgYXJlIGJlYXV0aWZ1bCJ9')
 })
 
 test('formatPackageJson: 2 package.json files', async () => {
