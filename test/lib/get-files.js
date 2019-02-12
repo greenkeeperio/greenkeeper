@@ -116,8 +116,8 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
   expect(files['package.json'][1].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
 })
 
-test('getFiles: too large package-lock.json', async () => {
-  expect.assertions(5)
+test('getFiles: 2 too large package-lock.json', async () => {
+  expect.assertions(7)
 
   nock('https://api.github.com')
     .post('/app/installations/123/access_tokens')
@@ -139,7 +139,7 @@ test('getFiles: too large package-lock.json', async () => {
       status: 'too_large',
       code: 'too_large'
     })
-    .get('/repos/owner/repo/git/trees/1312')
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
       'sha': 'db6dbefcd2e2dfc46c3169dacd3472c06ac1c1a2',
       'tree': [{
@@ -149,25 +149,55 @@ test('getFiles: too large package-lock.json', async () => {
         'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsarebeautiful'
       },
       {
-        'path': 'package.json',
+        'path': 'cats/package-lock.json',
         'type': 'blob',
-        'sha': 'allcatsarebeautifulcats',
-        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsarebeautifulcats'
+        'sha': 'allcatsaremajestic',
+        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsaremajestic'
+      }]
+    })
+    .get('/repos/owner/repo/contents/cats/package-lock.json')
+    .reply(403, {
+      message: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
+      status: 'too_large',
+      code: 'too_large'
+    })
+    .get('/repos/owner/repo/git/trees/master?recursive=1')
+    .reply(200, {
+      'sha': 'db6dbefcd2e2dfc46c3169dacd3472c06ac1c1a2',
+      'tree': [{
+        'path': 'package-lock.json',
+        'type': 'blob',
+        'sha': 'allcatsarebeautiful',
+        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsarebeautiful'
+      },
+      {
+        'path': 'cats/package-lock.json',
+        'type': 'blob',
+        'sha': 'allcatsaremajestic',
+        'url': 'https://api.github.com/repos/owner/repo/git/blobs/allcatsaremajestic'
       }]
     })
     .get('/repos/owner/repo/git/blobs/allcatsarebeautiful')
     .reply(200, {
       content: Buffer.from(JSON.stringify({ name: 'all cats are beautiful' })).toString('base64')
     })
+    .get('/repos/owner/repo/git/blobs/allcatsaremajestic')
+    .reply(200, {
+      content: Buffer.from(JSON.stringify({ name: 'all cats are majestic' })).toString('base64')
+    })
 
-  const fileList = [ 'package.json' ]
-
-  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, sha: '1312', log })
+  const fileList = [
+    'package.json',
+    'cats/package-lock.json'
+  ]
+  const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, sha: 'master', log })
   expect(files['package.json']).toHaveLength(1)
   expect(files['package.json'][0].path).toEqual('package.json')
   expect(files['package.json'][0].content).toEqual('eyJuYW1lIjoidGVzdCJ9')
-  expect(files['package-lock.json'][0].path).toEqual('package-lock.json')
-  expect(files['package-lock.json'][0].content).toEqual('eyJuYW1lIjoiYWxsIGNhdHMgYXJlIGJlYXV0aWZ1bCJ9')
+  expect(files['package-lock.json'][0].path).toEqual('cats/package-lock.json')
+  expect(files['package-lock.json'][0].content).toEqual('eyJuYW1lIjoiYWxsIGNhdHMgYXJlIG1hamVzdGljIn0=')
+  expect(files['package-lock.json'][1].path).toEqual('package-lock.json')
+  expect(files['package-lock.json'][1].content).toEqual('eyJuYW1lIjoiYWxsIGNhdHMgYXJlIGJlYXV0aWZ1bCJ9')
 })
 
 test('formatPackageJson: 2 package.json files', async () => {
