@@ -135,9 +135,8 @@ test('getFiles: 2 too large package-lock.json', async () => {
     })
     .get('/repos/owner/repo/contents/package-lock.json')
     .reply(403, {
-      message: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
-      status: 'too_large',
-      code: 'too_large'
+      name: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
+      errors: [{ resource: 'Blob', field: 'data', code: 'too_large' }]
     })
     .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
@@ -157,9 +156,8 @@ test('getFiles: 2 too large package-lock.json', async () => {
     })
     .get('/repos/owner/repo/contents/cats/package-lock.json')
     .reply(403, {
-      message: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
-      status: 'too_large',
-      code: 'too_large'
+      name: 'This API returns blobs up to 1 MB in size. The requested blob is too large to fetch via the API, but you can use the Git Data API to request blobs up to 100 MB in size.',
+      errors: [{ resource: 'Blob', field: 'data', code: 'too_large' }]
     })
     .get('/repos/owner/repo/git/trees/master?recursive=1')
     .reply(200, {
