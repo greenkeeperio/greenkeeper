@@ -118,7 +118,7 @@ module.exports = async function (
 
     // in case the pull request was already created
     // we just store that PRs info
-    const pr = (await ghqueue.read(github => github.pullRequests.getAll({
+    const pr = (await ghqueue.read(github => github.pulls.list({
       owner,
       repo,
       base,
