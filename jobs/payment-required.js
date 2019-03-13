@@ -18,7 +18,7 @@ module.exports = async function ({ accountId, repositoryId }) {
     owner,
     repo,
     title: 'Payment required',
-    body: paymentRequiredBody,
+    body: paymentRequiredBody(),
     labels: [label]
   }))
 

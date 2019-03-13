@@ -28,7 +28,7 @@ module.exports = async function ({ repository }) {
   repoDoc.archived = true
   await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
-    return maybeUpdatePaymentsJob({ accoundId: repoDoc.accountId, isPrivate: repoDoc.private })
+    return maybeUpdatePaymentsJob({ accountId: repoDoc.accountId, isPrivate: repoDoc.private })
   }
 
   function updateDoc (repositories, repository, repoDoc) {
