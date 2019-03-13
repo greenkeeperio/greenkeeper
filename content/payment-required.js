@@ -1,6 +1,6 @@
 const md = require('./template')
 
-module.exports = ({ fullName }) =>
+module.exports = () =>
   md`🚨 You privatized your repo. 🚨
 
   Hello!

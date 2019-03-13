@@ -24,7 +24,7 @@ module.exports = async function ({ repository }) {
 
   if (!env.IS_ENTERPRISE) {
     log.warn('payment required')
-    return maybeUpdatePaymentsJob({ accoundId: repoDoc.accountId, isPrivate: repoDoc.private, repositoryId })
+    return maybeUpdatePaymentsJob({ accountId: repoDoc.accountId, isPrivate: repoDoc.private, repositoryId })
   }
 
   function updateDoc (repositories, repository, repoDoc) {

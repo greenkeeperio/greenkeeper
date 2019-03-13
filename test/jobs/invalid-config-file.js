@@ -37,10 +37,12 @@ describe('invalid-config-file', async () => {
     expect.assertions(12)
     const githubMock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/lisa/monorepo/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()
@@ -140,10 +142,12 @@ describe('invalid-config-file', async () => {
 
     nock('https://api.github.com')
       .post('/app/installations/39/access_tokens')
+      .optionally()
       .reply(200, {
         token: 'secret'
       })
       .get('/rate_limit')
+      .optionally()
       .reply(200, {})
       .post('/repos/lisa/monorepo/issues', ({ title, body, labels }) => {
         expect(title).toBeTruthy()

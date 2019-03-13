@@ -211,7 +211,8 @@ describe('payments', async () => {
       expect(newJob).toMatchObject({
         data: {
           name: 'payment-required',
-          accountId: '123'
+          accountId: '123business',
+          repositoryId: '1312'
         }
       })
     })
