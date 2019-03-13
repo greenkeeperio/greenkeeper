@@ -244,7 +244,7 @@ async function disableRepo ({ repositories, repoDoc, repository }) {
   repoDoc.enabled = false
   await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
-    return maybeUpdatePaymentsJob(repoDoc.accountId, repoDoc.private)
+    return maybeUpdatePaymentsJob({ accountId: repoDoc.accountId, isPrivate: repoDoc.private })
   }
 }
 

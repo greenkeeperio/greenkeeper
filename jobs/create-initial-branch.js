@@ -297,7 +297,7 @@ module.exports = async function ({ repositoryId, closes = [] }) {
       if (env.IS_ENTERPRISE) {
         return
       } else {
-        return maybeUpdatePaymentsJob(accountId, repoDoc.private)
+        return maybeUpdatePaymentsJob({ accountId, isPrivate: repoDoc.private })
       }
     } else {
       log.error('Could not create initial branch')

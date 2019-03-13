@@ -46,5 +46,5 @@ module.exports = async function ({ installation, repositories_removed }) { // es
 
   log.success('starting maybeUpdatePaymentsJob', { hasPrivateRepos })
 
-  return maybeUpdatePaymentsJob(accountId, hasPrivateRepos)
+  return maybeUpdatePaymentsJob({ accountId, isPrivate: hasPrivateRepos })
 }
