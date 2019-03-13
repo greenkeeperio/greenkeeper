@@ -5,7 +5,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 const {
   getActiveBilling,
-  hasPayedAccount,
+  hasPaidAccount,
   maybeUpdatePaymentsJob,
   hasStripeBilling,
   getAccountNeedsMarketplaceUpgrade,
@@ -151,19 +151,24 @@ describe('payments', async () => {
     })
   })
 
-  describe('hasPayedAccount', async () => {
-    test('hasPayedAccount without free plan', async () => {
-      const result = await hasPayedAccount()
+  describe('hasPaidAccount', async () => {
+    test('hasPaidAccount without plan', async () => {
+      const result = await hasPaidAccount()
       expect(result).toBeFalsy()
     })
 
-    test('hasPayedAccount with free plan', async () => {
-      const result = await hasPayedAccount('123free')
+    test('hasPaidAccount with free plan', async () => {
+      const result = await hasPaidAccount('123free')
       expect(result).toBeFalsy()
     })
 
-    test('hasPayedAccount with payed plan', async () => {
-      const result = await hasPayedAccount('123org')
+    test('hasPaidAccount with opensource plan', async () => {
+      const result = await hasPaidAccount('123opensource')
+      expect(result).toBeFalsy()
+    })
+
+    test('hasPaidAccount with payed plan', async () => {
+      const result = await hasPaidAccount('123org')
       expect(result).toBeTruthy()
     })
   })
