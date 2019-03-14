@@ -1,7 +1,7 @@
 const md = require('./template')
 
 module.exports = () =>
-  md`🚨 You privatized your repo. 🚨
+  md`🚨 You privatised your repo. 🚨
 
   Hello!
   You have set your repository to private. From now on Greenkeeper is no longer free. We have disabled your repo for now.
