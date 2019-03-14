@@ -48,7 +48,7 @@ describe('payment-required', async () => {
       .reply(200)
       .post('/repos/jacoba/private/issues', ({ title, body, labels }) => {
         expect(title).toEqual('Payment required')
-        expect(body).toMatch(/🚨 You privatized your repo. 🚨/)
+        expect(body).toMatch(/🚨 You privatised your repo. 🚨/)
         expect(body).toMatch(/Please enter your payment information at/)
         expect(labels[0]).toEqual('greenkeeper')
         return true
