@@ -1,6 +1,7 @@
 const redis = require('redis')
 const { promisify } = require('bluebird')
 const Log = require('gk-log')
+const { flatten } = require('lodash')
 
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
@@ -31,13 +32,21 @@ module.exports = async function ({ accountId }) {
   }
 
   try {
-    gitHubRepos = await githubQueue(installationId).read(github => github.apps.listRepos({
+    const options = await githubQueue(installationId).read(github => github.apps.listRepos.endpoint.merge({
       headers: {
         accept: 'application/vnd.github.machine-man-preview+json'
       },
       org: 'neighbourhoodie',
       per_page: 100
     }))
+
+    // Paginate does not actually flatten results into a single result array
+    // as it should, according to the docs, possibly due to these:
+    // https://github.com/octokit/rest.js/issues/1161
+    // https://github.com/octokit/routes/issues/329
+    const results = await githubQueue(installationId).read(github => github.paginate(options))
+    // So we flatten them ourselves
+    gitHubRepos = flatten(results.map((result) => result.repositories))
   } catch (error) {
     log.error('Could not get repos from Github', { error: error.message })
   }
@@ -46,8 +55,8 @@ module.exports = async function ({ accountId }) {
 
   // create missing repositories
   let reposToCreate = []
-  gitHubRepos.repositories.map(ghRepo => {
-    if (!ghRepo.name.includes(dbRepos)) {
+  gitHubRepos.map(ghRepo => {
+    if (!dbRepos.includes(ghRepo.name)) {
       reposToCreate.push(ghRepo)
     }
   })
