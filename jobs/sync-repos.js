@@ -6,13 +6,15 @@ const { flatten } = require('lodash')
 const dbs = require('../lib/dbs')
 const githubQueue = require('../lib/github-queue')
 const { createDocs } = require('../lib/repository-docs')
+const GitHub = require('../../../lib/github')
+const getToken = require('../../../lib/get-token')
 
 module.exports = async function ({ accountId }) {
+  const { installations, repositories } = await dbs()
   const logs = dbs.getLogsDb()
-  const log = Log({ logsDb: logs, accountId: accountId, repoSlug: null, context: 'sync-repositories' })
+  const log = Log({ logsDb: logs, accountId: accountId, repoSlug: null, context: 'sync-repos' })
   log.info(`started`)
 
-  const { installations, repositories } = await dbs()
   const installation = await installations.get(String(accountId))
   const installationId = installation.installation
 
@@ -32,13 +34,15 @@ module.exports = async function ({ accountId }) {
   }
 
   try {
-    const options = await githubQueue(installationId).read(github => github.apps.listRepos.endpoint.merge({
+    const { token } = await getToken(installationId)
+    const github = GitHub({ auth: `token ${token}` })
+    const options = github.apps.listRepos.endpoint.merge({
       headers: {
         accept: 'application/vnd.github.machine-man-preview+json'
       },
       org: 'neighbourhoodie',
       per_page: 100
-    }))
+    })
 
     // Paginate does not actually flatten results into a single result array
     // as it should, according to the docs, possibly due to these:
