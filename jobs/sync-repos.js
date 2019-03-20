@@ -75,6 +75,6 @@ module.exports = async function ({ accountId }) {
   }
 
   const client = redis.createClient(process.env.REDIS_URL)
-  const del = promisify(client.del)
+  const del = promisify(client.del.bind(client))
   await del(`sync_${accountName}`)
 }
