@@ -1,5 +1,5 @@
 const redis = require('redis')
-const { promisify } = require('bluebird')
+const { promisify } = require('util')
 const Log = require('gk-log')
 const { flatten } = require('lodash')
 
@@ -22,25 +22,25 @@ module.exports = async function ({ accountId }) {
   let gitHubRepos
   let accountName
   try {
+    const repoDoc = await installations.get(String(accountId))
+    accountName = repoDoc.login
     const { rows: currentRepos } = await repositories.query('repo-by-org/repo-by-org', {
-      key: 'neighbourhoodie',
+      key: accountName,
       reduce: false,
       include_docs: true
     })
     dbRepos = currentRepos.map(repo => repo.doc.fullName.split('/')[1])
-    accountName = currentRepos[0].doc.fullName.split('/')[0]
   } catch (error) {
     log.error('Could not get repos from database', { error: error.message })
   }
 
   try {
-    const { token } = await getToken(installationId)
+    const { token } = await getToken(Number(installationId))
     const github = GitHub({ auth: `token ${token}` })
     const options = github.apps.listRepos.endpoint.merge({
       headers: {
         accept: 'application/vnd.github.machine-man-preview+json'
       },
-      org: 'neighbourhoodie',
       per_page: 100
     })
 
@@ -48,13 +48,12 @@ module.exports = async function ({ accountId }) {
     // as it should, according to the docs, possibly due to these:
     // https://github.com/octokit/rest.js/issues/1161
     // https://github.com/octokit/routes/issues/329
-    const results = await githubQueue(installationId).read(github => github.paginate(options))
+    const results = await github.paginate(options)
     // So we flatten them ourselves
     gitHubRepos = flatten(results.map((result) => result.repositories))
   } catch (error) {
     log.error('Could not get repos from Github', { error: error.message })
   }
-
   log.info('There are more active repos on GitHub than in our database.')
 
   // create missing repositories
@@ -68,7 +67,7 @@ module.exports = async function ({ accountId }) {
   log.info('Starting to create missing repoDocs')
   try {
     const repoDocs = await createDocs({
-      reposToCreate,
+      repositories: reposToCreate,
       accountId: String(accountId)
     })
     await repositories.bulkDocs(repoDocs)
