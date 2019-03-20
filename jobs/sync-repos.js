@@ -4,7 +4,6 @@ const Log = require('gk-log')
 const { flatten } = require('lodash')
 
 const dbs = require('../lib/dbs')
-const githubQueue = require('../lib/github-queue')
 const { createDocs } = require('../lib/repository-docs')
 const GitHub = require('../lib/github')
 const getToken = require('../lib/get-token')
