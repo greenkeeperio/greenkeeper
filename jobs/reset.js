@@ -119,7 +119,12 @@ const deleteAllTheThings = async ({ repositories, installations, repoDoc, owner,
 
   log.info(`started deleting ${prdocs.rows.length} PR docs`)
   const deletePrDocs = prdocs.rows.map(row => repositories.remove(row.doc))
-  await Promise.all(deletePrDocs)
+
+  try {
+    await Promise.all(deletePrDocs)
+  } catch (error) {
+    log.warn('failed to delete PR docs', { error: error.message })
+  }
 
   // delete all greenkeeper branches in the repository
   const branches = await repositories.allDocs({
