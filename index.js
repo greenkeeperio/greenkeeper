@@ -29,8 +29,8 @@ require('./lib/rollbar')
   const conn = await amqp.connect(env.AMQP_URL)
   const channel = await conn.createChannel()
 
-  // only allow 128 items to pile up
-  channel.prefetch(128)
+  // only allow 256 items to pile up
+  channel.prefetch(256)
 
   // 5 different prios because order matters
   // e.g. always sync before everything else
@@ -67,8 +67,12 @@ require('./lib/rollbar')
 
   if (env.NODE_ENV !== 'testing') {
     setInterval(function collectAccountQueueStats () {
-      statsd.gauge('queues.account-jobs', Object.keys(queues).length)
-    }, 5000)
+      const queueKeys = Object.keys(queues)
+      statsd.gauge('queues.account-jobs', queueKeys.length)
+      queueKeys.map((queueId) => {
+        statsd.gauge('queues.account-jobs-by-job', queues[queueId].length || 0, { tag: queueId })
+      })
+    }, 20000)
   }
 
   if (env.IS_ENTERPRISE) {
