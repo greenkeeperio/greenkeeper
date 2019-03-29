@@ -90,14 +90,34 @@ describe('create version branch', () => {
         }
       }
     })
+    await npm.put({
+      _id: '@finnpauls/invalid',
+      distTags: {
+        latest: 'invalid'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        }
+      }
+    })
   })
   afterAll(async () => {
     const { installations, repositories, payments, npm } = await dbs()
     await Promise.all([
       removeIfExists(installations, '123', '124', '124gke', '125', '126', '127', '2323'),
-      removeIfExists(npm, '@finnpauls/dep', '@finnpauls/dep2', 'jest', 'best'),
+      removeIfExists(npm, '@finnpauls/dep', '@finnpauls/dep2', '@finnpauls/invalid', 'jest', 'best'),
       removeIfExists(payments, '124', '125'),
-      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease', 'ignored-in-group-1'),
+      removeIfExists(repositories, '1', '41', '42', '43', '44', '45', '00044', '00045', '46', '47', '48', '49', '50', '51', '86', 'too-many-packages', 'prerelease', 'ignored-in-group-1'),
       removeIfExists(repositories, '41:branch:1234abcd', '42:branch:1234abcd', '43:branch:1234abcd', '50:branch:1234abcd', '86:branch:1234abcd',
         '1:branch:2222abcd', '41:pr:321', '50:pr:321', '1:pr:3210', '50_cvb_lockfile', '50_cvb_lockfile:pr:1234', '50_cvb_lockfile:branch:1234abcd')
     ])
@@ -854,6 +874,84 @@ describe('create version branch', () => {
       oldVersion: '1.0.0'
     })
 
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('ignore invalid package.json version', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '00044',
+      accountId: '127',
+      fullName: 'finnp/test',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            '@finnpauls/dep': 'git:bla'
+          },
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
+    })
+    expect.assertions(1)
+
+    nock('https://api.github.com')
+      .post('/app/installations/42/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      // this should never be called, cvb should stop before calling it
+      expect(true).toBeFalsy()
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep',
+      accountId: '127',
+      repositoryId: '44',
+      type: 'devDependencies',
+      version: '2.0.0',
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.1': {}
+      }
+    })
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+  })
+
+  test('ignore invalid latest version', async () => {
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/invalid',
+      accountId: '127',
+      repositoryId: '44',
+      type: 'devDependencies',
+      version: '2.0.0',
+      oldVersion: '^2.0.1',
+      oldVersionResolved: '2.0.1',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {}
+      }
+    })
     // no new job scheduled
     expect(newJob).toBeFalsy()
   })
