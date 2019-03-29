@@ -159,7 +159,7 @@ module.exports = async function (
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
       if (!semver.valid(latestDependencyVersion)) {
-        log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} is not a valid version`)
+        log.warn(`exited transform creation: ${depName} latestDependencyVersion: ${latestDependencyVersion} is not a valid version`)
         return null
       }
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
