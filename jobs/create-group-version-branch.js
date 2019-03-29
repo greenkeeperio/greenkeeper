@@ -158,6 +158,10 @@ module.exports = async function (
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      if (!semver.valid(latestDependencyVersion)) {
+        log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} is not a valid version`)
+        return null
+      }
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       return Promise.all(monorepo.map(async pkgRow => {
@@ -169,13 +173,17 @@ module.exports = async function (
         const oldPkgVersion = _.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
         if (!oldPkgVersion) {
           log.warn(`exited transform creation: could not find old package version for ${depName}`, { newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`) })
-          return
+          return null
+        }
+        if (!semver.validRange(oldPkgVersion)) {
+          log.warn(`exited transform creation: ${depName} oldPkgVersion: ${oldPkgVersion} is not a valid version`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
+          return null
         }
         const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
         // no downgrades
         if (semver.ltr(latestDependencyVersion, oldPkgVersion)) {
           log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
-          return
+          return null
         }
 
         const transforms = []

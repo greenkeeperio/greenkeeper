@@ -131,10 +131,18 @@ module.exports = async function (
         log.warn(`exited transform creation: could not find old package version for ${depName}`, { newVersion: version, dependencyType, packageFile: _.get(json, [dependencyType]) })
         return null
       }
+      if (!semver.validRange(oldPkgVersion)) {
+        log.warn(`exited transform creation: ${depName} oldPkgVersion: ${oldPkgVersion} is not a valid version`, { newVersion: version, oldVersion: oldPkgVersion })
+        return null
+      }
 
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      if (!semver.validRange(latestDependencyVersion)) {
+        log.warn(`exited transform creation: ${depName} latest: ${latestDependencyVersion} is not a valid version`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
+        return null
+      }
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
