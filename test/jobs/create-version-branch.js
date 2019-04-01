@@ -51,6 +51,7 @@ describe('create version branch', () => {
 
     await npm.put({
       _id: '@finnpauls/dep',
+      updatedAt: '2019-03-30T17:59:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -72,6 +73,7 @@ describe('create version branch', () => {
 
     await npm.put({
       _id: '@finnpauls/dep2',
+      updatedAt: '2019-03-30T17:59:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -92,6 +94,7 @@ describe('create version branch', () => {
     })
     await npm.put({
       _id: '@finnpauls/invalid',
+      updatedAt: '2019-03-30T17:59:13.829Z',
       distTags: {
         latest: 'invalid'
       },
@@ -1105,6 +1108,7 @@ describe('create version branch', () => {
     })
     await npm.put({
       _id: 'jest',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.2.0'
       },
@@ -1129,7 +1133,7 @@ describe('create version branch', () => {
         }
       }
     })
-    expect.assertions(10)
+    expect.assertions(11)
 
     const githubMock = nock('https://api.github.com')
       .post('/app/installations/40/access_tokens')
@@ -1188,6 +1192,7 @@ describe('create version branch', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'jest',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '2323',
       repositoryId: '50',
       type: 'devDependencies',
@@ -1204,6 +1209,7 @@ describe('create version branch', () => {
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('50:branch:1234abcd')
     expect(branch).toBeTruthy()
+    expect(branch.head).toEqual('greenkeeper/monorepo.jest-20190330170013')
     await expect(repositories.get('50:pr:1234')).resolves.not.toThrow('missing')
     expect(githubMock.isDone()).toBeTruthy()
   })
@@ -1329,6 +1335,7 @@ describe('create version branch', () => {
     })
     await npm.put({
       _id: 'best',
+      updatedAt: '2019-03-30T17:59:13.829Z',
       distTags: {
         latest: '1.2.0'
       },
@@ -1488,7 +1495,6 @@ describe('create version branch', () => {
   Monorepo section
 */
 describe('create version branch for dependencies from monorepos', () => {
-  const constantDate = new Date('2018-11-19T11:11:11.000Z')
   afterEach(() => {
     jest.resetModules()
     jest.clearAllMocks()
@@ -1498,12 +1504,6 @@ describe('create version branch for dependencies from monorepos', () => {
     jest.resetModules()
     jest.clearAllMocks()
     nock.cleanAll()
-    global.Date = class extends Date {
-      constructor () {
-        super()
-        return constantDate
-      }
-    }
   })
   beforeAll(async () => {
     const { installations, npm } = await dbs()
@@ -1514,6 +1514,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: 'colors',
+      updatedAt: '2019-03-30T17:29:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1526,6 +1527,7 @@ describe('create version branch for dependencies from monorepos', () => {
     // should be an npm url for this package
     await npm.put({
       _id: 'colors-blue',
+      updatedAt: '2019-03-30T17:39:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1536,6 +1538,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'colors-red',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1547,6 +1550,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: 'flowers',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1557,6 +1561,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'flowers-blue',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1567,6 +1572,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'flowers-red',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1577,6 +1583,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'flowers-green',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1694,6 +1701,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'colors-red',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-1-ignored',
       type: 'dependencies',
@@ -1720,7 +1728,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1-ignored:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20190330170013')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1823,6 +1831,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'colors-red',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-1',
       type: 'dependencies',
@@ -1850,7 +1859,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-1:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.colors-20190330170013')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -1881,6 +1890,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: 'numbers',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.2.0'
       },
@@ -1891,6 +1901,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'numbers-three',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.5.0'
       },
@@ -1903,6 +1914,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'numbers-four',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.3.0'
       },
@@ -1988,6 +2000,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'numbers',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-deps-diff',
       type: 'dependencies',
@@ -2015,7 +2028,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-deps-diff:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.numbers-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.numbers-20190330170013')
 
     expect(pr.number).toBe(66)
     expect(pr.state).toEqual('open')
@@ -2141,6 +2154,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     const newJob = await createVersionBranch({
       dependency: 'flowers-red',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-2',
       type: 'dependencies',
@@ -2174,7 +2188,7 @@ describe('create version branch for dependencies from monorepos', () => {
     const pr = await repositories.get('mono-2:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/monorepo.flowers-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.flowers-20190330170013')
 
     expect(pr.number).toBe(77)
     expect(pr.state).toEqual('open')
@@ -2199,6 +2213,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: 'enzyme',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '3.4.4'
       },
@@ -2225,6 +2240,7 @@ describe('create version branch for dependencies from monorepos', () => {
     })
     await npm.put({
       _id: 'enzyme-adapter-react-16',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.2.0'
       },
@@ -2247,6 +2263,7 @@ describe('create version branch for dependencies from monorepos', () => {
     // have a commit itself, since it isn’t depended upon
     await npm.put({
       _id: 'enzyme-adapter-utils',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.6.0'
       },
@@ -2341,6 +2358,7 @@ describe('create version branch for dependencies from monorepos', () => {
     // We might be able to leave this as-is and just handle things in cvb correctly.
     const newJob = await createVersionBranch({
       dependency: 'enzyme-adapter-utils',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-nuclear-100',
       plan: 'free',
@@ -2361,7 +2379,7 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-100:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.enzyme-20190330170013')
   })
 
   test('create branch name with prerelease suffix if user had prerelases in package.json', async () => {
@@ -2383,6 +2401,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: '@babel/core',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '7.0.0-rc.2'
       },
@@ -2404,6 +2423,7 @@ describe('create version branch for dependencies from monorepos', () => {
 
     await npm.put({
       _id: '@babel/preset-env',
+      updatedAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '7.0.0-rc.2'
       },
@@ -2475,6 +2495,7 @@ describe('create version branch for dependencies from monorepos', () => {
     // We might be able to leave this as-is and just handle things in cvb correctly.
     const newJob = await createVersionBranch({
       dependency: '@babel/core',
+      dependencyUpdatedAt: '20190330170013',
       accountId: 'mono-123',
       repositoryId: 'mono-nuclear-babel',
       plan: 'free',
@@ -2491,6 +2512,6 @@ describe('create version branch for dependencies from monorepos', () => {
     await expect(repositories.get('mono-nuclear-babel:pr:321')).rejects.toThrow('missing')
 
     expect(branch.processed).toBeFalsy() // I think
-    expect(branch.head).toEqual('greenkeeper/monorepo.babel7-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/monorepo.babel7-20190330170013')
   })
 })
