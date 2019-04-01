@@ -53,6 +53,7 @@ module.exports = async function (
   let monorepoGroupName = null
   let monorepoGroup = ''
   let relevantDependencies = []
+  let hasNewUpdates = false // to prevent commenting on a PR multiple times with exactly the same update
 
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
@@ -111,6 +112,9 @@ module.exports = async function (
 
   const ghqueue = githubQueue(installationId)
   const openPR = await findOpenPR()
+  if (!openPR) {
+    hasNewUpdates = true
+  }
 
   let satisfiesAll = true
   async function createTransformsArray (group, json) {
@@ -164,10 +168,14 @@ module.exports = async function (
       let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
       if (!satisfies && openPR) {
-        await upsert(repositories, openPR._id, {
-          comments: [...(openPR.comments || []), latestDependencyVersion]
-        })
-        commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+        const dependencyNameAndVersion = `${depName}-${latestDependencyVersion}`
+        if (!openPR.comments.includes(dependencyNameAndVersion)) {
+          hasNewUpdates = true
+          await upsert(repositories, openPR._id, {
+            comments: [...(openPR.comments || []), dependencyNameAndVersion]
+          })
+          commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+        }
       }
       log.info(`commit message for ${depName} created`, { commitMessage })
 
@@ -225,6 +233,7 @@ module.exports = async function (
   const transforms = _.compact(_.flatten(await createTransformsArray(group, repoDoc.packages['package.json'])))
 
   if (transforms.length === 0) return
+  if (!hasNewUpdates) return // don't create unnecessary doubled branches
 
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', { defaultBranch: base })
