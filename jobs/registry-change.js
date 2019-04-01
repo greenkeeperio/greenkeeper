@@ -13,7 +13,7 @@ const {
   getSatisfyingVersions,
   getOldVersionResolved
 } = require('../utils/utils')
-const { getAllAccounts } = require('../utils/registry-change-utils')
+const { getAllAccounts, getAllMonorepoDocs } = require('../utils/registry-change-utils')
 const {
   isPartOfMonorepo,
   hasAllMonorepoUdates,
@@ -158,10 +158,7 @@ module.exports = async function (
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
-    const monorepoDocs = (await repositories.query('by_full_name', {
-      keys: keysToFindMonorepoDocs,
-      include_docs: true
-    })).rows
+    const monorepoDocs = await getAllMonorepoDocs(repositories, keysToFindMonorepoDocs)
 
     if (repoDocsCount >= 4000) log.info(`got ${monorepoDocs.length} monorepoDocs`)
 
