@@ -154,7 +154,7 @@ module.exports = async function (
   if (repoDocsCount >= 4000) log.info(`got ${Object.keys(accounts).length} accounts`)
 
   // ******** Monorepos begin
-  const depTimestamp = npmDoc.updatedAt ? npmDoc.updatedAt : npmDoc.createdAt
+  const depTimestamp = npmDbDoc.updatedAt ? npmDbDoc.updatedAt : npmDbDoc.createdAt
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
