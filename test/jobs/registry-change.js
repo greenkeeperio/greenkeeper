@@ -43,24 +43,29 @@ describe('registry change create jobs', async () => {
       }),
       npm.put({
         _id: 'standard',
+        createdAt: '2019-03-30T17:00:13.829Z',
+        updatedAt: '2019-03-31T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'eslint',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'betazed',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0-beta.1'
         }
       }),
       npm.put({
         _id: 'kronos',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0-beta.1'
         }
@@ -103,6 +108,7 @@ describe('registry change create jobs', async () => {
   test('registry change skip already processed version', async () => {
     const newJob = await registryChange({
       name: 'registry-change',
+      createdAt: '2019-03-30T17:00:13.829Z',
       dependency: 'standard',
       distTags: {
         latest: '8.0.0'
@@ -121,6 +127,7 @@ describe('registry change create jobs', async () => {
   test('registry change skip distTags other than latest', async () => {
     const newJob = await registryChange({
       name: 'registry-change',
+      createdAt: '2019-03-30T17:00:13.829Z',
       dependency: 'standard',
       distTags: {
         latest: '8.0.0',
@@ -160,6 +167,7 @@ describe('registry change create jobs', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'eslint',
+      createdAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '9.0.0'
       },
@@ -198,6 +206,7 @@ describe('registry change create jobs', async () => {
 
     const newJobs = await registryChange({
       name: 'registry-change',
+      createdAt: '2019-03-30T17:00:13.829Z',
       dependency: 'eslint',
       distTags: {
         latest: '10.0.0'
@@ -254,6 +263,7 @@ describe('registry change create jobs', async () => {
       }),
       npm.put({
         _id: 'react',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
@@ -326,6 +336,7 @@ describe('registry change create jobs', async () => {
       }),
       npm.put({
         _id: 'lodash',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
@@ -418,6 +429,7 @@ describe('registry change create jobs', async () => {
       }),
       npm.put({
         _id: 'redux',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
@@ -427,6 +439,7 @@ describe('registry change create jobs', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'redux',
+      createdAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '8.0.0'
       },
@@ -513,42 +526,49 @@ describe('monorepo-release: registry change create jobs', async () => {
       }),
       npm.put({
         _id: 'huge-1',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'kroko',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'kroko-dile',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'colors',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '2.0.0'
         }
       }),
       npm.put({
         _id: 'colors-blue',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
       }),
       npm.put({
         _id: 'bulldog',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '2.0.0'
         }
       }),
       npm.put({
         _id: 'pug',
+        updatedAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           latest: '1.0.0'
         }
@@ -655,6 +675,7 @@ describe('monorepo-release: registry change create jobs', async () => {
 
     const newJobs = await registryChange({
       name: 'registry-change',
+      createdAt: '2019-03-30T17:00:13.829Z',
       dependency: 'colors-blue',
       distTags: {
         latest: '2.0.0'
@@ -696,6 +717,7 @@ describe('monorepo-release: registry change create jobs', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
       dependency: 'pug',
+      createdAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -791,6 +813,8 @@ describe('monorepo-release: registry change create jobs', async () => {
       }),
       npm.put({
         _id: '@storybook/vue',
+        updatedAt: '2019-03-30T17:00:13.829Z',
+        createdAt: '2019-03-30T17:00:13.829Z',
         distTags: {
           alpha: '4.0.0-alpha.9',
           latest: '3.4.6',
