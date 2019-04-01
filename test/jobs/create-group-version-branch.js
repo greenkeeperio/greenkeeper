@@ -12,14 +12,7 @@ describe('create-group-version-branch', async () => {
     nock.cleanAll()
   })
 
-  const constantDate = new Date('2018-11-19T11:11:11.000Z')
   beforeAll(async () => {
-    global.Date = class extends Date {
-      constructor () {
-        super()
-        return constantDate
-      }
-    }
     const { installations, repositories, npm } = await dbs()
     await npm.put({
       _id: 'react',
@@ -362,6 +355,7 @@ describe('create-group-version-branch', async () => {
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
     const newJob = await createGroupVersionBranch({
       dependency: 'react',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: '123-monorepo',
       types: [
@@ -407,7 +401,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     const pr = await repositories.get('123-monorepo:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -478,6 +472,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'react',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages-different-types',
       repositoryId: '123-monorepo-different-types',
       types: [
@@ -523,7 +518,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-different-types:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-different-types:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo-different-types')
     expect(branch.accountId).toEqual('123-two-packages-different-types')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -595,6 +590,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'react',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-dep-ignored-on-group-level',
       repositoryId: '123-monorepo-dep-ignored-on-group-level',
       types: [
@@ -654,6 +650,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'react',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: 'too-many-packages',
       types: [
@@ -734,6 +731,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'react-with-pre',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: 'prerelease',
       types: [
@@ -839,6 +837,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'react',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: '123-monorepo',
       types: [
@@ -882,7 +881,7 @@ describe('create-group-version-branch', async () => {
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -987,6 +986,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'pouchdb-adapter-utils',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release',
       types: [
@@ -1046,7 +1046,7 @@ describe('create-group-version-branch', async () => {
     const pr = await repositories.get('123-monorepo-monorepo-release:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1169,6 +1169,7 @@ describe('create-group-version-branch', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: 'pouchdb-adapter-utils',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release-different',
       types: [
@@ -1228,7 +1229,7 @@ describe('create-group-version-branch', async () => {
     const pr = await repositories.get('123-monorepo-monorepo-release-different:pr:321')
 
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release-different')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1292,6 +1293,7 @@ describe('create-group-version-branch', async () => {
     const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
     const newJob = await createGroupVersionBranch({
       dependency: 'pouchdb-adapter-utils',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-two-packages',
       repositoryId: '123-monorepo-monorepo-release-ignore',
       types: [
@@ -1337,7 +1339,7 @@ describe('create-group-version-branch', async () => {
     const branch = await repositories.get('123-monorepo-monorepo-release-ignore:branch:1234abcd')
     const pr = await repositories.get('123-monorepo-monorepo-release-ignore:pr:321')
     expect(branch.processed).toBeTruthy()
-    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20181119111111')
+    expect(branch.head).toEqual('greenkeeper/default/monorepo.pouchdb-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo-monorepo-release-ignore')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
@@ -1365,6 +1367,7 @@ describe('create-group-version-branch with lockfiles', async () => {
 
     await npm.put({
       _id: '@finnpauls/dep',
+      createdAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '2.0.0'
       },
@@ -1376,6 +1379,7 @@ describe('create-group-version-branch with lockfiles', async () => {
 
     await npm.put({
       _id: '@finnpauls/depp',
+      createdAt: '2019-03-30T17:00:13.829Z',
       distTags: {
         latest: '1.1.0'
       },
@@ -1487,6 +1491,7 @@ describe('create-group-version-branch with lockfiles', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: '@finnpauls/dep',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-lockfiles',
       repositoryId: 'monorepo-with-lockfiles-1',
       types: [
@@ -1579,6 +1584,7 @@ describe('create-group-version-branch with lockfiles', async () => {
 
     const newJob = await createGroupVersionBranch({
       dependency: '@finnpauls/depp',
+      dependencyUpdatedAt: '20190330170013',
       accountId: '123-lockfiles',
       repositoryId: 'monorepo-with-lockfiles-2',
       types: [

@@ -154,6 +154,7 @@ module.exports = async function (
   if (repoDocsCount >= 4000) log.info(`got ${Object.keys(accounts).length} accounts`)
 
   // ******** Monorepos begin
+  const depTimestamp = npmDoc.updatedAt ? npmDoc.updatedAt : npmDoc.createdAt
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
@@ -164,7 +165,7 @@ module.exports = async function (
 
     if (repoDocsCount >= 4000) log.info(`got ${monorepoDocs.length} monorepoDocs`)
 
-    _.forEach(withMultiplePackageJSON, monorepo => {
+    withMultiplePackageJSON.forEach(monorepo => {
       const account = accounts[monorepo[0].value.accountId]
       if (isFromHook && String(account.installation) !== installation) return {}
 
@@ -177,6 +178,7 @@ module.exports = async function (
         distTags,
         distTag,
         dependency,
+        dependencyUpdatedAt: new Date(depTimestamp).toISOString().substr(0, 19).replace(/[^0-9]/g, ''),
         versions,
         account,
         repositoryId: repoDoc.id,
@@ -206,6 +208,7 @@ module.exports = async function (
           {
             name: 'create-version-branch',
             dependency,
+            dependencyUpdatedAt: new Date(depTimestamp).toISOString().substr(0, 19).replace(/[^0-9]/g, ''),
             version,
             versions,
             oldVersionResolved,
