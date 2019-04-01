@@ -31,6 +31,7 @@ const { isGatsbyPkg } = require('../lib/isGatsby')
 module.exports = async function (
   {
     dependency,
+    dependencyUpdatedAt,
     accountId,
     repositoryId,
     types,
@@ -123,8 +124,7 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     dependencyGroup = relevantDependencies
-    const datetime = new Date().toISOString().substr(0, 19).replace(/[^0-9]/g, '')
-    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}-${datetime}`
+    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}-${dependencyUpdatedAt}`
   } else {
     dependencyKey = dependency
     dependencyGroup = [dependency]
