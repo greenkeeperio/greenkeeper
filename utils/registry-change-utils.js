@@ -27,7 +27,33 @@ async function getAllDocs (db, skip, limit, accountIds) {
   })).rows
 }
 
+async function getAllMonorepoDocs (repositories, keysToFindMonorepoDocs) {
+  const limit = 200
+  let skip = 0
+  let monorepoDocs = []
+
+  // send multiple smaller allDocs requests and paginate them.
+  while (true) {
+    const partialMonorepoDocs = await queryAllDocs(repositories, skip, limit, keysToFindMonorepoDocs)
+    if (partialMonorepoDocs.length === 0) break
+
+    skip += limit
+    monorepoDocs = [...monorepoDocs, ...partialMonorepoDocs]
+  }
+  return monorepoDocs
+}
+
+async function queryAllDocs (db, skip, limit, monorepoKeys) {
+  return (await db.query('by_full_name', {
+    keys: monorepoKeys,
+    limit,
+    skip,
+    include_docs: true
+  })).rows
+}
+
 module.exports = {
   getAllAccounts,
-  getAllDocs
+  getAllDocs,
+  getAllMonorepoDocs
 }
