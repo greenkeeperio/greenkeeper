@@ -194,7 +194,6 @@ module.exports = async function (
 
   const filteredSortedPackages = filterAndSortPackages(withOnlyRootPackageJSON)
   if (repoDocsCount >= 4000) log.info(`got ${filteredSortedPackages.length} filtered and sorted packages`)
-
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
