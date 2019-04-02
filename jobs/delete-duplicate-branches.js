@@ -31,63 +31,77 @@ look like:
 }
 */
 
+var log = console.log
+
+console.log = function () {
+  log.apply(console, [new Date().toJSON()].concat([...arguments]))
+}
+
+console.log('Required')
+
 module.exports = async function (dryRun = true) {
+  console.log(`
+Starting delete-duplicate-branches.js with dryRun: ${dryRun}.`)
   const { repositories, installations } = await dbs()
 
   let success = []
   let failedInGitHub = []
   let failedInDB = []
 
-  async function asyncForEach (array, callback) {
-    for (let index = 0; index < array.length; index++) {
-      await callback(array[index], index, array)
-    }
-  }
-
-  fs.createReadStream(path.resolve('./branches.json'))
+  const sourceFile = dryRun ? './jobs/branches_dry_run.json' : './jobs/branches.json'
+  fs.createReadStream(path.resolve(sourceFile))
     .pipe(JSONStream.parse('dupes.*'))
-    .on('data', (branchArray) => {
-      asyncForEach(branchArray, async (branch, index) => {
-        const repoId = branch.key[0]
-        const accountId = branch.accountId
-        const repoDoc = await repositories.get(String(repoId))
-        const repositoryFullName = repoDoc.fullName.toLowerCase()
-        const accountDoc = await installations.get(String(accountId))
-        const installationId = accountDoc.installation
-        // Skip first branch so we have one correct one left over
-        if (index !== 0) {
-          const branchName = branch.value
-          console.log(`
-🤖  Preparing deletion - branchId: "${branch.id}",  #${index} for repoId "${repoId}", branchName: "${branchName}"`)
-          dryRun && console.log(`
-    Dry run deleteBranchFromGitHub
-      installationId: ${installationId}
-      branchName: ${branchName}
-      repositoryFullName: ${repositoryFullName}`)
-          const branchDeletedFromGitHub = dryRun ? true : await deleteBranchFromGitHub({
-            installationId,
-            branchName,
-            repositoryFullName
-          })
-          if (branchDeletedFromGitHub) {
-            // Delete branch doc from db, get it first to get latest rev for remove
-            const branchDoc = await repositories.get(branch.id)
-            dryRun && console.log(`    dry run remove repo from DB - branch.id: ${branch.id}`)
-            const response = dryRun ? { ok: true } : await repositories.remove(branchDoc)
-            const docDeletedFromDB = !!response.ok
-            if (docDeletedFromDB) {
-              console.log(`✅  Finished with ${branch.id}, it was deleted successfully in GitHub and our DB.`)
-              success.push(branch.id)
+    .on('error', (error) => {
+      console.log('meep meep', error)
+    })
+    .on('data', async (branchArray) => {
+      let index = 0
+      for (const branch of branchArray) {
+        try {
+          const repoId = branch.key[0]
+          const accountId = branch.value.accountId
+          const repoDoc = await repositories.get(String(repoId))
+          const repositoryFullName = repoDoc.fullName.toLowerCase()
+          const accountDoc = await installations.get(String(accountId))
+          const installationId = accountDoc.installation
+          // Skip first branch so we have one correct one left over
+          if (index !== 0) {
+            const branchName = branch.value.branchHead
+            console.log(`
+  🤖  Preparing deletion - branchId: "${branch.id}",  #${index} for repoId "${repoId}", branchName: "${branchName}"`)
+            dryRun && console.log(`
+      Dry run deleteBranchFromGitHub
+        installationId: ${installationId}
+        branchName: ${branchName}
+        repositoryFullName: ${repositoryFullName}`)
+            const branchDeletedFromGitHub = dryRun ? true : await deleteBranchFromGitHub({
+              installationId,
+              branchName,
+              repositoryFullName
+            })
+            if (branchDeletedFromGitHub) {
+              // Delete branch doc from db, get it first to get latest rev for remove
+              const branchDoc = await repositories.get(branch.id)
+              dryRun && console.log(`    dry run remove repo from DB - branch.id: ${branch.id}`)
+              const response = dryRun ? { ok: true } : await repositories.remove(branchDoc)
+              const docDeletedFromDB = !!response.ok
+              if (docDeletedFromDB) {
+                console.log(`✅  Finished with ${branch.id}, it was deleted successfully in GitHub and our DB.`)
+                success.push(branch.id)
+              } else {
+                console.log(`💥  Finished with ${branch.id}, it was deleted in GitHub but failed in our DB.`)
+                failedInDB.push(branch.id)
+              }
             } else {
-              console.log(`💥  Finished with ${branch.id}, it was deleted in GitHub but failed in our DB.`)
-              failedInDB.push(branch.id)
+              console.log(`💥  Finished with ${branch.id}, it failed in GitHub.`)
+              failedInGitHub.push(branch.id)
             }
-          } else {
-            console.log(`💥  Finished with ${branch.id}, it failed in GitHub.`)
-            failedInGitHub.push(branch.id)
           }
+          index++
+        } catch (err) {
+          console.log('💥  ', err)
         }
-      })
+      }
     })
     .on('end', () => {
       dryRun && console.log('The dry run completed. Everything should have succeeded.')
