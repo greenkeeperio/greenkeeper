@@ -169,7 +169,7 @@ module.exports = async function (
 
       if (!satisfies && openPR) {
         const dependencyNameAndVersion = `${depName}-${latestDependencyVersion}`
-        if (!openPR.comments.includes(dependencyNameAndVersion)) {
+        if (!openPR.comments || !openPR.comments.includes(dependencyNameAndVersion)) {
           hasNewUpdates = true
           await upsert(repositories, openPR._id, {
             comments: [...(openPR.comments || []), dependencyNameAndVersion]
