@@ -6,6 +6,12 @@ exports[`create version branch comment pr 1`] = `
 [Update to this version instead 🚀](https://github.com/finnp/test2/compare/master...finnp:greenkeeper%2F%40finnpauls%2Fdep2-2.0.0)"
 `;
 
+exports[`create version branch comment pr 2`] = `
+Array [
+  "@finnpauls/dep2-2.0.0",
+]
+`;
+
 exports[`create version branch for dependencies from monorepos new pull request 1`] = `
 "
 ## There have been updates to the *colors* monorepo: 
@@ -263,4 +269,19 @@ If you don’t accept this pull request, your project will work just like it did
 Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 
 "
+`;
+
+exports[`create version branch no new branch, because comment already exists 1`] = `
+Object {
+  "_id": "43:pr:6",
+  "_rev": "1-a82652e0cb814a2cdf20f636634b45df",
+  "comments": Array [
+    "@finnpauls/dep3-2.0.0",
+  ],
+  "dependency": "@finnpauls/dep3",
+  "number": 6,
+  "repositoryId": "43",
+  "state": "open",
+  "type": "pr",
+}
 `;

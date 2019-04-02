@@ -19,7 +19,7 @@ describe('create version branch', () => {
     nock.cleanAll()
   })
   beforeAll(async () => {
-    const { installations, npm } = await dbs()
+    const { installations, npm, repositories } = await dbs()
     await installations.put({
       _id: '123',
       installation: 37
@@ -47,6 +47,28 @@ describe('create version branch', () => {
     await installations.put({
       _id: '2323',
       installation: 40
+    })
+
+    await repositories.put({
+      _id: '43',
+      accountId: '126',
+      fullName: 'finnp/test2',
+      files: {
+        'package.json': ['package.json'],
+        'package-lock.json': [],
+        'npm-shrinkwrap.json': [],
+        'yarn.lock': []
+      },
+      packages: {
+        'package.json': {
+          devDependencies: {
+            '@finnpauls/dep2': '^1.0.0'
+          },
+          greenkeeper: {
+            label: 'customlabel'
+          }
+        }
+      }
     })
 
     await npm.put({
@@ -79,6 +101,33 @@ describe('create version branch', () => {
       },
       versions: {
         '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        }
+      }
+    })
+    await npm.put({
+      _id: '@finnpauls/dep3',
+      updatedAt: '2019-03-30T17:59:13.829Z',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '1.0.0': {
+          'repository': {
+            'type': 'git',
+            'url': 'git+https://github.com/finnpauls/dep2.git'
+          }
+        },
+        '1.2.0': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/finnpauls/dep2.git'
@@ -668,40 +717,17 @@ describe('create version branch', () => {
 
   test('comment pr', async () => {
     const { repositories } = await dbs()
-    await Promise.all([
-      repositories.put({
-        _id: '43:pr:5',
-        state: 'open',
-        type: 'pr',
-        repositoryId: '43',
-        number: 5,
-        comments: [],
-        dependency: '@finnpauls/dep2'
-      }),
-      repositories.put({
-        _id: '43',
-        accountId: '126',
-        fullName: 'finnp/test2',
-        files: {
-          'package.json': ['package.json'],
-          'package-lock.json': [],
-          'npm-shrinkwrap.json': [],
-          'yarn.lock': []
-        },
-        packages: {
-          'package.json': {
-            devDependencies: {
-              '@finnpauls/dep2': '^1.0.0'
-            },
-            greenkeeper: {
-              label: 'customlabel'
-            }
-          }
-        }
-      })
-    ])
+    await repositories.put({
+      _id: '43:pr:5',
+      state: 'open',
+      type: 'pr',
+      repositoryId: '43',
+      number: 5,
+      comments: [],
+      dependency: '@finnpauls/dep2'
+    })
 
-    expect.assertions(5)
+    expect.assertions(6)
 
     const githubMock = nock('https://api.github.com')
       .post('/app/installations/41/access_tokens')
@@ -771,7 +797,73 @@ describe('create version branch', () => {
     // no new job scheduled
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('43:branch:1234abcd')
+    const pr = await repositories.get('43:pr:5')
+    expect(pr.comments).toMatchSnapshot()
     expect(branch.processed).toBeTruthy()
+  })
+
+  test('no new branch, because comment already exists', async () => {
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '43:pr:6',
+      state: 'open',
+      type: 'pr',
+      repositoryId: '43',
+      number: 6,
+      comments: ['@finnpauls/dep3-2.0.0'],
+      dependency: '@finnpauls/dep3'
+    })
+
+    expect.assertions(4)
+
+    const githubMock = nock('https://api.github.com')
+      .post('/app/installations/41/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/test2/pulls/6')
+      .reply(200, {
+        state: 'open',
+        merged: false
+      })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+
+    jest.mock('../../lib/create-branch', () => async ({ transforms }) => {
+      return '1234abcdf'
+    })
+    const createVersionBranch = require('../../jobs/create-version-branch')
+
+    const newJob = await createVersionBranch({
+      dependency: '@finnpauls/dep3',
+      accountId: '126',
+      repositoryId: '43',
+      type: 'devDependencies',
+      version: '2.0.0',
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '1.1.0': {},
+        '2.0.0': {}
+      }
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    // no new job scheduled
+    expect(newJob).toBeFalsy()
+    await expect(repositories.get('43:branch:1234abcdf')).rejects.toThrow('missing')
+    const pr = await repositories.get('43:pr:6')
+    expect(pr).toMatchSnapshot()
   })
 
   test('no downgrades', async () => {
@@ -1230,14 +1322,14 @@ describe('create version branch', () => {
         'package.json': {
           devDependencies: {
             'greenkeeper-lockfile': '1.1.1',
-            '@finnpauls/dep3': '^2.0.0'
+            '@finnpauls/dep4': '^2.0.0'
           }
         }
       }
     })
 
     await npm.put({
-      _id: '@finnpauls/dep3',
+      _id: '@finnpauls/dep4',
       distTags: {
         latest: '2.1.0'
       },
@@ -1291,7 +1383,7 @@ describe('create version branch', () => {
     const createVersionBranch = require('../../jobs/create-version-branch')
 
     const newJob = await createVersionBranch({
-      dependency: '@finnpauls/dep3',
+      dependency: '@finnpauls/dep4',
       accountId: '2323',
       repositoryId: '86',
       type: 'devDependencies',
