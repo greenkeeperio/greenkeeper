@@ -798,7 +798,6 @@ describe('create-group-version-branch', async () => {
       accountId: '123-two-packages',
       repositoryId: '123-monorepo',
       version: '2.0.0',
-      comments: [],
       oldVersion: '^1.0.0',
       dependency: 'react',
       initial: false,
