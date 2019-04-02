@@ -14,11 +14,17 @@ look like:
       {
         "id":"100000999:branch:369a677c347c8dfed4cd0b64a3efae7ccd27262c",
         "key":["100000999","enzyme","3.8.0"],
-        "value":"greenkeeper/monorepo.enzyme-20181210100936"
+        "value": {
+          branchHead: "greenkeeper/monorepo.enzyme-20181210100936"
+          accountId: "238642387"
+        }
       },{
         "id":"100000999:branch:9f86308f4b6286ed2475b716812f7c101fcd36fe",
         "key":["100000999","enzyme","3.8.0"],
-        "value":"greenkeeper/monorepo.enzyme-20181210101135"
+        "value": {
+          branchHead: "greenkeeper/monorepo.enzyme-20181210101135"
+          accountId: "238642387"
+        }
       }
     ]
   }
@@ -42,15 +48,17 @@ module.exports = async function () {
     .pipe(JSONStream.parse('dupes.*'))
     .on('data', (branchArray) => {
       asyncForEach(branchArray, async (branch, index) => {
-        // Skip first branch
         const repoId = branch.key[0]
         const accountId = branch.accountId
-        const repositoryFullName = await repositories.get(String(repoId))
+        const repoDoc = await repositories.get(String(repoId))
+        const repositoryFullName = repoDoc.fullName.toLowerCase()
         const accountDoc = await installations.get(String(accountId))
         const installationId = accountDoc.installation
+        // Skip first branch so we have one correct one left over
         if (index !== 0) {
-          console.log(index, branch.id)
           const branchName = branch.value
+          console.log('\n')
+          console.log(`🤖  Preparing deletion - branchId: "${branch.id}",  #${index} for repoId "${repoId}", branchName: "${branchName}"`)
           const branchDeletedFromGitHub = await deleteBranchFromGitHub({
             installationId,
             branchName,
