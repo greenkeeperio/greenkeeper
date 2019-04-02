@@ -723,7 +723,6 @@ describe('create version branch', () => {
       type: 'pr',
       repositoryId: '43',
       number: 5,
-      comments: [],
       dependency: '@finnpauls/dep2'
     })
 
