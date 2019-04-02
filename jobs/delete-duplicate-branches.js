@@ -31,7 +31,7 @@ look like:
 }
 */
 
-module.exports = async function () {
+module.exports = async function (dryRun = true) {
   const { repositories, installations } = await dbs()
 
   let success = []
@@ -57,9 +57,14 @@ module.exports = async function () {
         // Skip first branch so we have one correct one left over
         if (index !== 0) {
           const branchName = branch.value
-          console.log('\n')
-          console.log(`🤖  Preparing deletion - branchId: "${branch.id}",  #${index} for repoId "${repoId}", branchName: "${branchName}"`)
-          const branchDeletedFromGitHub = await deleteBranchFromGitHub({
+          console.log(`
+🤖  Preparing deletion - branchId: "${branch.id}",  #${index} for repoId "${repoId}", branchName: "${branchName}"`)
+          dryRun && console.log(`
+    Dry run deleteBranchFromGitHub
+      installationId: ${installationId}
+      branchName: ${branchName}
+      repositoryFullName: ${repositoryFullName}`)
+          const branchDeletedFromGitHub = dryRun ? true : await deleteBranchFromGitHub({
             installationId,
             branchName,
             repositoryFullName
@@ -67,7 +72,8 @@ module.exports = async function () {
           if (branchDeletedFromGitHub) {
             // Delete branch doc from db, get it first to get latest rev for remove
             const branchDoc = await repositories.get(branch.id)
-            const response = await repositories.remove(branchDoc)
+            dryRun && console.log(`    dry run remove repo from DB - branch.id: ${branch.id}`)
+            const response = dryRun ? { ok: true } : await repositories.remove(branchDoc)
             const docDeletedFromDB = !!response.ok
             if (docDeletedFromDB) {
               console.log(`✅  Finished with ${branch.id}, it was deleted successfully in GitHub and our DB.`)
@@ -84,13 +90,16 @@ module.exports = async function () {
       })
     })
     .on('end', () => {
-      console.log(`🚀  Deleted all the branches. ${success} successes, ${failedInGitHub} failed in gitHub, ${failedInDB} failed in DB.`)
+      dryRun && console.log('The dry run completed. Everything should have succeeded.')
+      console.log(`
+🚀  Deleted all the branches. ${success} successes, ${failedInGitHub} failed in gitHub, ${failedInDB} failed in DB.`)
       const fileContent = {
         success,
         failedInGitHub,
         failedInDB
       }
-      fs.writeFile('branch_removal_log.json', JSON.stringify(fileContent), (err) => {
+      const fileName = dryRun ? 'branch_removal_dry_run_log.json' : 'branch_removal_log.json'
+      fs.writeFile(fileName, JSON.stringify(fileContent), (err) => {
         if (err) {
           return console.log(err)
         }
