@@ -29,8 +29,8 @@ require('./lib/rollbar')
   const conn = await amqp.connect(env.AMQP_URL)
   const channel = await conn.createChannel()
 
-  // only allow 128 items to pile up
-  channel.prefetch(128)
+  // only allow 256 items to pile up
+  channel.prefetch(256)
 
   // 5 different prios because order matters
   // e.g. always sync before everything else
@@ -67,8 +67,12 @@ require('./lib/rollbar')
 
   if (env.NODE_ENV !== 'testing') {
     setInterval(function collectAccountQueueStats () {
-      statsd.gauge('queues.account-jobs', Object.keys(queues).length)
-    }, 5000)
+      const queueKeys = Object.keys(queues)
+      statsd.gauge('queues.account-jobs', queueKeys.length)
+      queueKeys.map((queueId) => {
+        statsd.gauge('queues.account-jobs-by-job', queues[queueId].getQueueLength() || 0, { tag: queueId })
+      })
+    }, 20000)
   }
 
   if (env.IS_ENTERPRISE) {
@@ -96,8 +100,29 @@ require('./lib/rollbar')
   setInterval(scheduleReminders, 24 * 60 * 60 * 1000)
   setInterval(scheduleMonorepoReleaseSupervisor, 5 * 60 * 1000)
 
+  const isBad = (data) => {
+    const values = Object.values(data)
+    const baddies = ['gatsby', 'material-ui', 'react-cosmos']
+    let bad = false
+    baddies.forEach((baddie) => {
+      values.forEach((value) => {
+        if (String(value).match(baddie)) {
+          bad = true
+          statsd.increment('jobs.baddie', { tag: baddie })
+        }
+      })
+    })
+    return bad
+  }
+
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
+
+    if (isBad(data)) {
+      channel.ack(job)
+      return
+    }
+
     const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription', 'update-nodejs-version', 'deprecate-nodejs-version', 'monorepo-supervisor']
     if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
       return queueJob(data.name, job)

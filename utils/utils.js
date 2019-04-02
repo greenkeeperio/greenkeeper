@@ -66,13 +66,13 @@ function getOldVersionResolved (satisfyingVersions, distTags, distTag) {
 function getJobsPerGroup ({
   config,
   monorepo,
+  dependencyUpdatedAt,
   distTags,
   distTag,
   dependency,
   versions,
   account,
   repositoryId,
-  plan,
   isFromHook,
   log
 }) {
@@ -92,7 +92,7 @@ function getJobsPerGroup ({
   }))
 
   return groups.map((group) => {
-    // only include chages from
+    // only include changes from
     const groupName = Object.keys(group)[0]
     const relevantMonorepoChangeFiles = monorepo.filter(change => {
       return group[groupName].packages.includes(change.value.filename)
@@ -109,9 +109,9 @@ function getJobsPerGroup ({
         group,
         version,
         dependency,
+        dependencyUpdatedAt,
         versions,
         repositoryId,
-        plan,
         oldVersionResolved,
         installation: account.installation,
         accountId: account.id || account._id,
@@ -119,8 +119,7 @@ function getJobsPerGroup ({
         oldVersion: monorepo[0].value.oldVersion,
         monorepo: relevantMonorepoChangeFiles,
         isFromHook
-      }),
-      plan
+      })
     }
   })
 }

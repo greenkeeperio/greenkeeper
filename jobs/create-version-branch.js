@@ -26,10 +26,12 @@ const { createTransformFunction,
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
+const { isGatsbyPkg } = require('../lib/isGatsby')
 
 module.exports = async function (
   {
     dependency,
+    dependencyUpdatedAt,
     accountId,
     repositoryId,
     type,
@@ -41,12 +43,17 @@ module.exports = async function (
     isFromHook
   }
 ) {
+  // TODO: delete me!
+  if (isGatsbyPkg(dependency)) {
+    return null
+  }
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
   let isMonorepo = false
   let monorepoGroupName = null
   let monorepoGroup = ''
   let relevantDependencies = []
+  let hasNewUpdates = false // to prevent commenting on a PR multiple times with exactly the same update
 
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
@@ -94,8 +101,8 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     group = relevantDependencies
-    const datetime = new Date().toISOString().substr(0, 19).replace(/[^0-9]/g, '')
-    newBranch = `${config.branchPrefix}monorepo.${monorepoGroupName}-${datetime}`
+
+    newBranch = `${config.branchPrefix}monorepo.${monorepoGroupName}-${dependencyUpdatedAt}`
   } else {
     dependencyKey = dependency
     group = [dependency]
@@ -105,6 +112,9 @@ module.exports = async function (
 
   const ghqueue = githubQueue(installationId)
   const openPR = await findOpenPR()
+  if (!openPR) {
+    hasNewUpdates = true
+  }
 
   let satisfiesAll = true
   async function createTransformsArray (group, json) {
@@ -131,10 +141,18 @@ module.exports = async function (
         log.warn(`exited transform creation: could not find old package version for ${depName}`, { newVersion: version, dependencyType, packageFile: _.get(json, [dependencyType]) })
         return null
       }
+      if (!semver.validRange(oldPkgVersion)) {
+        log.warn(`exited transform creation: ${depName} oldPkgVersion: ${oldPkgVersion} is not a valid version`, { newVersion: version, oldVersion: oldPkgVersion })
+        return null
+      }
 
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      if (!semver.validRange(latestDependencyVersion)) {
+        log.warn(`exited transform creation: ${depName} latestDependencyVersion: ${latestDependencyVersion} is not a valid version`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
+        return null
+      }
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       if (semver.ltr(latestDependencyVersion, oldPkgVersion)) { // no downgrades
@@ -150,10 +168,14 @@ module.exports = async function (
       let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
       if (!satisfies && openPR) {
-        await upsert(repositories, openPR._id, {
-          comments: [...(openPR.comments || []), latestDependencyVersion]
-        })
-        commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+        const dependencyNameAndVersion = `${depName}-${latestDependencyVersion}`
+        if (!openPR.comments.includes(dependencyNameAndVersion)) {
+          hasNewUpdates = true
+          await upsert(repositories, openPR._id, {
+            comments: [...(openPR.comments || []), dependencyNameAndVersion]
+          })
+          commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+        }
       }
       log.info(`commit message for ${depName} created`, { commitMessage })
 
@@ -211,6 +233,7 @@ module.exports = async function (
   const transforms = _.compact(_.flatten(await createTransformsArray(group, repoDoc.packages['package.json'])))
 
   if (transforms.length === 0) return
+  if (!hasNewUpdates) return // don't create unnecessary doubled branches
 
   const { default_branch: base } = await ghqueue.read(github => github.repos.get({ owner, repo }))
   log.info('github: using default branch', { defaultBranch: base })
@@ -419,10 +442,10 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo, log })
       repo
     }))
   } catch (err) {
-    log.warn('Could not create PR', { err })
-    if (err.code !== 422) throw err
+    log.warn('Could not create PR', { err: err.message })
+    if (err.status !== 422) throw err
 
-    const allPrs = await ghqueue.read(github => github.pullRequests.getAll({
+    const allPrs = await ghqueue.read(github => github.pulls.list({
       base,
       head: owner + ':' + head,
       owner,

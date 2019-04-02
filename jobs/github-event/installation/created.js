@@ -33,33 +33,50 @@ module.exports = async function ({ installation }) {
   log.info('Installation Document created', { installation: doc })
 
   const { token } = await getToken(doc.installation)
-  const github = GitHub()
-  github.authenticate({ type: 'token', token })
+  const github = GitHub({ auth: `token ${token}` })
 
+  let repositories
   // getting installation repos from github
-  let res = await github.apps.getInstallationRepositories({
-    per_page: 100
-  })
-  let { repositories } = res.data
-  while (github.hasNextPage(res)) {
-    res = await github.getNextPage(res)
-    repositories = repositories.concat(res.data.repositories)
+  try {
+    // For some reason, the accept header is not part of this
+    // Octokit API
+    const options = github.apps.listRepos.endpoint.merge({
+      headers: {
+        accept: 'application/vnd.github.machine-man-preview+json'
+      },
+      per_page: 100
+    })
+    // Paginate does not actually flatten results into a single result array
+    // as it should, according to the docs, possibly due to these:
+    // https://github.com/octokit/rest.js/issues/1161
+    // https://github.com/octokit/routes/issues/329
+    const results = await github.paginate(options)
+    // So we flatten them ourselves
+    repositories = _.flatten(results.map((result) => result.repositories))
+  } catch (error) {
+    log.error('error: could not fetch repositories from GitHub', { error })
   }
-  log.info('github: getting installation repositories', { repositories })
 
   if (!repositories.length) {
     log.warn('exited: no repositories found')
     return
   }
+
+  log.info(`github: fetched ${repositories.length} installation repositories`)
   statsd.increment('repositories', repositories.length)
 
-  const repoDocs = await createDocs({
-    repositories,
-    accountId: doc._id
-  })
-
-  // saving installation repos to db
-  await reposDb.bulkDocs(repoDocs)
+  let repoDocs = []
+  try {
+    repoDocs = createDocs({
+      repositories,
+      accountId: doc._id
+    })
+    // saving installation repos to db
+    log.info(`Preparing to write ${repoDocs.length} repoDocs to the DB`)
+    await reposDb.bulkDocs(repoDocs)
+  } catch (error) {
+    log.error('error: could not write repoDocs', { error })
+  }
   statsd.increment('installs')
   statsd.event('install')
 

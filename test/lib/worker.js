@@ -347,7 +347,7 @@ describe('worker', () => {
         },
         {
           data: true,
-          plan: 'supporter'
+          plan: 'org'
         },
         {
           data: true

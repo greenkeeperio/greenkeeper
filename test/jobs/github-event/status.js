@@ -42,12 +42,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/deadbeef/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/club/mate/commits/deadbeef/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/deadbeef/check-runs')
       .reply(200, {
         'total_count': 0,
@@ -85,7 +84,7 @@ describe('github-event status', async () => {
 
   test('initial pr with 2 checks, 1 status', async () => {
     const { repositories } = await dbs()
-    expect.assertions(7)
+    expect.assertions(6)
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
@@ -97,12 +96,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/muppets/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/club/mate/commits/muppets/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/muppets/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -158,12 +156,11 @@ describe('github-event status', async () => {
     expect(job.combined.state).toEqual('success')
     expect(job.repository.id).toBe(42)
     expect(job.installationId).toEqual(1336)
-    expect(job.combined.statuses).toHaveLength(3)
   })
 
   test('initial pr fails with a failed check, two successful statuses', async () => {
     const { repositories } = await dbs()
-    expect.assertions(7)
+    expect.assertions(6)
     const githubStatus = require('../../../jobs/github-event/status')
 
     nock('https://api.github.com')
@@ -175,16 +172,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/hats/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }, {
-        'state': 'success',
-        'description': 'PR is verified',
-        'context': 'greenkeeper/verify'
-      }])
+      .get('/repos/club/mate/commits/hats/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/hats/check-runs')
       .reply(200, {
         'total_count': 2,
@@ -240,7 +232,6 @@ describe('github-event status', async () => {
     expect(job.combined.state).toEqual('failure')
     expect(job.repository.id).toBe(42)
     expect(job.installationId).toEqual(1336)
-    expect(job.combined.statuses).toHaveLength(4)
   })
 
   test('initial pr by user, 1 status, no checks', async () => {
@@ -258,12 +249,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/deadbeef/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/club/mate/commits/deadbeef/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/deadbeef/check-runs')
       .reply(200, {
         'total_count': 0,
@@ -323,12 +313,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/lara/monorepo/commits/abcdf1234/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/lara/monorepo/commits/abcdf1234/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/lara/monorepo/commits/abcdf1234/check-runs')
       .reply(200, {
         'total_count': 0,
@@ -385,12 +374,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/plant/monorepo/commits/plantsarethebest11/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/plant/monorepo/commits/plantsarethebest11/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/plant/monorepo/commits/plantsarethebest11/check-runs')
       .reply(200, {
         'total_count': 0,
@@ -464,12 +452,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/deadbeef2/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/club/mate/commits/deadbeef2/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/deadbeef2/check-runs')
       .reply(200, {
         'total_count': 0,
@@ -523,12 +510,11 @@ describe('github-event status', async () => {
       .get('/rate_limit')
       .optionally()
       .reply(200, {})
-      .get('/repos/club/mate/commits/gnu2/statuses')
-      .reply(200, [{
-        'state': 'success',
-        'description': 'Build has completed successfully',
-        'context': 'continuous-integration/jenkins'
-      }])
+      .get('/repos/club/mate/commits/gnu2/status')
+      .reply(200, {
+        state: 'success',
+        statuses: []
+      })
       .get('/repos/club/mate/commits/gnu2/check-runs')
       .reply(403, {
         'message': 'Resource not accessible by integration',

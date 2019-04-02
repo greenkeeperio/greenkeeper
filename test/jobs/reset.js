@@ -66,21 +66,73 @@ describe('reset repo', async () => {
     await removeIfExists(installations, '123')
   })
 
-  test('response with error if repo cound not be found', async () => {
-    expect.assertions(1)
-    try {
-      await resetJob({
-        repositoryFullName: 'finnp/hello'
-      })
-    } catch (e) {
-      if (e.status !== 404) {
-        throw e
-      }
-      const message = 'The repository finnp/hello does not exist in the database'
-      expect(e.message).toEqual(message)
-    } finally {
-      await waitFor(timeToWaitAfterTests)
+  test('create a tmp repo if repo could not be found (given accountId)', async () => {
+    const newRepository = {
+      id: 'hi-finnp',
+      full_name: 'finnp/hi',
+      private: false,
+      type: 'repository',
+      fork: false,
+      has_issues: true
     }
+    const githubNock = nock('https://api.github.com')
+      .post('/app/installations/37/access_tokens')
+      .optionally()
+      .reply(200, { token: 'secret' })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/hi')
+      .reply(200, newRepository)
+
+    await resetJob({
+      repositoryFullName: 'finnp/hi',
+      accountId: '123'
+    })
+
+    const { repositories } = await dbs()
+    const freshRepoDoc = await repositories.get('hi-finnp')
+    expect(freshRepoDoc.fullName).toEqual('finnp/hi')
+    expect(freshRepoDoc.enabled).toBeFalsy()
+    expect(freshRepoDoc.type).toEqual('repository')
+    expect(freshRepoDoc.accountId).toEqual('123')
+
+    expect(githubNock.isDone()).toBeTruthy()
+    await waitFor(timeToWaitAfterTests)
+  })
+
+  test('create a tmp repo if repo could not be found (without accountId)', async () => {
+    const newRepository = {
+      id: 'hi-finnp',
+      full_name: 'finnp/hi',
+      private: false,
+      type: 'repository',
+      fork: false,
+      has_issues: true
+    }
+    const githubNock = nock('https://api.github.com')
+      .post('/app/installations/37/access_tokens')
+      .optionally()
+      .reply(200, { token: 'secret' })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/finnp/hi')
+      .reply(200, newRepository)
+
+    await resetJob({
+      repositoryFullName: 'finnp/hi'
+    })
+
+    const { repositories } = await dbs()
+    const freshRepoDoc = await repositories.get('hi-finnp')
+    expect(freshRepoDoc.fullName).toEqual('finnp/hi')
+    expect(freshRepoDoc.enabled).toBeFalsy()
+    expect(freshRepoDoc.type).toEqual('repository')
+    expect(freshRepoDoc.accountId).toEqual('123')
+
+    expect(githubNock.isDone()).toBeTruthy()
+    await waitFor(timeToWaitAfterTests)
   })
 
   test('delete all prdocs of the repo', async () => {
@@ -98,28 +150,21 @@ describe('reset repo', async () => {
       .reply(200, {})
       .get('/repos/finnp/abc')
       .reply(200, githubRepository)
+
     await resetJob({
       repositoryFullName: 'finnp/abc'
     })
 
     const { repositories } = await dbs()
-    try {
-      await repositories.get('42:pr:123')
-    } catch (e) {
-      if (e.status !== 404) {
-        throw e
-      }
-      // PrDocs successfully deleted
-      expect(true).toBeTruthy()
-    } finally {
-      await waitFor(timeToWaitAfterTests)
-    }
+    // PrDocs successfully deleted
+    await expect(repositories.get('42:pr:123')).rejects.toThrow()
+    await waitFor(timeToWaitAfterTests)
   })
 
   test('delete all greenkeeper branches', async () => {
-    expect.assertions(2)
+    expect.assertions(3)
 
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -141,13 +186,14 @@ describe('reset repo', async () => {
     })
     // Worker ran successfully
     expect(true).toBeTruthy()
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('do not mind if some dependency branch could not be deleted', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
 
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -166,11 +212,12 @@ describe('reset repo', async () => {
     })
     // Worker ran successfully
     expect(true).toBeTruthy()
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('fail if initial branch could not be deleted', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '42:branch:deadbeef0',
@@ -178,7 +225,7 @@ describe('reset repo', async () => {
       repositoryId: '42',
       head: 'greenkeeper/initial'
     })
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -197,12 +244,13 @@ describe('reset repo', async () => {
         repositoryFullName: 'finnp/abc'
       })
     } catch (e) {
-      if (e.code !== 409) {
+      if (e.status !== 409) {
         throw e
       }
       // error thrown
-      expect(e.code).toBe(409)
+      expect(e.status).toBe(409)
     } finally {
+      expect(githubNock.isDone()).toBeTruthy()
       await waitFor(timeToWaitAfterTests)
     }
   })
@@ -216,7 +264,7 @@ describe('reset repo', async () => {
       repositoryId: '42',
       head: 'greenkeeper/initial'
     })
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -240,13 +288,14 @@ describe('reset repo', async () => {
       // error thrown
       expect(true).toBeTruthy()
     } finally {
+      expect(githubNock.isDone()).toBeTruthy()
       await waitFor(timeToWaitAfterTests)
     }
   })
 
   test('delete all branchdocs of the repo', async () => {
-    expect.assertions(1)
-    nock('https://api.github.com')
+    expect.assertions(2)
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -274,13 +323,14 @@ describe('reset repo', async () => {
       // BranchDocs successfully deleted
       expect(true).toBeTruthy()
     } finally {
+      expect(githubNock.isDone()).toBeTruthy()
       await waitFor(timeToWaitAfterTests)
     }
   })
 
   test('delete the repodoc and create a fresh one', async () => {
-    expect.assertions(1)
-    nock('https://api.github.com')
+    expect.assertions(2)
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -301,12 +351,14 @@ describe('reset repo', async () => {
     const { repositories } = await dbs()
     const freshRepoDoc = await repositories.get('42')
     expect(freshRepoDoc.enabled).toBeFalsy()
+
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('schedule create inital branch job', async () => {
-    expect.assertions(2)
-    nock('https://api.github.com')
+    expect.assertions(3)
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -329,11 +381,13 @@ describe('reset repo', async () => {
     const job = newJob.data
     expect(job.name).toEqual('create-initial-branch')
     expect(job.repositoryId).toEqual(freshRepoDoc._id)
+
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('Close open issues and delete them from the database', async () => {
-    expect.assertions(3)
+    expect.assertions(4)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '42:issue:67',
@@ -350,7 +404,7 @@ describe('reset repo', async () => {
       state: 'open'
     })
 
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -399,11 +453,13 @@ describe('reset repo', async () => {
         throw e
       }
     }
+
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('Do not mind issues that do not exist', async () => {
-    expect.assertions(1)
+    expect.assertions(2)
     const { repositories } = await dbs()
 
     await repositories.put({
@@ -413,7 +469,7 @@ describe('reset repo', async () => {
       number: 65,
       state: 'open'
     })
-    nock('https://api.github.com')
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -436,12 +492,13 @@ describe('reset repo', async () => {
     // no errors were thrown
     expect(true).toBeTruthy()
 
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 
   test('Do not mind about case sensivity in the repository name', async () => {
-    expect.assertions(2)
-    nock('https://api.github.com')
+    expect.assertions(3)
+    const githubNock = nock('https://api.github.com')
       .post('/app/installations/37/access_tokens')
       .optionally()
       .reply(200, {
@@ -464,6 +521,8 @@ describe('reset repo', async () => {
     const job = newJob.data
     expect(job.name).toEqual('create-initial-branch')
     expect(job.repositoryId).toEqual(freshRepoDoc._id)
+
+    expect(githubNock.isDone()).toBeTruthy()
     await waitFor(timeToWaitAfterTests)
   })
 })

@@ -5,6 +5,7 @@ const removeIfExists = require('../helpers/remove-if-exists')
 
 const {
   getActiveBilling,
+  hasPaidAccount,
   maybeUpdatePaymentsJob,
   hasStripeBilling,
   getAccountNeedsMarketplaceUpgrade,
@@ -150,6 +151,28 @@ describe('payments', async () => {
     })
   })
 
+  describe('hasPaidAccount', async () => {
+    test('hasPaidAccount without plan', async () => {
+      const result = await hasPaidAccount()
+      expect(result).toBeFalsy()
+    })
+
+    test('hasPaidAccount with free plan', async () => {
+      const result = await hasPaidAccount('123free')
+      expect(result).toBeFalsy()
+    })
+
+    test('hasPaidAccount with opensource plan', async () => {
+      const result = await hasPaidAccount('123opensource')
+      expect(result).toBeFalsy()
+    })
+
+    test('hasPaidAccount with payed plan', async () => {
+      const result = await hasPaidAccount('123org')
+      expect(result).toBeTruthy()
+    })
+  })
+
   describe('hasStripeBilling', async () => {
     test('hasStripeBilling without stripe', async () => {
       const billing = await hasStripeBilling('123team')
@@ -174,22 +197,33 @@ describe('payments', async () => {
 
   describe('maybeUpdatePaymentsJob', async () => {
     test('maybeUpdatePaymentsJob without billing', async () => {
-      const newJob = await maybeUpdatePaymentsJob('000', true)
+      const newJob = await maybeUpdatePaymentsJob({ accountId: '000', isPrivate: true })
       expect(newJob).toBeFalsy()
     })
 
     test('maybeUpdatePaymentsJob without stripe', async () => {
-      const newJob = await maybeUpdatePaymentsJob('123business', true)
+      const newJob = await maybeUpdatePaymentsJob({ accountId: '123business', isPrivate: true })
       expect(newJob).toBeFalsy()
     })
 
+    test('maybeUpdatePaymentsJob without stripe, repo switched to private', async () => {
+      const newJob = await maybeUpdatePaymentsJob({ accountId: '123business', isPrivate: true, repositoryId: '1312' })
+      expect(newJob).toMatchObject({
+        data: {
+          name: 'payment-required',
+          accountId: '123business',
+          repositoryId: '1312'
+        }
+      })
+    })
+
     test('maybeUpdatePaymentsJob with billing, not private', async () => {
-      const newJob = await maybeUpdatePaymentsJob('123', false)
+      const newJob = await maybeUpdatePaymentsJob({ accountId: '123', isPrivate: false })
       expect(newJob).toBeFalsy()
     })
 
     test('maybeUpdatePaymentsJob with billing', async () => {
-      const newJob = await maybeUpdatePaymentsJob('123', true)
+      const newJob = await maybeUpdatePaymentsJob({ accountId: '123', isPrivate: true })
       expect(newJob).toMatchObject({
         data: {
           name: 'update-payments',

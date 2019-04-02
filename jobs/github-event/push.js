@@ -3,8 +3,7 @@ const Log = require('gk-log')
 
 const dbs = require('../../lib/dbs')
 const env = require('../../lib/env')
-const { updateRepoDoc } = require('../../lib/repository-docs')
-const updatedAt = require('../../lib/updated-at')
+const { updateRepoDoc, updateDoc } = require('../../lib/repository-docs')
 const diff = require('../../lib/diff-package-json')
 const diffGreenkeeperJson = require('../../lib/diff-greenkeeper-json')
 const deleteBranches = require('../../lib/delete-branches')
@@ -205,19 +204,6 @@ module.exports = async function (data) {
   log.success('success')
 }
 
-function updateDoc (repositories, repository, repoDoc) {
-  return repositories.put(
-    updatedAt(
-      Object.assign(repoDoc, {
-        private: repository.private,
-        fullName: repository.full_name,
-        fork: repository.fork,
-        hasIssues: repository.has_issues
-      })
-    )
-  )
-}
-
 function hasRelevantChanges (commits, files) {
   return _.some(files, file => {
     return _.some(['added', 'removed', 'modified'], changeType => {
@@ -244,7 +230,7 @@ async function disableRepo ({ repositories, repoDoc, repository }) {
   repoDoc.enabled = false
   await updateDoc(repositories, repository, repoDoc)
   if (!env.IS_ENTERPRISE) {
-    return maybeUpdatePaymentsJob(repoDoc.accountId, repoDoc.private)
+    return maybeUpdatePaymentsJob({ accountId: repoDoc.accountId, isPrivate: repoDoc.private })
   }
 }
 

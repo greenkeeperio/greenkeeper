@@ -2,7 +2,7 @@ const env = require('../lib/env')
 const { getActiveBilling, getAmountOfCurrentlyPrivateAndEnabledRepos } = require('../lib/payments')
 const stripe = require('stripe')(env.STRIPE_SECRET_KEY)
 
-module.exports = async ({ accountId, repositoryId }) => {
+module.exports = async ({ accountId }) => {
   const billingAccount = await getActiveBilling(accountId)
   // ignore non-stripe users
   // checking for stripeSubscriptionId instead of stripeItemId because in

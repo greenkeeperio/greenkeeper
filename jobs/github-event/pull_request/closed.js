@@ -25,16 +25,15 @@ module.exports = async function (data) {
   )
   if (!prdoc.merged || !prdoc.initial) return
 
-  let repodoc = await repositories.get(String(repository.id))
-  const accountId = repodoc.accountId
+  let repoDoc = await repositories.get(String(repository.id))
 
   const [owner, repo] = repository.full_name.split('/')
 
-  repodoc = await upsert(repositories, String(repository.id), {
+  repoDoc = await upsert(repositories, String(repository.id), {
     enabled: true
   })
   try {
-    await githubQueue(installation.id).write(github => github.gitdata.deleteReference({
+    await githubQueue(installation.id).write(github => github.gitdata.deleteRef({
       owner,
       repo,
       ref: `heads/${prdoc.head}`
@@ -42,6 +41,6 @@ module.exports = async function (data) {
   } catch (e) {}
 
   if (!env.IS_ENTERPRISE) {
-    return maybeUpdatePaymentsJob(accountId, repodoc.private)
+    return maybeUpdatePaymentsJob({ accountId: repoDoc.accountId, isPrivate: repoDoc.private })
   }
 }

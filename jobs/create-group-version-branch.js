@@ -26,10 +26,12 @@ const {
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 const prContent = require('../content/update-pr')
+const { isGatsbyPkg } = require('../lib/isGatsby')
 
 module.exports = async function (
   {
     dependency,
+    dependencyUpdatedAt,
     accountId,
     repositoryId,
     types,
@@ -44,12 +46,17 @@ module.exports = async function (
 ) {
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
+  // TODO: delete me!
+  if (isGatsbyPkg(dependency)) {
+    return null
+  }
 
   let isMonorepo = false
   let monorepoGroupName = null
   let monorepoGroup = ''
   let relevantDependencies = []
   const groupName = Object.keys(group)[0]
+  let hasNewUpdates = false // to prevent commenting on a PR multiple times with exactly the same update
 
   const { installations, repositories, npm } = await dbs()
   const logs = dbs.getLogsDb()
@@ -118,8 +125,7 @@ module.exports = async function (
   if (isMonorepo) {
     dependencyKey = monorepoGroupName
     dependencyGroup = relevantDependencies
-    const datetime = new Date().toISOString().substr(0, 19).replace(/[^0-9]/g, '')
-    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}-${datetime}`
+    newBranch = `${config.branchPrefix}${groupName}/monorepo.${monorepoGroupName}-${dependencyUpdatedAt}`
   } else {
     dependencyKey = dependency
     dependencyGroup = [dependency]
@@ -128,6 +134,9 @@ module.exports = async function (
   log.info(`branch name ${newBranch} created`)
 
   const openPR = await findOpenPR()
+  if (!openPR) {
+    hasNewUpdates = true
+  }
 
   async function findOpenPR () {
     const openPR = _.get(
@@ -158,6 +167,10 @@ module.exports = async function (
       // get version for each dependency
       const npmDoc = await npm.get(isFromHook ? `${installationId}:${depName}` : depName)
       const latestDependencyVersion = npmDoc['distTags']['latest']
+      if (!semver.valid(latestDependencyVersion)) {
+        log.warn(`exited transform creation: ${depName} latestDependencyVersion: ${latestDependencyVersion} is not a valid version`)
+        return null
+      }
       const repoURL = _.get(npmDoc, `versions['${latestDependencyVersion}'].repository.url`)
 
       return Promise.all(monorepo.map(async pkgRow => {
@@ -169,13 +182,17 @@ module.exports = async function (
         const oldPkgVersion = _.get(repoDoc, `packages['${pkg.filename}'].${pkg.type}.${depName}`)
         if (!oldPkgVersion) {
           log.warn(`exited transform creation: could not find old package version for ${depName}`, { newVersion: version, dependencyType: pkg.type, packageFile: _.get(repoDoc, `packages['${pkg.filename}']`) })
-          return
+          return null
+        }
+        if (!semver.validRange(oldPkgVersion)) {
+          log.warn(`exited transform creation: ${depName} oldPkgVersion: ${oldPkgVersion} is not a valid version`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
+          return null
         }
         const satisfies = semver.satisfies(latestDependencyVersion, oldPkgVersion)
         // no downgrades
         if (semver.ltr(latestDependencyVersion, oldPkgVersion)) {
           log.warn(`exited transform creation: ${depName} ${latestDependencyVersion} would be a downgrade from ${oldPkgVersion}`, { newVersion: latestDependencyVersion, oldVersion: oldPkgVersion })
-          return
+          return null
         }
 
         const transforms = []
@@ -188,10 +205,14 @@ module.exports = async function (
         let commitMessage = getMessage(config.commitMessages, commitMessageKey, commitMessageValues)
 
         if (!satisfies && openPR) {
-          await upsert(repositories, openPR._id, {
-            comments: [...(openPR.comments || []), latestDependencyVersion]
-          })
-          commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+          const dependencyNameAndVersion = `${depName}-${latestDependencyVersion}`
+          if (!openPR.comments.includes(dependencyNameAndVersion)) {
+            hasNewUpdates = true
+            await upsert(repositories, openPR._id, {
+              comments: [...(openPR.comments || []), dependencyNameAndVersion]
+            })
+            commitMessage += getMessage(config.commitMessages, 'closes', { number: openPR.number })
+          }
         }
         log.info(`commit message for ${depName} created`, { commitMessage })
 
@@ -225,7 +246,7 @@ module.exports = async function (
   }
   const transforms = _.compact(_.flattenDeep(await createTransformsArray(monorepo)))
   if (transforms.length === 0) return
-
+  if (!hasNewUpdates) return // don't create unnecessary doubled branches
   if (onlyUpdateLockfilesIfOutOfRange && satisfiesAll) {
     log.info('exiting: user wants out-of-range lockfile updates only', { config })
     return
@@ -425,9 +446,9 @@ async function createPr ({ ghqueue, title, body, base, head, owner, repo, log })
     }))
   } catch (err) {
     log.warn('Could not create PR', { err })
-    if (err.code !== 422) throw err
+    if (err.status !== 422) throw err
 
-    const allPrs = await ghqueue.read(github => github.pullRequests.getAll({
+    const allPrs = await ghqueue.read(github => github.pulls.list({
       base,
       head: owner + ':' + head,
       owner,

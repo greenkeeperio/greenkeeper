@@ -140,7 +140,7 @@ module.exports = async function (
   log.info(`found ${repoDocsCount} repoDocs that use ${dependency}`)
   statsd.gauge('package_files_with_dependency', repoDocsCount, { tag: dependency })
 
-  if (repoDocsCount > 100) statsd.event('popular_package')
+  if (repoDocsCount > 4000) statsd.event('popular_package')
   // check if package has a greenkeeper.json / more then 1 package json or package.json is in subdirectory
   // continue with the rest but send all otheres to a 'new' version branch job
 
@@ -151,9 +151,10 @@ module.exports = async function (
   const withMultiplePackageJSON = seperatedResults[0]
 
   const accounts = await getAllAccounts(installations, seperatedResults)
-  if (repoDocsCount >= 4000) log.info(`got ${accounts.length} accounts`)
+  if (repoDocsCount >= 4000) log.info(`got ${Object.keys(accounts).length} accounts`)
 
   // ******** Monorepos begin
+  const depTimestamp = npmDbDoc.updatedAt ? npmDbDoc.updatedAt : npmDbDoc.createdAt
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
@@ -164,11 +165,10 @@ module.exports = async function (
 
     if (repoDocsCount >= 4000) log.info(`got ${monorepoDocs.length} monorepoDocs`)
 
-    _.forEach(withMultiplePackageJSON, monorepo => {
+    withMultiplePackageJSON.forEach(monorepo => {
       const account = accounts[monorepo[0].value.accountId]
       if (isFromHook && String(account.installation) !== installation) return {}
 
-      const plan = account.plan
       const repoDoc = monorepoDocs.find(doc => doc.key === monorepo[0].value.fullName.toLowerCase())
       if (!repoDoc) return
       const config = getConfig(repoDoc.doc)
@@ -178,10 +178,10 @@ module.exports = async function (
         distTags,
         distTag,
         dependency,
+        dependencyUpdatedAt: new Date(depTimestamp).toISOString().substr(0, 19).replace(/[^0-9]/g, ''),
         versions,
         account,
         repositoryId: repoDoc.id,
-        plan,
         isFromHook,
         log }))
     })
@@ -197,33 +197,30 @@ module.exports = async function (
   jobs = [...jobs, ...(_.sortedUniqBy(filteredSortedPackages, pkg => pkg.value.fullName)
     .map(pkg => {
       const account = accounts[pkg.value.accountId]
-      const plan = account.plan
 
       const satisfyingVersions = getSatisfyingVersions(versions, pkg)
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, distTags, distTag)
 
-      if (isFromHook && String(account.installation) !== installation) return {}
+      if (isFromHook && String(account.installation) !== installation) { return {} }
 
       return {
         data: Object.assign(
           {
             name: 'create-version-branch',
             dependency,
+            dependencyUpdatedAt: new Date(depTimestamp).toISOString().substr(0, 19).replace(/[^0-9]/g, ''),
             version,
             versions,
             oldVersionResolved,
             repositoryId: pkg.id,
             installation: account.installation,
-            plan,
             isFromHook
           },
           pkg.value
-        ),
-        plan
+        )
       }
     }))
   ]
-  if (repoDocsCount >= 4000) log.info(`going to start ${jobs.length} jobs`, { jobs })
 
   log.success(`${jobs.length} registry-change jobs for dependency ${dependency} created`)
   return jobs
