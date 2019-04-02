@@ -70,7 +70,7 @@ require('./lib/rollbar')
       const queueKeys = Object.keys(queues)
       statsd.gauge('queues.account-jobs', queueKeys.length)
       queueKeys.map((queueId) => {
-        statsd.gauge('queues.account-jobs-by-job', queues[queueId].length || 0, { tag: queueId })
+        statsd.gauge('queues.account-jobs-by-job', queues[queueId].getQueueLength() || 0, { tag: queueId })
       })
     }, 20000)
   }
