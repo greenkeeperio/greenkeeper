@@ -25,6 +25,17 @@ describe('create-group-version-branch', async () => {
       }
     })
     await npm.put({
+      _id: 'react/cli',
+      distTags: {
+        latest: '2.0.1'
+      },
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {},
+        '2.0.1': {}
+      }
+    })
+    await npm.put({
       _id: 'pouchdb-core',
       distTags: {
         latest: '2.0.0'
@@ -79,7 +90,8 @@ describe('create-group-version-branch', async () => {
       packages: {
         'package.json': {
           dependencies: {
-            react: '1.0.0'
+            react: '1.0.0',
+            'react/cli': '1.0.0'
           },
           greenkeeper: {
             'groups': {
@@ -94,7 +106,8 @@ describe('create-group-version-branch', async () => {
         },
         'backend/package.json': {
           dependencies: {
-            react: '1.0.0'
+            react: '1.0.0',
+            'react/cli': '1.0.0'
           }
         }
       }
@@ -288,9 +301,9 @@ describe('create-group-version-branch', async () => {
 
     await Promise.all([
       removeIfExists(installations, '123-two-packages', '123-two-packages-different-types', '123-dep-ignored-on-group-level'),
-      removeIfExists(npm, 'react', 'pouchdb', 'pouchdb-core', 'pouchdb-adapter-utils', 'pouchdb-browser'),
+      removeIfExists(npm, 'react', 'react/cli', 'pouchdb', 'pouchdb-core', 'pouchdb-adapter-utils', 'pouchdb-browser'),
       removeIfExists(repositories, '123-monorepo', '123-monorepo-different-types', '123-monorepo-dep-ignored-on-group-level', '123-monorepo-monorepo-release', 'too-many-packages', 'prerelease', '123-monorepo-monorepo-release-different'),
-      removeIfExists(repositories, '123-monorepo:branch:1234abcd', '123-monorepo:pr:321', '123-monorepo-different-types:branch:1234abcd', '123-monorepo-different-types:pr:321', '123-monorepo-old-pr')
+      removeIfExists(repositories, '123-monorepo:branch:1234abcd', '123-monorepo:pr:321', '123-monorepo-different-types:branch:1234abcd', '123-monorepo-different-types:pr:321', '123-monorepo-old-pr', '123-monorepo:pr:123')
     ])
   })
 
@@ -776,8 +789,8 @@ describe('create-group-version-branch', async () => {
     await expect(repositories.get('prerelease:pr:321')).rejects.toThrow('missing')
   })
 
-  test('new pull request, 1 group, 2 packages, same dependencyType, old PR exists', async () => {
-    expect.assertions(10)
+  test('no new pull request, but new comment on PR, 1 group, 2 packages, same dependencyType, old PR exists', async () => {
+    expect.assertions(11)
     const { repositories } = await dbs()
     await repositories.put({
       _id: '123-monorepo-old-pr',
@@ -881,11 +894,112 @@ describe('create-group-version-branch', async () => {
     expect(githubMock.isDone()).toBeTruthy()
     expect(newJob).toBeFalsy()
     const branch = await repositories.get('123-monorepo:branch:1234abcd')
+    const pr = await repositories.get('123-monorepo-old-pr')
+    expect(pr.comments).toMatchSnapshot()
     expect(branch.processed).toBeTruthy()
     expect(branch.head).toEqual('greenkeeper/default/monorepo.react-20190330170013')
     expect(branch.repositoryId).toEqual('123-monorepo')
     expect(branch.accountId).toEqual('123-two-packages')
     expect(branch.dependencyType).toEqual('dependencies')
+  })
+
+  test('no new branch because old pull request has same updates already', async () => {
+    expect.assertions(4)
+    const { repositories } = await dbs()
+    await repositories.put({
+      _id: '123-monorepo:pr:123',
+      type: 'pr',
+      accountId: '123-two-packages',
+      repositoryId: '123-monorepo',
+      version: '2.0.0',
+      comments: ['react/cli-2.0.1'],
+      oldVersion: '^1.0.0',
+      dependency: 'react/cli',
+      initial: false,
+      merged: false,
+      number: 2,
+      state: 'open',
+      group: 'default'
+    })
+
+    const githubMock = nock('https://api.github.com')
+      .post('/app/installations/87/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/hans/monorepo/pulls/2')
+      .reply(200, {
+        state: 'open',
+        merged: false
+      })
+
+    jest.mock('../../lib/get-diff-commits', () => () => ({
+      html_url: 'https://github.com/lkjlsgfj/',
+      total_commits: 0,
+      behind_by: 0,
+      commits: []
+    }))
+    jest.mock('../../lib/create-branch', () => ({ transforms, processLockfiles }) => {
+      expect(transforms).toHaveLength(2)
+      transforms[0].created = true
+      transforms[1].created = true
+      expect(processLockfiles).toBeTruthy()
+      return '1234abcdf'
+    })
+    const createGroupVersionBranch = require('../../jobs/create-group-version-branch')
+
+    const newJob = await createGroupVersionBranch({
+      dependency: 'react/cli',
+      dependencyUpdatedAt: '20190330170013',
+      accountId: '123-two-packages',
+      repositoryId: '123-monorepo',
+      types: [
+        { type: 'dependencies', filename: 'backend/package.json' },
+        { type: 'dependencies', filename: 'package.json' }],
+      version: '2.0.1',
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': {},
+        '2.0.0': {},
+        '2.0.1': {}
+      },
+      group: {
+        'default': {
+          'packages': [
+            'package.json',
+            'backend/package.json'
+          ]
+        }
+      },
+      monorepo: [
+        { id: '123-monorepo',
+          key: 'react/cli',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-two-packages',
+            filename: 'package.json',
+            type: 'dependencies',
+            oldVersion: '1.0.0' } },
+        { id: '123-monorepo',
+          key: 'react/cli',
+          value: {
+            fullName: 'hans/monorepo',
+            accountId: '123-two-packages',
+            filename: 'backend/package.json',
+            type: 'dependencies',
+            oldVersion: '1.0.0' } } ]
+    })
+
+    expect(githubMock.isDone()).toBeTruthy()
+    expect(newJob).toBeFalsy()
+    await expect(repositories.get('123-monorepo:branch:1234abcdf')).rejects.toThrow('missing')
+    const pr = await repositories.get('123-monorepo:pr:123')
+    expect(pr.comments).toMatchSnapshot()
   })
 
   test('monorepo release: new pull request, 1 group, 2 packages, same dependencyType', async () => {

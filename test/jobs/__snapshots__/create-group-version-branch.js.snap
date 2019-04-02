@@ -179,10 +179,22 @@ Your [Greenkeeper](https://greenkeeper.io) bot :palm_tree:
 }
 `;
 
-exports[`create-group-version-branch new pull request, 1 group, 2 packages, same dependencyType, old PR exists 1`] = `
+exports[`create-group-version-branch no new branch because old pull request has same updates already 1`] = `
+Array [
+  "react/cli-2.0.1",
+]
+`;
+
+exports[`create-group-version-branch no new pull request, but new comment on PR, 1 group, 2 packages, same dependencyType, old PR exists 1`] = `
 "- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
 
 [Update to these versions instead 🚀](https://github.com/hans/monorepo/compare/master...hans:greenkeeper%2Fdefault%2Fmonorepo.react-20190330170013)"
+`;
+
+exports[`create-group-version-branch no new pull request, but new comment on PR, 1 group, 2 packages, same dependencyType, old PR exists 2`] = `
+Array [
+  "react-2.0.0",
+]
 `;
 
 exports[`create-group-version-branch with lockfiles new pull request, 2 groups, 1 package, same dependencyType, both have lockfiles 1`] = `"{\\"devDependencies\\":{\\"@finnpauls/dep\\":\\"2.0.0\\"}}"`;
