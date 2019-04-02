@@ -26,7 +26,6 @@ const {
   getMonorepoGroupNameForPackage
 } = require('../lib/monorepo')
 const prContent = require('../content/update-pr')
-const { isGatsbyPkg } = require('../lib/isGatsby')
 
 module.exports = async function (
   {
@@ -46,10 +45,6 @@ module.exports = async function (
 ) {
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
-  // TODO: delete me!
-  if (isGatsbyPkg(dependency)) {
-    return null
-  }
 
   let isMonorepo = false
   let monorepoGroupName = null

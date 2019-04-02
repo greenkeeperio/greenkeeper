@@ -26,7 +26,6 @@ const { createTransformFunction,
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
-const { isGatsbyPkg } = require('../lib/isGatsby')
 
 module.exports = async function (
   {
@@ -43,10 +42,6 @@ module.exports = async function (
     isFromHook
   }
 ) {
-  // TODO: delete me!
-  if (isGatsbyPkg(dependency)) {
-    return null
-  }
   // do not upgrade invalid versions
   if (!semver.validRange(oldVersion)) return
   let isMonorepo = false

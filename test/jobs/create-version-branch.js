@@ -935,18 +935,6 @@ describe('create version branch', () => {
     expect(newJob).toBeFalsy()
   })
 
-  test('ignore gatsby', async () => {
-    expect.assertions(1)
-    const createVersionBranch = require('../../jobs/create-version-branch')
-
-    const newJob = await createVersionBranch({
-      dependency: 'gatsby-cli'
-    })
-
-    // no new job scheduled
-    expect(newJob).toBeFalsy()
-  })
-
   test('ignore ignored dependencies', async () => {
     expect.assertions(1)
 
