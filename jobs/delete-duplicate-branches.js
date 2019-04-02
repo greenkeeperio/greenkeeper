@@ -42,6 +42,7 @@ console.log('  👍  Required')
 module.exports = async function (dryRun = true) {
   console.log(`  🚀  Starting delete-duplicate-branches.js with dryRun: ${dryRun}.`)
   const { repositories, installations } = await dbs()
+  console.log(`  ⏲️  Opened the databases.`)
 
   let success = []
   let failedInGitHub = []
@@ -84,10 +85,18 @@ ${pad} repositoryFullName: ${repositoryFullName}`)
           })
           if (branchDeletedFromGitHub) {
             // Delete branch doc from db, get it first to get latest rev for remove
-            const branchDoc = await repositories.get(branch.id)
             dryRun && console.log(`  👢  Dry run remove repo from DB - branch.id: ${branch.id}`)
-            const response = dryRun ? { ok: true } : await repositories.remove(branchDoc)
-            const docDeletedFromDB = !!response.ok
+            let response
+            let docDeletedFromDB
+            try {
+              const branchDoc = await repositories.get(branch.id)
+              response = dryRun ? { ok: true } : await repositories.remove(branchDoc)
+              docDeletedFromDB = !!response.ok
+            } catch (err) {
+              if (err.status && err.status === 404) {
+                docDeletedFromDB = true
+              }
+            }
             if (docDeletedFromDB) {
               console.log(`  ✅  Finished with ${branch.id}, it was deleted successfully in GitHub and our DB.\n`)
               success.push(branch.id)
@@ -102,7 +111,7 @@ ${pad} repositoryFullName: ${repositoryFullName}`)
         }
         index++
       } catch (err) {
-        console.log('💥  ', err)
+        console.log('  💥  ', err)
       }
     }
   }
