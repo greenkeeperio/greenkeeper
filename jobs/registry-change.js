@@ -157,7 +157,12 @@ module.exports = async function (
   // get config
   const keysToFindMonorepoDocs = _.compact(_.map(withMultiplePackageJSON, (group) => group[0].value.fullName.toLowerCase()))
   if (keysToFindMonorepoDocs.length) {
-    const monorepoDocs = await getAllMonorepoDocs(repositories, keysToFindMonorepoDocs)
+    let monorepoDocs
+    try {
+      monorepoDocs = await getAllMonorepoDocs(repositories, keysToFindMonorepoDocs)
+    } catch (error) {
+      log.warn('Could not get monorepoDocs', { error: error.message })
+    }
     if (repoDocsCount >= 4000) log.info(`got ${monorepoDocs.length} monorepoDocs`)
 
     _.forEach(withMultiplePackageJSON, monorepo => {
