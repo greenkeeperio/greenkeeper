@@ -467,10 +467,13 @@ describe('registry change create jobs', async () => {
 })
 
 describe('monorepo-release: registry change create jobs', async () => {
+  const repositoryKeys = []
   beforeAll(async () => {
     const maaaaaanyDependencies = {}
+
     for (let i = 0; i <= 333; i++) {
       maaaaaanyDependencies[`huge-${i}`] = '1.0.0'
+      repositoryKeys[i] = `owner/repo-${i}`
     }
 
     const { installations, repositories, npm } = await dbs()
@@ -479,6 +482,11 @@ describe('monorepo-release: registry change create jobs', async () => {
       installations.put({
         _id: 'monorepo-release-1',
         installation: 1,
+        plan: 'free'
+      }),
+      installations.put({
+        _id: 'monorepo-doc-1',
+        installation: 2,
         plan: 'free'
       }),
       repositories.put({
@@ -552,8 +560,35 @@ describe('monorepo-release: registry change create jobs', async () => {
         distTags: {
           latest: '1.0.0'
         }
+      }),
+      npm.put({
+        _id: 'leopold',
+        distTags: {
+          latest: '1.0.0'
+        }
       })
     ])
+    await Promise.all(repositoryKeys.map(async repo => {
+      repositories.put({
+        _id: repo,
+        type: 'repository',
+        fullName: repo,
+        accountId: 'monorepo-doc-1',
+        enabled: true,
+        packages: {
+          'package.json': {
+            dependencies: {
+              'leopold': '1.0.0'
+            }
+          },
+          'frontend/package.json': {
+            devDependencies: {
+              'leopold': '1.0.0'
+            }
+          }
+        }
+      })
+    }))
   })
   beforeEach(() => {
     jest.resetModules()
@@ -562,17 +597,16 @@ describe('monorepo-release: registry change create jobs', async () => {
   afterAll(async () => {
     const { installations, repositories, npm } = await dbs()
     await Promise.all([
-      removeIfExists(installations, 'monorepo-release-1'),
+      removeIfExists(installations, 'monorepo-release-1', 'monorepo-doc-1'),
       removeIfExists(repositories, 'mr-1', 'mr-2'),
-      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog', 'huge-1')
+      removeIfExists(npm, 'react', 'kroko', 'kroko-dile', 'colors', 'colors-blue', 'pug', 'bulldog', 'theodor', 'leopold', 'huge-1')
     ])
   })
 
-  test('create job with multiple (2) db requests', async () => {
+  test('create job with multiple (2) db requests (getAllAccounts)', async () => {
     jest.mock('../../lib/monorepo', () => {
       jest.mock('greenkeeper-monorepo-definitions', () => {
         const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
-
         const huuuuuugeMonorepoDefinitions = []
         for (let i = 0; i <= 333; i++) {
           huuuuuugeMonorepoDefinitions.push(`huge-${i}`)
@@ -615,6 +649,35 @@ describe('monorepo-release: registry change create jobs', async () => {
     spy.mockRestore()
   })
 
+  test('create job with multiple (2) db requests (getAllMonorepoDocs)', async () => {
+    const utils = require('../../utils/registry-change-utils')
+    const spy = jest.spyOn(utils, 'queryDocs')
+
+    const registryChange = require('../../jobs/registry-change.js')
+    const newJobs = await registryChange({
+      name: 'registry-change',
+      dependency: 'leopold',
+      distTags: {
+        latest: '2.0.0'
+      },
+      versions: {
+        '2.0.0': {
+          gitHead: 'smurf'
+        },
+        '1.0.0': {
+          gitHead: 'sky'
+        }
+      },
+      registry: 'https://skimdb.npmjs.com/registry'
+    })
+    expect(newJobs).toHaveLength(0)
+
+    expect(spy).toHaveBeenCalled()
+    expect(spy).toHaveBeenCalledTimes(3)
+
+    spy.mockRestore()
+  })
+
   test('monorepo-release: package is part of uncomplete monorepoDefinition', async () => {
     const newJobs = await registryChange({
       name: 'registry-change',
@@ -639,18 +702,6 @@ describe('monorepo-release: registry change create jobs', async () => {
   })
 
   test('monorepo-release: package is part of complete monorepoDefinition', async () => {
-    jest.mock('../../lib/monorepo', () => {
-      jest.mock('greenkeeper-monorepo-definitions', () => {
-        const monorepoDefinitions = require.requireActual('greenkeeper-monorepo-definitions')
-        const newDef = Object.assign(monorepoDefinitions, {
-          colors: ['colors', 'colors-blue']
-        })
-        return newDef
-      })
-      const lib = require.requireActual('../../lib/monorepo')
-      return lib
-    })
-
     const registryChange = require('../../jobs/registry-change.js')
 
     const newJobs = await registryChange({
@@ -690,7 +741,6 @@ describe('monorepo-release: registry change create jobs', async () => {
       const lib = require.requireActual('../../lib/monorepo')
       return lib
     })
-
     const registryChange = require('../../jobs/registry-change.js')
 
     const newJobs = await registryChange({

@@ -32,9 +32,9 @@ async function getAllMonorepoDocs (repositories, keysToFindMonorepoDocs) {
   let skip = 0
   let monorepoDocs = []
 
-  // send multiple smaller allDocs requests and paginate them.
+  // send multiple smaller query requests and paginate them.
   while (true) {
-    const partialMonorepoDocs = await queryAllDocs(repositories, skip, limit, keysToFindMonorepoDocs)
+    const partialMonorepoDocs = await module.exports.queryDocs(repositories, skip, limit, keysToFindMonorepoDocs)
     if (partialMonorepoDocs.length === 0) break
 
     skip += limit
@@ -43,7 +43,7 @@ async function getAllMonorepoDocs (repositories, keysToFindMonorepoDocs) {
   return monorepoDocs
 }
 
-async function queryAllDocs (db, skip, limit, monorepoKeys) {
+async function queryDocs (db, skip, limit, monorepoKeys) {
   return (await db.query('by_full_name', {
     keys: monorepoKeys,
     limit,
@@ -55,5 +55,6 @@ async function queryAllDocs (db, skip, limit, monorepoKeys) {
 module.exports = {
   getAllAccounts,
   getAllDocs,
-  getAllMonorepoDocs
+  getAllMonorepoDocs,
+  queryDocs
 }
