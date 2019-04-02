@@ -586,6 +586,16 @@ describe('monorepo-release: registry change create jobs', async () => {
               'leopold': '1.0.0'
             }
           }
+        },
+        greenkeeper: {
+          'groups': {
+            'default': {
+              'packages': [
+                'package.json',
+                'frontend/package.json'
+              ]
+            }
+          }
         }
       })
     }))
@@ -671,7 +681,7 @@ describe('monorepo-release: registry change create jobs', async () => {
       },
       registry: 'https://skimdb.npmjs.com/registry'
     })
-    expect(newJobs).toHaveLength(0)
+    expect(newJobs).toHaveLength(334)
 
     expect(spy).toHaveBeenCalled()
     expect(spy).toHaveBeenCalledTimes(3)

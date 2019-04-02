@@ -89,7 +89,6 @@ function getJobsPerGroup ({
       return result
     }
   }))
-
   return groups.map((group) => {
     // only include chages from
     const groupName = Object.keys(group)[0]
@@ -101,7 +100,6 @@ function getJobsPerGroup ({
       log.info(`exited: ${dependency} ${version} is a prerelease on latest and user does not use prereleases`)
       return
     }
-
     return {
       data: Object.assign({
         name: 'create-group-version-branch',
