@@ -58,7 +58,8 @@ describe('getNewLockfile', async () => {
       .post('/', (body) => {
         return true
       })
-      .reply(200, () => ({ ok: false }))
+      .reply(200, () => ({ ok: true }))
+
     const packageJson = '{"name": "greenkeeper","devDependencies": {"jest": "^22.4.2"}}'
     await getNewLockfile({ packageJson, lock, isNpm: true })
     expect(httpTraffic.isDone()).toBeTruthy()
