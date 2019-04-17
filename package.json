@@ -9,7 +9,7 @@
     "catbox-memory": "^2.0.4",
     "couchdb-bootstrap": "14.1.1",
     "envalid": "^5.0.0",
-    "escape-string-regexp": "^1.0.5",
+    "escape-string-regexp": "^2.0.0",
     "github-url-from-git": "^1.4.0",
     "gk-log": "1.5.0",
     "greenkeeper-monorepo-definitions": "^1.14.1",
