@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "jest": "^22.4.2",
-    "lolex": "^3.0.0",
+    "lolex": "^4.0.1",
     "nock": "^10.0.0",
     "prettier-standard-formatter": "^0.222222222222222.333333333333333",
     "simple-mock": "^0.8.0",
