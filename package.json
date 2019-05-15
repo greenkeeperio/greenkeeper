@@ -32,7 +32,7 @@
     "request": "^2.75.0",
     "request-promise": "^4.1.1",
     "retry-promise": "^1.0.0",
-    "rollbar": "^2.0.3",
+    "rollbar": "2.6.1",
     "semver": "^6.0.0",
     "slack-notify": "^0.1.6",
     "stripe": "^6.0.0",
