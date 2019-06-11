@@ -10,7 +10,7 @@ if [[ -n "$GK_COUCHDB" ]]; then
 else
   echo "Starting CouchDB via Docker"
   docker rm -fv gk-couchdb || true
-  docker run -d -p 5984:5984 --name gk-couchdb apache/couchdb:2.1.1
+  docker run -d -p 5984:5984 --name gk-couchdb apache/couchdb:2.3.1
 fi
 
 TIMEOUT=280
