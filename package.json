@@ -23,7 +23,7 @@
     "nodemailer": "^6.0.0",
     "npm-registry-client": "^8.3.0",
     "pouchdb-http": "^6.0.2",
-    "pouchdb-mapreduce": "^6.0.5",
+    "pouchdb-mapreduce": "^7.1.1",
     "pouchdb-upsert": "greenkeeperio/upsert#add_update-timeout",
     "promise-queue": "^2.2.3",
     "promise-retry": "^1.1.1",
