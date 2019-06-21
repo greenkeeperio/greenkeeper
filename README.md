@@ -55,10 +55,10 @@
   </h3>
 </div>
 <div align="center">
-  <strong>Greenkeeper brings you safety & consistency with automatic updates and **real-time monitoring for npm dependencies**. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.</strong>
+  <strong>Greenkeeper brings you safety & consistency with automatic updates and real-time monitoring for npm dependencies. Let a bot send you informative and actionable issues so you can easily keep your software up to date and in working condition.</strong>
 </div>
 <div align="center">
-  Join over **10000 projects on GitHub that trust Greenkeeper** to warn them before dependency updates break their builds.
+  Join over <b>10000 projects on GitHub that trust Greenkeeper</b> to warn them before dependency updates break their builds.
 </div>
 <details>
 <summary>Who else is using it? Anyone I know?</summary>
