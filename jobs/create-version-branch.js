@@ -179,7 +179,7 @@ module.exports = async function (
       })
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
       if (!oldVersionResolved) {
-        log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, { newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
+        log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is not an update for ${oldPkgVersion}`, { newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
         return null
       }
 
