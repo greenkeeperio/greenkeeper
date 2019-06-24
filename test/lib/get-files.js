@@ -23,7 +23,7 @@ test('getFiles: with no fileList provided', async () => {
   const files = await getFiles({ installationId: '123', fullName: 'owner/repo', log })
 
   // returns an Object with the 4 standard files
-  expect(Object.keys(files)).toHaveLength(4)
+  expect(Object.keys(files)).toHaveLength(5)
 })
 
 test('getFiles: 2 package.json files', async () => {
@@ -66,8 +66,8 @@ test('getFiles: 2 package.json files', async () => {
   ]
 
   const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, log })
-  // returns an Object with the 4 file types
-  expect(Object.keys(files)).toHaveLength(4)
+  // returns an Object with the 5 file types
+  expect(Object.keys(files)).toHaveLength(5)
   // The Object has 2 files at the `package.json` key
   expect(files['package.json']).toHaveLength(2)
   expect(files['package.json'][0].path).toEqual('package.json')
@@ -104,7 +104,7 @@ test('getFiles: 2 package.json files but one is not found on github', async () =
 
   const files = await getFiles({ installationId: '123', fullName: 'owner/repo', files: fileList, log })
 
-  expect(Object.keys(files)).toHaveLength(4)
+  expect(Object.keys(files)).toHaveLength(5)
   // returns an Object with the key `package.json`
   expect(files['package.json']).toBeDefined()
   // The Object has 2 files at the `package.json` key

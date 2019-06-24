@@ -29,6 +29,7 @@ module.exports = async function (data) {
     'package.json',
     'package-lock.json',
     'npm-shrinkwrap.json',
+    'pnpm-lock.yaml',
     'yarn.lock',
     'greenkeeper.json'
   ]

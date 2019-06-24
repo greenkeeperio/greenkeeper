@@ -148,17 +148,20 @@ function createTransformFunction (type, dependency, version, log) {
 
 // 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
 // 'newer' repoDocs have an array (empty or with the paths)
-// packageFilename: path of pckage.json
+// packageFilename: path of package.json
 const getLockfilePath = function (files, packageFilename) {
   const convertedFiles = _.flatten(Object.keys(files).map(key => {
     if (files[key] === true) return key
     else return files[key]
   }))
 
-  const hasPackageLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'package-lock.json'))
+  const hasPackageLock = convertedFiles.includes(packageFilename.replace('package.json', 'package-lock.json'))
   if (hasPackageLock) return packageFilename.replace('package.json', 'package-lock.json')
 
-  const hasYarnLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'yarn.lock'))
+  const hasPnpmLock = convertedFiles.includes(packageFilename.replace('package.json', 'pnpm-lock.yaml'))
+  if (hasPnpmLock) return packageFilename.replace('package.json', 'pnpm-lock.yaml')
+
+  const hasYarnLock = convertedFiles.includes(packageFilename.replace('package.json', 'yarn.lock'))
   if (hasYarnLock) return packageFilename.replace('package.json', 'yarn.lock')
 
   return null
