@@ -5,6 +5,18 @@ const removeIfExists = require('../helpers/remove-if-exists')
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
 
+const versionInfos = {
+  'repository': {
+    type: 'git',
+    url: 'git+https://github.com/dep/dep.git'
+  },
+  'license': 'MIT',
+  '_npmUser': {
+    name: 'finn',
+    email: 'finn.pauls@gmail.com'
+  }
+}
+
 describe('create-group-version-branch', async () => {
   beforeEach(() => {
     jest.resetModules()
@@ -20,8 +32,8 @@ describe('create-group-version-branch', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
     await npm.put({
@@ -30,9 +42,9 @@ describe('create-group-version-branch', async () => {
         latest: '2.0.1'
       },
       versions: {
-        '1.0.0': {},
-        '2.0.0': {},
-        '2.0.1': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos,
+        '2.0.1': versionInfos
       }
     })
     await npm.put({
@@ -41,8 +53,8 @@ describe('create-group-version-branch', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
     await npm.put({
@@ -51,8 +63,8 @@ describe('create-group-version-branch', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
     await npm.put({
@@ -61,8 +73,8 @@ describe('create-group-version-branch', async () => {
         latest: '2.0.0'
       },
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
     await npm.put({
@@ -71,8 +83,8 @@ describe('create-group-version-branch', async () => {
         latest: '1.8.0'
       },
       versions: {
-        '1.0.0': {},
-        '1.8.0': {}
+        '1.0.0': versionInfos,
+        '1.8.0': versionInfos
       }
     })
 
@@ -378,8 +390,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -495,8 +507,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -613,8 +625,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'backend': {
@@ -673,8 +685,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -757,8 +769,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0-prerelease': {}
+        '1.0.0': versionInfos,
+        '2.0.0-prerelease': versionInfos
       },
       group: {
         'default': {
@@ -860,8 +872,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -963,9 +975,9 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {},
-        '2.0.1': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos,
+        '2.0.1': versionInfos
       },
       group: {
         'default': {
@@ -1112,8 +1124,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -1295,8 +1307,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -1417,8 +1429,8 @@ describe('create-group-version-branch', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -1615,8 +1627,8 @@ describe('create-group-version-branch with lockfiles', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       },
       group: {
         'default': {
@@ -1708,8 +1720,8 @@ describe('create-group-version-branch with lockfiles', async () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '1.1.0': {}
+        '1.0.0': versionInfos,
+        '1.1.0': versionInfos
       },
       group: {
         'default': {

@@ -362,7 +362,7 @@ module.exports = async function (
   const dependencyLink = getFormattedDependencyURL({ repositoryURL: transforms[0].repoURL })
 
   const license = versions[version].license
-  const licenseHasChanged = versions[oldVersionResolved].license !== license
+  const licenseHasChanged = oldVersionResolved ? versions[oldVersionResolved].license !== license : false
   const publisher = versions[version]['_npmUser'].name
 
   // maybe adapt PR body

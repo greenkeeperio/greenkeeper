@@ -9,7 +9,20 @@ nock.disableNetConnect()
 nock.enableNetConnect('localhost:5984')
 
 let defaultPrivateKey = process.env.PRIVATE_KEY
-describe('create version branch', () => {
+
+const versionInfos = {
+  'repository': {
+    type: 'git',
+    url: 'git+https://github.com/dep/dep.git'
+  },
+  'license': 'MIT',
+  '_npmUser': {
+    name: 'finn',
+    email: 'finn.pauls@gmail.com'
+  }
+}
+
+describe.only('create version branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
@@ -268,28 +281,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {
-          'repository': {
-            type: 'git',
-            url: 'git+https://github.com/lodash/lodash.git'
-          },
-          'license': 'MIT',
-          '_npmUser': {
-            name: 'jdalton',
-            email: 'john.david.dalton@gmail.com'
-          }
-        },
-        '2.0.0': {
-          'repository': {
-            type: 'git',
-            url: 'git+https://github.com/lodash/lodash.git'
-          },
-          'license': 'TIM',
-          '_npmUser': {
-            name: 'jdalton',
-            email: 'john.david.dalton@gmail.com'
-          }
-        }
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -408,8 +401,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -529,8 +522,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -600,8 +593,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -662,8 +655,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -723,8 +716,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0-beta': {}
+        '1.0.0': versionInfos,
+        '2.0.0-beta': versionInfos
       }
     })
 
@@ -807,8 +800,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -871,9 +864,9 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '1.1.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '1.1.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -935,8 +928,8 @@ describe('create version branch', () => {
       oldVersion: '^2.0.1',
       oldVersionResolved: '2.0.1',
       versions: {
-        '1.0.0': {},
-        '2.0.1': {}
+        '1.0.0': versionInfos,
+        '2.0.1': versionInfos
       }
     })
     // no new job scheduled
@@ -1042,8 +1035,8 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.1': {}
+        '1.0.0': versionInfos,
+        '2.0.1': versionInfos
       }
     })
     // no new job scheduled
@@ -1062,8 +1055,8 @@ describe('create version branch', () => {
       oldVersion: '^2.0.1',
       oldVersionResolved: '2.0.1',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
     // no new job scheduled
@@ -1144,7 +1137,12 @@ describe('create version branch', () => {
       repositoryId: '51',
       type: 'devDependencies',
       version: '2.0.2',
-      oldVersion: '1.3.0'
+      oldVersion: '^1.3.0',
+      oldVersionResolved: '1.3.0',
+      versions: {
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
+      }
     })
 
     expect(githubMock.isDone()).toBeTruthy()
@@ -1178,7 +1176,12 @@ describe('create version branch', () => {
       accountId: '2323',
       repositoryId: '47',
       version: '1.0.1',
-      oldVersion: '^1.0.0'
+      oldVersion: '^1.0.0',
+      oldVersionResolved: '1.0.0',
+      versions: {
+        '1.0.0': versionInfos,
+        '2.0.0': versionInfos
+      }
     })
 
     // no new job scheduled
@@ -1216,18 +1219,33 @@ describe('create version branch', () => {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/jest/jest.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '1.1.1': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/jest/jest.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '1.2.0': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/jest/jest.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -1242,7 +1260,7 @@ describe('create version branch', () => {
       })
       .get('/rate_limit')
       .optionally()
-      .reply(200, {})
+      .reply(200)
       .get('/repos/espy/test')
       .reply(200, {
         default_branch: 'master'
@@ -1299,8 +1317,9 @@ describe('create version branch', () => {
       oldVersion: '1.1.1',
       oldVersionResolved: '1.1.1',
       versions: {
-        '1.0.0': {},
-        '1.1.1': {}
+        '1.0.0': versionInfos,
+        '1.1.1': versionInfos,
+        '1.2.0': versionInfos
       }
     })
 
@@ -1398,9 +1417,9 @@ describe('create version branch', () => {
       oldVersion: '^2.0.0',
       oldVersionResolved: '2.0.0',
       versions: {
-        '1.0.0': {},
-        '1.1.0': {},
-        '2.0.0': {}
+        '1.0.0': versionInfos,
+        '1.1.0': versionInfos,
+        '2.0.0': versionInfos
       }
     })
 
@@ -1443,18 +1462,33 @@ describe('create version branch', () => {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/best/best.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '1.1.1': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/best/best.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '1.2.0': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/best/best.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -1521,11 +1555,12 @@ describe('create version branch', () => {
       repositoryId: '50_cvb_lockfile',
       type: 'devDependencies',
       version: '1.2.0',
-      oldVersion: '1.1.1',
+      oldVersion: '^1.1.1',
       oldVersionResolved: '1.1.1',
       versions: {
-        '1.0.0': {},
-        '1.1.1': {}
+        '1.0.0': versionInfos,
+        '1.1.1': versionInfos,
+        '1.2.0': versionInfos
       }
     })
 
@@ -1581,7 +1616,12 @@ describe('create version branch', () => {
       oldVersionResolved: '5.5.5',
       versions: {
         '5.5.6': {
-          gitHead: 'deadbeef222'
+          gitHead: 'deadbeef222',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
         }
       }
     })
@@ -1809,12 +1849,22 @@ describe('create version branch for dependencies from monorepos', () => {
       oldVersionResolved: '1.0.0',
       versions: {
         '1.0.0': {
-          gitHead: 'deadbeef100'
+          gitHead: 'deadbeef100',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
         },
         '2.0.0': {
           gitHead: 'deadbeef222',
           repository: {
             url: 'https://github.com/colors/monorepo'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -1940,12 +1990,22 @@ describe('create version branch for dependencies from monorepos', () => {
       oldVersionResolved: '1.0.0',
       versions: {
         '1.0.0': {
-          gitHead: 'deadbeef100'
+          gitHead: 'deadbeef100',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
         },
         '2.0.0': {
           gitHead: 'deadbeef222',
           repository: {
             url: 'https://github.com/colors/monorepo'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -1994,8 +2054,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '2.2.0'
       },
       versions: {
-        '2.1.0': {},
-        '2.2.0': {}
+        '2.1.0': versionInfos,
+        '2.2.0': versionInfos
       }
     })
     await npm.put({
@@ -2005,10 +2065,10 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '1.5.0'
       },
       versions: {
-        '1.2.0': {},
-        '1.3.0': {},
-        '1.4.0': {},
-        '1.5.0': {}
+        '1.2.0': versionInfos,
+        '1.3.0': versionInfos,
+        '1.4.0': versionInfos,
+        '1.5.0': versionInfos
       }
     })
     await npm.put({
@@ -2018,8 +2078,8 @@ describe('create version branch for dependencies from monorepos', () => {
         latest: '1.3.0'
       },
       versions: {
-        '1.2.0': {},
-        '1.3.0': {}
+        '1.2.0': versionInfos,
+        '1.3.0': versionInfos
       }
     })
     expect.assertions(11)
@@ -2104,17 +2164,26 @@ describe('create version branch for dependencies from monorepos', () => {
       repositoryId: 'mono-deps-diff',
       type: 'dependencies',
       version: '2.2.0',
-
-      oldVersion: '2.1.0',
+      oldVersion: '^2.1.0',
       oldVersionResolved: '2.1.0',
       versions: {
         '1.0.0': {
-          gitHead: 'deadbeef100'
+          gitHead: 'deadbeef100',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
         },
         '2.1.0': {
           gitHead: 'deadbeef222',
           repository: {
             url: 'https://github.com/numbers/monorepo'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -2258,23 +2327,37 @@ describe('create version branch for dependencies from monorepos', () => {
       repositoryId: 'mono-2',
       type: 'dependencies',
       version: '2.0.0',
-
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
         '1.0.0': {
-          gitHead: 'deadbeef100'
+          gitHead: 'deadbeef100',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
         },
         '2.0.0': {
           gitHead: 'deadbeef222',
           repository: {
             url: 'https://github.com/colors/monorepo'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '3.0.0': {
           gitHead: 'deadbeef333',
           repository: {
             url: 'https://github.com/colors/monorepo'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -2321,18 +2404,33 @@ describe('create version branch for dependencies from monorepos', () => {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/airbnb/enzyme.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '3.4.3': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/airbnb/enzyme.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '3.4.4': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/airbnb/enzyme.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -2348,12 +2446,22 @@ describe('create version branch for dependencies from monorepos', () => {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/airbnb/enzyme.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         },
         '1.2.0': {
           'repository': {
             'type': 'git',
             'url': 'git+https://github.com/airbnb/enzyme.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
           }
         }
       }
@@ -2466,8 +2574,22 @@ describe('create version branch for dependencies from monorepos', () => {
       oldVersion: '^3.3.0',
       oldVersionResolved: undefined,
       versions: {
-        '1.6.0': { gitHead: 'wau' },
-        '1.5.0': { gitHead: 'woof' }
+        '1.6.0': {
+          gitHead: 'wau',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
+        },
+        '1.5.0': {
+          gitHead: 'woof',
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
+        }
       }
     })
 
@@ -2601,7 +2723,8 @@ describe('create version branch for dependencies from monorepos', () => {
       type: 'devDependencies',
       version: '7.0.0-rc.2',
       oldVersion: '^7.0.0-rc.1',
-      oldVersionResolved: undefined
+      oldVersionResolved: undefined,
+      versions: versionInfos
     })
 
     expect(githubMock.isDone()).toBeTruthy()
