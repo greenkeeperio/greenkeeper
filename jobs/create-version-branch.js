@@ -34,7 +34,7 @@ module.exports = async function (
     accountId,
     repositoryId,
     type,
-    // The following 4 don’t matter anymore, since we fetch them anew for every dependency anyway
+    // The following 4 don’t matter anymore, sincversionse we fetch them anew for every dependency anyway
     version,
     oldVersion,
     oldVersionResolved,
@@ -336,6 +336,10 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles })
 
+  const license = versions[version].license
+  const licenseHasChanged = versions[oldVersionResolved].license !== license
+  const publisher = versions[version]['_npmUser'].name
+
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -345,7 +349,10 @@ module.exports = async function (
     diffCommits,
     monorepoGroupName,
     type,
-    packageUpdateList
+    packageUpdateList,
+    license,
+    licenseHasChanged,
+    publisher
   })
 
   // verify pull requests commit
