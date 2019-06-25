@@ -20,6 +20,7 @@
     "jsonwebtoken": "^8.1.1",
     "lodash": "^4.17.10",
     "mergejson": "^1.0.30",
+    "micromatch": "^4.0.2",
     "nodemailer": "^6.0.0",
     "npm-registry-client": "^8.3.0",
     "pouchdb-http": "^6.0.2",

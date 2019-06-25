@@ -1,8 +1,8 @@
 const nock = require('nock')
 
-const createBranch = require('../../lib/create-branch')
-const { createTransformFunction } = require('../../utils/utils')
-const dbs = require('../../lib/dbs')
+const createBranch = require('../../../lib/create-branch')
+const { createTransformFunction } = require('../../../utils/utils')
+const dbs = require('../../../lib/dbs')
 
 nock.disableNetConnect()
 nock.enableNetConnect('localhost')
