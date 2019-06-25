@@ -4,6 +4,11 @@ const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
 
+// removes falsy values from the array
+function compactArray (array) {
+  return array.filter(value => value)
+}
+
 function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
 
@@ -319,6 +324,7 @@ const hasTooManyPackageJSONs = function (repo) {
 }
 
 module.exports = {
+  compactArray,
   seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,

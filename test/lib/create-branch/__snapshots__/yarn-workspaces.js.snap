@@ -1,0 +1,65 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`create branch with yarn workspace lockfiles handle a complex yarn workspace 1`] = `
+Object {
+  "lock": "{\\"very-excellent-lockfile\\":\\"nah\\"}",
+  "packages": Object {
+    "non-root/docs/package.json": Object {
+      "dependencies": Object {
+        "react": "2.0.0",
+      },
+    },
+    "non-root/jobs/first-job/package.json": Object {
+      "dependencies": Object {
+        "react": "2.0.0",
+      },
+    },
+    "non-root/jobs/second-job/package.json": Object {
+      "dependencies": Object {
+        "react": "2.0.0",
+      },
+    },
+    "non-root/outside-workspace/package.json": Object {
+      "dependencies": Object {
+        "nothing": "1.0.0",
+      },
+    },
+    "non-root/package.json": Object {
+      "dependencies": Object {
+        "nothing": "1.0.0",
+      },
+      "workspaces": Array [
+        "jobs/*",
+        "docs",
+      ],
+    },
+  },
+  "repositoryTokens": "",
+  "type": "yarn",
+  "workspaceRoot": "non-root/package.json",
+}
+`;
+
+exports[`create branch with yarn workspace lockfiles handle a simple yarn workspace 1`] = `
+Object {
+  "lock": "{\\"very-excellent-lockfile\\":\\"nah\\"}",
+  "packages": Object {
+    "jobs/first-job/package.json": Object {
+      "dependencies": Object {
+        "react": "2.0.0",
+      },
+    },
+    "package.json": Object {
+      "dependencies": Object {
+        "react": "1.0.0",
+      },
+      "workspaces": Array [
+        "jobs/*",
+      ],
+    },
+  },
+  "repositoryTokens": "",
+  "type": "yarn",
+  "workspaceRoot": "package.json",
+}
+`;
