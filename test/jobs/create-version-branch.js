@@ -268,8 +268,28 @@ describe('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': {},
-        '2.0.0': {}
+        '1.0.0': {
+          'repository': {
+            type: 'git',
+            url: 'git+https://github.com/lodash/lodash.git'
+          },
+          'license': 'MIT',
+          '_npmUser': {
+            name: 'jdalton',
+            email: 'john.david.dalton@gmail.com'
+          }
+        },
+        '2.0.0': {
+          'repository': {
+            type: 'git',
+            url: 'git+https://github.com/lodash/lodash.git'
+          },
+          'license': 'TIM',
+          '_npmUser': {
+            name: 'jdalton',
+            email: 'john.david.dalton@gmail.com'
+          }
+        }
       }
     })
 

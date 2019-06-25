@@ -360,6 +360,11 @@ module.exports = async function (
     prTitles: config.prTitles })
 
   const dependencyLink = getFormattedDependencyURL({ repositoryURL: transforms[0].repoURL })
+
+  const license = versions[version].license
+  const licenseHasChanged = versions[oldVersionResolved].license !== license
+  const publisher = versions[version]['_npmUser'].name
+
   // maybe adapt PR body
   const body = prContent({
     dependencyLink,
@@ -370,7 +375,10 @@ module.exports = async function (
     type: highestPriorityDependency,
     release,
     diffCommits,
-    packageUpdateList
+    packageUpdateList,
+    license,
+    licenseHasChanged,
+    publisher
   })
 
   // verify pull requests commit
