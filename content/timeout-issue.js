@@ -10,6 +10,7 @@ Since we didnâ€™t receive a CI status on the ${branchLink(fullName)} branch, itâ
 We recommend using:
 - [CircleCI](https://circleci.com)
 - [Travis CI](https://travis-ci.org)
+- [Buildkite](https://buildkite.com/)
 - [CodeShip](https://codeship.com)
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines)
 - [TeamCity](https://www.jetbrains.com/teamcity)
