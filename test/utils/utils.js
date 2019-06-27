@@ -274,24 +274,53 @@ test('getLicenseAndAuthorFromVersions', () => {
       '_npmUser': {
         name: 'finn',
         email: 'finn.pauls@gmail.com'
+      }
+    },
+    '2.2.2': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/best/best.git'
       },
-      '2.2.2': {
-        'repository': {
-          'type': 'git',
-          'url': 'git+https://github.com/best/best.git'
-        },
-        'license': 'MIT',
-        '_npmUser': {
-          name: 'finn',
-          email: 'finn.pauls@gmail.com'
-        }
+      'license': 'MIT',
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
       }
     }
   }
   const output = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
-  console.log('### output', output)
-  // returns the last satisfying version
-  expect(output).toEqual('9.3.1')
+  expect(output).toMatchObject({ license: 'MIT', licenseHasChanged: false, publisher: 'finn' })
+})
+
+test('getLicenseAndAuthorFromVersions with changed license', () => {
+  const version = '2.2.2'
+  const oldVersionResolved = '1.1.1'
+  const versions = {
+    '1.1.1': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/cat/cat.git'
+      },
+      'license': 'MIT',
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
+      }
+    },
+    '2.2.2': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/best/best.git'
+      },
+      'license': 'kitty',
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
+      }
+    }
+  }
+  const output = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
+  expect(output).toMatchObject({ license: 'kitty', licenseHasChanged: true, publisher: 'finn' })
 })
 
 test('Use default env.GITHUB_URL in github compare URL', () => {
