@@ -279,59 +279,7 @@ test('respect env.GITHUB_URL in github compare URL', () => {
   expect(url).toEqual('https://superprivategit.megacorp.com/hanshansen/mopeds/compare/dev...hanshansen:greenkeeper%2Ffrontend%2Fstandard-10.0.0')
 })
 
-test('get no lockfile in old syntax', () => {
-  process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
-  const files = {
-    'package.json': true,
-    'package-lock.json': false,
-    'yarn.lock': false,
-    'shrinkwrap.json': false
-  }
-  const packageFileName = 'package.json'
-  const path = getLockfilePath(files, packageFileName)
-  expect(path).toBeFalsy()
-})
-
-test('get lockfile for package-lock in old syntax', () => {
-  process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
-  const files = {
-    'package.json': true,
-    'package-lock.json': true,
-    'yarn.lock': false,
-    'shrinkwrap.json': false
-  }
-  const packageFileName = 'package.json'
-  const path = getLockfilePath(files, packageFileName)
-  expect(path).toEqual('package-lock.json')
-})
-
-test('get npm lockfile despite yarn.lock in old syntax', () => {
-  process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
-  const files = {
-    'package.json': true,
-    'package-lock.json': true,
-    'yarn.lock': true,
-    'shrinkwrap.json': false
-  }
-  const packageFileName = 'package.json'
-  const path = getLockfilePath(files, packageFileName)
-  expect(path).toEqual('package-lock.json')
-})
-
-test('get yarn.lock in old syntax', () => {
-  process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
-  const files = {
-    'package.json': true,
-    'package-lock.json': false,
-    'yarn.lock': true,
-    'shrinkwrap.json': false
-  }
-  const packageFileName = 'package.json'
-  const path = getLockfilePath(files, packageFileName)
-  expect(path).toEqual('yarn.lock')
-})
-
-test('get no lockfile in new syntax', () => {
+test('get no lockfile', () => {
   process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const files = {
     'package.json': ['package.json'],
@@ -344,7 +292,7 @@ test('get no lockfile in new syntax', () => {
   expect(path).toBeFalsy()
 })
 
-test('get lockfile for package-lock in new syntax', () => {
+test('get lockfile for package-lock', () => {
   process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const files = {
     'package.json': ['package.json'],
@@ -357,7 +305,7 @@ test('get lockfile for package-lock in new syntax', () => {
   expect(path).toEqual('package-lock.json')
 })
 
-test('get npm lockfile despite yarn.lock in new syntax', () => {
+test('get npm lockfile despite yarn.lock', () => {
   process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const files = {
     'package.json': ['package.json'],
@@ -370,7 +318,7 @@ test('get npm lockfile despite yarn.lock in new syntax', () => {
   expect(path).toEqual('package-lock.json')
 })
 
-test('get yarn.lock in new syntax', () => {
+test('get yarn.lock', () => {
   process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const files = {
     'package.json': ['package.json'],
@@ -383,7 +331,7 @@ test('get yarn.lock in new syntax', () => {
   expect(path).toEqual('yarn.lock')
 })
 
-test('get one of many yarn.lock in new syntax', () => {
+test('get one of many yarn.lock', () => {
   process.env.GITHUB_URL = 'https://superprivategit.megacorp.com'
   const files = {
     'package.json': ['package.json'],
