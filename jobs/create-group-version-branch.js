@@ -19,7 +19,7 @@ const {
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
   getOldVersionResolved,
-  getLicenseAndAuthorFromVersions
+  getLicenseAndPublisherFromVersions
 } = require('../utils/utils')
 const {
   isPartOfMonorepo,
@@ -362,7 +362,7 @@ module.exports = async function (
 
   const dependencyLink = getFormattedDependencyURL({ repositoryURL: transforms[0].repoURL })
 
-  const { license, licenseHasChanged, publisher } = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
+  const { license, previousLicense, licenseHasChanged, publisher } = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
 
   // maybe adapt PR body
   const body = prContent({
@@ -376,6 +376,7 @@ module.exports = async function (
     diffCommits,
     packageUpdateList,
     license,
+    previousLicense,
     licenseHasChanged,
     publisher
   })

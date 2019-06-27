@@ -323,13 +323,14 @@ const hasTooManyPackageJSONs = function (repo) {
   return repo.packages && Object.keys(repo.packages).length > 300
 }
 
-const getLicenseAndAuthorFromVersions = function ({ versions, version, oldVersionResolved }) {
-  const license = versions[version].license
+const getLicenseAndPublisherFromVersions = function ({ versions, version, oldVersionResolved }) {
+  const license = versions[version].license || 'No license'
+  const previousLicense = versions[oldVersionResolved].license || 'No license'
   return {
     license,
-    licenseHasChanged: versions[oldVersionResolved].license !== license,
+    previousLicense,
+    licenseHasChanged: previousLicense !== license,
     publisher: versions[version]['_npmUser'].name
-
   }
 }
 
@@ -352,5 +353,5 @@ module.exports = {
   addNewLowestAndDeprecate,
   hasTooManyPackageJSONs,
   getLockfilePath,
-  getLicenseAndAuthorFromVersions
+  getLicenseAndPublisherFromVersions
 }

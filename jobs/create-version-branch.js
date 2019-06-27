@@ -23,7 +23,7 @@ const { createTransformFunction,
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
   getOldVersionResolved,
-  getLicenseAndAuthorFromVersions
+  getLicenseAndPublisherFromVersions
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
@@ -35,7 +35,7 @@ module.exports = async function (
     accountId,
     repositoryId,
     type,
-    // The following 4 don’t matter anymore, sincversionse we fetch them anew for every dependency anyway
+    // The following 4 don’t matter anymore, since we fetch them anew for every dependency anyway
     version,
     oldVersion,
     oldVersionResolved,
@@ -337,7 +337,7 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles })
 
-  const { license, licenseHasChanged, publisher } = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
+  const { license, previousLicense, licenseHasChanged, publisher } = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
 
   const body = prContent({
     dependencyLink,
@@ -350,6 +350,7 @@ module.exports = async function (
     type,
     packageUpdateList,
     license,
+    previousLicense,
     licenseHasChanged,
     publisher
   })
