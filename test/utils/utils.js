@@ -10,7 +10,8 @@ const {
   addNodeVersionToTravisYML,
   addNewLowestAndDeprecate,
   hasNodeVersion,
-  getLockfilePath
+  getLockfilePath,
+  getLicenseAndAuthorFromVersions
 } = require('../../utils/utils')
 
 const { cleanCache } = require('../helpers/module-cache-helpers')
@@ -256,6 +257,39 @@ test('getOldVersionResolved', () => {
   const distTag = 'latest'
 
   const output = getOldVersionResolved(satisfyingVersions, distTags, distTag)
+  // returns the last satisfying version
+  expect(output).toEqual('9.3.1')
+})
+
+test('getLicenseAndAuthorFromVersions', () => {
+  const version = '2.2.2'
+  const oldVersionResolved = '1.1.1'
+  const versions = {
+    '1.1.1': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/cat/cat.git'
+      },
+      'license': 'MIT',
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
+      },
+      '2.2.2': {
+        'repository': {
+          'type': 'git',
+          'url': 'git+https://github.com/best/best.git'
+        },
+        'license': 'MIT',
+        '_npmUser': {
+          name: 'finn',
+          email: 'finn.pauls@gmail.com'
+        }
+      }
+    }
+  }
+  const output = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
+  console.log('### output', output)
   // returns the last satisfying version
   expect(output).toEqual('9.3.1')
 })
