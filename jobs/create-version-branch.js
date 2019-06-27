@@ -22,7 +22,8 @@ const { createTransformFunction,
   generateGitHubCompareURL,
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  getLicenseAndAuthorFromVersions
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
@@ -336,9 +337,7 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles })
 
-  const license = versions[version].license
-  const licenseHasChanged = versions[oldVersionResolved].license !== license
-  const publisher = versions[version]['_npmUser'].name
+  const { license, licenseHasChanged, publisher } = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
 
   const body = prContent({
     dependencyLink,
