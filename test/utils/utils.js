@@ -11,7 +11,7 @@ const {
   addNewLowestAndDeprecate,
   hasNodeVersion,
   getLockfilePath,
-  getLicenseAndAuthorFromVersions
+  getLicenseAndPublisherFromVersions
 } = require('../../utils/utils')
 
 const { cleanCache } = require('../helpers/module-cache-helpers')
@@ -261,7 +261,7 @@ test('getOldVersionResolved', () => {
   expect(output).toEqual('9.3.1')
 })
 
-test('getLicenseAndAuthorFromVersions', () => {
+test('getLicenseAndPublisherFromVersions', () => {
   const version = '2.2.2'
   const oldVersionResolved = '1.1.1'
   const versions = {
@@ -288,11 +288,11 @@ test('getLicenseAndAuthorFromVersions', () => {
       }
     }
   }
-  const output = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
+  const output = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
   expect(output).toMatchObject({ license: 'MIT', licenseHasChanged: false, publisher: 'finn' })
 })
 
-test('getLicenseAndAuthorFromVersions with changed license', () => {
+test('getLicenseAndPublisherFromVersions with changed license', () => {
   const version = '2.2.2'
   const oldVersionResolved = '1.1.1'
   const versions = {
@@ -319,8 +319,42 @@ test('getLicenseAndAuthorFromVersions with changed license', () => {
       }
     }
   }
-  const output = getLicenseAndAuthorFromVersions({ versions, version, oldVersionResolved })
-  expect(output).toMatchObject({ license: 'kitty', licenseHasChanged: true, publisher: 'finn' })
+  const output = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
+  expect(output).toMatchObject({ license: 'kitty', licenseHasChanged: true, publisher: 'finn', previousLicense: 'MIT' })
+})
+
+test('getLicenseAndPublisherFromVersions with no previous license', () => {
+  const version = '2.2.2'
+  const oldVersionResolved = '1.1.1'
+  const versions = {
+    '1.1.1': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/cat/cat.git'
+      },
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
+      }
+    },
+    '2.2.2': {
+      'repository': {
+        'type': 'git',
+        'url': 'git+https://github.com/best/best.git'
+      },
+      'license': 'kitty',
+      '_npmUser': {
+        name: 'finn',
+        email: 'finn.pauls@gmail.com'
+      }
+    }
+  }
+  const output = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
+  expect(output).toMatchObject({
+    license: 'kitty',
+    publisher: 'finn',
+    licenseHasChanged: true,
+    previousLicense: 'No license' })
 })
 
 test('Use default env.GITHUB_URL in github compare URL', () => {

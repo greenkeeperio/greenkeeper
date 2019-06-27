@@ -22,7 +22,7 @@ const versionInfos = {
   }
 }
 
-describe.only('create version branch', () => {
+describe('create version branch', () => {
   beforeEach(() => {
     delete process.env.IS_ENTERPRISE
     cleanCache('../../lib/env')
@@ -281,7 +281,7 @@ describe.only('create version branch', () => {
       oldVersion: '^1.0.0',
       oldVersionResolved: '1.0.0',
       versions: {
-        '1.0.0': versionInfos,
+        '1.0.0': { ...versionInfos, license: 'BYOL' },
         '2.0.0': versionInfos
       }
     })
@@ -2169,7 +2169,6 @@ describe('create version branch for dependencies from monorepos', () => {
       versions: {
         '1.0.0': {
           gitHead: 'deadbeef100',
-          'license': 'MIT',
           '_npmUser': {
             name: 'finn',
             email: 'finn.pauls@gmail.com'
@@ -2180,7 +2179,16 @@ describe('create version branch for dependencies from monorepos', () => {
           repository: {
             url: 'https://github.com/numbers/monorepo'
           },
-          'license': 'MIT',
+          '_npmUser': {
+            name: 'finn',
+            email: 'finn.pauls@gmail.com'
+          }
+        },
+        '2.2.0': {
+          gitHead: 'deadbeef220',
+          repository: {
+            url: 'https://github.com/numbers/monorepo'
+          },
           '_npmUser': {
             name: 'finn',
             email: 'finn.pauls@gmail.com'
