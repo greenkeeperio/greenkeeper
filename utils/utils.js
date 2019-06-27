@@ -323,6 +323,16 @@ const hasTooManyPackageJSONs = function (repo) {
   return repo.packages && Object.keys(repo.packages).length > 300
 }
 
+const getLicenseAndAuthorFromVersions = function ({ versions, version, oldVersionResolved }) {
+  const license = versions[version].license
+  return {
+    license,
+    licenseHasChanged: versions[oldVersionResolved].license !== license,
+    publisher: versions[version]['_npmUser'].name
+
+  }
+}
+
 module.exports = {
   compactArray,
   seperateNormalAndMonorepos,
@@ -341,5 +351,6 @@ module.exports = {
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
   hasTooManyPackageJSONs,
-  getLockfilePath
+  getLockfilePath,
+  getLicenseAndAuthorFromVersions
 }
