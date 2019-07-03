@@ -51,7 +51,7 @@ Object {
     },
     "package.json": Object {
       "dependencies": Object {
-        "react": "1.0.0",
+        "react": "2.0.0",
       },
       "workspaces": Array [
         "jobs/*",
