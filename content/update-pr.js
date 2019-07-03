@@ -17,8 +17,8 @@ ${monorepoGroupName && `\nThis monorepo update includes releases of one or more 
 }
 ---
 
-**Publisher:** ${publisher}
-**License:** ${licenseHasChanged ? `This package’s license has changed from **${previousLicense}** to **${license}** in this release` : `${license}`}
+${publisher && `**Publisher:** ${publisher}`}
+${license && `**License:** ${licenseHasChanged ? `This package’s license has changed from **${previousLicense}** to **${license}** in this release` : `${license}`}`}
 
 ${hasReleaseInfo
     ? _.compact([release, diffCommits])
