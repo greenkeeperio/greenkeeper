@@ -324,13 +324,25 @@ const hasTooManyPackageJSONs = function (repo) {
 }
 
 const getLicenseAndPublisherFromVersions = function ({ versions, version, oldVersionResolved }) {
-  const license = versions[version].license || 'No license'
-  const previousLicense = versions[oldVersionResolved].license || 'No license'
+  const newVersion = versions[version]
+  const oldVersion = versions[oldVersionResolved]
+  const publisher = _.get(newVersion, '_npmUser.name')
+  let license, previousLicense, licenseHasChanged
+  if (_.has(newVersion, 'license')) {
+    license = newVersion['license'] || 'No license'
+
+    // only compare if we have a license field for both versions in the DB
+    if (_.has(oldVersion, 'license')) {
+      previousLicense = oldVersion['license'] || 'No license'
+      licenseHasChanged = previousLicense !== license
+    }
+  }
+
   return {
     license,
     previousLicense,
-    licenseHasChanged: previousLicense !== license,
-    publisher: versions[version]['_npmUser'].name
+    licenseHasChanged,
+    publisher
   }
 }
 
