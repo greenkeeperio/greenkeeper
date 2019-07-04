@@ -353,8 +353,8 @@ test('getLicenseAndPublisherFromVersions with no previous license', () => {
   expect(output).toMatchObject({
     license: 'kitty',
     publisher: 'finn',
-    licenseHasChanged: true,
-    previousLicense: 'No license' })
+    licenseHasChanged: undefined,
+    previousLicense: undefined })
 })
 
 test('Use default env.GITHUB_URL in github compare URL', () => {
