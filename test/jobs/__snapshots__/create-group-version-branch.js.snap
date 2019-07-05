@@ -6,9 +6,9 @@ Object {
   "body": "
 ## There have been updates to the *pouchdb* monorepo: 
 
-- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
-- The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
-- The \`devDependency\` [pouchdb-core](https://www.npmjs.com/package/pouchdb-core) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb-adapter-utils](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`devDependency\` [pouchdb-core](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -18,7 +18,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+**License:** MIT
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -43,7 +48,7 @@ Object {
   "body": "
 ## There have been updates to the *pouchdb* monorepo: 
 
-- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -53,7 +58,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+**License:** MIT
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -78,9 +88,9 @@ Object {
   "body": "
 ## There have been updates to the *pouchdb* monorepo: 
 
-- The \`dependency\` [pouchdb](https://www.npmjs.com/package/pouchdb) was updated from \`1.0.0\` to \`2.0.0\`.
-- The \`dependency\` [pouchdb-adapter-utils](https://www.npmjs.com/package/pouchdb-adapter-utils) was updated from \`1.0.0\` to \`2.0.0\`.
-- The \`devDependency\` [pouchdb-browser](https://www.npmjs.com/package/pouchdb-browser) was updated from \`1.0.0\` to \`1.8.0\`.
+- The \`dependency\` [pouchdb](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [pouchdb-adapter-utils](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`devDependency\` [pouchdb-browser](https://github.com/dep/dep) was updated from \`1.0.0\` to \`1.8.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -90,7 +100,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+**License:** MIT
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -115,7 +130,7 @@ Object {
   "body": "
 ## There have been updates to the *react* monorepo: 
 
-- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [react](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -125,7 +140,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+**License:** MIT
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -150,7 +170,7 @@ Object {
   "body": "
 ## There have been updates to the *react* monorepo: 
 
-- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+- The \`dependency\` [react](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -160,7 +180,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+**License:** MIT
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -186,7 +211,7 @@ Array [
 `;
 
 exports[`create-group-version-branch no new pull request, but new comment on PR, 1 group, 2 packages, same dependencyType, old PR exists 1`] = `
-"- The \`dependency\` [react](https://www.npmjs.com/package/react) was updated from \`1.0.0\` to \`2.0.0\`.
+"- The \`dependency\` [react](https://github.com/dep/dep) was updated from \`1.0.0\` to \`2.0.0\`.
 
 [Update to these versions instead 🚀](https://github.com/hans/monorepo/compare/master...hans:greenkeeper%2Fdefault%2Fmonorepo.react-20190330170013)"
 `;
@@ -210,7 +235,12 @@ If you don’t accept this pull request, your project will work just like it did
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release]().
+
+---
 
 <details>
   <summary>FAQ and help</summary>

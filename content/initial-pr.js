@@ -163,7 +163,7 @@ There is a collection of [frequently asked questions](https://greenkeeper.io/faq
 // needs to handle files as an array of arrays!
 function hasLockFileText (files) {
   if (!files) return
-  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'].filter((key) => {
+  const lockFiles = ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock', 'pnpm-lock.yaml'].filter((key) => {
     if (_.isArray(files[key]) && files[key].length) {
       return true
     }

@@ -4,6 +4,11 @@ const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
 
+// removes falsy values from the array
+function compactArray (array) {
+  return array.filter(value => value)
+}
+
 function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
 
@@ -148,17 +153,20 @@ function createTransformFunction (type, dependency, version, log) {
 
 // 'legacy' repoDocs have only true/false set at repository.files['yarn.lock'] ect
 // 'newer' repoDocs have an array (empty or with the paths)
-// packageFilename: path of pckage.json
+// packageFilename: path of package.json
 const getLockfilePath = function (files, packageFilename) {
   const convertedFiles = _.flatten(Object.keys(files).map(key => {
     if (files[key] === true) return key
     else return files[key]
   }))
 
-  const hasPackageLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'package-lock.json'))
+  const hasPackageLock = convertedFiles.includes(packageFilename.replace('package.json', 'package-lock.json'))
   if (hasPackageLock) return packageFilename.replace('package.json', 'package-lock.json')
 
-  const hasYarnLock = _.includes(convertedFiles, packageFilename.replace('package.json', 'yarn.lock'))
+  const hasPnpmLock = convertedFiles.includes(packageFilename.replace('package.json', 'pnpm-lock.yaml'))
+  if (hasPnpmLock) return packageFilename.replace('package.json', 'pnpm-lock.yaml')
+
+  const hasYarnLock = convertedFiles.includes(packageFilename.replace('package.json', 'yarn.lock'))
   if (hasYarnLock) return packageFilename.replace('package.json', 'yarn.lock')
 
   return null
@@ -315,7 +323,31 @@ const hasTooManyPackageJSONs = function (repo) {
   return repo.packages && Object.keys(repo.packages).length > 300
 }
 
+const getLicenseAndPublisherFromVersions = function ({ versions, version, oldVersionResolved }) {
+  const newVersion = versions[version]
+  const oldVersion = versions[oldVersionResolved]
+  const publisher = _.get(newVersion, '_npmUser.name')
+  let license, previousLicense, licenseHasChanged
+  if (_.has(newVersion, 'license')) {
+    license = newVersion['license'] || 'No license'
+
+    // only compare if we have a license field for both versions in the DB
+    if (_.has(oldVersion, 'license')) {
+      previousLicense = oldVersion['license'] || 'No license'
+      licenseHasChanged = previousLicense !== license
+    }
+  }
+
+  return {
+    license,
+    previousLicense,
+    licenseHasChanged,
+    publisher
+  }
+}
+
 module.exports = {
+  compactArray,
   seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
@@ -332,5 +364,6 @@ module.exports = {
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
   hasTooManyPackageJSONs,
-  getLockfilePath
+  getLockfilePath,
+  getLicenseAndPublisherFromVersions
 }

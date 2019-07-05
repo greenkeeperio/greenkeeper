@@ -22,7 +22,8 @@ const { createTransformFunction,
   generateGitHubCompareURL,
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  getLicenseAndPublisherFromVersions
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
@@ -179,7 +180,7 @@ module.exports = async function (
       })
       const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
       if (!oldVersionResolved) {
-        log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, { newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
+        log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is not an update for ${oldPkgVersion}`, { newVersion: version, json, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
         return null
       }
 
@@ -336,6 +337,8 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles })
 
+  const { license, previousLicense, licenseHasChanged, publisher } = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
+
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -345,7 +348,11 @@ module.exports = async function (
     diffCommits,
     monorepoGroupName,
     type,
-    packageUpdateList
+    packageUpdateList,
+    license,
+    previousLicense,
+    licenseHasChanged,
+    publisher
   })
 
   // verify pull requests commit

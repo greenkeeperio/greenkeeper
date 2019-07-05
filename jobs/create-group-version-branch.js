@@ -18,7 +18,8 @@ const {
   generateGitHubCompareURL,
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  getLicenseAndPublisherFromVersions
 } = require('../utils/utils')
 const {
   isPartOfMonorepo,
@@ -216,7 +217,7 @@ module.exports = async function (
         })
         const oldVersionResolved = getOldVersionResolved(satisfyingVersions, npmDoc.distTags, 'latest')
         if (!oldVersionResolved) {
-          log.warn(`exited transform creation: could not resolve old version for ${depName} (no update?)`, { newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
+          log.info(`exited transform creation: ${depName} ${latestDependencyVersion} is not an update for ${oldPkgVersion}`, { newVersion: version, satisfyingVersions, latestDependencyVersion, oldPkgVersion })
           return null
         }
 
@@ -360,6 +361,9 @@ module.exports = async function (
     prTitles: config.prTitles })
 
   const dependencyLink = getFormattedDependencyURL({ repositoryURL: transforms[0].repoURL })
+
+  const { license, previousLicense, licenseHasChanged, publisher } = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
+
   // maybe adapt PR body
   const body = prContent({
     dependencyLink,
@@ -370,7 +374,11 @@ module.exports = async function (
     type: highestPriorityDependency,
     release,
     diffCommits,
-    packageUpdateList
+    packageUpdateList,
+    license,
+    previousLicense,
+    licenseHasChanged,
+    publisher
   })
 
   // verify pull requests commit

@@ -100,8 +100,29 @@ require('./lib/rollbar')
   setInterval(scheduleReminders, 24 * 60 * 60 * 1000)
   setInterval(scheduleMonorepoReleaseSupervisor, 5 * 60 * 1000)
 
+  const isBad = (data) => {
+    const values = Object.values(data)
+    const baddies = ['gatsby', 'material-ui', 'react-cosmos']
+    let bad = false
+    baddies.forEach((baddie) => {
+      values.forEach((value) => {
+        if (String(value).match(baddie)) {
+          bad = true
+          statsd.increment('jobs.baddie', { tag: baddie })
+        }
+      })
+    })
+    return bad
+  }
+
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
+
+    if (isBad(data)) {
+      channel.ack(job)
+      return
+    }
+
     const jobsWithoutOwners = ['registry-change', 'stripe-event', 'schedule-stale-initial-pr-reminders', 'reset', 'cancel-stripe-subscription', 'update-nodejs-version', 'deprecate-nodejs-version', 'monorepo-supervisor']
     if (jobsWithoutOwners.includes(data.name) || data.type === 'marketplace_purchase') {
       return queueJob(data.name, job)

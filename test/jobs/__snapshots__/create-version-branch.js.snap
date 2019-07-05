@@ -27,7 +27,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/orgname/colors).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -47,8 +52,8 @@ exports[`create version branch for dependencies from monorepos new pull request 
 "
 ## There have been updates to the *numbers* monorepo: 
 
-- The \`devDependency\` [numbers](https://www.npmjs.com/package/numbers) was updated from \`2.1.0\` to \`2.2.0\`.
-- The \`dependency\` [numbers-four](https://www.npmjs.com/package/numbers-four) was updated from \`1.2.0\` to \`1.3.0\`.
+- The \`devDependency\` [numbers](https://github.com/dep/dep) was updated from \`2.1.0\` to \`2.2.0\`.
+- The \`dependency\` [numbers-four](https://github.com/dep/dep) was updated from \`1.2.0\` to \`1.3.0\`.
 
 These versions are **not covered** by your **current version range**.
 
@@ -58,7 +63,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
-[Find out more about this release]().
+**Publisher:** finn
+
+
+[Find out more about this release](https://github.com/dep/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -91,7 +101,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/orgname/flowers).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -121,7 +136,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/orgname/colors).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -153,7 +173,12 @@ This monorepo update includes releases of one or more dependencies which all bel
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/jest/jest).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -180,7 +205,12 @@ If you don’t accept this pull request, your project will work just like it did
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/best/best).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -205,7 +235,12 @@ If you don’t accept this pull request, your project will work just like it did
 
 ---
 
+**Publisher:** finn
+**License:** This package’s license **has changed** from \`BYOL\` to \`MIT\` in this release 🤔
+
 [Find out more about this release](https://github.com/finnpauls/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -230,7 +265,12 @@ If you don’t accept this pull request, your project will work just like it did
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/finnpauls/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
@@ -255,7 +295,12 @@ If you don’t accept this pull request, your project will work just like it did
 
 ---
 
+**Publisher:** finn
+**License:** MIT
+
 [Find out more about this release](https://github.com/finnpauls/dep).
+
+---
 
 <details>
   <summary>FAQ and help</summary>
