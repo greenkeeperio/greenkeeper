@@ -17,7 +17,7 @@ ${monorepoGroupName && `\nThis monorepo update includes releases of one or more 
 }
 ---
 
-${publisher && `**Publisher:** ${publisher}`}
+${publisher && `**Publisher:** [${publisher}](https://www.npmjs.com/~${publisher})`}
 ${license && `**License:** ${licenseHasChanged ? `This package’s license **has changed** from \`${previousLicense}\` to \`${license}\` in this release 🤔` : `${license}`}`}
 
 ${hasReleaseInfo
