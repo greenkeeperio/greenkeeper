@@ -328,11 +328,11 @@ const getLicenseAndPublisherFromVersions = function ({ versions, version, oldVer
   const oldVersion = versions[oldVersionResolved]
   const publisher = _.get(newVersion, '_npmUser.name')
   let license, previousLicense, licenseHasChanged
-  if (_.has(newVersion, 'license')) {
+  if (_.has(newVersion, 'license') && typeof newVersion['license'] !== 'object') {
     license = newVersion['license'] || 'No license'
 
     // only compare if we have a license field for both versions in the DB
-    if (_.has(oldVersion, 'license')) {
+    if (_.has(oldVersion, 'license') && typeof oldVersion['license'] !== 'object') {
       previousLicense = oldVersion['license'] || 'No license'
       licenseHasChanged = previousLicense !== license
     }
