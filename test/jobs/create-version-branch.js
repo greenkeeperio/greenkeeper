@@ -2351,7 +2351,7 @@ describe('create version branch for dependencies from monorepos', () => {
           repository: {
             url: 'https://github.com/colors/monorepo'
           },
-          'license': 'MIT',
+          'license': { 'preferred': 'MIT' },
           '_npmUser': {
             name: 'finn',
             email: 'finn.pauls@gmail.com'
