@@ -122,7 +122,7 @@ describe('initial branch utils', () => {
       'bazquux/package.json'
     ]
     const contents = {
-      'package.json': { devDependencies: { '@finnpauls/blup': '1.0.0' }, workspaceRoot: 'bazquux/' },
+      'package.json': { devDependencies: { '@finnpauls/blup': '1.0.0' }, workspaces: 'bazquux/' },
       'bazquux/package.json': { devDependencies: { '@finnpauls/dep': '*' }, dependencies: { 'florp': '1.2.3' } }
     }
     const result = getDependenciesFromPackageFiles(paths, contents)
