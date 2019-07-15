@@ -23,7 +23,7 @@ function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
     For those dependencies, we should not try to fetch infos
     from npm, because the dependencies are not there.
   */
-  const isMonorepo = !!_.get(packageJsonContents['package.json'], 'workspaceRoot')
+  const isMonorepo = !!_.get(packageJsonContents['package.json'], 'workspaces')
   const isMonorepoStar = ({ name, version, type }) => {
     return !(isMonorepo && version === '*')
   }
