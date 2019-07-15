@@ -22,7 +22,8 @@ const { createTransformFunction,
   generateGitHubCompareURL,
   hasTooManyPackageJSONs,
   getSatisfyingVersions,
-  getOldVersionResolved
+  getOldVersionResolved,
+  getLicenseAndPublisherFromVersions
 } = require('../utils/utils')
 
 const prContent = require('../content/update-pr')
@@ -336,6 +337,8 @@ module.exports = async function (
     dependency: dependencyKey,
     prTitles: config.prTitles })
 
+  const { license, previousLicense, licenseHasChanged, publisher } = getLicenseAndPublisherFromVersions({ versions, version, oldVersionResolved })
+
   const body = prContent({
     dependencyLink,
     oldVersionResolved,
@@ -345,7 +348,11 @@ module.exports = async function (
     diffCommits,
     monorepoGroupName,
     type,
-    packageUpdateList
+    packageUpdateList,
+    license,
+    previousLicense,
+    licenseHasChanged,
+    publisher
   })
 
   // verify pull requests commit

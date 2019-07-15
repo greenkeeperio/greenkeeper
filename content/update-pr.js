@@ -1,7 +1,9 @@
 const _ = require('lodash')
 const md = require('./template')
 
-module.exports = ({ version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, packageUpdateList }) => {
+module.exports = ({
+  version, dependencyLink, dependency, monorepoGroupName, release, diffCommits, oldVersionResolved, type, packageUpdateList, license, licenseHasChanged, previousLicense, publisher
+}) => {
   const hasReleaseInfo = release && diffCommits
   return md`
 ${monorepoGroupName
@@ -15,10 +17,15 @@ ${monorepoGroupName && `\nThis monorepo update includes releases of one or more 
 }
 ---
 
+${publisher && `**Publisher:** ${publisher}`}
+${license && `**License:** ${licenseHasChanged ? `This package’s license has changed from **${previousLicense}** to **${license}** in this release` : `${license}`}`}
+
 ${hasReleaseInfo
     ? _.compact([release, diffCommits])
     : `[Find out more about this release](${dependencyLink}).`
 }
+
+---
 
 <details>
   <summary>FAQ and help</summary>

@@ -4,6 +4,11 @@ const jsonInPlace = require('json-in-place')
 const semver = require('semver')
 const getRangedVersion = require('../lib/get-ranged-version')
 
+// removes falsy values from the array
+function compactArray (array) {
+  return array.filter(value => value)
+}
+
 function seperateNormalAndMonorepos (packageFiles) {
   const resultsByRepo = groupPackageFilesByRepo(packageFiles)
 
@@ -318,7 +323,31 @@ const hasTooManyPackageJSONs = function (repo) {
   return repo.packages && Object.keys(repo.packages).length > 300
 }
 
+const getLicenseAndPublisherFromVersions = function ({ versions, version, oldVersionResolved }) {
+  const newVersion = versions[version]
+  const oldVersion = versions[oldVersionResolved]
+  const publisher = _.get(newVersion, '_npmUser.name')
+  let license, previousLicense, licenseHasChanged
+  if (_.has(newVersion, 'license')) {
+    license = newVersion['license'] || 'No license'
+
+    // only compare if we have a license field for both versions in the DB
+    if (_.has(oldVersion, 'license')) {
+      previousLicense = oldVersion['license'] || 'No license'
+      licenseHasChanged = previousLicense !== license
+    }
+  }
+
+  return {
+    license,
+    previousLicense,
+    licenseHasChanged,
+    publisher
+  }
+}
+
 module.exports = {
+  compactArray,
   seperateNormalAndMonorepos,
   getJobsPerGroup,
   filterAndSortPackages,
@@ -335,5 +364,6 @@ module.exports = {
   updateNodeVersionToNvmrc,
   addNewLowestAndDeprecate,
   hasTooManyPackageJSONs,
-  getLockfilePath
+  getLockfilePath,
+  getLicenseAndPublisherFromVersions
 }
