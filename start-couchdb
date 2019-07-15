@@ -30,4 +30,4 @@ until $(curl --output /dev/null --silent --head --fail http://localhost:5984); d
 done
 
 # speed up couchdb operations
-curl -X PUT http://localhost:5984/_node/_local/_config/couchdb/delayed_commits -d '"true"'
+curl -sX PUT http://localhost:5984/_node/_local/_config/couchdb/delayed_commits -d '"true"' > /dev/null 2>&1
