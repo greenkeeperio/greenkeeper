@@ -87,3 +87,45 @@ describe('create initial branch', () => {
     expect(updatedDependencies[0].newVersion).toEqual('2.0.0')
   })
 })
+
+/*
+function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
+*/
+
+const { getDependenciesFromPackageFiles } = require('../../utils/initial-branch-utils')
+describe('initial branch utils', () => {
+  test('getDependenciesFromPackageFiles single devDependency', () => {
+    const paths = [
+      'foobar/package.json'
+    ]
+    const contents = { 'foobar/package.json': { devDependencies: { '@finnpauls/dep': '1.0.0' } } }
+    const result = getDependenciesFromPackageFiles(paths, contents)
+    expect(result).toMatchSnapshot()
+  })
+
+  test('getDependenciesFromPackageFiles duplicate dependency across dep type', () => {
+    const paths = [
+      'foobar/package.json',
+      'bazquux/package.json'
+    ]
+    const contents = {
+      'foobar/package.json': { devDependencies: { '@finnpauls/dep': '1.0.0' } },
+      'bazquux/package.json': { devDependencies: { '@finnpauls/dep': '1.0.0' } }
+    }
+    const result = getDependenciesFromPackageFiles(paths, contents)
+    expect(result).toMatchSnapshot()
+  })
+
+  test('getDependenciesFromPackageFiles workspace', () => {
+    const paths = [
+      'package.json',
+      'bazquux/package.json'
+    ]
+    const contents = {
+      'package.json': { devDependencies: { '@finnpauls/blup': '1.0.0' }, workspaceRoot: 'bazquux/' },
+      'bazquux/package.json': { devDependencies: { '@finnpauls/dep': '*' }, dependencies: { 'florp': '1.2.3' } }
+    }
+    const result = getDependenciesFromPackageFiles(paths, contents)
+    expect(result).toMatchSnapshot()
+  })
+})
