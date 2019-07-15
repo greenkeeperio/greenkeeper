@@ -14,11 +14,25 @@ const registryUrl = env.NPM_REGISTRY
   }]
 */
 function getDependenciesFromPackageFiles (packagePaths, packageJsonContents) {
+  /*
+    yarn monorepos are identified by packageJson.workspaceRoot.
+    if we are handling one of those, we might encounter a [sub-]
+    package.json that specifies a dependency like this:
+    "@reponame/dependency": "*" which looks like a scoped npm
+    dependency, but is in reality a in-monorepo dependency.
+    For those dependencies, we should not try to fetch infos
+    from npm, because the dependencies are not there.
+  */
+  const isMonorepo = !!_.get(packageJsonContents['package.json'], 'workspaceRoot')
+  const isMonorepoStar = ({ name, version, type }) => {
+    return !(isMonorepo && version === '*')
+  }
   return _.compact(_.uniqWith(_.flatten(packagePaths.map(path => {
     return _.flatten(
       ['dependencies', 'devDependencies', 'optionalDependencies'].map(type => {
         if (packageJsonContents[path]) {
           return _.map(packageJsonContents[path][type], (version, name) => ({ name, version, type }))
+            .filter(isMonorepoStar)
         }
       })
     )

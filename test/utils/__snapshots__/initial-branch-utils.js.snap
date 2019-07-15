@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`initial branch utils getDependenciesFromPackageFiles duplicate dependency across dep type 1`] = `
+Array [
+  Object {
+    "name": "@finnpauls/dep",
+    "type": "devDependencies",
+    "version": "1.0.0",
+  },
+]
+`;
+
+exports[`initial branch utils getDependenciesFromPackageFiles single devDependency 1`] = `
+Array [
+  Object {
+    "name": "@finnpauls/dep",
+    "type": "devDependencies",
+    "version": "1.0.0",
+  },
+]
+`;
+
+exports[`initial branch utils getDependenciesFromPackageFiles workspace 1`] = `
+Array [
+  Object {
+    "name": "@finnpauls/blup",
+    "type": "devDependencies",
+    "version": "1.0.0",
+  },
+  Object {
+    "name": "florp",
+    "type": "dependencies",
+    "version": "1.2.3",
+  },
+]
+`;
