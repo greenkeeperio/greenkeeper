@@ -909,6 +909,146 @@ describe('create branch with lockfiles', () => {
     expect(gitHubNock.isDone()).toBeTruthy()
   })
 
+  test('change one file (package.json) and generate its lockfile (yarn)', async () => {
+    const packageFileContents = { devDependencies: {
+      'jest': '1.1.1'
+    } }
+    const updatedPackageFileContents = { devDependencies: {
+      'jest': '1.2.0'
+    } }
+    const gitHubNock = nock('https://api.github.com')
+      .post('/app/installations/123/access_tokens')
+      .optionally()
+      .reply(200, {
+        token: 'secret'
+      })
+      .get('/rate_limit')
+      .optionally()
+      .reply(200, {})
+      .get('/repos/owner/yarn-repo/contents/package.json')
+      .query({ ref: 'master' })
+      .reply(200, {
+        type: 'file',
+        content: Buffer.from(JSON.stringify(packageFileContents)).toString('base64')
+      })
+      .get('/repos/owner/yarn-repo/contents/yarn.lock')
+      .reply(200, {
+        type: 'file',
+        path: 'yarn.lock',
+        name: 'yarn.lock',
+        content: Buffer.from(JSON.stringify(packageFileContents)).toString('base64')
+      })
+      .get('/repos/owner/yarn-repo/git/refs/heads/master')
+      .reply(200, {
+        object: {
+          sha: '123abc'
+        }
+      })
+      // First tree and commit for package.json
+      .post('/repos/owner/yarn-repo/git/trees', {
+        tree: [
+          {
+            path: 'package.json',
+            content: JSON.stringify(updatedPackageFileContents),
+            mode: '100644',
+            type: 'blob'
+          }
+        ],
+        base_tree: '123abc'
+      })
+      .reply(201, {
+        sha: 'def456'
+      })
+      .post('/repos/owner/yarn-repo/git/commits', {
+        message: 'new commit',
+        tree: 'def456',
+        parents: ['123abc']
+      })
+      .reply(201, {
+        sha: '789beef'
+      })
+      // Second tree and commit for yarn.lock
+      .post('/repos/owner/yarn-repo/git/trees', {
+        tree: [
+          {
+            path: 'yarn.lock',
+            content: '{"devDependencies":{"jest": {"version": "1.2.0"}}}',
+            mode: '100644',
+            type: 'blob'
+          }
+        ],
+        base_tree: '789beef'
+      })
+      .reply(201, {
+        sha: 'lol999'
+      })
+      .post('/repos/owner/yarn-repo/git/commits', {
+        message: 'Updated lockfile yarn.lock, yay',
+        tree: 'lol999',
+        parents: ['789beef']
+      })
+      .reply(201, {
+        sha: 'finalsha123'
+      })
+      .post('/repos/owner/yarn-repo/git/refs', {
+        ref: 'refs/heads/testBranch',
+        sha: 'finalsha123'
+      })
+      .reply(201)
+
+    nock('http://localhost:1234')
+      .post('/', (body) => {
+        expect(body.packageJson).toEqual('{"devDependencies":{"jest":"1.2.0"}}')
+        expect(typeof body.type).toBe('string')
+        expect(typeof body.packageJson).toBe('string')
+        expect(typeof body.lock).toBe('string')
+        expect(body).toMatchSnapshot()
+        return true
+      })
+      .reply(200, () => {
+        return {
+          ok: true,
+          contents: '{"devDependencies":{"jest": {"version": "1.2.0"}}}'
+        }
+      })
+
+    const sha = await createBranch({
+      installationId: 123,
+      owner: 'owner',
+      repoName: 'yarn-repo',
+      branch: 'master',
+      newBranch: 'testBranch',
+      path: 'package.json',
+      transform: oldPkg => JSON.stringify(updatedPackageFileContents),
+      message: 'new commit',
+      processLockfiles: true,
+      commitMessageTemplates: { 'lockfileUpdate': 'Updated lockfile ${lockfilePath}, yay' }, // eslint-disable-line no-template-curly-in-string
+      repoDoc: {
+        _id: 'yarn-lockfile',
+        accountId: '124',
+        fullName: 'finnp/yarn-lockfile',
+        private: false,
+        files: {
+          'package.json': ['package.json'],
+          'package-lock.json': [],
+          'npm-shrinkwrap.json': [],
+          'yarn.lock': ['yarn.lock'],
+          'pnpm-lock.yaml': []
+        },
+        packages: {
+          'package.json': {
+            devDependencies: {
+              'jest': '1.0.0'
+            }
+          }
+        }
+      }
+    })
+
+    expect(sha).toEqual('finalsha123')
+    expect(gitHubNock.isDone()).toBeTruthy()
+  })
+
   test('change two files (package.json, frontend/package.json) and generate their lockfiles', async () => {
     const packageFileContents = { devDependencies: {
       'jest': '1.1.1'
