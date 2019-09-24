@@ -9,6 +9,15 @@ Object {
 }
 `;
 
+exports[`create branch with lockfiles change one file (package.json) and generate its lockfile (yarn) 1`] = `
+Object {
+  "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
+  "packageJson": "{\\"devDependencies\\":{\\"jest\\":\\"1.2.0\\"}}",
+  "repositoryTokens": "",
+  "type": "yarn",
+}
+`;
+
 exports[`create branch with lockfiles change one file (package.json) and generate its lockfile 1`] = `
 Object {
   "lock": "{\\"devDependencies\\":{\\"jest\\":\\"1.1.1\\"}}",
