@@ -2,7 +2,7 @@
   "name": "@greenkeeper/jobs",
   "version": "0.0.0-development",
   "dependencies": {
-    "@octokit/rest": "16.19.0",
+    "@octokit/rest": "16.31.0",
     "amqplib": "^0.5.0",
     "bluebird": "^3.4.6",
     "catbox": "^7.1.3",
