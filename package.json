@@ -8,7 +8,7 @@
     "catbox": "^7.1.3",
     "catbox-memory": "^2.0.4",
     "couchdb-bootstrap": "14.1.1",
-    "envalid": "^5.0.0",
+    "envalid": "^6.0.1",
     "escape-string-regexp": "^2.0.0",
     "github-url-from-git": "^1.4.0",
     "gk-log": "1.5.0",
