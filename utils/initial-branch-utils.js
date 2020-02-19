@@ -58,7 +58,14 @@ async function addNPMPackageData (dependencyInfo, registryGet, log) {
       })
       return dep
     } catch (err) {
-      log.error('npm: Could not get package data', { dependency: dep, error: err })
+      if (!env.IS_ENTERPRISE) {
+        /*
+          An Enterprise installation might not have access to public GH, or their
+          private registry might not be 100% API compatible, so this only creates
+          errors that aren’t actionable.
+        */
+        log.error('npm: Could not get package data', { dependency: dep, error: err })
+      }
     }
   })
 }
