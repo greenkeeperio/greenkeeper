@@ -1,3 +1,7 @@
+***
+☝️ **Important announcement:** Greenkeeper will be saying goodbye 👋 and passing the torch to Snyk on June 3rd, 2020! New installations are no longer possible. [Find out how to migrate to Snyk and more at greenkeeper.io](https://greenkeeper.io)
+***
+
 <div align="center">
   <img src="https://user-images.githubusercontent.com/391124/36849148-8a73f484-1d63-11e8-8f2b-d7ffa940cb31.jpg" alt="Greenkeeper" align="center" />
 </div>
