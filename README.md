@@ -108,31 +108,6 @@ If you’ve discovered a security-related bug in Greenkeeper or related services
 If you find any, **don’t share security vulnerabilities publicly** (in a GitHub issue for example), always keep these conversations with us confidential so we have a chance to get things fixed before anyone exploits the bug.
 </details>
 
-## Getting started with the new GitHub App
-
-1. Click on the green **Install** button at the top of the [app page](https://github.com/apps/greenkeeper). If you’ve already done this, the button will be grey and labeled **Configure**.
-
-2. You can choose the specific organization to install Greenkeeper on, and have the option to enable individual repositories (we strongly recommend this), or all of the repositories.
-
-    **Important:** just having the Greenkeeper _installed_ on a repo doesn’t necessarily _enable_ it. More on that below. By the way, you can change this behaviour on the `Installed integrations` page in your organizations’ settings.
-
-    | **Screenshot - Installing Greenkeeper on repositories** |
-    |---|
-    | ![Choosing repositories](https://cloud.githubusercontent.com/assets/908178/21938177/85b0587c-d9ba-11e6-8c62-210a7fc5a53b.png) |
-
-3. If there’s a `package.json` file present in your repository you will get Greenkeeper’s **initial pull request**, which updates all outdated dependencies and contains a lot of additional information. Greenkeeper will only be **enabled** on this repo if you merge this initial pull request.
-
-    | **Screenshot - Greenkeeper’s initial pull request** |
-    |---|
-    | ![Initial pull request](https://cloud.githubusercontent.com/assets/908178/21938830/4ad9fe76-d9bd-11e6-95da-8b26450e3021.png) |
-
-    **Important:** If all dependencies are already up-to-date, we *won’t* send this initial pull request. Instead, Greenkeeper will enable itself on the repo immediately, and you’ll start getting new issues on this repo only when Greenkeeper determines that there’s something for you to do. You can control this by only installing the app on the repos you actually need it on, using step 1. Again, we highly recommend taking the time to whitelist repos individually.
-
-4. That’s it. If a dependency breaks your build, Greenkeeper will let you know immediately. If not, it’ll stay out of your way. In any case, you get a more reliable software with minimum amount of work.
-
-### Additional Notes
-- With the new Greenkeeper public scoped npm packages work out of the box. Private scoped packages require an additional setup step, which is described in the initial pull request.
-
 ---
 
 <details>
