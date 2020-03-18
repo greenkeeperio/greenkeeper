@@ -11,18 +11,13 @@ const Queue = require('promise-queue')
 const env = require('./lib/env')
 const dbs = require('./lib/dbs')
 const statsd = require('./lib/statsd')
+const { connect, cron, start } = require('./lib/scheduler')
 const enterpriseSetup = require('./lib/enterprise-setup')
 
 require('./lib/rollbar')
 
-// if (cluster.isMaster && env.NODE_ENV !== 'development') {
-//   for (let i = 0; i++ < env.WORKER_SIZE;) cluster.fork()
+start() // start scheduler
 
-//   cluster.on('exit', (worker, code, signal) => {
-//     console.log('worker %d died (%s). restarting...', worker.process.pid, signal || code)
-//     cluster.fork()
-//   })
-// } else {
 ;(async () => {
   const amqp = require('amqplib')
 
@@ -62,11 +57,12 @@ require('./lib/rollbar')
     const q = queues[queueId] = queues[queueId] || new Queue(1, Infinity)
     return q.add(() => worker(job))
   }
-  channel.consume(env.EVENTS_QUEUE_NAME, consume)
-  channel.consume(env.JOBS_QUEUE_NAME, consume)
+
+  // connect queues with consume function
+  connect(channel, consume)
 
   if (env.NODE_ENV !== 'testing') {
-    setInterval(function collectAccountQueueStats () {
+    cron('collectAccountQueueStats', function collectAccountQueueStats () {
       const queueKeys = Object.keys(queues)
       statsd.gauge('queues.account-jobs', queueKeys.length)
       queueKeys.map((queueId) => {
@@ -96,27 +92,28 @@ require('./lib/rollbar')
       console.log(e)
     }
   }
-  setTimeout(scheduleReminders, 5000)
-  setInterval(scheduleReminders, 24 * 60 * 60 * 1000)
-  setInterval(scheduleMonorepoReleaseSupervisor, 5 * 60 * 1000)
 
-  const isBad = (data) => {
-    const values = Object.values(data)
-    const baddies = ['gatsby', 'material-ui', 'react-cosmos']
-    let bad = false
-    baddies.forEach((baddie) => {
-      values.forEach((value) => {
-        if (String(value).match(baddie)) {
-          bad = true
-          statsd.increment('jobs.baddie', { tag: baddie })
-        }
-      })
-    })
-    return bad
-  }
+  setTimeout(scheduleReminders, 5000)
+  cron('reminders', scheduleReminders, 24 * 60 * 60 * 1000)
+  cron('monorepoReleaseSupervisor', scheduleMonorepoReleaseSupervisor, 5 * 60 * 1000)
 
   async function consume (job) {
     const data = JSON.parse(job.content.toString())
+
+    const isBad = (data) => {
+      const values = Object.values(data)
+      const baddies = ['gatsby', 'material-ui', 'react-cosmos']
+      let bad = false
+      baddies.forEach((baddie) => {
+        values.forEach((value) => {
+          if (String(value).match(baddie)) {
+            bad = true
+            statsd.increment('jobs.baddie', { tag: baddie })
+          }
+        })
+      })
+      return bad
+    }
 
     if (isBad(data)) {
       channel.ack(job)
