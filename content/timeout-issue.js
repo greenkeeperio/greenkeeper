@@ -9,7 +9,7 @@ To enable Greenkeeper, you need to make sure that a [commit status](https://help
 Since we didn’t receive a CI status on the ${branchLink(fullName)} branch, it’s possible that you don’t have CI set up yet.
 We recommend using:
 - [CircleCI](https://circleci.com)
-- [Travis CI](https://travis-ci.org)
+- [Travis CI](https://travis-ci.com)
 - [Buildkite](https://buildkite.com/)
 - [CodeShip](https://codeship.com)
 - [Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines)
