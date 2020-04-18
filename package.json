@@ -36,7 +36,7 @@
     "rollbar": "^2.0.3",
     "semver": "^6.0.0",
     "slack-notify": "^0.1.6",
-    "stripe": "^6.0.0",
+    "stripe": "^8.44.0",
     "yml-in-place": "^1.0.2"
   },
   "devDependencies": {
